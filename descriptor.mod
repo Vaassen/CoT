@@ -6,5 +6,10 @@ tags={
 	"Graphics"
 }
 name="[CoT] Anbennar"
+dependencies={
+	"Anbennar: A Fantasy Total Conversion Mod"
+	"Anbennar-PublicFork"
+}
 supported_version="1.33.3"
+path="mod/cot_anbennar"
 remote_file_id="2797963437"
