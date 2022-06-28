@@ -11,5 +11,5 @@ dependencies={
 	"Anbennar-PublicFork"
 }
 supported_version="1.33.3"
-path="C:/Users/jakub/Documents/Paradox Interactive/Europa Universalis IV/mod/CriersOfTellumAnbennar"
+path="mod/cot_anbennar"
 remote_file_id="2797963437"
