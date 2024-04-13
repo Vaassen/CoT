@@ -8,7 +8,7 @@ Vanilla and Anbennar changes (Based of Anbennar Bitbucket fork from the 30th Mar
 -		Changed the UI to accommodate for this
 -	Military leaders and rulers turned to leader should live significantly longer now
 -	Changed a state edict from -10% local development cost to -10% local construction cost
--	Introduced the CoT generic MT
+-	Completely reworked the vanilla generic MT to make it viable and fun in multiplayer
 -	Made the CoT generic MT compatible across all currently implemented generic mission trees
 -		Players now have the choice to pick between a nations MT or the new generic CoT MT when they first select a nation
 -	Halved all sources of All Power Cost Reduction across vanilla and Anbennar, with the exception of Golden Era and Innovativeness
