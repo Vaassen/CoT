@@ -350,7 +350,7 @@ NDiplomacy = {
 
 	DIPLOMAT_SPEED = 20.0,							-- DIPLOMAT_SPEED
 	DIPLOMAT_COOLDOWN_TIME = 1,						-- DIPLOMATIC ACTION COOLDOWN IN MONTHS
-	MIN_RELATIONS_TO_ALLY = -200,						-- Alliances not possible if either country has an opinion of the other lower than this
+	MIN_RELATIONS_TO_ALLY = -25,						-- Alliances not possible if either country has an opinion of the other lower than this
 	MIN_RELATIONS_TO_SUPPORT_INDEPENDENCE = -25,	-- Support Independence not possible if either country has an opinion of the other lower than this
 
 	ELECTIVE_VICTORY_PRESTIGE = 25,				-- Prestige for getting a heir from your country onto the throne of an elective nation
@@ -413,7 +413,7 @@ NDiplomacy = {
 
 	PAY_SUBJECT_DEBT_LIBERTY_DESIRE_REDUCTION = 5,	-- Amount of liberty desire the subject loses per paid loan
 
-	NUM_OF_GREAT_POWERS = 15,						-- The number of ordinary (i.e. non-leaving) Great Powers if RightsOfManDLC is enabled.
+	NUM_OF_GREAT_POWERS = 8,						-- The number of ordinary (i.e. non-leaving) Great Powers if RightsOfManDLC is enabled.
 	LEAVING_GREAT_POWER_YEARS = 5,					-- The number of years a Great Power can remain after being removed from the top (8).
 	GREAT_POWER_SUBJECT_CONTRIBUTION = 0.5,			-- Share of subjects' development that will count towards overlord's Great Power score.
 
@@ -635,7 +635,7 @@ NCountry = {
 
 	ALLOW_FEMALE_GENERALS = 0,
 	FEMALE_ADVISOR_CHANCE = 10,						-- (Anbennar) pdx: 2. If Women in History is enabled, chance of an advisor (or general if permitted) spawning as female
-	MAX_IDEA_GROUPS_FROM_SAME_CATEGORY = 0.35,
+	MAX_IDEA_GROUPS_FROM_SAME_CATEGORY = 0.5,
 
 	RANDOM_LUCKY_BASE_WEIGHT = 100,					-- Base weight given to each nation when rolling for random lucky
 	RANDOM_LUCKY_DEVELOPMENT_WEIGHT = 0.4,			-- Extra weight given for each base development when rolling for random luck
@@ -691,8 +691,8 @@ NCountry = {
 	GREAT_PROJECT_MONEY_CONSTRUCTION_BOOST_AMOUNT_IN_DAYS = 730, --how far throwing cash at the problem gets you
 	GREAT_PROJECT_MOVE_COST_PER_DAY = 3, --how much to move a great project for one day
 	COUNTRIES_GETTING_SCORE = 10,
-	LAND_FORCELIMIT_EXTRA_COST_FACTOR = 6,			-- extra expense for being above forcelimit
-	NAVAL_FORCELIMIT_EXTRA_COST_FACTOR = 6,			-- extra expense for being above forcelimit
+	LAND_FORCELIMIT_EXTRA_COST_FACTOR = 2,			-- extra expense for being above forcelimit
+	NAVAL_FORCELIMIT_EXTRA_COST_FACTOR = 2,			-- extra expense for being above forcelimit
 	REPUBLICAN_TRADITION_YEARLY_INCREASE = 1,		-- how much it increases each year.
 	PIETY_PERCENTAGE_AT_NEW_RULER = 0.90,			-- (Anbennar) pdx: 0.25 (percentage of piety kept at new ruler.)
 	PIETY_INCREASE_AT_GOOD_WAR = -0.1,				-- (Anbennar) pdx: 0.25
@@ -922,7 +922,7 @@ NCountry = {
 	REQUEST_EXTRA_LEVIES_COOLDOWN_MONTHS = 60,
 
 	SEIZE_COURT_RESOURCES_MAX_LIBERTY_DESIRE = 25,
-	SEIZE_COURT_RESOURCES_COOLDOWN_MONTHS = 60,
+	SEIZE_COURT_RESOURCES_COOLDOWN_MONTHS = 120,
 
 	MIN_LIBERTY_DESIRE = 0,							-- Min total (effective) liberty desire
 	MAX_LIBERTY_DESIRE = 100,						-- Max total (effective) liberty desire
@@ -1215,8 +1215,8 @@ NEconomy = {
 	TRADE_COMPANY_RELIGION_RESTRICTION = 0,			-- If we limit trade companies based on religion.
 	LARGE_COLONIAL_NATION_LIMIT = 10,
 	PRIVATEER_INCOME_COLLECTION_EFF = 0.5,
-	MIN_ARMY_MAINTENANCE = 0.2,
-	MIN_NAVY_MAINTENANCE = 0.2,
+	MIN_ARMY_MAINTENANCE = 0.1,
+	MIN_NAVY_MAINTENANCE = 0.1,
 	CARAVAN_FACTOR = 3.0,							-- Development is divided by this factor, do not set to zero!
 	CARAVAN_POWER_MAX = 50,
 	CARAVAN_POWER_MIN = 2,
@@ -1589,8 +1589,8 @@ NMilitary = {
 	LEADER_MINIMUM_AGE = 16,						-- Minimum age of a leader in years
 	LEADER_MAX_RANDOM_YEARS = 25,
 	LEADER_MAX_RANDOM_DAYS = 730,
-	LEADER_WORK_YEARS_DEATH_FACTOR = 9999,			-- (Anbennar) Divides how many years he has been working to calculate chance
-	LEADER_AGE_DEATH_FACTOR = 1000000,				-- (Anbennar) Divides age with this to calculate chance
+	LEADER_WORK_YEARS_DEATH_FACTOR = 4096,			-- (Anbennar) pdx:2 Divides how many years (above 20) a general has been working to calculate chance of death
+	LEADER_AGE_DEATH_FACTOR = 4096,				-- (Anbennar) pdx:3 Divides age with this to calculate chance of death for ruler-generals
 
 	MERCENARY_COMPANY_ARMY_TRADITION = 50.0,		-- At what army tradition mercenaries leaders are generated on.
 	
@@ -1609,6 +1609,11 @@ NMilitary = {
 	SIEGE_BONUS_FOOD_SHORTAGE = 2,
 	SIEGE_BONUS_WATER_SHORTAGE = 3,
 	SIEGE_BONUS_DEFENDERS_DESERT = 2,
+
+	MINIMUM_DRILL_DECAY_MODIFIER = 0, -- Change this to a negative value so values below -100% drill decay will actually give drill
+	MINIMUM_MERCENARY_HIRE_PRICE = 0.1, -- Lower cap for mercenary cost modifier, change it to 0 for free mercs
+
+	OPEN_SEA_PATHFIND_PENALTY = 3,
 },
 
 NAI = {
@@ -2143,7 +2148,7 @@ NAI = {
 	ESTATE_INTERACTION_THRESHOLD = 49.9,
 	ESTATE_MAX_WANTED_INFLUENCE = 73.0,
 	ESTATE_MIN_WANTED_CROWNLAND = 33.0,
-	ESTATE_MAX_PRIVILEGES = 5, 									-- (Anbennar) pdx: 6. Also see ESTATE_PRIVILEGES_MAX_CONCURRENT in NCountry
+	ESTATE_MAX_PRIVILEGES = 7, 									-- (Anbennar) pdx: 6. Also see ESTATE_PRIVILEGES_MAX_CONCURRENT in NCountry
 	MIN_SCORE_TO_CONCENTRATE_DEVELOPMENT = 100,					-- (Anbennar) pdx: 1.5 (disabled in Anbennar)
 
 	-- # AI unit strength evaluation
@@ -2179,6 +2184,8 @@ NAI = {
 	FIRE_PIP_MULT = 3, -- This means having one of each fire pip applies a modifier of 17/13 to the fire phase estimate, as desired (since it's equivalent to +1 dice modifier)
 	SHOCK_PIP_MULT = 3, -- Ditto
 	MORALE_PIP_MULT = 2, -- Morale pips are counted in both phases, but only applies to morale damage, which we guesstimate to be worth twice as much as casualties (=2/3, or ~1.32/2, of total)
+
+	MIN_DAYS_AFTER_TRUCE_ENDS = 5, -- How long AI needs to wait after a truce ends to declare a war, some time needed for the player to take any action since AI can do it immediately
 },
 
 NAIEconomy = {
