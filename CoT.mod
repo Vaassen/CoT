@@ -1,4 +1,4 @@
-name="CoT.Main"
+name="CoT"
 tags={
 	"Alternative History"
 	"Total Conversion"
@@ -28,5 +28,5 @@ replace_path="history/advisors"
 replace_path="gfx/loadingscreens"
 replace_path="tutorial"
 picture="anbennar.png"
-supported_version="1.36.2"
-path="C:/Users/Vaass/Documents/Paradox Interactive/Europa Universalis IV/mod/CoT"
+supported_version="1.37.*"
+path="C:/Users/minic/OneDrive/Documents/Paradox Interactive/Europa Universalis IV/mod/CoT"
