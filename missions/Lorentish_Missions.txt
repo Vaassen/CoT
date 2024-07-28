@@ -18,6 +18,7 @@ lorent_colonial = {
 		}
 		
 		effect = {
+			remove_country_modifier = cot_lorent_recovering
 			add_country_modifier = {
 				name = "lorent_recovered_from_the_lilac_wars"
 				duration = 9125 #25 years
@@ -357,6 +358,12 @@ lorent_internal = {
 			else = {
 				num_of_cavalry = 10
 			}
+			A02 = {
+				has_opinion = {
+					who = ROOT
+					value = 100
+				}
+			}
 		}
 		
 		effect = {
@@ -365,17 +372,8 @@ lorent_internal = {
 				duration = 5475
 			}
 			add_army_tradition = 30
-			deranne_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
-			}
-			add_casus_belli = {
-				target = A02
-				type = cb_vassalize_mission
-			}
+			remove_historical_rival = A02
+			A02 = { remove_historical_rival = A01 }
 		}
 	}
 	
@@ -386,19 +384,43 @@ lorent_internal = {
 		
 		provinces_to_highlight = {
 			area = deranne_area
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
+			NOT = { owned_by = ROOT }
 		}
 		
 		trigger = {
-			deranne_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
+			OR = {
+				deranne_area = {
+					type = all
+					owned_by = ROOT
+				}
+				A02 = {
+					has_opinion = {
+						who = ROOT
+						value = 150
+					}
+					trust = {
+						who = ROOT
+						value = 55
+					}
+				}
 			}
 		}
 		effect = {
 			add_country_modifier = {
 				name = "lorent_victory_over_the_seaflower"
 				duration = 5475
+			}
+			if = {
+				limit = {
+					A02 = {
+						trust = {
+							who = ROOT
+							value = 55
+						}
+					}
+				}
+				A02 = { add_historical_friend = A01 }
+				A01 = { create_march = A02 }
 			}
 		}
 	}
@@ -597,17 +619,20 @@ lorent_unification_of_lencenor = {
 		
 		trigger = {
 			army_size_percentage = 0.8
-			manpower_percentage = 0.4
+			manpower_percentage = 0.6
 			num_of_generals = 1
 		}
 		
 		effect = {
-			lower_bloodwine_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
+			add_stability_or_adm_power = yes
+			ROOT = {
+				every_subject_country = {
+					limit = { NOT = { tag = A03 } }
+					add_country_modifier = {
+						name = cot_lorent_cowed # -1 LFL
+						duration = 18250 #50 years
+					}
 				}
-				add_permanent_claim = ROOT
 			}
 		}
 	}
@@ -618,41 +643,75 @@ lorent_unification_of_lencenor = {
 		position = 3
 		
 		provinces_to_highlight = {
-			OR = {
-				province_id = 114
-				province_id = 108
-				province_id = 79
-			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
+		
 		}
 		
 		trigger = {
-			114 = {
-				country_or_non_sovereign_subject_holds = ROOT
+			stability = 1
+			army_size_percentage = 0.8
+			OR = {
+				A14 = { exists = no }
+				A14 = {
+					has_opinion = {
+						who = ROOT
+						value = 200
+					}
+				}
 			}
-			108 = {
-				country_or_non_sovereign_subject_holds = ROOT
+			OR = {
+				A18 = { exists = no }
+				A18 = {
+					has_spy_network_from = {
+						who = ROOT
+						value = 75
+					}
+				}
+				A18 = {
+					has_opinion = {
+						who = ROOT
+						value = 175
+					}
+					
+				}
 			}
-			79 = {
-				country_or_non_sovereign_subject_holds = ROOT
+			OR = {
+				A15 = { exists = no }
+				A15 = {
+					has_spy_network_from = {
+						who = ROOT
+						value = 75
+					}
+				}
+				A15 = {
+					has_opinion = {
+						who = ROOT
+						value = 175
+					}
+				
+				}
+			}
+			OR = {
+				A16 = { exists = no }
+				A16 = {
+					has_spy_network_from = {
+						who = ROOT
+						value = 75
+					}
+				}
+				A16 = {
+					has_opinion = {
+						who = ROOT
+						value = 175
+					}
+				}
 			}
 		}
 		
 		effect = {
-			sorncost_vines_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
-			}
-			sornhills_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
-			}
+			inherit = A14
+			A18 = { remove_historical_rival = A01 }
+			A15 = { remove_historical_rival = A01 }
+			A16 = { remove_historical_rival = A01 }
 			add_country_modifier = {
 				name = lorent_curtailed_the_wine_lords
 				duration = 5475 #15 years
@@ -669,18 +728,42 @@ lorent_unification_of_lencenor = {
 			OR = {
 				area = sorncost_vines_area
 				area = sornhills_area
+				area = shrouded_coast_area
 			}
-			NOT = { owned_by = ROOT }
 		}
 		
 		trigger = {
-			sorncost_vines_area = {
-				type = all
-				owned_by = ROOT
-			}
-			sornhills_area = {
-				type = all
-				owned_by = ROOT
+			OR = {
+				AND = {
+					sorncost_vines_area = {
+						type = all
+						owned_by = ROOT
+					}
+					sornhills_area = {
+						type = all
+						owned_by = ROOT
+					}
+				}
+				AND = {
+					sorncost_vines_area = {
+						type = all
+						owned_by = A09
+					}
+					sornhills_area = {
+						type = all
+						owned_by = A09
+					}
+					shrouded_coast_area = {
+						type = all
+						owned_by = A09
+					}
+					A09 = {
+						has_opinion = {
+							who = ROOT
+							value = 190
+						}
+					}
+				}
 			}
 		}
 		
@@ -688,6 +771,28 @@ lorent_unification_of_lencenor = {
 			add_country_modifier = {
 				name = lorent_integrated_ancient_lencori_blood
 				duration = 9125 #25 years
+			}
+			if = {
+				limit = {
+					A09 = {
+						exists = yes
+						is_subject_of = ROOT
+					}
+				}
+				A09 = {
+					add_historical_friend = A01
+				}
+				A01 = {
+					add_historical_friend = A09
+					create_march = A09
+				}
+				shrouded_coast_area = {
+					type = all
+					change_culture = sorncosti
+				}
+				venail_area = {
+					add_permanent_claim = A09
+				}
 			}
 		}
 	}
@@ -901,7 +1006,7 @@ lorent_unification_of_lencenor = {
 		
 		trigger = {
 			83 = {
-				owned_by = ROOT
+				country_or_non_sovereign_subject_holds = ROOT
 				base_manpower = 5
 				development = 15
 			}
@@ -1002,26 +1107,22 @@ lorent_wine = {
 		}
 		
 		effect = {
-			upper_winebay_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
-			}
-			lower_winebay_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
-			}
 			eastern_winebay_area = {
 				limit = {
 					NOT = { is_core = ROOT }
 					NOT = { owned_by = ROOT }
 				}
 				add_permanent_claim = ROOT
+			}
+			add_casus_belli = {
+				target = A87
+				type = cb_vassalize_mission
+				months = 600 # 50 years
+			}
+			add_casus_belli = {
+				target = A96
+				trype = cb_restore_union
+				months = 600 # 50 years
 			}
 			add_country_modifier = {
 				name = "lorent_emperor_disregards_lorentish_advances"
@@ -1037,19 +1138,21 @@ lorent_wine = {
 		
 		provinces_to_highlight = {
 			OR = {
+				province_id = 59
+				province_id = 32
+				province_id = 34
+				province_id = 40
 				province_id = 33
-				province_id = 81
-				province_id = 86
-				province_id = 101
 			}
 			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 		}
 		
 		trigger = {
+			32 = { country_or_non_sovereign_subject_holds = ROOT }
 			33 = { country_or_non_sovereign_subject_holds = ROOT }
-			81 = { country_or_non_sovereign_subject_holds = ROOT }
-			86 = { country_or_non_sovereign_subject_holds = ROOT }
-			101 = { country_or_non_sovereign_subject_holds = ROOT }
+			34 = { country_or_non_sovereign_subject_holds = ROOT }
+			40 = { country_or_non_sovereign_subject_holds = ROOT }
+			59 = { country_or_non_sovereign_subject_holds = ROOT }
 		}
 		
 		effect = {
@@ -1670,13 +1773,21 @@ lorent_conflict_with_gawed_and_anbennar = {
 		position = 1
 		
 		trigger = {
-			if = {
-				limit = { exists = A13 }
-				war_with = A13
+			OR = {
+				any_enemy_country  = { capital_scope = { region = small_country_region } }
+				any_subject_country = { capital_scope = { region = small_country_region } }
 			}
 		}
 		
 		effect = {
+			if = {
+				limit = { exists = Z39 }
+				add_casus_belli = {
+					target = Z39
+					type = cb_vassalize_mission
+					months = 300 # 25 years
+				}
+			}
 			small_country_region = {
 				limit = {
 					NOT = { is_core = ROOT }
