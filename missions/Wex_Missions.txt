@@ -4,136 +4,208 @@ wex_slot_1 = {
 	generic = no
 	ai = yes
 	potential = {
-		tag = A30
+		tag = A30 NOT = { has_country_flag = CoT_gib_generic_flag	}
 	}
 	has_country_shield = yes
-	
-	A30_ripest_of_fruits = {
-		icon = mission_feast
-		required_missions = { A30_lothane_triumph }
+
+	A30_grand_army = { # Change loc to say "Revitalize Wexonard nationalism" or something
+		icon = mission_assemble_an_army
+		required_missions = { }
+		position = 1
+		
+		trigger = {
+			army_size = A01
+			306 = {
+				development = 15
+				has_building = barracks
+			}
+		}
+		
+		effect = {
+			add_country_modifier = {
+				name = wex_new_army
+				duration = 7300 # 20 years
+			}
+			
+			add_casus_belli = {
+				target = A34
+				type = cb_restore_personal_union
+				months = 120 # 10 years
+			}
+			west_bisan_area = {
+				limit = {
+					NOT = { is_core = ROOT }
+					NOT = { owned_by = ROOT }
+					NOT = { owned_by = A34 }
+				}
+				add_permanent_claim = ROOT
+			}
+			east_bisan_area = {
+				limit = {
+					NOT = { is_core = ROOT }
+					NOT = { owned_by = ROOT }
+					NOT = { owned_by = A34 }
+				}
+				add_permanent_claim = ROOT
+			}
+		}
+	}
+
+	A30_order_sugamber = {
+		icon = mission_dark_book
+		required_missions = { A30_grand_army A30_reconvene_roses }
 		position = 2
 		
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_bene_tt
-				has_country_flag = lothane_benevolent
+			OR = {
+				A34 = {
+					is_subject_of = A30
+					NOT = { liberty_desire = 35 }
+				}
+				AND = {
+					east_bisan_area = {
+						owned_by = A30
+						is_core = A30
+					}
+					west_bisan_area = {
+						owned_by = A30
+						is_core = A30
+					}
+				}
 			}
-			adm_power = 100
-			Z41 = {
-				has_opinion = {
-					who = A30
-					value = 200
+			OR = {
+				A48 = { exists = no }
+				custom_trigger_tooltip = {
+					tooltip = sugamber_civil_war_tt
+					OR = {
+						is_year = 1500
+						A48 = {
+							OR = {
+								has_country_flag = had_sugamber_succession_war
+								has_country_flag = sugamber_succession_war_start
+								has_country_flag = sugamber_baldwin_rebellion
+								has_country_flag = sugamber_ethelbert_rebellion
+								has_country_flag = sugamber_lisolette_avenged
+								has_country_flag = sugamber_ethelbert_restored
+							}
+						}
+						A48 = {
+							alliance_with = ROOT
+							ai = yes
+							owes_favors = { 
+								who = ROOT
+								value = 30 
+							}
+							trust = {
+								who = ROOT
+								value = 75
+							}
+						}
+					}
 				}
 			}
 		}
 		
 		effect = {
-			add_adm_power = -100
-			inherit = Z41
-			country_event = { id = flavor_wex.9 }
+			inherit = A34
+			if = {
+				limit = {
+					A48 = {
+						ai = yes
+						trust = {
+							who = ROOT
+							value = 75
+						}
+					}
+				}
+				A48 = {
+					add_trust = {
+						who = ROOT
+						value = -45
+					}
+				}
+				create_subject = {
+					subject = A48
+					subject_type = personal_union
+				}
+			}
+			else_if = {
+				limit = {
+					A48 = { exists = no }
+				}
+				the_borders_region = {
+					limit = { 
+						is_core = A48
+						NOT = { country_or_non_sovereign_subject_holds = ROOT }
+					}
+					add_permanent_claim = ROOT
+				}
+			}
+			else = {
+				add_casus_belli = {
+					target = A48
+					type = cb_restore_personal_union
+					months = 300 # 25 years
+				}
+			}
+			add_casus_belli = {
+				target = A49
+				type = cb_vassalize_mission
+				months = 300
+			}
 		}
 	}
 	
-	A30_grand_cross = {
-		icon = mission_swear_fealty_knight
-		required_missions = { A30_ripest_of_fruits }
+	A30_wexkeep_expansion = {
+		icon = mission_green_village
+		required_missions = { A30_order_sugamber }
 		position = 3
 		
-		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_bene_tt
-				has_country_flag = lothane_benevolent
+		provinces_to_highlight = {
+			OR = {
+				province_id = 306
 			}
-			mil_power = 100
-			Z40 = {
-				has_opinion = {
-					who = A30
-					value = 200
-				}
+			NOT = { development = 20 }
+			NOT = { university = 1 }
+		}
+		
+		trigger = {
+			OR = {
+				ruler_has_personality = industrious_personality
+				ruler_has_personality = entrepreneur_personality
+				production_efficiency = 0.1
+				innovativeness = 20
+			}
+			university = 1
+			306 = {
+				development = 20
 			}
 		}
 		
 		effect = {
-			inherit = Z40
-			add_mil_power = -100
-			country_event = { id = flavor_wex.11 }
-		}
-	}
-	
-	A30_heirs_of_munas = {
-		icon = mission_white_tower
-		required_missions = { A30_grand_cross }
-		position = 4
-		
-		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_bene_tt
-				has_country_flag = lothane_benevolent
+			wexhills_area = {
+				type = all
+				limit = {
+					owned_by = ROOT
 				}
-			dip_power = 100
-			Z42 = {
-				has_opinion = {
-					who = A30
-					value = 200
+				add_province_modifier = {
+					name = wex_cot_our_own_jewel # -20% dev cost
+					duration = -1
 				}
 			}
-		}
-		
-		effect = {
-			add_dip_power = -100
-			inherit = Z42
-			country_event = { id = flavor_wex.10 }
-		}
-	}
-	
-	A30_true_elfrealm = {
-		icon = mission_candide_letter
-		required_missions = { A30_imperial_dukes }
-		position = 6
-		
-		trigger = {
-			is_emperor = yes
-			is_at_war = no
-			A31 = {
-				exists = yes
-				is_elector = yes
-				NOT = { alliance_with = A30 }
-				NOT = { alliance_with = A32 }
-			}
-			A32 = {
-				has_opinion = {
-					who = A30
-					value = 180
+			306 = {
+				add_province_modifier = {
+					name = wex_wexkeep_1
+					duration = -1
 				}
 			}
-		}
-		
-		effect = {
-			A32 = {
-				country_event = { id = flavor_wex.4 }
-			}
-		}
-	}
-	
-	A30_pact_of_opportunity = {
-		icon = mission_dual_diplomacy
-		required_missions = { A30_true_elfrealm }
-		position = 7
-		
-		trigger = {
-			A32 = { is_elector = yes }
-		}
-		
-		effect = {
-			A32 = { add_historical_friend = A30 }
-			A30 = { add_historical_friend = A32 }
 		}
 	}
 	
 	A30_ironhill = {
 		icon = mission_smith
-		required_missions = { }
-		position = 9
+		required_missions = { A30_wexkeep_expansion }
+		position = 4
 		
 		provinces_to_highlight = {
 			province_id = 303
@@ -141,6 +213,7 @@ wex_slot_1 = {
 		}
 		
 		trigger = {
+			university = 3
 			303 = {
 				development = 30
 			}
@@ -149,7 +222,96 @@ wex_slot_1 = {
 		effect = {
 			303 = {
 				add_province_modifier = {
-					name = wex_ironhill_1
+					name = wex_ironhill_1 # change to production efficiency +30%
+					duration = -1
+				}
+			}
+			304 = {
+				change_trade_goods = iron
+			}
+			305 = {
+				change_trade_goods = salt
+			}
+			add_country_modifier = {
+				name = wex_industrial_breakthroughs
+				duration = 7300
+			}
+		}
+	} 
+	
+	A30_mass_equipment = {
+		icon = mission_mechanical_mining
+		required_missions = { A30_ironhill }
+		position = 5
+		
+		trigger = {
+			is_emperor = yes
+			num_of_owned_provinces_with = {
+				value = 12
+				has_manufactory_trigger = yes
+			}
+		}
+		
+		effect = {
+			add_country_modifier = {
+				name = wex_tools_innovation
+				duration = 7300
+			}
+		}
+	}
+
+	A30_true_imperial_capital = {
+		icon = mission_big_house
+		required_missions = { A30_mass_equipment }
+		position = 5
+		
+		provinces_to_highlight = {
+			province_id = 306
+			OR = {
+				NOT = { has_manufactory_trigger = yes }
+				NOT = { development = 40 }
+			}
+		}
+		
+		trigger = {
+			is_emperor = yes
+			hre_reform_passed = emperor_perpetual_diet
+			OR = {
+				has_idea = adm4_5_a
+				306 = {
+					has_manufactory_trigger = yes
+					development = 40
+				}
+			}
+			OR = {
+				AND = {
+					A30 = { diplomatic_reputation = 5 }
+					8 = {
+						owner = {
+							alliance_with = A30
+							has_opinion = {
+								who = A30
+								value = 175
+							}
+						}
+					}
+				}
+				8 = {
+					controlled_by = A30
+				}
+			}
+		}
+		
+		effect = {
+			custom_tooltip = wex_diet_tt
+			hidden_effect = {
+				8 = { remove_province_triggered_modifier = perpetual_diet }
+				306 = { add_province_triggered_modifier = perpetual_diet }
+			}
+			306 = {
+				remove_province_modifier = wex_wexkeep_1
+				add_province_modifier = {
+					name = wex_wexkeep_2 # increase devcost to 50%
 					duration = -1
 				}
 			}
@@ -158,31 +320,31 @@ wex_slot_1 = {
 	
 	A30_black_heart_of_wex = {
 		icon = mission_treasure_room
-		required_missions = { A30_ironhill }
-		position = 10
+		required_missions = { A30_true_imperial_capital }
+		position = 6
 		
 		provinces_to_highlight = {
 			province_id = 303
 			OR = {
 				NOT = { trade_goods = coal }
-				NOT = { has_building = furnace }
 				NOT = { development = 40 }
 			}
 		}
 		
 		trigger = {
+			is_year = 1600
 			303 = {
-				trade_goods = coal
-				has_building = furnace
+				has_manufactory_trigger = yes
 				development = 40
 			}
 		}
 		
 		effect = {
 			303 = {
+				change_trade_goods = coal
 				remove_province_modifier = wex_ironhill_1
 				add_province_modifier = {
-					name = wex_ironhill_2
+					name = wex_ironhill_2 #change to production efficiency 50%, inflation +0.01
 					duration = -1
 				}
 			}
@@ -195,92 +357,477 @@ wex_slot_2 = {
 	generic = no
 	ai = yes
 	potential = {
-		tag = A30
+		tag = A30 NOT = { has_country_flag = CoT_gib_generic_flag	}
 	}
 	has_country_shield = yes
-	
-	A30_esalleni_connection = {
-		icon = mission_writing_book
-		required_missions = { A30_estalleni_claims }
-		position = 4
-		
-		provinces_to_highlight = {
-			OR = {
-				province_id = 297
-				province_id = 44
-				province_id = 576
-				province_id = 280
-			}
-			OR = {
-				NOT = { owned_by = ROOT }
-				NOT = { is_core = ROOT }
-			}
-		}
+
+	A30_reconvene_roses = {
+		icon = mission_discussion_arch
+		required_missions = { }
+		position = 1
 		
 		trigger = {
-			owns_core_province = 280
-			owns_core_province = 44
-			owns_core_province = 297
-			owns_core_province = 576
+			diplomatic_reputation = 1
+			calc_true_if = {
+				all_country = {
+					has_opinion_modifier = {
+						who = ROOT
+						modifier = lilac_wars_rose_party_member
+					}
+					alliance_with = ROOT
+				}
+				amount = 3
+			}
 		}
 		
 		effect = {
+			add_imperial_influence = 10
+			
+			custom_tooltip = wex_reconvene_roses_tt
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = lilac_wars_rose_party_member
+						}
+					}
+					add_opinion = {
+						who = ROOT
+						modifier = lilac_wars_rose_party_member
+						years = 100
+					}
+				}
+			}
 			add_country_modifier = {
-				name = wex_heir_of_sybille
-				duration = -1
+				name = wex_cot_anbennarian_ties
+				duration = 36500 # 100 years
 			}
 		}
 	}
-	
-	A30_building_wexport = {
-		icon = mission_galleys_in_port
-		required_missions = { A30_grand_army }
-		position = 5
-		
-		provinces_to_highlight = {
-			province_id = 276
-			OR = {
-				NOT = { owned_by = ROOT }
-				NOT = { is_core = ROOT }
-				NOT = { has_shipyard_building_trigger = yes }
-				NOT = { has_dock_building_trigger = yes }
-			}
-		}
+
+	A30_safeguard_reign = {
+		icon = mission_monarch_in_throne_room
+		required_missions = { A30_reconvene_roses }
+		position = 2
 		
 		trigger = {
-			owns_core_province = 276
-			276 = {
-				has_shipyard_building_trigger = yes
-				has_dock_building_trigger = yes
+			stability = 1
+			army_size = 20
+			is_at_war = no
+			OR = {
+				is_neighbor_of = A73
+				NOT = { exists = A73 }
+				A99 = {
+					is_subject_of = ROOT
+				}
+				A99 = {
+					alliance_with = ROOT
+					gives_military_access_to = ROOT
+				}
+				AND = {
+					A20 = {
+						alliance_with = ROOT
+					}
+					is_emperor = yes
+				}
 			}
 		}
 		
 		effect = {
-			276 = {
-				custom_tooltip = wex_wexport_tt
-				add_base_production = 2
-				hidden_effect = {
-					change_province_name = "Wexport"
-					rename_capital = "Wexport"
-					change_culture = wexonard
-					add_province_modifier = {
-						name = wex_wexport
-						duration = -1
-						desc = desc_wex_wexport
+			if = {
+				limit = {
+					A20 = {
+						alliance_with = A30
+					}
+					is_emperor = yes
+				}
+				set_country_flag = wex_silverforge_r_elector_war
+				A30 = {
+					set_country_flag = wex_silverforge_r_elector_war
+					declare_war_with_cb = {
+						who = A73
+						casus_belli = cb_steal_electorate
+					}
+				}
+				A20 = { 
+					join_all_offensive_wars_of = A30 
+				}
+			}
+			else_if = {
+				limit = {
+					is_emperor = yes
+					OR = {
+						A99 = {
+							alliance_with = ROOT
+						}
+						A99 = {
+							is_subject_of = ROOT
+						}
+					}
+				}
+				set_country_flag = wex_silverforge_v_elector_war
+				A30 = {
+					set_country_flag = wex_silverforge_v_elector_war
+					declare_war_with_cb = {
+						who = A73
+						casus_belli = cb_steal_electorate
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { exists = A73 }
+				}
+				add_imperial_influence = 10
+			}
+			else = {
+				A30 = {
+					declare_war_with_cb = {
+						who = A73
+						casus_belli = cb_vassalize_mission
 					}
 				}
 			}
 		}
 	}
 	
+	A30_busilar = { # Busilar and the Empire
+		icon = mission_candide_letter
+		required_missions = { A30_order_sugamber }
+		position = 3
+		
+		trigger = {
+			is_at_war = no
+			316 = {
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			411 = {
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			415 = {
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			OR = {
+				AND = {
+					army_size = 30
+					alliance_with = A29
+					A29 = {
+						army_size = 25
+					}
+				}
+				AND = {
+					army_size = A29
+					A29 = {
+						is_rival = A30
+					}
+				}
+				NOT = { exists = A29 }
+			}
+		}
+		
+		effect = {
+			add_imperial_influence = -10
+			if = {
+				limit = {
+					A29 = { alliance_with = A30 }
+					A45 = { is_elector = yes }
+				}
+				complete_mission = A30_cestirande_deal
+				A30 = {
+					set_country_flag = wex_busilar_elector_war
+					add_historical_friend = A29
+					declare_war_with_cb = {
+						who = A45
+						casus_belli = cb_steal_electorate
+					}
+				}
+				A29 = {
+					add_historical_friend = A30
+					join_all_offensive_wars_of = A30 
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { exists = A29 }
+				}
+				mountainway_area = {
+					limit = {
+						NOT = { owned_by = A30 }
+						NOT = { is_core = A30 }
+					}
+					add_permanent_claim = A30
+				}
+				lorbet_area = {
+					limit = {
+						NOT = { owned_by = A30 }
+						NOT = { is_core = A30 }
+					}
+					add_permanent_claim = A30
+				}
+			}
+			else_if = {
+				limit = {
+					A49 = { is_subject_of = ROOT }
+				}
+				businor_region = {
+					limit = {
+						NOT = { country_or_non_sovereign_subject_holds = ROOT }
+					}
+					add_permanent_claim = A49
+				}
+			}
+			else_if = {
+				limit = {
+					A29 = { is_rival = A30 }
+				}
+				declare_war_with_cb = {
+					who = A29
+					casus_belli = cb_restore_personal_union
+				}
+			}			
+		}
+	}
+	
+#	A30_sack_anbenncost_again # Turn into an event
+
+	A30_south_secure = {
+		icon = mission_burning_castle
+		required_missions = { A30_busilar }
+		position = 4
+
+		
+		trigger = {
+			treasury = 1000
+			OR = {
+				AND = {
+					A48 = {
+						is_subject_of = A30
+						NOT = { liberty_desire = 50 }
+					}
+				}
+				NOT = { exists = A48 }
+			}
+			OR = {
+				AND = {
+					alliance_with = A29
+					A29 = { is_elector = yes }
+					mountainway_area = {
+						type = all
+						owned_by = A29
+					}
+					lorbet_area = {
+						type = all
+						owned_by = A29
+					}
+				}
+				AND = {
+					mountainway_area = {
+						type = all
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+					lorbet_area = {
+						type = all
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+				}
+			}
+		}
+		
+		effect = {
+			add_treasury = -1000
+			
+			inherit = A48
+
+			add_imperial_influence = 10
+			
+			411 = {
+				center_of_trade = 1
+				change_trade_goods = spices
+			}
+			
+			add_country_modifier = {
+				name = wex_wexonards_united # -20% primary culture dev cost, +0.2 imperial authority, +1 legitimacy
+				duration = 9125 # 25 years
+			}
+			
+			if = {
+				limit = {
+					A49 = {
+						is_subject_of = ROOT
+						NOT = { religion = regent_court }
+					}
+				}
+				A49 = {
+					add_stability = -1
+					change_religion = regent_court
+				}
+			}
+		}
+	}
+
+	A30_lean_on_nathalaire = {
+		icon = mission_big_house
+		required_missions = { A30_south_secure A30_resettle_arannese }
+		position = 5
+		
+		trigger = {
+			num_of_ports = 1
+			OR = {
+				navy_size = A74
+				AND = {
+					445 = {
+						artillery_in_province = 30
+					}
+					447 = {
+						artillery_in_province = 30
+					}
+				}
+			}
+			OR = {
+				A74 = {
+					alliance_with = ROOT
+					owes_favors = {
+						who = ROOT
+						value = 50
+					}
+				}
+				A74 = {
+					exists = no
+				}
+				AND = {
+					451 = {
+						owned_by = A74
+						controlled_by = ROOT
+					}
+					is_in_war = {
+						defender_leader = A74
+						war_score = 95
+					}
+				}
+			}
+		}
+		
+		effect = {
+			country_event = {
+				id = flavor_wex.33 # Option to turn Nathalaire into a historical friend free city, vassal of Wex, burn to the ground, or else gain vassalize cb on nathalaire
+				days = 1
+			}
+		}
+	}
+	
+	A30_mass_firearms = {
+		icon = mission_machine_of_war
+		required_missions = { A30_black_heart_of_wex A30_mass_equipment }
+		position = 6
+		
+		provinces_to_highlight = {
+			owned_by = ROOT
+			trade_goods = coal
+			
+		}
+		
+		trigger = {
+			num_of_owned_provinces_with = {
+				value = 10
+				has_manufactory_trigger = yes
+			}
+			num_of_owned_provinces_with = {
+				trade_goods = iron
+				base_production = 10
+				value = 4
+			}
+		}
+		
+		effect = {
+			add_country_modifier = {
+				name = wex_firearms_innovation
+				duration = 7300
+			}
+		}
+	}
+	
+	A30_deepwoods_charcoal = {
+		icon = mission_green_village
+		required_missions = { A30_mass_firearms A30_bahar_trade }
+		position = 6
+		
+		trigger = {
+			918 = {
+				owned_by = ROOT
+				is_core = ROOT
+				base_production = 3
+			}
+			OR = {
+				any_ally = {
+					owns_core_province = 447
+					owns_core_province = 446
+				}
+				any_ally = {
+					owns_core_province = 510
+					owns_core_province = 509
+				}
+				3023 = {
+					trade_share = {
+						country = ROOT
+						share = 30
+					}
+				}
+			}	
+		}
+		
+		effect = {
+			918 = {
+				change_trade_goods = coal
+				add_permanent_province_modifier = {
+					name = wex_cot_wexonard_charcoal_plant # local goods produced -50%
+					duration = -1
+				}
+			}
+		}
+	}
+	
+	A30_industrial_revolution = {
+		icon = mission_artificier_experience
+		required_missions = { A30_black_heart_of_wex A30_deepwoods_charcoal }
+		position = 8
+		
+		trigger = {
+			furnace = 1
+			OR = {
+				production_efficiency = 0.5
+				innovativeness = 40
+			}
+		}
+		
+		effect = {
+			set_country_flag = wex_industrial_plans
+			custom_tooltip = wex_industrial_plans_tt
+			hidden_effect = {
+				country_event = { id = flavor_wex.8 }
+			}
+		}
+	}
+}
+
+wex_slot_3 = {
+	slot = 3
+	generic = no
+	ai = yes
+	potential = {
+		tag = A30 NOT = { has_country_flag = CoT_gib_generic_flag	}
+	}
+	has_country_shield = yes
+
 	A30_cestirande_deal = {
 		icon = mission_confrontation
-		required_missions = { A30_imperial_dukes }
-		position = 6
+		required_missions = { }
+		position = 1
 		
 		trigger = {
 			is_emperor = yes
 			is_at_war = no
+			is_year = 1500
 			A45 = {
 				exists = yes
 				is_elector = yes
@@ -318,340 +865,370 @@ wex_slot_2 = {
 			}
 		}
 	}
-	
-	A30_new_elector = {
-		icon = mission_discussion_arch
-		required_missions = { A30_cestirande_deal }
-		position = 7
-		
-		trigger = {
-			OR = {
-				A98 = { is_elector = yes }
-				B59 = { is_elector = yes }
-			}
-		}
-		
-		effect = {
-			A98 = { add_historical_friend = A30 }
-			A30 = { add_historical_friend = A98 }
-			B59 = { add_historical_friend = A30 }
-			A30 = { add_historical_friend = B59 }
-		}
-	}
-	
-	A30_mass_firearms = {
-		icon = mission_machine_of_war
-		required_missions = { A30_black_heart_of_wex A30_industrial_expertise }
-		position = 11
-		
-		provinces_to_highlight = {
-			owned_by = ROOT
-			trade_goods = coal
-			NOT = { has_building = furnace }
-		}
-		
-		trigger = {
-			furnace = 4
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_firearms_innovation
-				duration = 7300
-			}
-		}
-	}
-}
 
-wex_slot_3 = {
-	slot = 3
-	generic = no
-	ai = yes
-	potential = {
-		tag = A30
-	}
-	has_country_shield = yes
-	
-	A30_lothane_triumph = {
-		icon = mission_marriage
-		required_missions = { }
-		position = 1
-		
-		trigger = {
-			A38 = {
-				has_opinion_modifier = {
-					who = A30
-					modifier = A38_sacked_anbenncost
-				}
-			}
-		}
-		
-		effect = {
-			country_event = { id = flavor_wex.2 }
-		}
-	}
-	
-	A30_towards_esmaria = {
-		icon = mission_merchant_trip
-		required_missions = { A30_lothane_triumph }
+	A30_esalleni_connection = {
+		icon = mission_candide_letter
+		required_missions = {  }
 		position = 2
-		
-		trigger = {
-			is_neighbor_of = A93
-		}
-		
-		effect = {
-			add_casus_belli = {
-				target = A93
-				type = cb_restore_personal_union
-				months = 120
-			}
-		}
-	}
-	
-	A30_estalleni_claims = {
-		icon = mission_magnificent_castle
-		required_missions = { A30_towards_esmaria }
-		position = 3
 		
 		provinces_to_highlight = {
 			area = low_esmar_area
 			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 		}
-		
+
 		trigger = {
-			low_esmar_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-		}
-		
-		effect = {
-			add_ruler_modifier = {
-				name = wex_heir_of_sybille
-				duration = -1
-			}
-		}
-	}
-	
-	A30_grand_army = {
-		icon = mission_assemble_an_army
-		required_missions = { A30_estalleni_claims }
-		position = 4
-		
-		trigger = {
-			num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
-				value = 5
-				has_manpower_building_trigger = yes
-				is_city = yes
-			}
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_new_army
-				duration = 7300
-			}
-		}
-	}
-	
-	A30_imperial_dukes = {
-		icon = mission_crowning
-		required_missions = { A30_grand_army }
-		position = 5
-		
-		trigger = {
-			is_emperor = yes
-			custom_trigger_tooltip = {
-				tooltip = reform_empire_tt
-				OR = {
-					hre_reform_passed = emperor_reichsregiment
-					hre_reform_passed = reichsregiment
+			dip_power = 300
+			OR = {
+				A93 = {
+					exists = no
+				}
+				AND = {
+					low_esmar_area = {
+						type = all
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+					A93 = {
+						is_subject_of = ROOT
+						NOT = { liberty_desire = 25 }
+					}
 				}
 			}
 		}
 		
 		effect = {
+			add_country_modifier = {
+				name = wex_heir_of_sybille
+				duration = -1
+			}
+			if = {
+				limit = {
+					A93 = {
+						is_subject_of = ROOT
+					}
+				}
+				add_dip_power = -300
+				inherit = A93
+			}
+		}
+	}
+	
+	A30_the_eastern_march = {
+		icon = mission_crowning
+		required_missions = { A30_safeguard_reign }
+		position = 3
+		
+		trigger = {
+			OR = {
+				alliance_with = A57
+				alliance_with = A59
+				alliance_with = A77
+				AND = {
+					army_size = A57
+					army_size = A59
+				}
+			}
+			treasury = 250
+			dip_power = 100
+		}
+		
+		effect = {
+			add_treasury = -250
+			add_dip_power = -100
+			add_imperial_influence = 10
+			add_country_modifier = {
+				name = wex_cot_eastern_margrave # war exhaustion cost = -20% war exhaustion = -0.02 imperial authority = +0.05
+				duration = -1
+			}
+			if = {
+				limit = {
+					alliance_with = A59
+				}
+				A57 = {
+					set_in_empire = yes
+					add_historical_friend = ROOT
+					add_historical_rival = A57
+					add_historical_rival = A72
+					add_country_modifier = {
+						name = wex_cot_bestowed_margrave # 50% garrison size -0.1 reinforce cost
+						duration = -1
+					}
+				}
+				ROOT = {
+					add_historical_friend = A59
+					add_historical_rival = A57
+					add_historical_rival = A72
+				}
+			}
+			else_if = {
+				limit = {
+					alliance_with = A57
+				}
+				A57 = {
+					add_historical_friend = ROOT
+					add_historical_rival = A59
+					add_historical_rival = A72
+					add_country_modifier = {
+						name = wex_cot_bestowed_margrave
+						duration = -1
+					}
+				}
+				A30 = {
+					add_historical_friend = A57
+					add_historical_rival = A59
+					add_historical_rival = A72
+				}
+			}
+			else = {
+				custom_tooltip = wex_arannen_tt
+				hidden_effect = {
+					add_casus_belli = {
+						target = A72
+						type = cb_vassalize_mission
+						months = 120
+					}
+					the_borders_region = {
+						limit = {
+							NOT = { owner = { primary_culture = wexonard } }
+							culture = arannese
+						}
+						add_claim = A72
+					}
+				}
+				313 = {
+					limit = {
+						NOT = { owned_by = ROOT }
+						NOT = { is_core = ROOT }
+					}
+					add_permanent_claim = ROOT
+				}
+			}
+		}
+	}
+	
+	A30_resettle_arannese = {
+		icon = mission_green_village
+		required_missions = { A30_the_eastern_march }
+		position = 4
+		
+		trigger = {
+			mil_power = 100
+			dip_power = 100
+			OR = {
+				army_size = 100
+				imperial_influence = 25
+			}
+			num_of_owned_provinces_with = {
+				region = the_borders_region
+				culture = arannese
+				value = 10
+			}
+		}
+		
+		effect = {
+			if = {
+				limit = { imperial_influence = 25}
+				add_imperial_influence = -25
+			}
+			else = {
+				every_known_country = {
+					limit = {
+						NOT = { alliance_with = ROOT }
+						capital_scope = {
+							OR = {
+								region = east_dameshead_region
+								region = esmaria_region
+								region = businor_region
+								region = the_borders_region
+								region = dostanor_region
+							}
+						}
+					}
+					add_aggressive_expansion = {
+						who = ROOT
+						value = 10
+					}
+				}
+			}
+			add_adm_power = 300
+			add_dip_power = -100
+			add_mil_power = -100
+			hidden_effect = {
+				remove_country_modifier = wex_cot_grand_duke_claimant
+			}
 			add_country_modifier = {
 				name = wex_grand_duke_imperial
 				duration = -1
 			}
-			damerian_dales_area = {
+			the_borders_region = {
 				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
+					culture = arannese
+					owned_by = ROOT
 				}
-				add_permanent_claim = ROOT
-			}
-			east_damesear_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
+				add_base_manpower = -2
+				add_base_production = -2
+				add_base_tax = -2
+				add_province_modifier = {
+					name = wex_cot_wexonard_settlers # dev cost -20%, local tax efficiency -30%, local manpower modifier -30%
+					duration = 18250 # 50 years
 				}
-				add_permanent_claim = ROOT
-			}
-			west_damesear_area = {
-				limit = {
-					NOT = { is_core = ROOT }
-					NOT = { owned_by = ROOT }
-				}
-				add_permanent_claim = ROOT
+				change_culture = wexonard
 			}
 		}
 	}
 	
-	A30_dameshead = {
-		icon = mission_face_off
-		required_missions = { A30_imperial_dukes }
-		position = 6
-		
-		provinces_to_highlight = {
-			OR = {
-				area = damerian_dales_area
-				area = east_damesear_area
-				area = west_damesear_area
-			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
-		}
+	A30_economic_cooperation = {
+		icon = mission_war_chest
+		required_missions = { A30_resettle_arannese }
+		position = 4
 		
 		trigger = {
-			damerian_dales_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-			east_damesear_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-			west_damesear_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
+			dip_power = 100
+			calc_true_if = {
+				all_country = {
+					has_reform = free_city
+					OR = {
+						guaranteed_by = A30
+						is_subject_of = A30
+						alliance_with = A30
+						trust = {
+							who = A30
+							value = 75
+						}
+					}
+				}
+				amount = 3
 			}
 		}
 		
 		effect = {
-			add_country_modifier = {
-				name = wex_rose_party_victorious
-				duration = 7300
+			add_dip_power = -100
+			add_prestige = 10
+			if = {
+				limit = { is_emperor = yes }
+				add_imperial_influence = 25
 			}
-		}
-	}
-	
-	A30_sack_anbenncost_again = {
-		icon = mission_burning_castle
-		required_missions = { A30_dameshead }
-		position = 7
-		
-		provinces_to_highlight = {
-			province_id = 8
-		}
-		
-		trigger = {
-			8 = {
-				controlled_by = A30
-			}
-		}
-		
-		effect = {
-			8 = {
-				add_base_tax = -8
-				add_base_production = -8
-				add_base_manpower = -8
-			}
+			custom_tooltip = wex_cot_economic_cooperation_tooltip
+			set_country_flag = wex_cot_economic_cooperation_flag # gives decision giving 5 years of production income from wexonard lands (iron salt and cloth), every free city gets 1 base tax, but costs 10 IA to click
 			306 = {
-				add_base_tax = 8
-				add_base_production = 8
-				add_base_manpower = 8
+				add_center_of_trade_level = 1
+				add_permanent_province_modifier = {
+					name = wex_cot_heart_of_trade # gives +20 province trade power, +10% trade efficiency, +10% domestic trade power
+					duration = -1
+				}
+			}	
+		}
+	}
+	
+	A30_bahar_trade = {
+		icon = mission_city_prosperity
+		required_missions = { A30_economic_cooperation A30_lean_on_nathalaire }
+		position = 5
+		
+		trigger = {
+			mercantilism = 25
+			OR = {
+				1303 = {
+					trade_share = {
+						country = ROOT
+						share = 25
+					}
+				}
+				1303 = {
+					privateer_power = {
+						country = ROOT
+						share = 25
+					}
+				}
+			}
+			OR = {
+				1312 = {
+					trade_share = {
+						country = ROOT
+						share = 25
+					}
+				}
+				1312 = {
+					privateer_power = {
+						country = ROOT
+						share = 25
+					}
+				}
+			}
+		}
+		
+		effect = {
+			add_years_of_income = 1
+			add_mercantilism = 5
+			1303 = {
+				add_trade_modifier = {
+					who = ROOT
+					duration = -1
+					power = 50
+					key = WEXONARD_MERCHANTHOUSES
+				}
+			}
+			1312 = {
+				add_trade_modifier = {
+					who = ROOT
+					duration = -1
+					power = 25
+					key = WEXONARD_MERCHANTHOUSES
+				}
 			}
 		}
 	}
 	
-	A30_true_imperial_capital = {
-		icon = mission_big_house
-		required_missions = { A30_sack_anbenncost_again }
-		position = 8
-		
-		provinces_to_highlight = {
-			province_id = 306
-		}
+	A30_alenic_diplomats = {
+		icon = mission_dual_diplomacy
+		required_missions = { A30_bolster_allies }
+		position = 7
 		
 		trigger = {
 			is_emperor = yes
-			hre_reform_passed = emperor_perpetual_diet
-			8 = {
-				controlled_by = A30
+			OR = {
+				imperial_influence = 25
+				diplomatic_reputation = 4
+			}
+			calc_true_if = {
+				all_country = {
+					culture_group = alenic
+					OR = {
+						alliance_with = ROOT
+						is_subject_of = ROOT
+						has_opinion = {
+							who = ROOT
+							value = 150
+						}
+					}
+				}
+				amount = 3
 			}
 		}
 		
 		effect = {
-			custom_tooltip = wex_diet_tt
-			hidden_effect = {
-				8 = { remove_province_triggered_modifier = perpetual_diet }
-				306 = { add_province_triggered_modifier = perpetual_diet }
+			if = {
+				limit = {
+					diplomatic_reputation = 4
+				}
+				add_prestige = -5
 			}
-		}
-	}
-	
-	A30_industrial_expertise = {
-		icon = mission_approach_throne
-		required_missions = { }
-		position = 10
-		
-		trigger = {
-			OR = {
-				production_efficiency = 0.1
-				innovativeness = 20
+			else = {
+				add_imperial_influence = -25
+				add_prestige = -5
 			}
-			OR = {
-				ruler_has_personality = industrious_personality
-				ruler_has_personality = entrepreneur_personality
-				natural_scientist = 3
-				treasurer = 3
-			}
-		}
-		
-		effect = {
 			add_country_modifier = {
-				name = wex_industrial_breakthroughs
-				duration = 7300
+				name = wex_cot_new_alenic_diplomats # +1 diplomatic_reputation +1 monthly splendor
+				duration = -1
 			}
-		}
-	}
-	
-	A30_modern_economics = {
-		icon = mission_science
-		required_missions = { A30_industrial_expertise }
-		position = 11
-		
-		trigger = {
-			university = 3
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_economics_innovation
-				duration = 7300
-			}
-		}
-	}
-	
-	A30_industrial_revolution = {
-		icon = mission_artificier_experience
-		required_missions = { A30_mass_firearms A30_modern_economics A30_mass_equipment }
-		position = 12
-		
-		trigger = {
-			OR = {
-				production_efficiency = 0.2
-				innovativeness = 40
-			}
-		}
-		
-		effect = {
-			set_country_flag = wex_industrial_plans
-			custom_tooltip = wex_industrial_plans_tt
-			hidden_effect = {
-				country_event = { id = flavor_wex.8 }
+			every_known_country = {
+				limit = {
+					culture_group = alenic
+					NOT = { is_part_of_hre = yes }
+					NOT = { tag = A13 }
+				}
+				country_event = {
+					id = flavor_wex.18 # Join the empire? everyone who joins gives +5 imperial authority but -5 prestige to wex flavor_wex.19
+				}
 			}
 		}
 	}
@@ -662,167 +1239,300 @@ wex_slot_4 = {
 	generic = no
 	ai = yes
 	potential = {
-		tag = A30
+		tag = A30 NOT = { has_country_flag = CoT_gib_generic_flag	}
 	}
 	has_country_shield = yes
-	
-	A30_order_sugamber = {
-		icon = mission_dark_book
-		required_missions = { A30_estalleni_claims }
-		position = 4
-		
-		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = sugamber_civil_war_tt
-				A48 = {
-					OR = {
-						has_country_flag = had_sugamber_succession_war
-						has_country_flag = sugamber_succession_war_start
-						has_country_flag = sugamber_baldwin_rebellion
-						has_country_flag = sugamber_ethelbert_rebellion
-						has_country_flag = sugamber_lisolette_avenged
-						has_country_flag = sugamber_ethelbert_restored
-					}
-				}
-			}
-		}
-		
-		effect = {
-			add_casus_belli = {
-				target = A48
-				type = cb_restore_personal_union
-				months = 120
-			}
-		}
-	}
-	
-	A30_connect_lands_wex = {
-		icon = mission_unite_home_region
-		required_missions = { A30_grand_army }
-		position = 5
-		
-		provinces_to_highlight = {
-			OR = {
-				province_id = 306
-				province_id = 276
-			}
-		}
-		
-		trigger = {
-			276 = {
-				is_in_capital_area = yes
-			}
-			306 = {
-				is_in_capital_area = yes
-			}
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_uninterrupted_wex
-				duration = 7300
-			}
-		}
-	}
-	
-	A30_traitors_reward = {
-		icon = mission_impaled_soldies
-		required_missions = { A30_imperial_dukes }
-		position = 6
-		
-		trigger = {
-			army_size = 30
-		}
-		
-		effect = {
-			custom_tooltip = wex_bisan_tt
-			hidden_effect = {
-				add_casus_belli = {
-					target = A34
-					type = cb_vassalize_mission
-					months = 120
-				}
-				west_bisan_area = {
-					limit = {
-						NOT = { is_core = ROOT }
-						NOT = { owned_by = ROOT }
-						NOT = { owned_by = A34 }
-					}
-					add_permanent_claim = ROOT
-				}
-				east_bisan_area = {
-					limit = {
-						NOT = { is_core = ROOT }
-						NOT = { owned_by = ROOT }
-						NOT = { owned_by = A34 }
-					}
-					add_permanent_claim = ROOT
-				}
-			}
-		}
-	}
-	
-	A30_lord_of_wex = {
-		icon = mission_mounted_battle
-		required_missions = { A30_traitors_reward }
-		position = 7
-		
-		provinces_to_highlight = {
-			OR = {
-				area = west_bisan_area
-				area = east_bisan_area
-			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
-		}
-		
-		trigger = {
-			west_bisan_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-			east_bisan_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_wexonards_united
-				duration = 7300
-			}
-			custom_tooltip = lord_wex_tt
-			hidden_effect = {
-				the_borders_region = {
-					limit = {
-						NOT = { is_core = ROOT }
-						NOT = { owned_by = ROOT }
-						culture = wexonard
-					}
-					add_permanent_claim = ROOT
-				}
-			}
-		}
-	}
-	
-	A30_mass_equipment = {
-		icon = mission_mechanical_mining
-		required_missions = { A30_wexkeep_metropolis A30_industrial_expertise }
-		position = 11
+
+	A30_true_elfrealm = {
+		icon = mission_confrontation
+		required_missions = { }
+		position = 1
 		
 		trigger = {
 			is_emperor = yes
-			num_of_owned_provinces_with = {
-				value = 12
-				has_manufactory_trigger = yes
+			is_at_war = no
+			OR = {
+				AND = {
+					A31 = {
+						exists = yes
+						is_elector = yes
+						NOT = { alliance_with = A30 }
+						NOT = { alliance_with = A32 }
+					}
+					A32 = {
+						has_opinion = {
+							who = A30
+							value = 180
+						}
+					}
+				}
+				AND = {
+					NOT = { alliance_with = A32 }
+					A39 = {
+						NOT = { alliance_with = A32 }
+						has_opinion = {
+							who = A30
+							value = 150
+						}
+					}
+				}
+				AND = {
+					adm_power = 100
+					NOT = { alliance_with = A32 }
+					A77 = {
+						NOT = { alliance_with = A32 }
+						alliance_with = ROOT
+					}	
+				}
 			}
 		}
 		
 		effect = {
-			add_country_modifier = {
-				name = wex_tools_innovation
-				duration = 7300
+			if = {
+				limit = {
+					A32 = {
+						has_opinion = {
+							who = A30
+							value = 180
+						}
+					}
+				}
+				A32 = {
+					country_event = { id = flavor_wex.4 }
+				}
+				A32 = { add_historical_friend = A30 }
+				A30 = { add_historical_friend = A32 }
 			}
+			else_if = {
+				limit = {
+					A39 = {
+						has_opinion = {
+							who = A30
+							value = 150
+						}
+					}
+				}
+				A39 = {
+					add_historical_friend = ROOT
+				}
+				A32 = {
+					add_historical_rival = ROOT
+					add_historical_rival = A39
+				}
+				add_historical_friend = A39
+				add_imperial_influence = 5
+			}
+			else_if = {
+				limit = {
+					A77 = { alliance_with = ROOT }
+				}
+				A77 = {
+					add_historical_rival = A32
+				}
+				A32 = {
+					add_historical_rival = ROOT
+					add_historical_rival = A77
+				}
+				add_adm_power = -100
+				forlorn_vale_region = {
+					limit = { country_or_non_sovereign_subject_holds = A32 }
+					add_permanent_claim = A77
+				}
+			}
+		}
+	}
+	
+	A30_accessing_the_vault = {
+		icon = mission_treasure_room
+		required_missions = { A30_edict_on_magic }
+		position = 2
+		
+		trigger = {
+			any_known_country = {
+				owns_core_province = 423
+				trust = {
+					who = ROOT
+					value = 60
+				}
+				owes_favors = {
+					who = ROOT
+					value = 10
+				}
+			}
+			adm_power = 500
+			dip_power = 500
+			mil_power = 500
+			OR = {
+				is_emperor = yes
+				NOT = { great_power_rank = 6 }
+			}
+		}
+		
+		effect = {
+			add_imperial_influence = -10
+			country_event = {
+				id = flavor_wex.16 # wex asks for us to open the vault -> leads to choice of an artifact. Long life absolutism control, diplomatic acumen, ancestral power, administrative skill.
+			}
+		}
+	}
+	
+	A30_folly_to_fortress = {
+		icon = mission_machine_of_war
+		required_missions = { A30_the_eastern_march }
+		position = 4
+		
+		trigger = {
+			manpower = 25
+			treasury = 500
+			OR = {
+				922 = { country_or_non_sovereign_subject_holds = ROOT }
+				any_ally = { owns_core_province = 922 }
+			}
+			OR = {
+				420 = { country_or_non_sovereign_subject_holds = ROOT }
+				any_ally = { owns_core_province = 420 }
+			}
+			OR = {
+				421 = { country_or_non_sovereign_subject_holds = ROOT }
+				any_ally = { owns_core_province = 421 }
+			}
+			OR = {
+				323 = { country_or_non_sovereign_subject_holds = ROOT }
+				any_ally = { owns_core_province = 323 }
+			}
+			OR = {
+				court_mage = 2
+			}
+		}
+		
+		effect = {
+			add_imperial_influence = 10
+			add_prestige = 10
+			add_manpower = -25
+			add_treasury = -100
+			421 = {
+				add_permanent_province_modifier = {
+					name = wex_cot_lothanes_wall_gate # +1 fort level, 25% defensiveness, -1 attacker roll, +5 trade power, 20% spy defence, -24 yearly tax
+					duration = -1
+				}
+			}
+			323 = {
+				add_permanent_province_modifier = {
+					name = wex_cot_lothanes_wall # +1 fort level, 10% defensiveness -1 attacker roll, -12 tax
+					duration = -1
+				}
+			}
+			420 = {
+				add_permanent_province_modifier = {
+					name = wex_cot_lothanes_wall # +1 fort level, 10% devensiveness -1 attacker roll, -12 tax
+					duration = -1
+				}
+			}
+			922 = {
+				add_permanent_province_modifier = {
+					name = wex_cot_lothanes_wall # +1 fort level, 10% devensiveness -1 attacker roll, -12 tax
+					duration = -1
+				}
+			}
+		}
+	}
+	
+	A30_corvurian_consideration = {
+		icon = mission_confrontation
+		required_missions = { A30_folly_to_fortress }
+		position = 5
+		
+		trigger = {
+			OR = {
+				NOT = { exists = A59 }
+				is_rival = A59
+				any_ally = {
+					owns_core_province = 433
+					owns_core_province = 424
+					owns_core_province = 431
+					owns_core_province = 441
+				}
+			}
+		}
+		
+		effect = {
+			add_prestige = 10
+			add_country_modifier = {
+				name = wex_cot_relief_from_leeches # -2 global unrest, -10% stab cost.
+				duration = 18250 # 50 years
+			}
+			if = {
+				limit = {
+					any_ally = {
+						owns_core_province = 433
+						owns_core_province = 424
+						owns_core_province = 431
+						owns_core_province = 441
+					}
+				}
+				random_ally = {
+					limit = {
+						owns_core_province = 433
+						owns_core_province = 424
+						owns_core_province = 431
+						owns_core_province = 441
+					}
+					country_event = {
+						id = flavor_wex.9 # Develop Corvuria buff, giving culture conversion and dev cost but at cost of permanent wex trade power in corvuria
+					}
+					add_country_modifier = {
+						name = wex_cot_bestowed_margrave
+						duration = -1
+					}
+				}
+				add_imperial_influence = 20
+			}
+			else = {
+				add_casus_belli = {
+					target = A59
+					type = cb_restore_personal_union
+					months = 300 # 25 years
+				}
+				322 = {
+					add_permanent_province_modifier = {
+						name = wex_cot_lothanes_wall # +1 fort level, 10% devensiveness -1 attacker roll, -12 tax
+						duration = -1
+					}
+				}
+				321 = {
+					add_permanent_province_modifier = {
+						name = wex_cot_lothanes_wall # +1 fort level, 10% devensiveness -1 attacker roll, -12 tax
+						duration = -1
+					}
+				}
+			}
+		}
+	}
+	
+	A30_bolster_allies = {
+		icon = mission_assemble_an_army
+		required_missions = { A30_economic_cooperation }
+		position = 6
+		
+		trigger = {
+			army_size = 50
+			manpower_percentage = 0.8
+			manpower = 200
+			is_emperor = yes
+			OR = {
+				imperial_influence = 50
+				mil_power = 500
+			}
+		}
+		
+		effect = {
+			add_yearly_manpower = -5
+			add_country_modifier = {
+				name = wex_cot_established_imperial_foreign_guard # increase AT decay by 1%, decrease mp recovery by 30%
+				duration = 1825 # 5 years
+			}
+			custom_tooltip = wex_cot_imperial_foreign_guard_tooltip
+			set_global_flag = wex_cot_imperial_foreign_guard_flag # allies of emperor wex get flat 10k manpower, flat 5 FL, and mp recovery 20% but -24 yearly tax. in return wex gets -10% manpower, -10% production efficiency, -0.01 AT decay, and +48 yearly tax
 		}
 	}
 }
@@ -832,234 +1542,157 @@ wex_slot_5 = {
 	generic = no
 	ai = yes
 	potential = {
-		tag = A30
+		tag = A30 NOT = { has_country_flag = CoT_gib_generic_flag	}
 	}
 	has_country_shield = yes
-	
-	A30_rotten_fruit = {
-		icon = mission_fire_judgement
-		required_missions = { A30_lothane_triumph }
-		position = 2
-		
-		provinces_to_highlight = {
-			OR = {
-				province_id = 281
-				province_id = 910
-			}
-			devastation = 10
-		}
+
+	A30_edict_on_magic = {
+		icon = mission_dual_diplomacy
+		required_missions = {  }
+		position = 1
 		
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_conq_tt
-				has_country_flag = lothane_conqueror
-			}
-			if = {
-				limit = { ai = no }
-				281 = { NOT = { devastation = 10 } }
-				910 = { NOT = { devastation = 10 } }
+			is_emperor = yes
+			is_year = 1445
+			OR = {
+				alliance_with = A85
+				is_rival = A85
+				NOT = { exists = A85 }
+				AND = {
+					imperial_influence = 20
+					A77 = {
+						is_subject_of = ROOT
+						NOT = { liberty_desire = 50 }
+					}
+				}
 			}
 		}
 		
 		effect = {
-			custom_tooltip = wex_unrest1_tt
-			281 = { remove_province_modifier = wex_rebellious_damerians }
-			910 = { remove_province_modifier = wex_rebellious_damerians }
+			if = {
+				limit = {
+					OR = {
+						alliance_with = A85
+					}
+				}
+				add_historical_friend = A85
+				custom_tooltip = wex_cot_aligned_with_magi_tooltip
+				set_country_flag = wex_cot_aligned_with_magi_flag #gives +0.1 ia, 20% mage loyalty, 20% mage influence as long as allied with magisterium
+				A85 = {
+					add_historical_friend = ROOT
+					set_country_flag = wex_cot_aligned_with_magi_flag #gives +2 monthly splendor as long as allied with wex.
+				}					
+			}
+			
+			else_if = {
+				limit = {
+					A77 = {
+						is_subject_of = ROOT
+						NOT = { liberty_desire = 50 }
+					}
+				}
+				add_imperial_influence = -10
+				add_historical_friend = A77
+				remove_estate_privilege = estate_mages_organization_magisterium
+				set_estate_privilege = estate_mages_organization_state
+				add_country_modifier = {
+					name = wex_cot_aligned_with_order # mage estate loyalty 10%, influence -10%, fl -5%, mp -10%, shock damage 5%, shock received -10%
+					duration = -1
+				}
+				A77 = {
+					add_historical_friend = ROOT
+					country_event = { id = flavor_wex.27 } # Ordo gains cores on Magisterium enclaves
+				}
+			}
+
+			else = {
+				limit = {
+					OR = {
+						is_rival = A85
+						NOT = { exists = A85 }
+					}
+				}
+				add_historical_rival = A85
+				A85 = { add_historical_rival = A30 }
+				remove_estate_privilege = estate_mages_organization_magisterium
+				set_estate_privilege = estate_mages_organization_state
+			}
 		}
 	}
-	
-	A30_mines_of_damecross = {
-		icon = mission_torch_fire
-		required_missions = { A30_rotten_fruit }
-		position = 3
-		
-		provinces_to_highlight = {
-			OR = {
-				province_id = 276
-				province_id = 330
-			}
-			devastation = 10
-		}
+
+	A30_expand_hinterlands = {
+		icon = mission_city_prosperity
+		required_missions = { A30_folly_to_fortress }
+		position = 5
 		
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_conq_tt
-				has_country_flag = lothane_conqueror
-			}
-			if = {
-				limit = { ai = no }
-				330 = { NOT = { devastation = 10 } }
-				276 = { NOT = { devastation = 10 } }
+			grown_by_development = 300
+			OR = {
+				has_reform = wex_early_industry_reform
+				production_efficiency = 0.3
 			}
 		}
 		
 		effect = {
-			custom_tooltip = wex_unrest2_tt
-			330 = { remove_province_modifier = wex_rebellious_damerians }
-			276 = { remove_province_modifier = wex_rebellious_damerians }
+			country_event = {
+				id = cot_generic.13
+			}
+			random_list = {
+				40 = { change_adm = 1 }
+				60 = { add_adm_power = 100 }
+			}
 		}
 	}
 	
-	A30_secure_eargate = {
-		icon = mission_murder
-		required_missions = { A30_mines_of_damecross }
-		position = 4
-		
-		provinces_to_highlight = {
-			OR = {
-				province_id = 2
-				province_id = 5
-			}
-			devastation = 10
-		}
-		
-		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = wex_conq_tt
-				has_country_flag = lothane_conqueror
-			}
-			if = {
-				limit = { ai = no }
-				2 = { NOT = { devastation = 10 } }
-				5 = { NOT = { devastation = 10 } }
-			}
-		}
-		effect = {
-			custom_tooltip = wex_unrest3_tt
-			2 = { remove_province_modifier = wex_rebellious_damerians }
-			5 = { remove_province_modifier = wex_rebellious_damerians }
-		}
-	}
-	
-	A30_arannese_affairs = {
-		icon = mission_princess_writing
-		required_missions = { A30_imperial_dukes }
+	A30_expand_heartland = {
+		icon = mission_city_prosperity
+		required_missions = { A30_expand_hinterlands }
 		position = 6
 		
-		provinces_to_highlight = {
-			culture = arannese
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
-			has_discovered = ROOT
-		}
-		
 		trigger = {
-			num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
-				value = 5
-				culture = arannese
-				is_city = yes
+			grown_by_development = 500
+			num_of_owned_provinces_with = {
+				value = 10
+				culture = wexonard
+				development = 20
 			}
 		}
 		
 		effect = {
-			custom_tooltip = wex_arannen_tt
-			hidden_effect = {
-				add_casus_belli = {
-					target = A72
-					type = cb_vassalize_mission
-					months = 120
-				}
-				arannen_area = {
-					limit = {
-						NOT = { is_core = ROOT }
-						NOT = { owned_by = ROOT }
-						NOT = { owned_by = A72 }
-					}
-					add_permanent_claim = ROOT
-				}
+			country_event = {
+				id = cot_generic.16
 			}
 		}
 	}
 	
-	A30_consolidate_duchy = {
-		icon = mission_monarch_diplomacy
-		required_missions = { A30_arannese_affairs }
+	A30_eternal_empire = {
+		icon = mission_crowning
+		required_missions = { A30_bolster_allies A30_expand_heartland }
 		position = 7
 		
-		provinces_to_highlight = {
-			area = arannen_area
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
-		}
-		
 		trigger = {
-			arannen_area = {
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-		}
-		
-		effect = {
-			add_country_modifier = {
-				name = wex_arannese_conquest
-				duration = 7300
-			}
-			custom_tooltip = cons_duchy_tt
-			hidden_effect = {
-				the_borders_region = {
-					limit = {
-						NOT = { is_core = ROOT }
-						NOT = { owned_by = ROOT }
-						culture = arannese
-					}
-					add_permanent_claim = ROOT
-				}
-			}
-		}
-	}
-	
-	A30_wexkeep_expansion = {
-		icon = mission_green_village
-		required_missions = { }
-		position = 9
-		
-		provinces_to_highlight = {
-			province_id = 306
-			NOT = { development = 30 }
-		}
-		
-		trigger = {
-			306 = {
-				development = 30
-			}
-		}
-		
-		effect = {
-			306 = {
-				add_province_modifier = {
-					name = wex_wexkeep_1
-					duration = -1
-				}
-			}
-		}
-	}
-	
-	A30_wexkeep_metropolis = {
-		icon = mission_city_prosperity
-		required_missions = { A30_wexkeep_expansion }
-		position = 10
-		
-		provinces_to_highlight = {
-			province_id = 306
+			is_emperor = yes
+			reform_level = 9
+			grown_by_development = 1000
 			OR = {
-				NOT = { has_manufactory_trigger = yes }
-				NOT = { development = 40 }
+				diplomatic_reputation = 5
+				imperial_influence = 50
 			}
-		}
-		
-		trigger = {
-			306 = {
-				has_manufactory_trigger = yes
-				development = 40
-			}
+			prestige = 75
 		}
 		
 		effect = {
-			306 = {
-				remove_province_modifier = wex_wexkeep_1
-				add_province_modifier = {
-					name = wex_wexkeep_2
-					duration = -1
-				}
+			if = {
+				limit = { diplomatic_reputation = 5 }
 			}
+			else = {
+				add_imperial_influence = -50
+			}
+			add_prestige = 100
+			add_splendor = 800
+			#Gov't Reform
+			custom_tooltip = wex_cot_cultural_rev_tooltip # Every country in Cannor that is alenic culture or cannorian culture and of regent court faith will gain a decision to enthrone a sil Wex.
+			set_global_flag = wex_cot_cultural_rev_flag
 		}
 	}
 }
