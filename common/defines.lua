@@ -725,7 +725,7 @@ NCountry = {
 	POWER_MAX = 999,								-- how much power can be stored at maximum.
 	DISMANTLE_HRE_PRESTIGE = 0,						-- Prestige gain on dismantling HRE
 	CROWN_LANDS_ALERT_THRESHOLD = 30,
-	FREE_IDEA_GROUP_COST  = 3,						-- modifier on cheapness of "free" idea group
+	FREE_IDEA_GROUP_COST  = 4,						-- modifier on cheapness of "free" idea group
 	CONVERSION_COOLDOWN = 120,						-- months before you can convert again.
 	CONVERSION_COOLDOWN_SECONDARY = 120,			-- months before you can convert secondary religion again.
 
