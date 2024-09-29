@@ -698,7 +698,7 @@ NCountry = {
 	PIETY_INCREASE_AT_GOOD_WAR = -0.1,				-- (Anbennar) pdx: 0.25
 	PIETY_DECREASE_AT_BAD_WAR = -0.1,				-- (Anbennar) pdx: -0.33
 	ADVISOR_COST_INCREASE_PER_YEAR = 0.005,			-- yearly increase in price in percent,
-	SCRIPTED_ADVISOR_DISCOUNT = 0.5,				-- Multiplier on cost for advisors scripted with discount=yes
+	SCRIPTED_ADVISOR_DISCOUNT = 0.75,				-- Multiplier on cost for advisors scripted with discount=yes
 	MINIMUM_ADVISOR_DURATION = 10, 					-- _CDEF_MINIMUM_ADVISOR_DURATION_
 	MINIMUM_ADVISOR_DURATION_CHANCE_VALUE = 15,		-- Higher value here gives lower daily death chance after MINIMUM_ADVISOR_DURATION
 	ADVISOR_CUT_OFF_AGE = 30, 						-- _CDEF_ADVISOR_CUT_OFF_AGE = 10,
