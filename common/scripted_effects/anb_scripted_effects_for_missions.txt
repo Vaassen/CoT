@@ -17820,6 +17820,93 @@ increase_collaboration_counter = {
 	}
 }
 
+maghargama_vassalize_centaur_tributary = {
+	hidden_effect = {
+		#Every tributary and their vassals becomes our vassal
+		every_known_country = { 
+			limit = {
+				OR = {
+					AND = {
+						is_subject_of_type_with_overlord = {
+							who = ROOT
+							type = tributary_state_anb
+						}
+						[[check_capital] capital_scope = { region = $region$ } ]
+					}
+					overlord = {
+						[[check_capital] capital_scope = { region = $region$ } ]
+						is_subject_of_type_with_overlord = {
+							who = ROOT
+							type = tributary_state_anb
+						}	
+					}
+				}
+				culture_group = centaur
+			}
+			ROOT = { vassalize = PREV }
+			[[move_capital]
+			if = {
+				limit = {
+					NOT = {
+						capital_scope = { region = $region$ }
+					}
+				}
+				random_owned_province = {
+					limit = {
+						region = $region$ 
+					}
+					owner = { set_capital = PREV }
+				}
+			}
+			]
+		}
+		#Every tributary inside the region should've been your vassal, if any other tribs outside owns it its ceded to you
+		every_subject_country = { 
+			limit = {
+				is_subject_of_type = tributary_state_anb
+				any_owned_province = {
+					region = $region$
+				}
+			}
+			every_owned_province = {
+				limit = {
+					region = $region$
+				}
+				cede_province = ROOT
+			}
+		}
+	}
+}
+
+
+maghargma_consolidate_centaur_vassal = {
+	random_subject_country = {
+		limit = {
+			is_subject_of_type = vassal
+			has_50_opinion_improved_relation = { target = ROOT }
+			capital_scope = { region = $region$ }
+			culture_group = centaur
+		}
+		set_country_flag = I90_centaur_vassal_$horse$
+		add_country_modifier = {
+			name = I90_favored_horse
+			duration = -1
+		}
+		every_country = {
+			limit = {
+				is_subject_of_type_with_overlord = {
+					who = ROOT
+					type = vassal
+				}
+				NOT = { has_country_flag = I90_centaur_vassal_$horse$ }
+				capital_scope = { region = $region$ }
+				culture_group = centaur
+			}
+			PREV = { inherit = PREV }
+		}
+	}
+}
+
 #Kherka
 kherka_set_ruler = {
 	[[stalwarts]
@@ -17879,7 +17966,7 @@ kherka_remove_faction_flags = {
 rakkaz_add_fighting_pit_modifier = {
 	if = {
 		limit = { owner = { has_country_flag = rakkaz_fighting_pit_more_cav_unlocked } }
-		add_province_modifier = {
+		add_permanent_province_modifier = {
 			name = rakkaz_fighting_pit_more_cav
 			duration = -1
 			hidden = yes
@@ -17887,13 +17974,13 @@ rakkaz_add_fighting_pit_modifier = {
 	}
 	else_if = {
 		limit = { owner = { has_country_flag = rakkaz_fighting_pit_more_cav_upgrade_unlocked } }
-		add_province_modifier = {
+		add_permanent_province_modifier = {
 			name = rakkaz_fighting_pit_more_cav_upgrade
 			duration = -1
 			hidden = yes
 		}
 	}
-	add_province_modifier = {
+	add_permanent_province_modifier = {
 		name = rakkaz_fighting_pit
 		duration = -1
 	}
