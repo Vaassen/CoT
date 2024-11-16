@@ -1,4 +1,4 @@
-name="Anbennar-PublicFork"
+name="CoT"
 tags={
 	"Alternative History"
 	"Total Conversion"
@@ -29,4 +29,4 @@ replace_path="gfx/loadingscreens"
 replace_path="tutorial"
 picture="anbennar.jpg"
 supported_version="1.36.*"
-path="mod/Anbennar-PublicFork"
+path="mod/CoT"
