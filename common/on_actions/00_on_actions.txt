@@ -722,6 +722,17 @@ on_religion_change = {
 			}
 		}
 	}
+
+	if = {
+		limit = {
+			has_country_flag = J84_ravelian_event_happened_flag
+			religion = ravelian
+		}
+		add_country_modifier = {
+			name = J84_slave_holding_ravelians
+			duration = -1
+		}
+	}
 }
 
 # country.
@@ -1667,8 +1678,26 @@ on_war_won = {
 			}
 		}
 	}
-	
-	
+
+	if = {
+		limit = {
+			OR = {
+				tag = J84 #Taychendi Empire
+				was_tag = J84
+			}
+			has_country_flag = J84_singing_jungle_war_start_flag
+			NOT = { 
+				has_country_flag = J84_effelai_war_ended_flag 
+				is_in_war = { casus_belli = cb_war_for_the_singing_jungle }
+			}
+		}
+		G20 = { #Araya
+			declare_war_with_cb = {
+				casus_belli = cb_war_for_the_singing_jungle
+				who = ROOT
+			}
+		}
+	}
 
 
 	update_artifice_points = yes #needs to be last
@@ -2039,6 +2068,37 @@ on_battle_won_country = {
 			add_government_power = { mechanic_type = desert_legion_mechanic power_type = jaddari_zealotry value = 1 }
 			subtract_variable = {
 				which = JaddariDeathCount
+				value = 1000
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			has_government_mechanic = taychend_vainglory_mechanic
+		}
+		set_variable = {
+			which = TaychendDeathCount
+			value = 0
+		}
+		change_variable = {
+			which = TaychendDeathCount
+			which = land_units_killed 
+		}
+		change_variable = {
+			which = TaychendDeathCount
+			which = land_units_lost 
+		}
+		while = {
+			limit = {
+				check_variable = {
+					which = TaychendDeathCount
+					value = 1000
+				}
+			}
+			add_government_power = { mechanic_type = taychend_vainglory_mechanic power_type = taychend_vainglory_power value = 0.2 }
+			subtract_variable = {
+				which = TaychendDeathCount
 				value = 1000
 			}
 		}
@@ -3618,7 +3678,6 @@ on_new_heir = {
 	}
 	if = {
 		limit = {
-			tag = B55
 			has_reform = trust_of_the_future
 		}
 		ROOT = { country_event = { id = flavour_counts_league.30 } }
@@ -8852,6 +8911,12 @@ on_four_year_pulse_3 = {
 		100 = taychend_flavour.32 # caergarae does surf
 		100 = taychend_flavour.33 # (OTTO, TAKA CODED) sarihaddhu tribes migrate
 		100 = taychend_flavour.34 # chend. + sari tribes quarrel
+
+		#Taychendi Empire Vainglory Events
+		100 = taychendi_empire_events.100 #Border Warlods Attack Neighbour
+		100 = taychendi_empire_events.101 #The Provincial Revolt of YEAR
+		100 = taychendi_empire_events.102 #Family Member Rebels
+		100 = taychendi_empire_events.103 #The Slave Revolt of YEAR
 	}
 	
 	
@@ -10895,6 +10960,40 @@ on_province_culture_converted = {
 	#imperial_modifiers_on_province_change_culture_or_change_owner_effect = yes
 	on_province_culture_converted_effect = yes
 	# don't use this, it doesn't account for culture change by effect, use on_province_culture_changed
+	if = { #This is here on purpose, it is only supposed to be activated on MANUAL culture conversion
+		limit = {
+			owner = {
+				is_or_was_tag = { tag = B39 }
+				NOT = { has_country_modifier = wyvernheart_cultural_events_timer }
+			}
+		}
+		random_list = {
+			1 = {
+				trigger = { owner = { NOT = { has_country_flag = wyvernheart_401_recent } } }
+				province_event = {
+					id = flavour_wyvernheart.401
+				}
+			}
+			1 = {
+				trigger = { owner = { NOT = { has_country_flag = wyvernheart_402_recent } } }
+				province_event = {
+					id = flavour_wyvernheart.402
+				}
+			}
+			1 = {
+				trigger = { owner = { NOT = { has_country_flag = wyvernheart_403_recent } } }
+				province_event = {
+					id = flavour_wyvernheart.403
+				}
+			}
+			1 = {
+				trigger = { owner = { NOT = { has_country_flag = wyvernheart_404_recent } } }
+				province_event = {
+					id = flavour_wyvernheart.404
+				}
+			}
+		}
+	}
 }
 
 # province, general conversion through effects 1.35
@@ -10938,40 +11037,6 @@ on_province_culture_changed = {
             change_culture = metobesebi
         }
     }
-	if = {
-		limit = {
-			owner = {
-				is_or_was_tag = { tag = B39 }
-				NOT = { has_country_modifier = wyvernheart_cultural_events_timer }
-			}
-		}
-		random_list = {
-			1 = {
-				trigger = { owner = { NOT = { has_country_flag = wyvernheart_401_recent } } }
-				province_event = {
-					id = flavour_wyvernheart.401
-				}
-			}
-			1 = {
-				trigger = { owner = { NOT = { has_country_flag = wyvernheart_402_recent } } }
-				province_event = {
-					id = flavour_wyvernheart.402
-				}
-			}
-			1 = {
-				trigger = { owner = { NOT = { has_country_flag = wyvernheart_403_recent } } }
-				province_event = {
-					id = flavour_wyvernheart.403
-				}
-			}
-			1 = {
-				trigger = { owner = { NOT = { has_country_flag = wyvernheart_404_recent } } }
-				province_event = {
-					id = flavour_wyvernheart.404
-				}
-			}
-		}
-	}
 }
 
 
@@ -11586,6 +11651,63 @@ on_province_owner_change = {
 		}
 	}
 
+	if = {
+		limit = { owner = { tag = J84 } } #Taychendi Empire
+		if = { 
+			limit = { has_building = farm_estate }
+			owner = { 
+				change_variable = {
+					which = J84_num_of_farm_estates_var
+					value = 1
+				}
+			}
+			if = { 
+				limit = {
+					owner = { has_country_flag = J84_sanguosynthesis_enabled_flag }
+				}
+				owner = { calc_sanguosynthesis_modifier = yes }
+			}
+		}
+		if = { 
+			limit = { 
+				owner = { has_country_flag = J84_soldiers_households_buff_flag } 
+				has_building = soldier_households
+			}
+			add_province_modifier = {
+				name = J84_soldiers_households_buff
+				duration = -1
+			}
+		}
+		if = { 
+			limit = {
+				owner = { has_country_flag = J84_trade_station_bonus_flag }
+				has_building = tradecompany
+				trade_goods = precursor_relics
+			}
+			add_province_modifier = {
+				name = J84_trade_station_buff
+				duration = -1
+			}
+		}
+	}
+	if = { 
+		limit = {
+			FROM = { tag = J84 } #Taychendi Empire
+			has_building = farm_estate
+		}
+		FROM = { 
+			change_variable = {
+				which = J84_num_of_farm_estates_var
+				value = -1
+			}
+		}
+		if = {
+			limit = {
+				FROM = { has_country_flag = J84_sanguosynthesis_enabled_flag }
+			}
+			FROM = { calc_sanguosynthesis_modifier = yes }
+		}
+	}
 }
 
 # country 1.35
@@ -12669,6 +12791,13 @@ on_culture_demoted = {
 			}
 		add_accepted_culture = moon_elf
 	 }
+	if = {
+		limit = {
+			has_country_modifier = J84_free_accepted_orc_culture
+			NOT = { accepted_culture = ozgar_orc }
+		}
+		remove_country_modifier = J84_free_accepted_orc_culture
+	}
 }
 
 # ROOT = country
@@ -13568,9 +13697,11 @@ on_raid_coast = {
 			religion = xhazobkult
 		}
 		add_patriarch_authority = 0.005
-		change_variable = {
-			which = demonicPowerGained
-			value = 1
+		hidden_effect = {
+			change_variable = {
+				which = demonicPowerGained
+				value = 0.5
+			}
 		}
 	}
 }
@@ -13971,6 +14102,7 @@ on_trade_good_changed = {
 				has_province_modifier = B34_board_of_chains_boost_upgraded_2
 				has_province_modifier = livestock_boost_frontier
 				has_province_modifier = centaur_wool_bonus_prod
+				has_province_modifier = J84_masquerade_relics
 			}
 		}
 		remove_province_modifier = wine_bonus_prod
@@ -13992,6 +14124,7 @@ on_trade_good_changed = {
 		remove_province_modifier = B34_board_of_chains_boost_upgraded_2
 		remove_province_modifier = livestock_boost_frontier
 		remove_province_modifier = centaur_wool_bonus_prod
+		remove_province_modifier = J84_masquerade_relics
 	}
 	if = {
 		limit = { 
@@ -14303,6 +14436,17 @@ on_trade_good_changed = {
 			}
 			add_province_modifier = { 
 				name = centaur_wool_bonus_prod
+				duration = -1
+				hidden = yes
+			}
+		}
+		if = { #Taychendi Empire
+			limit = {
+				trade_goods = precursor_relics
+				FROM = { has_estate_privilege = estate_vampire_law_relic_shrouded_masquerade }
+			}
+			add_province_modifier = {
+				name = J84_masquerade_relics
 				duration = -1
 				hidden = yes
 			}
@@ -14865,6 +15009,29 @@ on_conquest = {
 			owner = { country_event = { id = sanghariyar.11 } } #Sack of Dhenijansar
 		}
 	}
+
+	if = { #Taychendi Vainglory
+		limit = { 
+			owner = { has_government_mechanic = taychend_vainglory_mechanic } 
+			NOT = { is_core = owner }
+		}
+		owner = {
+			add_government_power = {
+				mechanic_type = taychend_vainglory_mechanic
+				power_type = taychend_vainglory_power
+				value = 2
+			}
+		}
+	}
+
+	if = {
+		limit = { owner = { has_country_flag = J84_lost_to_vainglory_flag } }
+		owner = {
+			country_event = {
+				id = taychendi_empire_events.1000
+			}
+		}
+	}
 }
 
 on_country_creation = {
@@ -15269,6 +15436,24 @@ on_colony_established = {
 		add_province_modifier = {
 			name = mb_from_the_dark
 			duration = 7300
+		}
+	}
+	
+	owner = {
+		if = {
+			limit = {
+				OR = {
+					has_country_modifier = A31_empire_colonial_office
+					has_country_modifier = A31_traders_invest_economy
+					has_country_modifier = A31_aiecoca_expanded
+				}
+				NOT = { has_country_modifier = elven_administration }
+				NOT = {	has_country_modifier = half_elven_administration }
+
+			}
+			remove_country_modifier = A31_empire_colonial_office
+			remove_country_modifier = A31_traders_invest_economy
+			remove_country_modifier = A31_aiecoca_expanded
 		}
 	}
 }
@@ -16622,6 +16807,24 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 		country_event = {
 			id = gushuokguan_event.62
 		}
+	}
+	
+	if = { #Taychendi Empire
+		limit = {
+			has_country_modifier = J84_the_lizardfolk_expedition
+			NOT = {
+				any_war_enemy_country = {
+					OR = {
+						culture_group = lizardfolk
+						num_of_owned_provinces_with = {
+							value = 10
+							culture_group = lizardfolk
+						}
+					}
+				}
+			}
+		}
+		remove_country_modifier = J84_the_lizardfolk_expedition
 	}
 }
 
