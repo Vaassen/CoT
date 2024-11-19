@@ -12192,35 +12192,35 @@ add_cult_aw_to_random_province = {
 
 give_all_embraced_institutions_to_province_effect = {
 	if = {
-		limit = { ROOT = { has_institution = feudalism } }
+		limit = { $tag$ = { has_institution = feudalism } }
 		add_institution_embracement = { which = feudalism value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = renaissance } }
+		limit = { $tag$ = { has_institution = renaissance } }
 		add_institution_embracement = { which = renaissance value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = new_world_i } }
+		limit = { $tag$ = { has_institution = new_world_i } }
 		add_institution_embracement = { which = new_world_i value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = printing_press } }
+		limit = { $tag$ = { has_institution = printing_press } }
 		add_institution_embracement = { which = printing_press value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = global_trade } }
+		limit = { $tag$ = { has_institution = global_trade } }
 		add_institution_embracement = { which = global_trade value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = manufactories } }
+		limit = { $tag$ = { has_institution = manufactories } }
 		add_institution_embracement = { which = manufactories value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = enlightenment } }
+		limit = { $tag$ = { has_institution = enlightenment } }
 		add_institution_embracement = { which = enlightenment value = 100 }
 	}
 	if = {
-		limit = { ROOT = { has_institution = industrialization } }
+		limit = { $tag$ = { has_institution = industrialization } }
 		add_institution_embracement = { which = industrialization value = 100 }
 	}
 }
@@ -17825,25 +17825,51 @@ maghargama_vassalize_centaur_tributary = {
 		#Every tributary and their vassals becomes our vassal
 		every_known_country = { 
 			limit = {
-				OR = {
-					AND = {
-						is_subject_of_type_with_overlord = {
-							who = ROOT
-							type = tributary_state_anb
-						}
-						[[check_capital] capital_scope = { region = $region$ } ]
-					}
-					overlord = {
-						[[check_capital] capital_scope = { region = $region$ } ]
-						is_subject_of_type_with_overlord = {
-							who = ROOT
-							type = tributary_state_anb
-						}	
+				overlord = {
+					[[check_capital] capital_scope = { region = $region$ } ]
+					is_subject_of_type_with_overlord = {
+						who = ROOT
+						type = tributary_state_anb
+					}	
+				}
+			}
+			ROOT = { 
+				create_subject = {
+					subject_type = maghargma_special_subject
+					subject = PREV
+				}
+			}
+			[[move_capital]
+			if = {
+				limit = {
+					NOT = {
+						capital_scope = { region = $region$ }
 					}
 				}
-				culture_group = centaur
+				random_owned_province = {
+					limit = {
+						region = $region$ 
+					}
+					owner = { set_capital = PREV }
+				}
 			}
-			ROOT = { vassalize = PREV }
+			]
+		}
+		every_subject_country = {
+			limit = {
+				is_subject_of_type_with_overlord = {
+					who = ROOT
+					type = tributary_state_anb
+				}
+				culture_group = centaur
+				[[check_capital] capital_scope = { region = $region$ } ]
+			}
+			ROOT = { 
+				create_subject = {
+					subject_type = maghargma_special_subject
+					subject = PREV
+				}
+			}
 			[[move_capital]
 			if = {
 				limit = {
@@ -17882,27 +17908,44 @@ maghargama_vassalize_centaur_tributary = {
 maghargma_consolidate_centaur_vassal = {
 	random_subject_country = {
 		limit = {
-			is_subject_of_type = vassal
+			is_subject_of_type = maghargma_special_subject
 			has_50_opinion_improved_relation = { target = ROOT }
 			capital_scope = { region = $region$ }
 			culture_group = centaur
 		}
 		set_country_flag = I90_centaur_vassal_$horse$
-		add_country_modifier = {
-			name = I90_favored_horse
-			duration = -1
-		}
 		every_country = {
 			limit = {
-				is_subject_of_type_with_overlord = {
-					who = ROOT
-					type = vassal
+				OR = {
+					is_subject_of_type_with_overlord = {
+						who = ROOT
+						type = vassal
+					}
+					is_subject_of_type_with_overlord = {
+						who = ROOT
+						type = maghargma_special_subject
+					}
 				}
 				NOT = { has_country_flag = I90_centaur_vassal_$horse$ }
 				capital_scope = { region = $region$ }
 				culture_group = centaur
 			}
 			PREV = { inherit = PREV }
+		}
+		every_owned_province = {
+			limit = { 
+				NOT = { region = $region$ }
+			}
+			cede_province = ROOT
+		}
+	}
+}
+
+maghargma_create_special_subject = {
+	ROOT = { 
+		create_subject = {
+			subject_type = maghargma_special_subject
+			who = PREV
 		}
 	}
 }
@@ -17965,7 +18008,10 @@ kherka_remove_faction_flags = {
 #Rakkaz
 rakkaz_add_fighting_pit_modifier = {
 	if = {
-		limit = { owner = { has_country_flag = rakkaz_fighting_pit_more_cav_unlocked } }
+		limit = { owner = { 
+			has_country_flag = rakkaz_fighting_pit_more_cav_unlocked 
+			NOT = { has_country_flag = rakkaz_fighting_pit_more_cav_upgrade_unlocked }
+		} }
 		add_permanent_province_modifier = {
 			name = rakkaz_fighting_pit_more_cav
 			duration = -1
