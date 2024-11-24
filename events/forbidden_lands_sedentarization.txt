@@ -1,0 +1,632 @@
+namespace = sedentarization
+
+# Sedentarization system and connected events
+# Designed by: Imacop42
+# Coded by: AngelicBurrito
+#
+# Contents by event IDs (***PLEASE try to fit future content within these ranges for neatness!):
+#  0-99: Hidden utility and handlers
+#  100-199:	Phase One
+#   100-119: First Contact Events
+#   120-199: Raid Events
+#  200-299: Phase Two
+#   200: Outpost Type
+#   210-299: Trade Goods Events
+#  300-399: Phase Three
+# 
+# *** Of course feel free to edit the ranges, add new ones, or affect more files.
+#
+# This system can be found in these files or objects:
+#  on_actions:
+#   on_startup
+#   on_province_owner_change
+#  this file!
+#  common\
+#   event_modifiers\forbidden_lands_sedentarization_modifiers.txt
+#   province_triggered_modifiers\forbidden_lands_sedentarization_modifiers.txt
+#   scripted_effects\forbidden_land_scripted_effects.txt
+#   scripted_triggers\anb_scripted_triggers_sedentarization.txt
+#   custom_gui\provinceview.txt
+#  interface\provinceview.gui
+#  localisation\anb_forbidden_lands_l_english.yml
+
+# Startup event, only places province modifiers so *could* be moved to province history instead
+country_event = {
+	id = sedentarization.0
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	fire_only_once = yes
+	hidden = yes
+
+	option = {
+		forbidden_lands_superregion = {
+			limit = {
+				owner = { culture_is_centaur = yes }
+			}
+			add_permanent_province_modifier = {
+				name = sed_forbidden
+				duration = -1
+			}
+			add_province_modifier = {
+				name = sed_entrenched_centaur_nomadism
+				duration = -1
+			}
+		}
+	}
+}
+
+# TODO: entry event for AI
+
+### Phase One
+## First Contact Events
+# Sudden Raid
+province_event = {
+	id = sedentarization.100
+	title = sedentarization.100.t
+	desc = sedentarization.100.d
+	picture = none
+
+	is_triggered_only = yes
+
+	option = {
+		name = sedentarization.100.a
+		owner = {
+			add_manpower = -0.5
+			add_treasury = -20
+		}
+		set_province_flag = sed_raid_events_unlocked
+		set_province_flag = sed_contact_complete
+	}
+}
+
+# Centaurs Seek Audience
+province_event = {
+	id = sedentarization.101
+	title = sedentarization.101.t
+	desc = sedentarization.101.d
+	picture = none
+
+	is_triggered_only = yes
+	trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
+
+	option = {
+		name = sedentarization.101.a
+		random_list = {
+			1 = {
+				province_event = { id = sedentarization.102 }
+			}
+			2 = {
+				province_event = { id = sedentarization.103 }
+			}
+			1 = {
+				province_event = { id = sedentarization.104 }
+			}
+		}
+	}
+	option = {
+		name = sedentarization.101.b
+		set_province_flag = sed_raid_events_unlocked
+		set_province_flag = sed_contact_complete
+	}
+}
+
+# Arrangment Reached
+province_event = {
+	id = sedentarization.102
+	title = sedentarization.102.t
+	desc = sedentarization.102.d
+	picture = none
+
+	is_triggered_only = yes
+
+	option = {
+		name = sedentarization.102.a
+		set_province_flag = sed_contact_complete
+	}
+}
+
+# Friendly Warning
+province_event = {
+	id = sedentarization.103
+	title = sedentarization.103.t
+	desc = sedentarization.103.d
+	picture = none
+
+	is_triggered_only = yes
+
+	option = {
+		name = sedentarization.103.a
+		set_province_flag = sed_friendly_warning
+		set_province_flag = sed_contact_complete
+	}
+}
+
+# Threatening Warning
+province_event = {
+	id = sedentarization.104
+	title = sedentarization.104.t
+	desc = sedentarization.104.d
+	picture = none
+
+	is_triggered_only = yes
+
+	option = {
+		name = sedentarization.104.a
+		set_province_flag = sed_raid_events_unlocked
+		set_province_flag = sed_contact_complete
+	}
+}
+## End of - First Contact Events
+
+## Raid Events
+# Outpost Raided
+province_event = {
+	id = sedentarization.120
+	title = sedentarization.120.t
+	desc = sedentarization.120.d
+	picture = none
+
+	is_triggered_only = yes
+	trigger = { sedentarization_raid_events_can_fire = yes }
+
+	option = {
+		name = sedentarization.120.a
+		random_list = {
+			1 = {
+				area = { add_local_autonomy = 5 }
+			}
+			1 = {
+				area = { add_local_autonomy = 6 }
+			}
+			1 = {
+				area = { add_local_autonomy = 7 }
+			}
+			1 = {
+				area = { add_local_autonomy = 8 }
+			}
+			1 = {
+				area = { add_local_autonomy = 9 }
+			}
+			1 = {
+				area = { add_local_autonomy = 10 }
+			}
+		}
+	}
+}
+
+# Mounted Guards
+province_event = {
+	id = sedentarization.121
+	title = sedentarization.121.t
+	desc = sedentarization.121.d
+	picture = none
+
+	is_triggered_only = yes
+	trigger = { sedentarization_raid_events_can_fire = yes }
+
+	option = {
+		name = sedentarization.121.reuse_guards
+		trigger = {
+			owner = {
+				has_country_flag = sed_created_mounted_guards
+				sedentarization_country_can_have_special_mounted_guards = no
+			}
+		}
+		owner = { add_treasury = -20 }
+		set_province_flag = sed_local_mounted_guards
+	}
+	option = {
+		name = sedentarization.121.create_guards
+		trigger = {
+			owner = {
+				NOT = { has_country_flag = sed_created_mounted_guards }
+				sedentarization_country_can_have_special_mounted_guards = no
+			}
+		}
+		owner = {
+			add_treasury = -100
+			set_country_flag = sed_created_mounted_guards
+		}
+		set_province_flag = sed_local_mounted_guards
+	}
+	option = {
+		name = sedentarization.121.cannot_afford_guards
+		trigger = { sedentarization_country_can_have_special_mounted_guards = no }
+	}
+	option = {
+		name = sedentarization.121.deploy_unique_guards
+		highlight = yes
+		trigger = { sedentarization_country_can_have_special_mounted_guards = yes }
+		owner = { set_country_flag = sed_established_special_mounted_guards }
+	}
+}
+## End of - Raid Events
+### End of - Phase One
+
+### Phase Two
+# Outpost Type
+province_event = {
+	id = sedentarization.200
+	title = sedentarization.200.t
+	desc = sedentarization.200.d
+	picture = none
+
+	is_triggered_only = yes
+
+	# Immediate clears queueing flag, part of the system that takes care of invalidated choices 
+	immediate = { clr_province_flag = sed_outpost_type_event_queued }
+
+	option = {
+		name = sedentarization.200.gozabhar
+		trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
+		if = {
+			limit = { has_province_flag = sed_friendly_warning }
+			custom_tooltip = "With a \"friendly\" warning from the centuars, this is the only option to prevent raids"
+		}
+		custom_tooltip = "Outpost gains 1 base tax on completion, but our Phase Three settler policy is locked to Centaur Tribute, giving the following effects:"
+		tooltip = {
+			add_province_modifier = {
+				name = sed_centaur_tributary_system
+				duration = -1
+			}
+		}
+		custom_tooltip = "Will invalidate if purging or expelling centaurs"	# TODO: implement the invalidation
+		set_province_flag = sed_outpost_type_gozabhar
+	}
+	option = {
+		name = sedentarization.200.settlement
+		sedentarization_neglecting_friendly_warning_effect = yes
+		custom_tooltip = "Outpost gains 1 base tax on completion"
+		set_province_flag = sed_outpost_type_settlement
+		owner = {
+			add_dip_power = -25
+			sedentarization_phase_two_settlement_culture_effect = yes
+		}
+	}
+	option = {
+		name = sedentarization.200.nomadic_base
+		highlight = yes
+		# The triggers MUST match the ones in "sedentarization_phase_two_nomadic_base_culture_effect"
+		trigger = { sedentarization_phase_two_nomadic_control_is_valid = yes }
+		sedentarization_neglecting_friendly_warning_effect = yes
+		custom_tooltip = "Outpost gains 1 base manpower on completion"
+		set_province_flag = sed_outpost_type_nomadic_base
+		owner = {
+			add_mil_power = -25
+			sedentarization_phase_two_nomadic_base_culture_effect = yes
+		}
+	}
+	option = {
+		name = sedentarization.200.kelaktar
+		highlight = yes
+		trigger = {
+			owner = { primary_culture = fathide_ogre }
+		}
+		sedentarization_neglecting_friendly_warning_effect = yes
+		custom_tooltip = "Outpost gains 1 base manpower and 1 production on completion"
+		set_province_flag = sed_outpost_type_kelaktar
+		owner = { add_mil_power = -25 }
+		change_culture = fathide_ogre
+	}
+	
+	after = {
+		set_province_flag = sed_outpost_type_selected
+		# Check that the AI didn't pick the first option when it's invalid
+		if = {
+			limit = {
+				has_province_flag = sed_outpost_type_gozabhar
+				sedentarization_province_valid_for_centaur_friendly_options = no
+			}
+			clr_province_flag = sed_outpost_type_gozabhar
+			random_list = {
+				1 = {
+					set_province_flag = sed_outpost_type_settlement
+					owner = {
+						add_dip_power = -25
+						sedentarization_phase_two_settlement_culture_effect = yes
+					}
+				}
+				1 = {
+					trigger = { sedentarization_phase_two_nomadic_control_is_valid = yes }
+					set_province_flag = sed_outpost_type_nomadic_base
+					owner = {
+						add_mil_power = -25
+						sedentarization_phase_two_nomadic_base_culture_effect = yes
+					}
+				}
+				1 = {
+					trigger = {
+						owner = { primary_culture = fathide_ogre }
+					}
+					set_province_flag = sed_outpost_type_kelaktar
+					owner = { add_mil_power = -25 }
+					change_culture = fathide_ogre
+				}
+			}
+		}
+		# Fire other queued events, part of the system that takes care of invalidated choices
+		sedentarization_fire_queued_choice_events = yes
+	}
+}
+
+## Trade Goods Events
+# Trade Goods Upgrade event (Idk if there'll be more or if I should split this one up; the design doc suggests this is a "set" of events)
+province_event = {
+	id = sedentarization.210
+	title = sedentarization.210.t
+	desc = sedentarization.210.d
+	picture = none
+
+	is_triggered_only = yes
+	trigger = {
+		has_province_flag = sed_trade_goods_upgrade_events_unlocked
+		owner = {
+			ROOT = {
+				area_for_scope_province = {
+					owned_by = PREV_PREV
+					OR = {
+						trade_goods = wool
+						trade_goods = livestock
+					}
+				}
+			}
+		}
+	}
+
+	immediate = {
+		if = {
+			limit = {
+				OR = {
+					trade_goods = wool
+					trade_goods = livestock
+				}
+			}
+			save_event_target_as = sed_trade_goods_upgrade_target
+		}
+		else = {
+			owner = {
+				ROOT = {
+					random_area_province = {
+						limit = {
+							owned_by = PREV_PREV
+							OR = {
+								trade_goods = wool
+								trade_goods = livestock
+							}
+						}
+						save_event_target_as = sed_trade_goods_upgrade_target
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = sedentarization.210.a
+		goto = event_target:sed_trade_goods_upgrade_target
+		event_target:sed_trade_goods_upgrade_target = {
+			if = {
+				limit = { region = west_forbidden_plains_region }
+				random_list = {
+					30 = { change_trade_goods = grain }
+					25 = { change_trade_goods = cloth }
+					25 = { change_trade_goods = ivory }
+					20 = { change_trade_goods = incense }
+				}
+			}
+			else_if = {
+				limit = { region = serpent_gift_region }
+				random_list = {
+					30 = { change_trade_goods = grain }
+					25 = { change_trade_goods = sugar }
+					25 = { change_trade_goods = incense }
+					20 = { change_trade_goods = cloth }
+				}
+			}
+			else_if = {
+				limit = { region = east_forbidden_plains_region }
+				random_list = {
+					35 = { change_trade_goods = grain }
+					30 = { change_trade_goods = incense }
+					25 = { change_trade_goods = cloth }
+					10 = { change_trade_goods = ivory }
+				}
+			}
+			else_if = {
+				limit = { region = nuzurbokh_region }
+				random_list = {
+					30 = { change_trade_goods = grain }
+					25 = { change_trade_goods = copper }
+					25 = { change_trade_goods = cloth }
+					20 = { change_trade_goods = iron }
+				}
+			}
+		}
+	}
+}
+## End of - Trade Goods Events
+### End of - Phase Two
+
+### Phase Three
+# Settler Policy
+province_event = {
+	id = sedentarization.300
+	title = sedentarization.300.t
+	desc = sedentarization.300.d
+	picture = none
+
+	is_triggered_only = yes
+
+	# Immediate clears queueing flag, part of the system that takes care of invalidated choices 
+	immediate = { clr_province_flag = sed_settler_policy_event_queued }
+
+	option = {
+		name = sedentarization.300.centaur_tribute
+		trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
+		set_province_flag = sed_settler_policy_centaur_tribute
+	}
+	option = {
+		name = sedentarization.300.nomadic_control
+		trigger = {
+			NOT = { has_province_flag = sed_outpost_type_gozabhar }
+		}
+		set_province_flag = sed_settler_policy_nomadic_control
+		owner = { add_mil_power = -10 }
+	}
+	option = {
+		name = sedentarization.300.heavy_settlement
+		trigger = {
+			NOT = { has_province_flag = sed_outpost_type_gozabhar }
+		}
+		set_province_flag = sed_settler_policy_heavy_settlement
+		owner = { add_dip_power = -40 }
+	}
+	
+	after = {
+		set_province_flag = sed_settler_policy_selected
+		# Check that the AI didn't pick the first option when it's invalid
+		if = {
+			limit = {
+				has_province_flag = sed_settler_policy_centaur_tribute
+				sedentarization_province_valid_for_centaur_friendly_options = no
+			}
+			clr_province_flag = sed_settler_policy_centaur_tribute
+			random_list = {
+				1 = {
+					set_province_flag = sed_settler_policy_nomadic_control
+					owner = { add_mil_power = -10 }
+				}
+				1 = {
+					set_province_flag = sed_settler_policy_heavy_settlement
+					owner = { add_dip_power = -40 }
+				}
+			}
+		}
+		# Fire other queued events, part of the system that takes care of invalidated choices
+		sedentarization_fire_queued_choice_events = yes
+	}
+}
+
+# Outpost Completion
+province_event = {
+	id = sedentarization.310
+	title = sedentarization.310.t
+	desc = sedentarization.310.d
+	picture = none
+
+	is_triggered_only = yes
+
+	option = {
+		name = sedentarization.310.a
+		# Bonus from outpost type
+		if = {
+			limit = { has_province_flag = sed_outpost_type_settlement }
+			add_base_tax = 1
+		}
+		else_if = {
+			limit = { has_province_flag = sed_outpost_type_nomadic_base }
+			add_base_manpower = 1
+		}
+		else_if = {
+			limit = { has_province_flag = sed_outpost_type_kelaktar }
+			add_base_production = 1
+			add_base_manpower = 1
+		}
+		# Completion effect from settler policy
+		save_event_target_as = sed_outpost
+		if = {
+			limit = { has_province_flag = sed_settler_policy_centaur_tribute }
+			sedentarization_outpost_completion_centaur_tribute_effect = { culture_source = event_target:sed_outpost }
+			# Propagate to the rest of the area regardless of ownership
+			area = {
+				limit = {
+					NOT = { province_id = ROOT }
+				}
+				province_event = {
+					id = sedentarization.311
+					days = 1
+					random = 89
+				}
+			}
+		}
+		else_if = {
+			limit = { has_province_flag = sed_settler_policy_nomadic_control }
+			sedentarization_outpost_completion_nomadic_control_effect = yes
+			# Propagate to the rest of the area regardless of ownership
+			area = {
+				limit = {
+					NOT = { province_id = ROOT }
+				}
+				province_event = {
+					id = sedentarization.312
+					days = 1
+					random = 89
+				}
+			}
+		}
+		else_if = {
+			limit = { has_province_flag = sed_settler_policy_heavy_settlement }
+			sedentarization_outpost_completion_heavy_settlement_effect = yes
+			# Propagate to the rest of the area regardless of ownership
+			area = {
+				limit = {
+					NOT = { province_id = ROOT }
+				}
+				province_event = {
+					id = sedentarization.313
+					days = 1
+					random = 89
+				}
+			}
+		}
+	}
+}
+
+# Centaur Tribute propagates to the rest of the area
+province_event = {
+	id = sedentarization.311
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		sedentarization_outpost_completion_centaur_tribute_effect = yes
+	}
+}
+
+# Nomadic Control propagates to the rest of the area
+province_event = {
+	id = sedentarization.312
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		sedentarization_outpost_completion_nomadic_control_effect = { culture_source = event_target:sed_outpost }
+	}
+}
+
+# Heavy Settlement propagates to the rest of the area
+province_event = {
+	id = sedentarization.313
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		sedentarization_outpost_completion_heavy_settlement_effect = { culture_source = event_target:sed_outpost }
+	}
+}
+### End of - Phase Three

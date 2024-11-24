@@ -544,3 +544,67 @@ custom_icon = {
 	}
 	tooltip = diggy_hole_progress_tt
 }
+
+custom_button = {
+	name = sedentarization_make_outpost
+	tooltip = "Sedentarization outpost"
+	potential = {
+		has_province_modifier = sed_forbidden
+		owner = {
+			tag = FROM
+			culture_is_centaur = no
+		}
+	}
+	trigger = {
+		NOT = { has_province_flag = sed_block_extra_clicks }
+		FROM = {
+			treasury = 50
+			NOT = {
+				check_variable = {
+					which = sed_outpost_cap_usage
+					which = sed_outpost_cap
+				}
+			}
+		}
+		area_for_scope_province = {
+			type = all
+			owned_by = FROM
+			# is_core = FROM	# Clarify with Imacop, gotten mixed messaging
+			sedentarization_province_has_outpost = no
+		}
+	}
+	effect = {
+		# Block extra clicks - idk why the trigger doesn't react fast enough
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_block_extra_clicks }
+			}
+			set_province_flag = sed_block_extra_clicks
+			# Deduct costs
+			FROM = {
+				add_treasury = -50
+				change_variable = {
+					which = sed_outpost_cap_usage
+					value = 1
+				}
+			}
+			# Apply a min autonomy-negating modifier if necessary (for territories and half-states)
+			sedentarization_apply_min_autonomy_negating_modifier = yes
+			# Apply the outpost at the correct phase. It should be Phase One most of the time.
+			if = {
+				limit = {
+					NOT = {
+						has_province_flag = sed_incomplete_sedentarization
+						has_province_flag = sed_semi_complete_sedentarization
+					}
+				}
+				sedentarization_reset_province_outpost = { phase_i = yes }
+			}
+			else = {
+				sedentarization_reset_province_outpost = { phase_ii = yes }
+				# Cleanup invalid Phase One flags; Phase Two and Three flags shouldn't exist because of on_province_owner_change
+				sedentarization_check_for_invalid_flags = yes
+			}
+		}
+	}
+}

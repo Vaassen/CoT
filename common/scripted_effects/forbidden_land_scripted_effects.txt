@@ -1718,3 +1718,596 @@ federation_magew_clear_flags = {
 		clear_global_event_target = LFbannedmageWarleader
 	}
 }
+
+### Sedentarization system related effects
+sedentarization_on_yearly_pulse = {
+	if = {
+		limit = {
+			check_variable = {
+				which = sed_outpost_cap
+				value = 1
+			}
+		}
+		# Recalculate outpost cap, but don't do anything if outpost usage is somehow above cap
+		sedentarization_calculate_outpost_cap = yes
+		# Check if outposts are even being used before scoping to every owned province
+		if = {
+			limit = {
+				check_variable = {
+					which = sed_outpost_cap_usage
+					value = 1
+				}
+			}
+			# Fire events
+			every_owned_province = {
+				limit = { sedentarization_province_has_outpost = yes }
+				sedentarization_apply_min_autonomy_negating_modifier = yes
+				sedentarization_check_for_invalid_flags = yes
+				sedentarization_pick_yearly_event = yes
+			}
+		}
+	}
+}
+
+sedentarization_calculate_outpost_cap = {
+	export_to_variable = {
+		which = sed_outpost_cap
+		value = trigger_value:government_rank
+	}
+	export_to_variable = {
+		which = sed_num_of_colonists
+		value = trigger_value:num_of_colonists
+	}
+	change_variable = {
+		which = sed_outpost_cap
+		which = sed_num_of_colonists
+	}
+}
+
+sedentarization_check_for_invalid_flags = {
+	if = {
+		limit = {
+			has_province_flag = sed_contact_complete
+			sedentarization_province_valid_for_centaur_friendly_options = no
+		}
+		# Phase One flags
+		clr_province_flag = sed_friendly_warning
+		set_province_flag = sed_raid_events_unlocked
+		# Phase Two flags
+		if = {
+			limit = { has_province_flag = sed_outpost_type_gozabhar }
+			clr_province_flag = sed_outpost_type_gozabhar
+			clr_province_flag = sed_outpost_type_selected
+			# Reset phase progress
+			set_local_autonomy = 60
+			# Refire the outpost type selection event
+			set_province_flag = sed_outpost_type_event_queued
+			province_event = { id = sedentarization.200 }
+		}
+		# Phase Three flags
+		if = {
+			limit = { has_province_flag = sed_settler_policy_centaur_tribute }
+			clr_province_flag = sed_settler_policy_centaur_tribute
+			clr_province_flag = sed_settler_policy_selected
+			# Reset phase progress
+			set_local_autonomy = 30
+			# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
+			set_province_flag = sed_settler_policy_event_queued
+			if = {
+				limit = {
+					NOT = { has_province_flag = sed_outpost_type_event_queued }
+				}
+				province_event = { id = sedentarization.300 }
+			}
+		}
+	}
+}
+
+sedentarization_pick_yearly_event = {
+	random_list = {
+		# 83.2% chance no event happens each year
+		832 = {}
+		# ~60% chance at least one event happens within 5 years
+		178 = {
+			# ~83% chance of first contact happening within 5 years
+			modifier = {
+				factor = 2
+				NOT = { has_province_flag = sed_contact_complete }
+			}
+			random_list = {
+				# Equal chance for Phase One events...
+				1 = {
+					trigger = { sedentarization_phase_one_events_can_fire = yes }
+					sedentarization_pick_yearly_phase_one_event = yes
+				}
+				# ...as Phase Two events (as long as it's reached Phase Two)
+				1 = {
+					trigger = {
+						NOT = { has_active_triggered_province_modifier = sed_outpost_phase_i }
+					}
+					# There's currently only 1 random Phase Two/Three event, so no need for a scripted effect or complex triggers yet
+					province_event = {
+						id = sedentarization.210
+						random = 360
+					}
+				}
+			}
+		}
+	}
+}
+
+sedentarization_pick_yearly_phase_one_event = {
+	# First Contact events come first
+	if = {
+		limit = {
+			NOT = { has_province_flag = sed_contact_complete }
+		}
+		random_list = {
+			1 = {
+				province_event = {
+					id = sedentarization.100
+					random = 360
+				}
+			}
+			4 = {
+				trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
+				province_event = {
+					id = sedentarization.101
+					random = 360
+				}
+			}
+		}
+	}
+	# Raid Events forever-after (until the player establishes guards)
+	else = {
+		random_list = {
+			# 73.7% chance of happening each roll
+			737 = {
+				province_event = {
+					id = sedentarization.120
+					random = 360
+				}
+			}
+			# ~60% chance of happening within 3 rolls
+			263 = {
+				province_event = {
+					id = sedentarization.121
+					random = 360
+				}
+			}
+		}
+	}
+}
+
+sedentarization_on_province_owner_change = {
+	if = {
+		limit = { has_province_modifier = sed_forbidden }
+		# Add the mitigating modifier for centaurs.
+		if = {
+			limit = {
+				owner = { culture_is_centaur = yes }
+			}
+			add_province_modifier = {
+				name = sed_entrenched_centaur_nomadism
+				duration = -1
+			}
+		}
+		# Housekeeping for province flags and modifiers and country variables
+		if = {
+			limit = { sedentarization_province_has_outpost = yes }
+			# Maintain correct outpost_cap_usage for the loser
+			FROM = {
+				subtract_variable = {
+					which = sed_outpost_cap_usage
+					value = 1
+				}
+			}
+			clr_province_flag = sed_block_extra_clicks
+			if = {
+				limit = { has_active_triggered_province_modifier = sed_outpost_phase_i }
+				sedentarization_clear_phase_one_flags = yes
+			}
+			else = {
+				sedentarization_clear_phase_two_flags = yes
+				sedentarization_clear_phase_three_flags = yes
+			}
+			sedentarization_reset_province_outpost = yes
+		}
+		# This is where a country's outpost cap is initiated. It's later updated in on_yearly_pulse (TODO)
+		owner = {
+			if = {
+				limit = {
+					culture_is_centaur = no
+					NOT = {
+						check_variable = {
+							which = sed_outpost_cap
+							value = 1
+						}
+					}
+				}
+				sedentarization_calculate_outpost_cap = yes
+			}
+		}
+	}
+}
+
+sedentarization_clear_phase_one_flags = {
+	clr_province_flag = sed_block_extra_clicks
+	clr_province_flag = sed_contact_complete
+	clr_province_flag = sed_friendly_warning
+	clr_province_flag = sed_raid_events_unlocked
+	clr_province_flag = sed_local_mounted_guards
+}
+
+sedentarization_clear_phase_two_flags = {
+	clr_province_flag = sed_outpost_type_gozabhar
+	clr_province_flag = sed_outpost_type_settlement
+	clr_province_flag = sed_outpost_type_nomadic_base
+	clr_province_flag = sed_outpost_type_kelaktar
+	clr_province_flag = sed_outpost_type_selected
+	clr_province_flag = sed_trade_goods_upgrade_events_unlocked
+}
+
+sedentarization_clear_phase_three_flags = {
+	clr_province_flag = sed_settler_policy_centaur_tribute
+	clr_province_flag = sed_settler_policy_nomadic_control
+	clr_province_flag = sed_settler_policy_heavy_settlement
+}
+
+sedentarization_reset_province_outpost = {
+	remove_province_triggered_modifier = sed_outpost_phase_i
+	remove_province_triggered_modifier = sed_outpost_phase_ii
+	remove_province_triggered_modifier = sed_outpost_phase_iii
+	[[phase_i]
+		add_province_triggered_modifier = sed_outpost_phase_i
+		set_local_autonomy = 100
+	]
+	[[phase_ii]
+		add_province_triggered_modifier = sed_outpost_phase_ii
+		set_local_autonomy = 60
+		set_province_flag = sed_trade_goods_upgrade_events_unlocked
+		province_event = { id = sedentarization.200 }
+	]
+	[[phase_iii]
+		add_province_triggered_modifier = sed_outpost_phase_iii
+		set_local_autonomy = 30
+		province_event = { id = sedentarization.300 }
+	]
+}
+
+sedentarization_outpost_try_phase_change = {
+	# Update the min autonomy-negating modifier if necessary
+	sedentarization_apply_min_autonomy_negating_modifier = yes
+	# Check for invalid progression flags, likely due to starting a purge/expulsion
+	sedentarization_check_for_invalid_flags = yes
+	# Check phase-specific progression eligibility
+	owner = { save_event_target_as = sed_outpost_owner }
+	if = {
+		limit = {
+			[[phase_i] has_province_flag = sed_contact_complete ]
+			[[phase_ii] has_province_flag = sed_outpost_type_selected ]
+			[[phase_iii] has_province_flag = sed_settler_policy_selected ]
+			area_for_scope_province = {
+				type = all
+				owned_by = event_target:sed_outpost_owner
+			}
+		}
+		# Phase One, progressing to Phase Two
+		[[phase_i]
+			sedentarization_reset_province_outpost = { phase_ii = yes }
+			# Reseting completeness is done here instead of within the above scripted effect because
+			# it should only happen the first time the province hits phase two (i.e. don't reset semi-complete to incomplete).
+			area = {
+				sedentarization_reset_completion_flag = { completeness = incomplete }
+			}
+		]
+		# Phase Two, progressing to Phase Three
+		[[phase_ii]
+			sedentarization_reset_province_outpost = { phase_iii = yes }
+		]
+		# Phase Three, progressing to completion
+		[[phase_iii]
+			sedentarization_reset_province_outpost = yes
+			owner = {
+				subtract_variable = {
+					which = sed_outpost_cap_usage
+					value = 1
+				}
+			}
+			province_event = { id = sedentarization.310 }
+		]
+	}
+	# If ineligible to progress, don't check again for about a year
+	else = {
+		add_permanent_province_modifier = {
+			name = sed_outpost_progress_blocked
+			duration = 360
+			hidden = yes
+		}
+	}
+}
+
+sedentarization_reset_completion_flag = {
+	clr_province_flag = sed_incomplete_sedentarization
+	clr_province_flag = sed_semi_complete_sedentarization
+	clr_province_flag = sed_complete_sedentarization
+	[[completeness] set_province_flag = sed_$completeness$_sedentarization ]
+}
+
+sedentarization_apply_min_autonomy_negating_modifier = {
+	# Apply a modifier to negate the min autonomy from territories and half-states
+	if = {
+		limit = { is_territory = yes }
+		add_province_modifier = {
+			name = sed_min_autonomy_from_territory_negation
+			duration = -1
+			hidden = yes
+		}
+		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+	}
+	else_if = {
+		limit = {
+			is_state = yes
+			NOT = { is_state_core = FROM }
+		}
+		add_province_modifier = {
+			name = sed_min_autonomy_from_half_state_negation
+			duration = -1
+			hidden = yes
+		}
+		remove_province_modifier = sed_min_autonomy_from_territory_negation
+	}
+	else = {
+		remove_province_modifier = sed_min_autonomy_from_territory_negation
+		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+	}
+}
+
+sedentarization_neglecting_friendly_warning_effect = {
+	if = {
+		limit = { has_province_flag = sed_friendly_warning }
+		custom_tooltip = "By ignoring a 'friendly' warning from the centuars, this will provoke their raids"
+		clr_province_flag = sed_friendly_warning
+		set_province_flag = sed_raid_events_unlocked
+	}
+}
+
+sedentarization_phase_two_settlement_culture_effect = {
+	# Change the culture of the outpost based on owner culture; base case is owner's primary culture.
+	if = {
+		limit = { culture_group = triunic }
+		ROOT = { change_culture = urmanki }
+	}
+	else_if = {
+		limit = {
+			primary_culture = sun_elf
+			any_owned_province = { culture = zanite }
+		}
+		ROOT = { change_culture = zanite }
+	}
+	else_if = {
+		limit = {
+			primary_culture = desert_elf
+			any_owned_province = { culture = surani }
+		}
+		ROOT = { change_culture = surani }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				primary_culture = rustroad_goblin
+				primary_culture = crawler_goblin
+				primary_culture = cave_goblin
+				# TODO: "IF you have completed special mission in Maghargma Tree, change culture to Crawler Goblin"
+			}
+		}
+		ROOT = { change_culture = crawler_goblin }
+	}
+	else = {
+		ROOT = { change_culture = PREV }
+	}
+}
+
+sedentarization_phase_two_nomadic_base_culture_effect = {
+	# Change the culture of the outpost based on owner culture; no base case - effect must be valid.
+	if = {
+		limit = { culture_group = triunic }
+		ROOT = { change_culture = orachav }
+	}
+	# TODO: culture not implemented yet; uncomment when implemented
+	# else_if = {
+	# 	limit = {
+	# 		OR = {
+	# 			primary_culture = fathide_ogre
+	# 			primary_culture = wild_ogre
+	# 		}
+	# 	}
+	# 	ROOT = { change_culture = wild_ogre }
+	# }
+	else_if = {
+		limit = {
+			OR = {
+				primary_culture = sun_elf
+				primary_culture = desert_elf
+				culture_group = bulwari
+			}
+			any_owned_province = { culture = masnsih }
+		}
+		ROOT = { change_culture = masnsih }
+	}
+	else_if = {
+		limit = { primary_culture = plateau_runsukhi }	# AKA "Rukunai"
+		ROOT = { change_culture = runsukhi }
+	}
+}
+
+sedentarization_fire_queued_choice_events = {
+	# Part of the system that takes care of invalidated choices
+	# Always go through the queued events for the current province before scoping to random other provinces
+	if = {
+		limit = { has_province_flag = sed_settler_policy_event_queued }
+		province_event = { id = sedentarization.300 }
+	}
+	# Finally, look for other provinces with either type of queued event
+	else = {
+		owner = {
+			random_owned_province = {
+				limit = {
+					OR = {
+						has_province_flag = sed_outpost_type_event_queued
+						has_province_flag = sed_settler_policy_event_queued
+					}
+				}
+				# Always fire the earlier-phase events before later ones (outpost type before settler policy)
+				if = {
+					limit = { has_province_flag = sed_outpost_type_event_queued }
+					province_event = { id = sedentarization.200 }
+				}
+				else = {
+					province_event = { id = sedentarization.300 }
+				}
+			}
+		}
+	}
+}
+
+sedentarization_outpost_completion_centaur_tribute_effect = {
+	add_province_modifier = {
+		name = sed_centaur_tributary_system
+		duration = -1
+	}
+	if = {
+		limit = { has_province_flag = sed_outpost_type_gozabhar }
+		add_base_tax = 1
+		owner = { large_increase_of_centaur_tolerance_effect = yes }
+	}
+	else_if = {
+		limit = {
+			$culture_source$ = { has_province_flag = sed_outpost_type_gozabhar }
+		}
+		owner = { large_increase_of_centaur_tolerance_effect = yes }
+	}
+	else = {
+		# TODO: Clarify the intended effect with Imacop. Owner scope or outpost scope?
+		$culture_source$ = {
+			add_matching_race_minority_size_to_scope = { scope = ROOT }
+		}
+	}
+	sedentarization_reset_completion_flag = { completeness = incomplete }
+}
+
+sedentarization_outpost_completion_nomadic_control_effect = {
+	[[culture_source] change_culture = $culture_source$ ]
+	add_province_modifier = {
+		name = sed_nomadic_governance
+		duration = -1
+	}
+	sedentarization_reset_completion_flag = { completeness = semi_complete }
+}
+
+sedentarization_outpost_completion_heavy_settlement_effect = {
+	sedentarization_remove_system_from_province = yes
+	[[culture_source] change_culture = $culture_source$ ]
+	# This flag should be the only provincial script remnant from the system
+	sedentarization_reset_completion_flag = { completeness = complete }
+}
+
+sedentarization_remove_system_from_province = {
+	remove_province_modifier = sed_forbidden
+	remove_province_modifier = sed_entrenched_centaur_nomadism
+	sedentarization_reset_province_outpost = yes
+	remove_province_modifier = sed_min_autonomy_from_territory_negation
+	remove_province_modifier = sed_min_autonomy_from_half_state_negation
+	sedentarization_clear_phase_one_flags = yes
+	sedentarization_clear_phase_two_flags = yes
+	sedentarization_clear_phase_three_flags = yes
+	remove_province_modifier = sed_centaur_tributary_system
+	remove_province_modifier = sed_nomadic_governance
+	sedentarization_reset_completion_flag = yes
+} 
+
+# TODO: move this to the proper file
+add_matching_race_minority_size_to_scope = {
+	#AddNewRaceHere
+	if = {
+		limit = { culture_is_centaur = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = centaur } }
+	}
+	else_if = {
+		limit = { culture_is_dwarven = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = dwarven } }
+	}
+	else_if = {
+		limit = { culture_is_elven = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = elven } }
+	}
+	else_if = {
+		limit = { culture_is_gnollish = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = gnollish } }
+	}
+	else_if = {
+		limit = { culture_is_gnomish = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = gnomish } }
+	}
+	else_if = {
+		limit = { culture_is_goblin = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = goblin } }
+	}
+	else_if = {
+		limit = { culture_is_half_elven = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = half_even } }
+	}
+	else_if = {
+		limit = { culture_is_half_orcish = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = half_orcish } }
+	}
+	else_if = {
+		limit = { culture_is_halfling = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = halfling } }
+	}
+	else_if = {
+		limit = { culture_is_harimari = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = harimari } }
+	}
+	else_if = {
+		limit = { culture_is_harpy = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = harpy } }
+	}
+	else_if = {
+		limit = { culture_is_hobgoblin = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = hobgoblin } }
+	}
+	else_if = {
+		limit = { culture_is_human = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = human } }
+	}
+	else_if = {
+		limit = { culture_is_kobold = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = kobold } }
+	}
+	else_if = {
+		limit = { culture_is_lizardfolk = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = lizardfolk } }
+	}
+	else_if = {
+		limit = { culture_is_mechanim = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = mechanim } }
+	}
+	else_if = {
+		limit = { culture_is_ogre = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = ogre } }
+	}
+	else_if = {
+		limit = { culture_is_orcish = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = orcish } }
+	}
+	else_if = {
+		limit = { culture_is_ruinborn = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = ruinborn } }
+	}
+	else_if = {
+		limit = { culture_is_troll = yes }
+		$scope$ = { generic_add_race_minority_size_effect = { race = troll } }
+	}
+}
+### End of - Sedentarization system related effects
