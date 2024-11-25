@@ -1730,6 +1730,41 @@ sedentarization_on_yearly_pulse = {
 		}
 		# Recalculate outpost cap, but don't do anything if outpost usage is somehow above cap
 		sedentarization_calculate_outpost_cap = yes
+		# Force AI to use the system
+		if = {
+			limit = {
+				ai = yes
+				sedentarization_country_can_place_outpost = yes
+			}
+			random_owned_province = {
+				limit = {
+					sedentarization_province_can_recieve_outpost = { owner_scope = ROOT }
+				}
+				# Prioritize which province to place an outpost. Criteria at the top have lowest priority (least desirable).
+				# Default option is the originally-picked random province.
+				save_event_target_as = sed_ai_new_outpost_province
+				random_area_province = {
+					limit = {
+						OR = {
+							has_terrain = farmlands
+							has_terrain = grasslands
+							has_terrain = drylands
+						}
+					}
+					save_event_target_as = sed_ai_new_outpost_province
+				}
+				random_area_province = {
+					limit = {
+						OR = {
+							province_has_center_of_trade_of_level = 1
+							has_river_estuary_trigger = yes
+						}
+					}
+					save_event_target_as = sed_ai_new_outpost_province
+				}
+				event_target:sed_ai_new_outpost_province = { sedentarization_place_brand_new_outpost = yes }
+			}
+		}
 		# Check if outposts are even being used before scoping to every owned province
 		if = {
 			limit = {
@@ -1761,6 +1796,63 @@ sedentarization_calculate_outpost_cap = {
 	change_variable = {
 		which = sed_outpost_cap
 		which = sed_num_of_colonists
+	}
+}
+
+sedentarization_deduct_outpost_cost_from_country = {
+	add_treasury = -50
+	change_variable = {
+		which = sed_outpost_cap_usage
+		value = 1
+	}
+}
+
+sedentarization_place_brand_new_outpost = {
+	# Apply a min autonomy-negating modifier if necessary (for territories and half-states)
+	sedentarization_apply_min_autonomy_negating_modifier = yes
+	# Apply the outpost at the correct phase. It should be Phase One most of the time.
+	if = {
+		limit = {
+			NOT = {
+				has_province_flag = sed_incomplete_sedentarization
+				has_province_flag = sed_semi_complete_sedentarization
+			}
+		}
+		sedentarization_reset_province_outpost = { phase_i = yes }
+	}
+	else = {
+		sedentarization_reset_province_outpost = { phase_ii = yes }
+		# Cleanup invalid Phase One flags; Phase Two and Three flags shouldn't exist because of on_province_owner_change
+		sedentarization_check_for_invalid_flags = yes
+	}
+}
+
+sedentarization_apply_min_autonomy_negating_modifier = {
+	# Apply a modifier to negate the min autonomy from territories and half-states
+	if = {
+		limit = { is_territory = yes }
+		add_province_modifier = {
+			name = sed_min_autonomy_from_territory_negation
+			duration = -1
+			hidden = yes
+		}
+		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+	}
+	else_if = {
+		limit = {
+			is_state = yes
+			NOT = { is_state_core = FROM }
+		}
+		add_province_modifier = {
+			name = sed_min_autonomy_from_half_state_negation
+			duration = -1
+			hidden = yes
+		}
+		remove_province_modifier = sed_min_autonomy_from_territory_negation
+	}
+	else = {
+		remove_province_modifier = sed_min_autonomy_from_territory_negation
+		remove_province_modifier = sed_min_autonomy_from_half_state_negation
 	}
 }
 
@@ -1913,7 +2005,7 @@ sedentarization_on_province_owner_change = {
 			}
 			sedentarization_reset_province_outpost = yes
 		}
-		# This is where a country's outpost cap is initiated. It's later updated in on_yearly_pulse (TODO)
+		# This is where a country's outpost cap is initiated. It's later updated in on_yearly_pulse
 		owner = {
 			if = {
 				limit = {
@@ -2034,35 +2126,6 @@ sedentarization_reset_completion_flag = {
 	[[completeness] set_province_flag = sed_$completeness$_sedentarization ]
 }
 
-sedentarization_apply_min_autonomy_negating_modifier = {
-	# Apply a modifier to negate the min autonomy from territories and half-states
-	if = {
-		limit = { is_territory = yes }
-		add_province_modifier = {
-			name = sed_min_autonomy_from_territory_negation
-			duration = -1
-			hidden = yes
-		}
-		remove_province_modifier = sed_min_autonomy_from_half_state_negation
-	}
-	else_if = {
-		limit = {
-			is_state = yes
-			NOT = { is_state_core = FROM }
-		}
-		add_province_modifier = {
-			name = sed_min_autonomy_from_half_state_negation
-			duration = -1
-			hidden = yes
-		}
-		remove_province_modifier = sed_min_autonomy_from_territory_negation
-	}
-	else = {
-		remove_province_modifier = sed_min_autonomy_from_territory_negation
-		remove_province_modifier = sed_min_autonomy_from_half_state_negation
-	}
-}
-
 sedentarization_neglecting_friendly_warning_effect = {
 	if = {
 		limit = { has_province_flag = sed_friendly_warning }
@@ -2181,14 +2244,7 @@ sedentarization_outpost_completion_centaur_tribute_effect = {
 		add_base_tax = 1
 		owner = { large_increase_of_centaur_tolerance_effect = yes }
 	}
-	else_if = {
-		limit = {
-			$culture_source$ = { has_province_flag = sed_outpost_type_gozabhar }
-		}
-		owner = { large_increase_of_centaur_tolerance_effect = yes }
-	}
 	else = {
-		# TODO: Clarify the intended effect with Imacop. Owner scope or outpost scope?
 		$culture_source$ = {
 			add_matching_race_minority_size_to_scope = { scope = ROOT }
 		}
