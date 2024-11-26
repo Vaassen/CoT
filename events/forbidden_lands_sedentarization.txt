@@ -58,7 +58,160 @@ country_event = {
 	}
 }
 
-# TODO: entry event for AI
+# Phase One event handler because scripted effects are jank and hate "else"s
+province_event = {
+	id = sedentarization.1
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		# First Contact events come first
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_contact_complete }
+			}
+			random_list = {
+				1 = {
+					province_event = {
+						id = sedentarization.100
+						days = 1
+						random = 359
+					}
+				}
+				4 = {
+					trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
+					province_event = {
+						id = sedentarization.101
+						days = 1
+						random = 359
+					}
+				}
+			}
+		}
+		# Raid Events forever-after (until the player establishes guards)
+		else = {
+			random_list = {
+				# 73.7% chance of happening each roll
+				737 = {
+					province_event = {
+						id = sedentarization.120
+						days = 1
+						random = 359
+					}
+				}
+				# ~60% chance of happening within 3 rolls
+				263 = {
+					province_event = {
+						id = sedentarization.121
+						days = 1
+						random = 359
+					}
+				}
+			}
+		}
+	}
+}
+
+# Phase Two event handler
+province_event = {
+	id = sedentarization.2
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		if = {
+			limit = { sedentarization_phase_two_events_can_fire = yes }
+			if = {
+				limit = {
+					OR = {
+						trade_goods = wool
+						trade_goods = livestock
+					}
+				}
+				save_event_target_as = sed_trade_goods_upgrade_target
+			}
+			else = {
+				random_area_province = {
+					limit = {
+						OR = {
+							trade_goods = wool
+							trade_goods = livestock
+						}
+					}
+					save_event_target_as = sed_trade_goods_upgrade_target
+				}
+			}
+			province_event = {
+				id = sedentarization.210
+				days = 1
+				random = 359
+			}
+		}
+		# There's currently only 1 random Phase Two/Three event, so no need for complex effects and triggers yet
+		owner = { save_event_target_as = sed_outpost_owner }
+		province_event = {
+			id = sedentarization.210
+			days = 1
+			random = 359
+		}
+	}
+}
+
+# Event queue handler. Part of the system that takes care of invalidated choices and edge-case simultaneous outpost completion
+province_event = {
+	id = sedentarization.20
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		# Always go through the queued events for the current province before scoping to random other provinces
+		if = {
+			limit = { has_province_flag = sed_settler_policy_event_queued }
+			province_event = { id = sedentarization.300 }
+		}
+		else_if = {
+			limit = { has_province_flag = sed_outpost_completion_event_queued }
+			province_event = { id = sedentarization.310 }
+		}
+		# Finally, look for other provinces with either type of queued event
+		else = {
+			owner = {
+				random_owned_province = {
+					limit = {
+						OR = {
+							has_province_flag = sed_outpost_type_event_queued
+							has_province_flag = sed_settler_policy_event_queued
+						}
+					}
+					# Always fire the earlier-phase events before later ones (outpost type before settler policy)
+					if = {
+						limit = { has_province_flag = sed_outpost_type_event_queued }
+						province_event = { id = sedentarization.200 }
+					}
+					else_if = {
+						limit = { has_province_flag = sed_settler_policy_event_queued }
+						province_event = { id = sedentarization.300 }
+					}
+					else = {
+						province_event = { id = sedentarization.310 }
+					}
+				}
+			}
+		}
+	}
+}
 
 ### Phase One
 ## First Contact Events
@@ -256,30 +409,27 @@ province_event = {
 
 	is_triggered_only = yes
 
-	# Immediate clears queueing flag, part of the system that takes care of invalidated choices 
-	immediate = { clr_province_flag = sed_outpost_type_event_queued }
-
 	option = {
 		name = sedentarization.200.gozabhar
 		trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
 		if = {
 			limit = { has_province_flag = sed_friendly_warning }
-			custom_tooltip = "With a \"friendly\" warning from the centuars, this is the only option to prevent raids"
+			custom_tooltip = "With a \"friendly\" warning from the centuars, this is the only option to prevent raids."
 		}
-		custom_tooltip = "Outpost gains 1 base tax on completion, but our Phase Three settler policy is locked to Centaur Tribute, giving the following effects:"
+		custom_tooltip = "Outpost gains 1 base tax on completion, but our Phase Three settler policy will be locked to Centaur Tribute, giving the following effects:"
 		tooltip = {
 			add_province_modifier = {
 				name = sed_centaur_tributary_system
 				duration = -1
 			}
 		}
-		custom_tooltip = "Will invalidate if purging or expelling centaurs"
+		custom_tooltip = "Will invalidate if purging or expelling centaurs."
 		set_province_flag = sed_outpost_type_gozabhar
 	}
 	option = {
 		name = sedentarization.200.settlement
 		sedentarization_neglecting_friendly_warning_effect = yes
-		custom_tooltip = "Outpost gains 1 base tax on completion"
+		custom_tooltip = "Outpost gains 1 base tax on completion."
 		set_province_flag = sed_outpost_type_settlement
 		owner = {
 			add_dip_power = -25
@@ -292,7 +442,7 @@ province_event = {
 		# The triggers MUST match the ones in "sedentarization_phase_two_nomadic_base_culture_effect"
 		trigger = { sedentarization_phase_two_nomadic_control_is_valid = yes }
 		sedentarization_neglecting_friendly_warning_effect = yes
-		custom_tooltip = "Outpost gains 1 base manpower on completion"
+		custom_tooltip = "Outpost gains 1 base manpower on completion."
 		set_province_flag = sed_outpost_type_nomadic_base
 		owner = {
 			add_mil_power = -25
@@ -306,7 +456,7 @@ province_event = {
 			owner = { primary_culture = fathide_ogre }
 		}
 		sedentarization_neglecting_friendly_warning_effect = yes
-		custom_tooltip = "Outpost gains 1 base manpower and 1 production on completion"
+		custom_tooltip = "Outpost gains 1 base manpower and 1 production on completion."
 		set_province_flag = sed_outpost_type_kelaktar
 		owner = { add_mil_power = -25 }
 		change_culture = fathide_ogre
@@ -348,7 +498,8 @@ province_event = {
 			}
 		}
 		# Fire other queued events, part of the system that takes care of invalidated choices
-		sedentarization_fire_queued_choice_events = yes
+		clr_province_flag = sed_outpost_type_event_queued
+		province_event = { id = sedentarization.20 }
 	}
 }
 
@@ -361,53 +512,20 @@ province_event = {
 	picture = none
 
 	is_triggered_only = yes
-	# TODO: fix this event not firing. Issue with PREV_PREV; see if replaceable with an event_target
 	trigger = {
 		has_province_flag = sed_trade_goods_upgrade_events_unlocked
-		owner = {
-			ROOT = {
-				area_for_scope_province = {
-					owned_by = PREV_PREV
-					OR = {
-						trade_goods = wool
-						trade_goods = livestock
-					}
-				}
-			}
-		}
-	}
-
-	immediate = {
-		if = {
-			limit = {
-				OR = {
-					trade_goods = wool
-					trade_goods = livestock
-				}
-			}
-			save_event_target_as = sed_trade_goods_upgrade_target
-		}
-		else = {
-			owner = {
-				ROOT = {
-					random_area_province = {
-						limit = {
-							owned_by = PREV_PREV
-							OR = {
-								trade_goods = wool
-								trade_goods = livestock
-							}
-						}
-						save_event_target_as = sed_trade_goods_upgrade_target
-					}
-				}
+		area_for_scope_province = {
+			owned_by = event_target:sed_outpost_owner
+			OR = {
+				trade_goods = wool
+				trade_goods = livestock
 			}
 		}
 	}
 
 	option = {
 		name = sedentarization.210.a
-		goto = event_target:sed_trade_goods_upgrade_target
+		goto = sed_trade_goods_upgrade_target
 		event_target:sed_trade_goods_upgrade_target = {
 			if = {
 				limit = { region = west_forbidden_plains_region }
@@ -461,9 +579,6 @@ province_event = {
 
 	is_triggered_only = yes
 
-	# Immediate clears queueing flag, part of the system that takes care of invalidated choices 
-	immediate = { clr_province_flag = sed_settler_policy_event_queued }
-
 	option = {
 		name = sedentarization.300.centaur_tribute
 		trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
@@ -507,7 +622,8 @@ province_event = {
 			}
 		}
 		# Fire other queued events, part of the system that takes care of invalidated choices
-		sedentarization_fire_queued_choice_events = yes
+		clr_province_flag = sed_settler_policy_event_queued
+		province_event = { id = sedentarization.20 }
 	}
 }
 
@@ -584,6 +700,12 @@ province_event = {
 			}
 		}
 	}
+	
+	after = {
+		# Fire other queued events, part of the system that takes care of invalidated choices
+		clr_province_flag = sed_outpost_completion_event_queued
+		province_event = { id = sedentarization.20 }
+	}
 }
 
 # Centaur Tribute propagates to the rest of the area
@@ -598,6 +720,7 @@ province_event = {
 
 	option = {
 		sedentarization_outpost_completion_centaur_tribute_effect = yes
+		set_local_autonomy = 50
 	}
 }
 
@@ -613,6 +736,7 @@ province_event = {
 
 	option = {
 		sedentarization_outpost_completion_nomadic_control_effect = { culture_source = event_target:sed_outpost }
+		set_local_autonomy = 50
 	}
 }
 
@@ -628,6 +752,7 @@ province_event = {
 
 	option = {
 		sedentarization_outpost_completion_heavy_settlement_effect = { culture_source = event_target:sed_outpost }
+		set_local_autonomy = 50
 	}
 }
 ### End of - Phase Three

@@ -1736,6 +1736,7 @@ sedentarization_on_yearly_pulse = {
 				ai = yes
 				sedentarization_country_can_place_outpost = yes
 			}
+			sedentarization_deduct_outpost_cost_from_country = yes
 			random_owned_province = {
 				limit = {
 					sedentarization_province_can_recieve_outpost = { owner_scope = ROOT }
@@ -1870,27 +1871,16 @@ sedentarization_check_for_invalid_flags = {
 			limit = { has_province_flag = sed_outpost_type_gozabhar }
 			clr_province_flag = sed_outpost_type_gozabhar
 			clr_province_flag = sed_outpost_type_selected
-			# Reset phase progress
-			set_local_autonomy = 60
-			# Refire the outpost type selection event
-			set_province_flag = sed_outpost_type_event_queued
-			province_event = { id = sedentarization.200 }
+			# Reset phase progress and refire the outpost type selection event
+			sedentarization_reset_province_outpost = { phase_ii = yes }
 		}
 		# Phase Three flags
 		if = {
 			limit = { has_province_flag = sed_settler_policy_centaur_tribute }
 			clr_province_flag = sed_settler_policy_centaur_tribute
 			clr_province_flag = sed_settler_policy_selected
-			# Reset phase progress
-			set_local_autonomy = 30
-			# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
-			set_province_flag = sed_settler_policy_event_queued
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_outpost_type_event_queued }
-				}
-				province_event = { id = sedentarization.300 }
-			}
+			# Reset phase progress and refire the settler policy selection event
+			sedentarization_reset_province_outpost = { phase_iii = yes }
 		}
 	}
 }
@@ -1910,61 +1900,15 @@ sedentarization_pick_yearly_event = {
 				# Equal chance for Phase One events...
 				1 = {
 					trigger = { sedentarization_phase_one_events_can_fire = yes }
-					sedentarization_pick_yearly_phase_one_event = yes
+					# Phase One event handler
+					province_event = { id = sedentarization.1 }
 				}
 				# ...as Phase Two events (as long as it's reached Phase Two)
 				1 = {
 					trigger = {
 						NOT = { has_active_triggered_province_modifier = sed_outpost_phase_i }
 					}
-					# There's currently only 1 random Phase Two/Three event, so no need for a scripted effect or complex triggers yet
-					province_event = {
-						id = sedentarization.210
-						random = 360
-					}
-				}
-			}
-		}
-	}
-}
-
-sedentarization_pick_yearly_phase_one_event = {
-	# First Contact events come first
-	if = {
-		limit = {
-			NOT = { has_province_flag = sed_contact_complete }
-		}
-		random_list = {
-			1 = {
-				province_event = {
-					id = sedentarization.100
-					random = 360
-				}
-			}
-			4 = {
-				trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
-				province_event = {
-					id = sedentarization.101
-					random = 360
-				}
-			}
-		}
-	}
-	# Raid Events forever-after (until the player establishes guards)
-	else = {
-		random_list = {
-			# 73.7% chance of happening each roll
-			737 = {
-				province_event = {
-					id = sedentarization.120
-					random = 360
-				}
-			}
-			# ~60% chance of happening within 3 rolls
-			263 = {
-				province_event = {
-					id = sedentarization.121
-					random = 360
+					province_event = { id = sedentarization.2 }
 				}
 			}
 		}
@@ -2056,14 +2000,44 @@ sedentarization_reset_province_outpost = {
 	]
 	[[phase_ii]
 		add_province_triggered_modifier = sed_outpost_phase_ii
-		set_local_autonomy = 60
+		set_local_autonomy = 80
 		set_province_flag = sed_trade_goods_upgrade_events_unlocked
+		# Set a queueing flag. Normally used for taking care of invalidated choices,
+		# it's also here for the edge-case that two provinces simultaneously progress.
+		set_province_flag = sed_outpost_type_event_queued
 		province_event = { id = sedentarization.200 }
 	]
 	[[phase_iii]
 		add_province_triggered_modifier = sed_outpost_phase_iii
-		set_local_autonomy = 30
-		province_event = { id = sedentarization.300 }
+		set_local_autonomy = 65
+		# Another queueing flag. Same purpose as the one above
+		set_province_flag = sed_settler_policy_event_queued
+		# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_outpost_type_event_queued }
+			}
+			province_event = { id = sedentarization.300 }
+		}
+	]
+	[[completion]
+		owner = {
+			subtract_variable = {
+				which = sed_outpost_cap_usage
+				value = 1
+			}
+		}
+		# Another queueing flag. Same purpose as the ones above
+		set_province_flag = sed_outpost_completion_event_queued
+		if = {
+			limit = {
+				NOT = {
+					has_province_flag = sed_outpost_type_event_queued
+					has_province_flag = sed_settler_policy_event_queued
+				}
+			}
+			province_event = { id = sedentarization.310 }
+		}
 	]
 }
 
@@ -2099,14 +2073,7 @@ sedentarization_outpost_try_phase_change = {
 		]
 		# Phase Three, progressing to completion
 		[[phase_iii]
-			sedentarization_reset_province_outpost = yes
-			owner = {
-				subtract_variable = {
-					which = sed_outpost_cap_usage
-					value = 1
-				}
-			}
-			province_event = { id = sedentarization.310 }
+			sedentarization_reset_province_outpost = { completion = yes }
 		]
 	}
 	# If ineligible to progress, don't check again for about a year
@@ -2201,36 +2168,6 @@ sedentarization_phase_two_nomadic_base_culture_effect = {
 	else_if = {
 		limit = { primary_culture = plateau_runsukhi }	# AKA "Rukunai"
 		ROOT = { change_culture = runsukhi }
-	}
-}
-
-sedentarization_fire_queued_choice_events = {
-	# Part of the system that takes care of invalidated choices
-	# Always go through the queued events for the current province before scoping to random other provinces
-	if = {
-		limit = { has_province_flag = sed_settler_policy_event_queued }
-		province_event = { id = sedentarization.300 }
-	}
-	# Finally, look for other provinces with either type of queued event
-	else = {
-		owner = {
-			random_owned_province = {
-				limit = {
-					OR = {
-						has_province_flag = sed_outpost_type_event_queued
-						has_province_flag = sed_settler_policy_event_queued
-					}
-				}
-				# Always fire the earlier-phase events before later ones (outpost type before settler policy)
-				if = {
-					limit = { has_province_flag = sed_outpost_type_event_queued }
-					province_event = { id = sedentarization.200 }
-				}
-				else = {
-					province_event = { id = sedentarization.300 }
-				}
-			}
-		}
 	}
 }
 
