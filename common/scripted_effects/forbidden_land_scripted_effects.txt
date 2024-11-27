@@ -1802,9 +1802,11 @@ sedentarization_calculate_outpost_cap = {
 
 sedentarization_deduct_outpost_cost_from_country = {
 	add_treasury = -50
-	change_variable = {
-		which = sed_outpost_cap_usage
-		value = 1
+	hidden_effect = {
+		change_variable = {
+			which = sed_outpost_cap_usage
+			value = 1
+		}
 	}
 }
 
@@ -1819,10 +1821,10 @@ sedentarization_place_brand_new_outpost = {
 				has_province_flag = sed_semi_complete_sedentarization
 			}
 		}
-		sedentarization_reset_province_outpost = { phase_i = yes }
+		sedentarization_reset_province_outpost = { reset_phase_one = yes }
 	}
 	else = {
-		sedentarization_reset_province_outpost = { phase_ii = yes }
+		sedentarization_reset_province_outpost = { reset_phase_two = yes }
 		# Cleanup invalid Phase One flags; Phase Two and Three flags shouldn't exist because of on_province_owner_change
 		sedentarization_check_for_invalid_flags = yes
 	}
@@ -1830,59 +1832,68 @@ sedentarization_place_brand_new_outpost = {
 
 sedentarization_apply_min_autonomy_negating_modifier = {
 	# Apply a modifier to negate the min autonomy from territories and half-states
-	if = {
-		limit = { is_territory = yes }
-		add_province_modifier = {
-			name = sed_min_autonomy_from_territory_negation
-			duration = -1
-			hidden = yes
+	hidden_effect = {
+		if = {
+			limit = { is_territory = yes }
+			add_province_modifier = {
+				name = sed_min_autonomy_from_territory_negation
+				duration = -1
+				hidden = yes
+			}
+			remove_province_modifier = sed_min_autonomy_from_half_state_negation
 		}
-		remove_province_modifier = sed_min_autonomy_from_half_state_negation
-	}
-	else_if = {
-		limit = {
-			is_state = yes
-			NOT = { is_state_core = FROM }
+		else_if = {
+			limit = {
+				is_state = yes
+				NOT = { is_state_core = FROM }
+			}
+			add_province_modifier = {
+				name = sed_min_autonomy_from_half_state_negation
+				duration = -1
+				hidden = yes
+			}
+			remove_province_modifier = sed_min_autonomy_from_territory_negation
 		}
-		add_province_modifier = {
-			name = sed_min_autonomy_from_half_state_negation
-			duration = -1
-			hidden = yes
+		else = {
+			remove_province_modifier = sed_min_autonomy_from_territory_negation
+			remove_province_modifier = sed_min_autonomy_from_half_state_negation
 		}
-		remove_province_modifier = sed_min_autonomy_from_territory_negation
-	}
-	else = {
-		remove_province_modifier = sed_min_autonomy_from_territory_negation
-		remove_province_modifier = sed_min_autonomy_from_half_state_negation
 	}
 }
 
 sedentarization_check_for_invalid_flags = {
-	if = {
-		limit = {
-			has_province_flag = sed_contact_complete
-			sedentarization_province_valid_for_centaur_friendly_options = no
-		}
-		# Phase One flags
-		clr_province_flag = sed_friendly_warning
-		set_province_flag = sed_raid_events_unlocked
-		# Phase Two flags
+	hidden_effect = {
 		if = {
-			limit = { has_province_flag = sed_outpost_type_gozabhar }
-			clr_province_flag = sed_outpost_type_gozabhar
-			clr_province_flag = sed_outpost_type_selected
-			# Reset phase progress and refire the outpost type selection event
-			sedentarization_reset_province_outpost = { phase_ii = yes }
-		}
-		# Phase Three flags
-		if = {
-			limit = { has_province_flag = sed_settler_policy_centaur_tribute }
-			clr_province_flag = sed_settler_policy_centaur_tribute
-			clr_province_flag = sed_settler_policy_selected
-			# Reset phase progress and refire the settler policy selection event
-			sedentarization_reset_province_outpost = { phase_iii = yes }
+			limit = {
+				has_province_flag = sed_contact_complete
+				sedentarization_province_valid_for_centaur_friendly_options = no
+			}
+			# Phase One flags
+			sedentarization_unlock_raid_events = yes
+			# Phase Two flags
+			if = {
+				limit = { has_province_flag = sed_outpost_type_gozabhar }
+				clr_province_flag = sed_outpost_type_gozabhar
+				clr_province_flag = sed_outpost_type_selected
+				# Reset phase progress and refire the outpost type selection event
+				sedentarization_reset_province_outpost = { reset_phase_two = yes }
+			}
+			# Phase Three flags
+			if = {
+				limit = { has_province_flag = sed_settler_policy_centaur_tribute }
+				clr_province_flag = sed_settler_policy_centaur_tribute
+				clr_province_flag = sed_settler_policy_selected
+				# Reset phase progress and refire the settler policy selection event
+				sedentarization_reset_province_outpost = { reset_phase_three = yes }
+			}
 		}
 	}
+}
+
+sedentarization_unlock_raid_events = {
+	clr_province_flag = sed_friendly_warning
+	custom_tooltip = "Raid events may occur here, increasing autonomy."
+	set_province_flag = sed_raid_events_unlocked
 }
 
 sedentarization_pick_yearly_event = {
@@ -1896,6 +1907,8 @@ sedentarization_pick_yearly_event = {
 				factor = 2
 				NOT = { has_province_flag = sed_contact_complete }
 			}
+			# Outpost owner is used for some triggers (currently just Phase Two)
+			owner = { save_event_target_as = sed_outpost_owner }
 			random_list = {
 				# Equal chance for Phase One events...
 				1 = {
@@ -1907,6 +1920,7 @@ sedentarization_pick_yearly_event = {
 				1 = {
 					trigger = {
 						NOT = { has_active_triggered_province_modifier = sed_outpost_phase_i }
+						sedentarization_phase_two_events_can_fire = yes
 					}
 					province_event = { id = sedentarization.2 }
 				}
@@ -1938,7 +1952,7 @@ sedentarization_on_province_owner_change = {
 					value = 1
 				}
 			}
-			clr_province_flag = sed_block_extra_clicks
+			# clr_province_flag = sed_block_extra_clicks
 			if = {
 				limit = { has_active_triggered_province_modifier = sed_outpost_phase_i }
 				sedentarization_clear_phase_one_flags = yes
@@ -1968,7 +1982,7 @@ sedentarization_on_province_owner_change = {
 }
 
 sedentarization_clear_phase_one_flags = {
-	clr_province_flag = sed_block_extra_clicks
+	# clr_province_flag = sed_block_extra_clicks
 	clr_province_flag = sed_contact_complete
 	clr_province_flag = sed_friendly_warning
 	clr_province_flag = sed_raid_events_unlocked
@@ -1991,25 +2005,31 @@ sedentarization_clear_phase_three_flags = {
 }
 
 sedentarization_reset_province_outpost = {
-	remove_province_triggered_modifier = sed_outpost_phase_i
-	remove_province_triggered_modifier = sed_outpost_phase_ii
-	remove_province_triggered_modifier = sed_outpost_phase_iii
-	[[phase_i]
-		add_province_triggered_modifier = sed_outpost_phase_i
+	hidden_effect = {
+		remove_province_triggered_modifier = sed_outpost_phase_i
+		remove_province_triggered_modifier = sed_outpost_phase_ii
+		remove_province_triggered_modifier = sed_outpost_phase_iii
+		clr_province_flag = sed_province_has_outpost
+	}
+	[[reset_phase_one]
+		set_province_flag = sed_province_has_outpost
 		set_local_autonomy = 100
+		add_province_triggered_modifier = sed_outpost_phase_i
 	]
-	[[phase_ii]
-		add_province_triggered_modifier = sed_outpost_phase_ii
+	[[reset_phase_two]
+		set_province_flag = sed_province_has_outpost
 		set_local_autonomy = 80
+		add_province_triggered_modifier = sed_outpost_phase_ii
 		set_province_flag = sed_trade_goods_upgrade_events_unlocked
 		# Set a queueing flag. Normally used for taking care of invalidated choices,
 		# it's also here for the edge-case that two provinces simultaneously progress.
 		set_province_flag = sed_outpost_type_event_queued
 		province_event = { id = sedentarization.200 }
 	]
-	[[phase_iii]
-		add_province_triggered_modifier = sed_outpost_phase_iii
+	[[reset_phase_three]
+		set_province_flag = sed_province_has_outpost
 		set_local_autonomy = 65
+		add_province_triggered_modifier = sed_outpost_phase_iii
 		# Another queueing flag. Same purpose as the one above
 		set_province_flag = sed_settler_policy_event_queued
 		# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
@@ -2050,17 +2070,17 @@ sedentarization_outpost_try_phase_change = {
 	owner = { save_event_target_as = sed_outpost_owner }
 	if = {
 		limit = {
-			[[phase_i] has_province_flag = sed_contact_complete ]
-			[[phase_ii] has_province_flag = sed_outpost_type_selected ]
-			[[phase_iii] has_province_flag = sed_settler_policy_selected ]
+			[[current_phase_is_one] has_province_flag = sed_contact_complete ]
+			[[current_phase_is_two] has_province_flag = sed_outpost_type_selected ]
+			[[current_phase_is_three] has_province_flag = sed_settler_policy_selected ]
 			area_for_scope_province = {
 				type = all
 				owned_by = event_target:sed_outpost_owner
 			}
 		}
 		# Phase One, progressing to Phase Two
-		[[phase_i]
-			sedentarization_reset_province_outpost = { phase_ii = yes }
+		[[current_phase_is_one]
+			sedentarization_reset_province_outpost = { reset_phase_two = yes }
 			# Reseting completeness is done here instead of within the above scripted effect because
 			# it should only happen the first time the province hits phase two (i.e. don't reset semi-complete to incomplete).
 			area = {
@@ -2068,17 +2088,17 @@ sedentarization_outpost_try_phase_change = {
 			}
 		]
 		# Phase Two, progressing to Phase Three
-		[[phase_ii]
-			sedentarization_reset_province_outpost = { phase_iii = yes }
+		[[current_phase_is_two]
+			sedentarization_reset_province_outpost = { reset_phase_three = yes }
 		]
 		# Phase Three, progressing to completion
-		[[phase_iii]
+		[[current_phase_is_three]
 			sedentarization_reset_province_outpost = { completion = yes }
 		]
 	}
 	# If ineligible to progress, don't check again for about a year
 	else = {
-		add_permanent_province_modifier = {
+		add_province_modifier = {
 			name = sed_outpost_progress_blocked
 			duration = 360
 			hidden = yes
@@ -2097,8 +2117,7 @@ sedentarization_neglecting_friendly_warning_effect = {
 	if = {
 		limit = { has_province_flag = sed_friendly_warning }
 		custom_tooltip = "By ignoring a 'friendly' warning from the centuars, this will provoke their raids"
-		clr_province_flag = sed_friendly_warning
-		set_province_flag = sed_raid_events_unlocked
+		sedentarization_unlock_raid_events = yes
 	}
 }
 
@@ -2128,7 +2147,9 @@ sedentarization_phase_two_settlement_culture_effect = {
 				primary_culture = rustroad_goblin
 				primary_culture = crawler_goblin
 				primary_culture = cave_goblin
-				# TODO: "IF you have completed special mission in Maghargma Tree, change culture to Crawler Goblin"
+				# Maghargma can colonize with goblins if this mission's completed.
+				# Will be lost if they form another country or otherwise lose access to this mission (even if completed).
+				mission_completed = maghargma_the_little_brothers
 			}
 		}
 		ROOT = { change_culture = crawler_goblin }
@@ -2182,9 +2203,12 @@ sedentarization_outpost_completion_centaur_tribute_effect = {
 		owner = { large_increase_of_centaur_tolerance_effect = yes }
 	}
 	else = {
-		$culture_source$ = {
-			add_matching_race_minority_size_to_scope = { scope = ROOT }
-		}
+		custom_tooltip = "The rest of the area will gain minorities from the outpost's majority."
+		[[culture_source]
+			$culture_source$ = {
+				add_matching_race_minority_size_to_scope = { scope = ROOT }
+			}
+		]
 	}
 	sedentarization_reset_completion_flag = { completeness = incomplete }
 }
@@ -2206,16 +2230,19 @@ sedentarization_outpost_completion_heavy_settlement_effect = {
 }
 
 sedentarization_remove_system_from_province = {
-	remove_province_modifier = sed_forbidden
-	remove_province_modifier = sed_entrenched_centaur_nomadism
-	sedentarization_reset_province_outpost = yes
-	remove_province_modifier = sed_min_autonomy_from_territory_negation
-	remove_province_modifier = sed_min_autonomy_from_half_state_negation
-	sedentarization_clear_phase_one_flags = yes
-	sedentarization_clear_phase_two_flags = yes
-	sedentarization_clear_phase_three_flags = yes
-	remove_province_modifier = sed_centaur_tributary_system
-	remove_province_modifier = sed_nomadic_governance
-	sedentarization_reset_completion_flag = yes
+	custom_tooltip = "This province will no longer be Forbidden."
+	hidden_effect = {
+		remove_province_modifier = sed_forbidden
+		remove_province_modifier = sed_entrenched_centaur_nomadism
+		sedentarization_reset_province_outpost = yes
+		remove_province_modifier = sed_min_autonomy_from_territory_negation
+		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+		sedentarization_clear_phase_one_flags = yes
+		sedentarization_clear_phase_two_flags = yes
+		sedentarization_clear_phase_three_flags = yes
+		remove_province_modifier = sed_centaur_tributary_system
+		remove_province_modifier = sed_nomadic_governance
+		sedentarization_reset_completion_flag = yes
+	}
 }
 ### End of - Sedentarization system related effects

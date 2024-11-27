@@ -127,9 +127,18 @@ province_event = {
 	hidden = yes
 
 	option = {
+	# There's currently only 1 random Phase Two/Three event, so no need for complex effects and triggers yet
 		if = {
-			limit = { sedentarization_phase_two_events_can_fire = yes }
-			if = {
+			limit = {
+				OR = {
+					trade_goods = wool
+					trade_goods = livestock
+				}
+			}
+			save_event_target_as = sed_trade_goods_upgrade_target
+		}
+		else = {
+			random_area_province = {
 				limit = {
 					OR = {
 						trade_goods = wool
@@ -138,25 +147,7 @@ province_event = {
 				}
 				save_event_target_as = sed_trade_goods_upgrade_target
 			}
-			else = {
-				random_area_province = {
-					limit = {
-						OR = {
-							trade_goods = wool
-							trade_goods = livestock
-						}
-					}
-					save_event_target_as = sed_trade_goods_upgrade_target
-				}
-			}
-			province_event = {
-				id = sedentarization.210
-				days = 1
-				random = 359
-			}
 		}
-		# There's currently only 1 random Phase Two/Three event, so no need for complex effects and triggers yet
-		owner = { save_event_target_as = sed_outpost_owner }
 		province_event = {
 			id = sedentarization.210
 			days = 1
@@ -193,6 +184,7 @@ province_event = {
 						OR = {
 							has_province_flag = sed_outpost_type_event_queued
 							has_province_flag = sed_settler_policy_event_queued
+							has_province_flag = sed_outpost_completion_event_queued
 						}
 					}
 					# Always fire the earlier-phase events before later ones (outpost type before settler policy)
@@ -230,7 +222,7 @@ province_event = {
 			add_manpower = -0.5
 			add_treasury = -20
 		}
-		set_province_flag = sed_raid_events_unlocked
+		sedentarization_unlock_raid_events = yes
 		set_province_flag = sed_contact_complete
 	}
 }
@@ -261,7 +253,7 @@ province_event = {
 	}
 	option = {
 		name = sedentarization.101.b
-		set_province_flag = sed_raid_events_unlocked
+		sedentarization_unlock_raid_events = yes
 		set_province_flag = sed_contact_complete
 	}
 }
@@ -277,7 +269,9 @@ province_event = {
 
 	option = {
 		name = sedentarization.102.a
+		custom_tooltip = "Raid events will not occur here."
 		set_province_flag = sed_contact_complete
+		custom_tooltip = "Will invalidate if purging or expelling centaurs."
 	}
 }
 
@@ -292,8 +286,10 @@ province_event = {
 
 	option = {
 		name = sedentarization.103.a
+		custom_tooltip = "Raid events will not occur here, as long as we don't push settlers onto their territory."
 		set_province_flag = sed_friendly_warning
 		set_province_flag = sed_contact_complete
+		custom_tooltip = "Will invalidate if purging or expelling centaurs."
 	}
 }
 
@@ -308,7 +304,7 @@ province_event = {
 
 	option = {
 		name = sedentarization.104.a
-		set_province_flag = sed_raid_events_unlocked
+		sedentarization_unlock_raid_events = yes
 		set_province_flag = sed_contact_complete
 	}
 }
@@ -328,24 +324,12 @@ province_event = {
 	option = {
 		name = sedentarization.120.a
 		random_list = {
-			1 = {
-				area = { add_local_autonomy = 5 }
-			}
-			1 = {
-				area = { add_local_autonomy = 6 }
-			}
-			1 = {
-				area = { add_local_autonomy = 7 }
-			}
-			1 = {
-				area = { add_local_autonomy = 8 }
-			}
-			1 = {
-				area = { add_local_autonomy = 9 }
-			}
-			1 = {
-				area = { add_local_autonomy = 10 }
-			}
+			1 = { add_local_autonomy = 2.5 }
+			1 = { add_local_autonomy = 3 }
+			1 = { add_local_autonomy = 3.5 }
+			1 = { add_local_autonomy = 4 }
+			1 = { add_local_autonomy = 4.5 }
+			1 = { add_local_autonomy = 5 }
 		}
 	}
 }
@@ -369,6 +353,7 @@ province_event = {
 			}
 		}
 		owner = { add_treasury = -20 }
+		custom_tooltip = "Raid events will be blocked from happening here."
 		set_province_flag = sed_local_mounted_guards
 	}
 	option = {
@@ -383,6 +368,7 @@ province_event = {
 			add_treasury = -100
 			set_country_flag = sed_created_mounted_guards
 		}
+		custom_tooltip = "Raid events will be blocked from happening here."
 		set_province_flag = sed_local_mounted_guards
 	}
 	option = {
@@ -393,6 +379,7 @@ province_event = {
 		name = sedentarization.121.deploy_unique_guards
 		highlight = yes
 		trigger = { sedentarization_country_can_have_special_mounted_guards = yes }
+		custom_tooltip = "Our elite soldiers will block raid events from happening here and at all other outposts."
 		owner = { set_country_flag = sed_established_special_mounted_guards }
 	}
 }
@@ -583,6 +570,8 @@ province_event = {
 		name = sedentarization.300.centaur_tribute
 		trigger = { sedentarization_province_valid_for_centaur_friendly_options = yes }
 		set_province_flag = sed_settler_policy_centaur_tribute
+		custom_tooltip = "When this outpost completes:"
+		tooltip = { sedentarization_outpost_completion_centaur_tribute_effect = yes }
 	}
 	option = {
 		name = sedentarization.300.nomadic_control
@@ -591,6 +580,8 @@ province_event = {
 		}
 		set_province_flag = sed_settler_policy_nomadic_control
 		owner = { add_mil_power = -10 }
+		custom_tooltip = "When this outpost completes:"
+		tooltip = { sedentarization_outpost_completion_nomadic_control_effect = yes }
 	}
 	option = {
 		name = sedentarization.300.heavy_settlement
@@ -599,6 +590,8 @@ province_event = {
 		}
 		set_province_flag = sed_settler_policy_heavy_settlement
 		owner = { add_dip_power = -40 }
+		custom_tooltip = "When this outpost completes:"
+		tooltip = { sedentarization_outpost_completion_heavy_settlement_effect = yes }
 	}
 	
 	after = {
@@ -653,10 +646,10 @@ province_event = {
 			add_base_manpower = 1
 		}
 		# Completion effect from settler policy
-		save_event_target_as = sed_outpost
+		hidden_effect = { save_event_target_as = sed_outpost }
 		if = {
 			limit = { has_province_flag = sed_settler_policy_centaur_tribute }
-			sedentarization_outpost_completion_centaur_tribute_effect = { culture_source = event_target:sed_outpost }
+			sedentarization_outpost_completion_centaur_tribute_effect = yes
 			# Propagate to the rest of the area regardless of ownership
 			area = {
 				limit = {
@@ -719,7 +712,7 @@ province_event = {
 	hidden = yes
 
 	option = {
-		sedentarization_outpost_completion_centaur_tribute_effect = yes
+		sedentarization_outpost_completion_centaur_tribute_effect = { culture_source = event_target:sed_outpost }
 		set_local_autonomy = 50
 	}
 }
