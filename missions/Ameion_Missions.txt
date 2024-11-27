@@ -86,10 +86,14 @@ G52_1 = {
 				G56 = {
 					add_historical_friend = ROOT
 					add_historical_friend = G62
+					force_remove_rival = ROOT
+					force_remove_rival = G62
 				}
 				G62 = { 
 					add_historical_friend = ROOT 
 					add_historical_friend = G56
+					force_remove_rival = ROOT
+					force_remove_rival = G56
 				}
 			}
 			if = {
@@ -338,7 +342,11 @@ G52_1 = {
 				}
 			}
 			if = {
-				limit = { has_parliament = yes }
+				limit = { 
+					has_parliament = yes
+					owns = 2684
+					owns = 2625
+				}
 				2684 = { set_seat_in_parliament = yes }
 				2625 = { set_seat_in_parliament = yes }
 			}
@@ -1716,28 +1724,8 @@ G52_3 = {
 		
 		trigger = {
 			army_size = 50
-			if = {
-				limit = {
-					kalavend_region = {
-						type = all
-						country_or_non_sovereign_subject_holds = ROOT
-					}
-					larankarha_highlands_region = {
-						type = all
-						country_or_non_sovereign_subject_holds = ROOT
-					}
-				}
-				kalavend_region = {
-					type = all
-					country_or_non_sovereign_subject_holds = ROOT
-				}
-				larankarha_highlands_region = {
-					type = all
-					country_or_non_sovereign_subject_holds = ROOT
-				}
-			}
-			else = {
-				any_known_country = { 
+			OR = {
+				any_known_country = {
 					capital_scope = {
 						OR = {
 							region = kalavend_region
@@ -1747,6 +1735,16 @@ G52_3 = {
 					is_in_war = {
 						attacker_leader = ROOT
 						defender_leader = THIS
+					}
+				}
+				AND = {
+					kalavend_region = {
+						type = all
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+					larankarha_highlands_region = {
+						type = all
+						country_or_non_sovereign_subject_holds = ROOT
 					}
 				}
 			}
@@ -1906,6 +1904,23 @@ G52_3 = {
 				name = G52_kheionai_immigrants
 				duration = 10950
 			}
+			custom_tooltip = ameion_klereyen_subjects_tt
+			every_subject_country = {
+				limit = { culture_group = taychendi_ruinborn_elf }
+				change_primary_culture = klereyen
+				change_religion = kheionism
+				hidden_effect = {
+					set_country_flag = ameion_kheionization
+					remove_opinion = {
+						who = ROOT
+						modifier = converted_our_culture
+					}
+					remove_opinion = {
+						who = ROOT
+						modifier = aggressive_expansion
+					}
+				}
+			}
 		}
 	}
 	
@@ -1944,7 +1959,12 @@ G52_3 = {
 			2496 = { add_province_triggered_modifier = G52_nakyra_capital_2 }
 			2495 = { add_province_triggered_modifier = G52_nakyra_capital_2 }
 			if = {
-				limit = { has_parliament = yes }
+				limit = { 
+					has_parliament = yes
+					owns = 2497
+					owns = 2496
+					owns = 2495
+				}
 				2497 = { set_seat_in_parliament = yes }
 				2496 = { set_seat_in_parliament = yes }
 				2495 = { set_seat_in_parliament = yes }
@@ -2015,7 +2035,10 @@ G52_3 = {
 					}
 				}
 				if = {
-					limit = { has_parliament = yes }
+					limit = { 
+						has_parliament = yes
+						owns = 2619
+					}
 					2619 = { set_seat_in_parliament = yes }
 				}
 			}
@@ -2610,11 +2633,27 @@ G52_4 = {
 		}
 		
 		trigger = {
-			num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
-				value = 20
-				superregion = effelai_superregion
-				trade_goods = tropical_wood
-				has_building = mage_tower
+			OR = {
+				num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
+					value = 20
+					superregion = effelai_superregion
+					trade_goods = tropical_wood
+					has_building = mage_tower
+				}
+				development_in_provinces = {
+					value = 200
+					superregion = effelai_superregion
+					trade_goods = tropical_wood
+					has_building = mage_tower
+				}
+				any_subject_country = {
+					development_in_provinces = {
+						value = 200
+						superregion = effelai_superregion
+						trade_goods = tropical_wood
+						has_building = mage_tower
+					}
+				}
 			}
 			dip_power = 100
 			mil_power = 100
@@ -2684,7 +2723,10 @@ G52_5 = {
 					type = all
 					owned_by = ROOT
 				}
-				J73 = { all_owned_province = { controlled_by = ROOT } }
+				J73 = {
+					war_with = ROOT
+					all_owned_province = { controlled_by = ROOT }
+				}
 			}
 		}
 		
@@ -2757,7 +2799,11 @@ G52_5 = {
 				duration = 9125
 			}
 			kalavend_region = { add_claim = ROOT }
-			country_event = { id = flavor_ameion.89 }
+			if = {
+				limit = { G64 = { ai = no } }
+				G64 = { country_event = { id = flavor_ameion.890 } }
+			}
+			else = { country_event = { id = flavor_ameion.89 } }
 			if = {
 				limit = { has_ruler_modifier = G52_destiny }
 				custom_tooltip = ameion_laskaris_perk
@@ -2779,12 +2825,28 @@ G52_5 = {
 		}
 		
 		trigger = {
-			OR = {
-				war_score_against = {
-					who = G64
-					value = 80
+			if = {
+				limit = { G64 = { is_subject = yes } }
+				G64 = {
+					overlord = {
+						war_with = ROOT
+						NOT = {
+							war_score_against = {
+								who = ROOT
+								value = -80
+							}
+						}
+					}
 				}
-				NOT = { exists = G64 }
+			}
+			else = {
+				OR = {
+					war_score_against = {
+						who = G64
+						value = 80
+					}
+					NOT = { exists = G64 }
+				}
 			}
 			urvand_area = {
 				type = all
