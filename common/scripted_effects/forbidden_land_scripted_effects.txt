@@ -1898,14 +1898,20 @@ sedentarization_unlock_raid_events = {
 
 sedentarization_pick_yearly_event = {
 	random_list = {
-		# 83.2% chance no event happens each year
-		832 = {}
-		# ~60% chance at least one event happens within 5 years
-		178 = {
-			# ~83% chance of first contact happening within 5 years
+		# 69.3% chance no event happens each year
+		693 = {}
+		# ~60% chance at least one event happens within 2.5 years
+		307 = {
+			# ~80% chance of first contact happening within 2.5 years
 			modifier = {
 				factor = 2
 				NOT = { has_province_flag = sed_contact_complete }
+			}
+			# Trade goods events was happening too frequently (temp fix?)
+			modifier = {
+				factor = 0.5
+				sedentarization_phase_one_events_can_fire = no
+				sedentarization_phase_two_events_can_fire = yes
 			}
 			# Outpost owner is used for some triggers (currently just Phase Two)
 			owner = { save_event_target_as = sed_outpost_owner }
@@ -1974,6 +1980,8 @@ sedentarization_on_province_owner_change = {
 						}
 					}
 				}
+				PREV = { save_event_target_as = sed_first_forbidden_province }
+				country_event = { id = sedentarization.10 }
 				sedentarization_calculate_outpost_cap = yes
 			}
 		}
@@ -2123,21 +2131,38 @@ sedentarization_phase_two_settlement_culture_effect = {
 	# Change the culture of the outpost based on owner culture; base case is owner's primary culture.
 	if = {
 		limit = { culture_group = triunic }
-		ROOT = { change_culture = urmanki }
+		ROOT = {
+			change_culture = urmanki
+			change_religion = PREV
+		}
 	}
 	else_if = {
 		limit = {
 			primary_culture = sun_elf
 			any_owned_province = { culture = zanite }
 		}
-		ROOT = { change_culture = zanite }
+		random_owned_province = {
+			limit = { culture = zanite }
+			save_event_target_as = sed_religion_source
+		}
+		ROOT = {
+			change_culture = zanite
+			change_religion = event_target:sed_religion_source
+		}
 	}
 	else_if = {
 		limit = {
 			primary_culture = desert_elf
 			any_owned_province = { culture = surani }
 		}
-		ROOT = { change_culture = surani }
+		random_owned_province = {
+			limit = { culture = surani }
+			save_event_target_as = sed_religion_source
+		}
+		ROOT = {
+			change_culture = surani
+			change_religion = event_target:sed_religion_source
+		}
 	}
 	else_if = {
 		limit = {
@@ -2150,10 +2175,16 @@ sedentarization_phase_two_settlement_culture_effect = {
 				mission_completed = maghargma_the_little_brothers
 			}
 		}
-		ROOT = { change_culture = crawler_goblin }
+		ROOT = {
+			change_culture = crawler_goblin
+			change_religion = PREV
+		}
 	}
 	else = {
-		ROOT = { change_culture = PREV }
+		ROOT = {
+			change_culture = PREV
+			change_religion = PREV
+		}
 	}
 }
 
@@ -2161,7 +2192,10 @@ sedentarization_phase_two_nomadic_base_culture_effect = {
 	# Change the culture of the outpost based on owner culture; no base case - effect must be valid.
 	if = {
 		limit = { culture_group = triunic }
-		ROOT = { change_culture = orachav }
+		ROOT = {
+			change_culture = orachav
+			change_religion = PREV
+		}
 	}
 	# TODO: culture not implemented yet; uncomment when implemented
 	# else_if = {
@@ -2182,11 +2216,21 @@ sedentarization_phase_two_nomadic_base_culture_effect = {
 			}
 			any_owned_province = { culture = masnsih }
 		}
-		ROOT = { change_culture = masnsih }
+		random_owned_province = {
+			limit = { culture = masnsih }
+			save_event_target_as = sed_religion_source
+		}
+		ROOT = {
+			change_culture = masnsih
+			change_religion = event_target:sed_religion_source
+		}
 	}
 	else_if = {
 		limit = { primary_culture = plateau_runsukhi }	# AKA "Rukunai"
-		ROOT = { change_culture = runsukhi }
+		ROOT = {
+			change_culture = runsukhi
+			change_religion = PREV
+		}
 	}
 }
 
@@ -2212,7 +2256,11 @@ sedentarization_outpost_completion_centaur_tribute_effect = {
 }
 
 sedentarization_outpost_completion_nomadic_control_effect = {
-	[[culture_source] change_culture = $culture_source$ ]
+	custom_tooltip = "The rest of the area will convert culture and religion to that of the outpost's."
+	[[culture_source]
+		change_culture = $culture_source$
+		change_religion = $culture_source$
+	]
 	add_province_modifier = {
 		name = sed_nomadic_governance
 		duration = -1
@@ -2222,7 +2270,11 @@ sedentarization_outpost_completion_nomadic_control_effect = {
 
 sedentarization_outpost_completion_heavy_settlement_effect = {
 	sedentarization_remove_system_from_province = yes
-	[[culture_source] change_culture = $culture_source$ ]
+	custom_tooltip = "The rest of the area will convert culture and religion to that of the outpost's."
+	[[culture_source]
+		change_culture = $culture_source$
+		change_religion = $culture_source$
+	]
 	# This flag should be the only provincial script remnant from the system
 	sedentarization_reset_completion_flag = { completeness = complete }
 }
@@ -2241,6 +2293,23 @@ sedentarization_remove_system_from_province = {
 		remove_province_modifier = sed_centaur_tributary_system
 		remove_province_modifier = sed_nomadic_governance
 		sedentarization_reset_completion_flag = yes
+	}
+}
+
+# This COULD be generalized to ANY province event, instead of only the sedentarization system events.
+sedentarization_propagate_completion_effect_to_area = {
+	# Propagate to the rest of the area regardless of ownership
+	hidden_effect = {
+		area = {
+			limit = {
+				NOT = { province_id = ROOT }
+			}
+			province_event = {
+				id = sedentarization.$event_number$
+				days = 1
+				random = 89
+			}
+		}
 	}
 }
 ### End of - Sedentarization system related effects
