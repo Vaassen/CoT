@@ -1777,7 +1777,7 @@ sedentarization_on_yearly_pulse = {
 			# Fire events
 			every_owned_province = {
 				limit = { sedentarization_province_has_outpost = yes }
-				sedentarization_apply_min_autonomy_negating_modifier = yes
+				area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
 				sedentarization_check_for_invalid_flags = yes
 				sedentarization_pick_yearly_event = yes
 			}
@@ -1812,7 +1812,7 @@ sedentarization_deduct_outpost_cost_from_country = {
 
 sedentarization_place_brand_new_outpost = {
 	# Apply a min autonomy-negating modifier if necessary (for territories and half-states)
-	sedentarization_apply_min_autonomy_negating_modifier = yes
+	area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
 	# Apply the outpost at the correct phase. It should be Phase One most of the time.
 	if = {
 		limit = {
@@ -1907,27 +1907,24 @@ sedentarization_pick_yearly_event = {
 				factor = 2
 				NOT = { has_province_flag = sed_contact_complete }
 			}
-			# Trade goods events was happening too frequently (temp fix?)
-			modifier = {
-				factor = 0.5
-				sedentarization_phase_one_events_can_fire = no
-				sedentarization_phase_two_events_can_fire = yes
-			}
+			# # Trade goods events were happening too frequently (temp fix?)
+			# modifier = {
+			# 	factor = 0.5
+			# 	sedentarization_phase_one_events_can_fire = no
+			# 	sedentarization_phase_two_events_can_fire = yes
+			# }
 			# Outpost owner is used for some triggers (currently just Phase Two)
 			owner = { save_event_target_as = sed_outpost_owner }
 			random_list = {
-				# Equal chance for Phase One events...
-				1 = {
+				# Twice as likely for Phase One events...
+				2 = {
 					trigger = { sedentarization_phase_one_events_can_fire = yes }
 					# Phase One event handler
 					province_event = { id = sedentarization.1 }
 				}
-				# ...as Phase Two events (as long as it's reached Phase Two)
+				# ...as Phase Two events
 				1 = {
-					trigger = {
-						NOT = { has_active_triggered_province_modifier = sed_outpost_phase_i }
-						sedentarization_phase_two_events_can_fire = yes
-					}
+					trigger = { sedentarization_phase_two_events_can_fire = yes }
 					province_event = { id = sedentarization.2 }
 				}
 			}
@@ -1959,7 +1956,7 @@ sedentarization_on_province_owner_change = {
 				}
 			}
 			if = {
-				limit = { has_active_triggered_province_modifier = sed_outpost_phase_i }
+				limit = { has_active_triggered_province_modifier = sed_triggered_outpost_phase_i }
 				sedentarization_clear_phase_one_flags = yes
 			}
 			else = {
@@ -2012,20 +2009,56 @@ sedentarization_clear_phase_three_flags = {
 
 sedentarization_reset_province_outpost = {
 	hidden_effect = {
-		remove_province_triggered_modifier = sed_outpost_phase_i
-		remove_province_triggered_modifier = sed_outpost_phase_ii
-		remove_province_triggered_modifier = sed_outpost_phase_iii
+		sedentarization_remove_outpost_modifiers = { phase = i }
+		sedentarization_remove_outpost_modifiers = { phase = ii }
+		sedentarization_remove_outpost_modifiers = { phase = iii }
 		clr_province_flag = sed_province_has_outpost
 	}
 	[[reset_phase_one]
 		set_province_flag = sed_province_has_outpost
-		set_local_autonomy = 100
-		add_province_triggered_modifier = sed_outpost_phase_i
+		area = {
+			# If below X autonomy, set to X
+			set_local_autonomy = 100
+			log = "Dang dong in area = {1}"
+			add_province_modifier = {
+				name = sed_outpost_areal_influence_phase_i
+				duration = -1
+			}
+		}
+		remove_province_modifier = sed_outpost_areal_influence_phase_i
+		add_province_modifier = {
+			name = sed_outpost_phase_i
+			duration = -1
+		}
+		add_province_triggered_modifier = sed_triggered_outpost_phase_i
 	]
 	[[reset_phase_two]
 		set_province_flag = sed_province_has_outpost
-		set_local_autonomy = 80
-		add_province_triggered_modifier = sed_outpost_phase_ii
+		area = {
+			# If below X autonomy, set to X
+			if = {
+				limit = {
+					OR = {
+						NOT = { local_autonomy = 80 }
+						# Seems to not be correctly setting autonomy for the province that needs it that most (the outpost)
+						has_province_flag = sed_province_has_outpost
+					}
+				}
+				log = "    Bing bong in area = { if = {2}}"
+				set_local_autonomy = 80
+			}
+			log = "Dang dong in area = {2}"
+			add_province_modifier = {
+				name = sed_outpost_areal_influence_phase_ii
+				duration = -1
+			}
+		}
+		remove_province_modifier = sed_outpost_areal_influence_phase_ii
+		add_province_modifier = {
+			name = sed_outpost_phase_ii
+			duration = -1
+		}
+		add_province_triggered_modifier = sed_triggered_outpost_phase_ii
 		set_province_flag = sed_trade_goods_upgrade_events_unlocked
 		# Set a queueing flag. Normally used for taking care of invalidated choices,
 		# it's also here for the edge-case that two provinces simultaneously progress.
@@ -2034,8 +2067,29 @@ sedentarization_reset_province_outpost = {
 	]
 	[[reset_phase_three]
 		set_province_flag = sed_province_has_outpost
-		set_local_autonomy = 65
-		add_province_triggered_modifier = sed_outpost_phase_iii
+		area = {
+			# If below X autonomy, set to X
+			if = {
+				OR = {
+					NOT = { local_autonomy = 65 }
+					# Seems to not be correctly setting autonomy for the province that needs it that most (the outpost)
+					has_province_flag = sed_province_has_outpost
+				}
+				log = "    Bing bong in area = { if = {3}}"
+				set_local_autonomy = 65
+			}
+			log = "Dang dong in area = {3}"
+			add_province_modifier = {
+				name = sed_outpost_areal_influence_phase_iii
+				duration = -1
+			}
+		}
+		remove_province_modifier = sed_outpost_areal_influence_phase_iii
+		add_province_modifier = {
+			name = sed_outpost_phase_iii
+			duration = -1
+		}
+		add_province_triggered_modifier = sed_triggered_outpost_phase_iii
 		# Another queueing flag. Same purpose as the one above
 		set_province_flag = sed_settler_policy_event_queued
 		# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
@@ -2047,6 +2101,13 @@ sedentarization_reset_province_outpost = {
 		}
 	]
 	[[completion]
+		area = {
+			add_province_modifier = {
+				name = sed_system_completed
+				duration = -1
+				hidden = yes
+			}
+		}
 		owner = {
 			subtract_variable = {
 				which = sed_outpost_cap_usage
@@ -2067,9 +2128,21 @@ sedentarization_reset_province_outpost = {
 	]
 }
 
+# DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
+sedentarization_remove_outpost_modifiers = {
+	area = { remove_province_modifier = sed_outpost_areal_influence_phase_$phase$ }
+	remove_province_triggered_modifier = sed_triggered_outpost_phase_$phase$
+	remove_province_modifier = sed_outpost_phase_$phase$
+}
+
+# DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
+# sedentarization_place_outpost_modifiers = {
+# 	# TODO maybe remove this
+# }
+
 sedentarization_outpost_try_phase_change = {
 	# Update the min autonomy-negating modifier if necessary
-	sedentarization_apply_min_autonomy_negating_modifier = yes
+	area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
 	# Check for invalid progression flags, likely due to starting a purge/expulsion
 	sedentarization_check_for_invalid_flags = yes
 	# Check phase-specific progression eligibility
@@ -2256,15 +2329,15 @@ sedentarization_outpost_completion_centaur_tribute_effect = {
 }
 
 sedentarization_outpost_completion_nomadic_control_effect = {
+	add_province_modifier = {
+		name = sed_nomadic_governance
+		duration = -1
+	}
 	custom_tooltip = "The rest of the area will convert culture and religion to that of the outpost's."
 	[[culture_source]
 		change_culture = $culture_source$
 		change_religion = $culture_source$
 	]
-	add_province_modifier = {
-		name = sed_nomadic_governance
-		duration = -1
-	}
 	sedentarization_reset_completion_flag = { completeness = semi_complete }
 }
 
