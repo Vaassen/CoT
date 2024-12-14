@@ -1665,7 +1665,7 @@ azjakuma_missiontree_2_pt_2 = {
 		effect = {
 			custom_tooltip = azjakuma_life_extension_unlock_tooltip
 			hidden_effect = {
-				set_country_flag = consumptive_life_extension_unlocked
+				set_country_flag = devouring_life_extension_unlocked
 			}
 		}
 	}
@@ -2182,6 +2182,8 @@ azjakuma_missiontree_4_pt_2 = {
 				4630 = { cede_province = ROOT }
 			}
 			add_stability_or_adm_power = yes
+			custom_tooltip = witches_and_shamans_unlock
+			clr_country_flag = witches_and_shamans_banned
 		}
 	}
 	
@@ -2817,7 +2819,12 @@ azjakuma_missiontree_5_pt_2 = {
 		
 		trigger = {
 			#jade march would probably not exist
-			R81 = { exists = no }
+			R81 = {
+				OR = {
+					exists = no
+					is_subject_of = ROOT
+				}
+			}
 			jade_mines_region = {
 				type = all
 				OR = {
@@ -2836,27 +2843,27 @@ azjakuma_missiontree_5_pt_2 = {
 			# this would create a new nation, it could change the tag of a goblin subject if one is available ?
 			custom_tooltip = goblin_subject_change_religion_and_type_tooltip
 			hidden_effect = {
-				random_subject_country = {
-					limit = { culture_group = goblin }
-					change_religion = devouring_path
-					change_tag = R81
-					save_global_event_target_as = azjakuma_goblinSubject # using this below before it's defined writes to log
-					ROOT = {
-						create_subject = {
-							subject_type = oni_governorship
-							subject = PREV
-						}
-						every_subject_country = {
-							limit = {
-								culture_group = goblin
-								NOT = { tag = event_target:azjakuma_goblinSubject }
-							}
-							every_owned_province = {
-								add_core = event_target:azjakuma_goblinSubject
-								remove_core = owner
-								cede_province = event_target:azjakuma_goblinSubject
-							}
-						}
+				if = {
+					limit = { NOT = { R81 = { is_subject_of = ROOT } } }
+					random_subject_country = {
+						limit = { culture_group = goblin }
+						change_tag = R81
+					}
+				}
+				R81 = { change_religion = devouring_path }
+				create_subject = {
+					subject_type = oni_governorship
+					subject = R81
+				}
+				every_subject_country = {
+					limit = {
+						culture_group = goblin
+						NOT = { tag = R81 }
+					}
+					every_owned_province = {
+						add_core = R81
+						remove_core = owner
+						cede_province = R81
 					}
 				}
 			}
@@ -2900,12 +2907,9 @@ azjakuma_missiontree_5_pt_2 = {
 		trigger = {
 			if = {
 				limit = {
-						mission_completed = Y01_subjugation_of_goblins # has_saved_event_target didnt work so this instead
-						event_target:azjakuma_goblinSubject = {
-							exists = yes
-						}
+						R81 = { is_subject_of = ROOT }	
 				}
-				event_target:azjakuma_goblinSubject = { # #change with the jade march tag - I think it would make more sense to have the goblin march own this provinces
+				R81 = {
 					num_of_owned_provinces_with = {
 						value = 5
 						region = jade_mines_region
@@ -2921,7 +2925,7 @@ azjakuma_missiontree_5_pt_2 = {
 			}
 			
 			else = {
-				any_subject_country = { # #change with the jade march tag - I think it would make more sense to have the goblin march own this provinces
+				any_subject_country = {
 					num_of_owned_provinces_with = {
 						value = 5
 						region = jade_mines_region
@@ -2938,10 +2942,6 @@ azjakuma_missiontree_5_pt_2 = {
 		}
 		
 		effect = {
-			hidden_effect = {
-				clear_global_event_target = azjakuma_goblinSubject
-			}
-		
 			capital_scope = { 
 				add_permanent_province_modifier = { name = azjakuma_senukagrii_main_level_1 duration = -1 }
 			}
