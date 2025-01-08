@@ -27,7 +27,8 @@ country_event = { #The Return of Himmat
 	picture = ELEPHANT_KING_eventPicture
 		 
 	is_triggered_only = yes
-		
+	fire_only_once = yes
+
 	option = {
 		name = khadisrapur.1.a
 		ai_chance = { factor = 1 }
@@ -35,7 +36,7 @@ country_event = { #The Return of Himmat
 		add_army_tradition = 30
 		set_estate_privilege = estate_adventurers_heroes_in_the_army
 		define_heir = {
-			name = "Himmat I"
+			name = "Himmat"
 			dynasty = "Pirvand"
 			adm = 4
 			dip = 3
@@ -439,7 +440,7 @@ country_event = { #The Contents of the Letter
 			"
 			third_effect = "
 				add_country_modifier = { name = khadisrapur_letter_south_raj_mod duration = 7300 }
-				define_advisor = {  type = fortification_expert skill = 3 discount = yes culture = royal_harimari }
+				define_advisor = {  type = fortification_expert skill = 2 discount = yes culture = royal_harimari }
 			"
 		}
 		hidden_effect = {
@@ -537,8 +538,6 @@ country_event = { #Cowardly Peons
 		ai_chance = { factor = 1 }
 
 		gronstunad_area = { discover_country = ROOT }
-		set_country_flag = khadisrapur_jade_mines_unlock
-		swap_non_generic_missions = yes
 	}
 }
 
@@ -550,15 +549,38 @@ country_event = { #Treaty of Sarnihanpur
 
 	is_triggered_only = yes
 
+
 	option = {
 		name = khadisrapur.17.a
 		ai_chance = { factor = 1 }
 
 		custom_tooltip = R11_rajnadhaga_gambit_effect_tt
+		if = {
+			limit = { event_target:rajnadhaga_or_was_rajnadhaga_target = { exists = no } }
+			set_country_flag = set_up_rajnadhaga_flag
+		}
 		every_owned_province = {
 			limit = { has_province_flag = rajnadhaga_rightful_territory }
-			cede_province = R07
+			remove_core = ROOT
 			ROOT = { add_dip_power = 50 }
+			event_target:rajnadhaga_or_was_rajnadhaga_target = {
+				PREV = {
+					cede_province = PREV
+					add_core = PREV
+				}
+				add_opinion = { who = ROOT modifier = returned_province }
+			}
+		}
+		event_target:rajnadhaga_or_was_rajnadhaga_target = { add_truce_with = ROOT }
+		if = {
+			limit = { has_country_flag = set_up_rajnadhaga_flag }
+			event_target:rajnadhaga_or_was_rajnadhaga_target = {
+				add_historical_friend = ROOT
+				create_alliance = ROOT
+				add_trust = { who = ROOT value = 25 mutual = yes }
+				ROOT = { add_historical_friend = PREV }
+				add_opinion = { who = ROOT modifier = released_in_peace }
+			}
 		}
 	}
 }
@@ -647,6 +669,20 @@ country_event = { #Treaty of Pirvand
 
 		demon_hills_region = { add_permanent_claim = ROOT }
 		add_country_modifier = { name = khadisrapur_shamakhad_consolidated duration = -1 }
+		R07 = {
+			change_tag = R73
+			hidden_effect = { restore_country_name = yes }
+			4460 = { move_capital_effect = yes }
+			set_government_rank = 2
+			add_prestige = 50
+			country_event = { id = ideagroups.1 }
+			add_country_modifier = {
+				name = "centralization_modifier"
+				duration = 7300
+			}
+			set_country_flag = formed_nadimraj_flag
+		}
+		hidden_effect = { R73 = { save_global_event_target_as = rajnadhaga_or_was_rajnadhaga_target } }
 	}
 }
 
@@ -1071,13 +1107,16 @@ country_event = { #An Exchange of Arms
 		ai_chance = { factor = 1 }
 
 		add_country_modifier = { name = khadisrapur_unification_bliss duration = 1825 }
-		R07 = {
+		R73 = {
 			add_country_modifier = { name = khadisrapur_unification_bliss duration = 1825 }
 			change_primary_culture = shamakhadi
 			set_country_flag = will_become_pu
 		}
 		custom_tooltip = R11_unification_effect_tt
-		hidden_effect = { save_global_event_target_as = khadisrapur_personal_union }
+		hidden_effect = {
+			save_global_event_target_as = khadisrapur_personal_union
+			shamakhad_region = { clr_province_flag = rajnadhaga_rightful_territory }
+		}
 	}
 }
 
@@ -1196,6 +1235,59 @@ country_event = { #Hidden Nonsense
 				change_variable = {
 					which = total_industrial_cap_gained
 					which = temp_industrial_cap_gained
+				}
+			}
+		}
+		every_subject_country = {
+			every_owned_province = {
+				limit = {
+					OR = {
+						trade_goods = copper
+						trade_goods = iron
+						trade_goods = coal
+					}
+				}
+				ROOT = {
+					export_to_variable = {
+						which = temp_industrial_cap_gained
+						value = base_production
+						who = PREV
+					}
+					export_to_variable = {
+						which = temp_trade_goods_size_var
+						value = modifier:trade_goods_size
+						who = PREV
+					}
+					export_to_variable = {
+						which = temp_trade_goods_size_modifier_var
+						value = modifier:trade_goods_size_modifier
+						who = PREV
+					}
+					
+					multiply_variable = { #0.2 goods produced per dev
+						which = temp_industrial_cap_gained
+						value = 0.2
+					}
+					change_variable = {
+						which = temp_trade_goods_size_var
+						which = global_trade_goods_size_var
+					}
+					change_variable = {
+						which = temp_trade_goods_size_modifier_var
+						which = global_trade_goods_size_modifier_var
+					}
+					change_variable = { #base goods produced
+						which = temp_industrial_cap_gained
+						which = temp_trade_goods_size_var
+					}
+					multiply_variable = {
+						which = temp_industrial_cap_gained
+						which = temp_trade_goods_size_modifier_var
+					}
+					change_variable = {
+						which = total_industrial_cap_gained
+						which = temp_industrial_cap_gained
+					}
 				}
 			}
 		}
