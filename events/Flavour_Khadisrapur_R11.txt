@@ -194,16 +194,34 @@ country_event = { #The Voice of Tilathi
 	option = {
 		name = khadisrapur.6.b
 		ai_chance = { factor = 1 }
-		trigger = { R12 = { is_subject = yes } }
 
 		add_dip_power = -100
+		custom_tooltip = no_allies_tt
 
-		R12 = {
-			overlord = { add_dip_power = 100 }
-			grant_independence = yes
+		if = {
+			limit = { R12 = { is_subject = yes } }
+			R12 = {
+				set_country_flag = khadisrapur_independence_war
+				overlord = {
+					set_country_flag = no_allies_war
+					set_country_flag = no_allies_war@R12
+					R12 = {
+						declare_war_with_cb = { who = PREV casus_belli = cb_independence_war }
+						set_country_flag = no_allies_war@PREV
+					}
+				}
+			}
 		}
-		vassalize = R12
-		R12 = { remove_country_modifier = khadisrapur_supporting_independence }
+		else = {
+			hidden_effect = {
+				R12 = {
+					set_country_flag = no_allies_war
+					set_country_flag = no_allies_war@ROOT
+				}
+				set_country_flag = no_allies_war@R12
+			}
+			declare_war_with_cb = { who = R12 casus_belli = cb_vassalize_mission }
+		}
 	}
 }
 
@@ -325,12 +343,12 @@ province_event = { #The Long March Continues...
 						remove_province_modifier = khadisrapur_passing_through
 					}
 				}
-				4533 = { province_event = { id = khadisrapur.10 days = 730 } }
+				4533 = { province_event = { id = khadisrapur.10 days = 365 } }
 			}
-			4533 = { 4534 = { province_event = { id = khadisrapur.10 days = 730 } } }
-			4534 = { 4538 = { province_event = { id = khadisrapur.10 days = 730 } } }
-			4538 = { 4539 = { province_event = { id = khadisrapur.10 days = 730 } } }
-			4539 = { 4541 = { province_event = { id = khadisrapur.10 days = 730 } } }
+			4533 = { 4534 = { province_event = { id = khadisrapur.10 days = 365 } } }
+			4534 = { 4538 = { province_event = { id = khadisrapur.10 days = 365 } } }
+			4538 = { 4539 = { province_event = { id = khadisrapur.10 days = 365 } } }
+			4539 = { 4541 = { province_event = { id = khadisrapur.10 days = 365 } } }
 		}
 	}
 }
@@ -514,6 +532,7 @@ country_event = { #A Heroic Victory
 		custom_tooltip = become_end_game_tag_tt
 		set_country_flag = formed_end_game_tag_flag
 		set_country_flag = khadisrapur_post_victory_unlock
+		set_country_flag = can_create_tributaries_flag #For Jade March stuff
 		swap_non_generic_missions = yes
 	}
 
@@ -643,9 +662,18 @@ country_event = { #Send Word to the Dwarves
 
 		jade_mines_region = {
 			discover_country = ROOT
-			add_claim = ROOT
+			if = {
+				limit = {
+					NOT = {
+						owned_by = R65
+						owned_by = R66
+						owned_by = R81
+					}
+				}
+				add_claim = ROOT
+				add_province_modifier = { name = khadisrapur_dwarven_claims duration = 9125 }
+			}
 		}
-		add_country_modifier = { name = khadisrapur_dwarven_claims duration = 3650 }
 		hidden_effect = {
 			tuwad_area = { add_core = R66 }
 			tuwad_pass_area = { add_core = R66 }
@@ -1291,9 +1319,9 @@ country_event = { #Hidden Nonsense
 				}
 			}
 		}
-		multiply_variable = { #1 power gained per 100 goods produced
+		multiply_variable = { #1 power gained per 50 goods produced
 			which = total_industrial_cap_gained
-			value = 0.01
+			value = 0.02
 		}
 		set_variable = {
 			which = last_month_industrial_cap_gained_raw
