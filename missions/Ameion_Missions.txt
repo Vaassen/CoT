@@ -330,7 +330,7 @@ G52_1 = {
 			hidden_effect = {
 				every_known_country = {
 					limit = {
-						is_subject = no
+						NOT = { is_subject_of = ROOT }
 						capital_scope = { region = devand_region }
 						NOT = { tag = G59 }
 					}
@@ -477,10 +477,10 @@ G52_1 = {
 		}
 		
 		trigger = {
-			navy_size = 120
+			navy_size = 100
 			army_size = 150
 			1713 = { transports_in_province = 30 }
-			1709 = { heavy_ships_in_province = 30 }
+			1709 = { heavy_ships_in_province = 20 }
 			is_at_war = no
 		}
 		
@@ -628,13 +628,25 @@ G52_2 = {
 				is_city = yes
 				owned_by = ROOT
 			}
-			reverse_has_opinion = { who = G63 value = 50 }
-			prestige = G63
+			if = {
+				limit = { G63 = { exists = yes } }
+				reverse_has_opinion = { who = G63 value = 50 }
+				prestige = G63
+			}
 		}
 		
 		effect = {
-			country_event = { id = flavor_ameion.11 }
-			custom_tooltip = G52_leaders_meeting_tt
+			if = {
+				limit = { G63 = { exists = yes } }
+				country_event = { id = flavor_ameion.11 }
+				custom_tooltip = G52_leaders_meeting_tt
+			}
+			else = {
+				mteibas_valley_region = { add_claim = ROOT }
+				set_country_flag = G52_mteibhar_conquest
+				clr_country_flag = G52_mteibhar_tributary
+				custom_tooltip = ameion_no_mteibhara_tt
+			}
 		}
 	}
 	
@@ -752,6 +764,7 @@ G52_2 = {
 						duration = 18250
 					}
 				}
+				custom_tooltip = ameion_mteibhara_reconquests_2_tt
 			}
 			else_if = {
 				limit = { has_country_flag = G52_mteibhar_conquest }
@@ -1200,12 +1213,7 @@ G52_2 = {
 			if = {
 				limit = { has_country_flag = G52_mteibhar_tributary }
 				custom_tooltip = ameion_mteibas_kheionization_tt
-				hidden_effect = {
-					mteibas_valley_region = { 
-						limit = { religion = kheionism }
-						ameion_kheionization_effect = yes
-					}
-				}
+				hidden_effect = { country_event = { id = flavor_ameion.811 } }
 			}
 			else_if = {
 				limit = { NOT = { mission_completed = G52_approach_mteibhar } }
@@ -1224,6 +1232,7 @@ G52_2 = {
 				region = gauraddhi_region
 				region = chendhya_region
 			}
+			NOT = { area = sarihaddu_area }
 			OR = {
 				NOT = { owned_by = ROOT }
 				NOT = { is_core = ROOT }
@@ -1244,11 +1253,12 @@ G52_2 = {
 				is_core = ROOT
 			}
 			num_of_owned_provinces_with = {
-				value = 15
+				value = 20
 				OR = {
 					region = gauraddhi_region
 					region = chendhya_region
 				}
+				NOT = { area = sarihaddu_area }
 				culture = astolbhen
 			}
 		}
@@ -1680,7 +1690,7 @@ G52_3 = {
 		
 		trigger = {
 			num_of_owned_provinces_with = {
-				value = 20
+				value = 25
 				superregion = taychend_superregion
 				is_core = ROOT
 				religion = kheionism
@@ -1911,8 +1921,12 @@ G52_3 = {
 			}
 			custom_tooltip = ameion_klereyen_subjects_tt
 			every_subject_country = {
-				limit = { culture_group = taychendi_ruinborn_elf }
+				limit = { 
+					culture_group = taychendi_ruinborn_elf
+					NOT = { tag = G79 }
+				}
 				change_primary_culture = klereyen
+				capital_scope = { change_culture = klereyen }
 				change_religion = kheionism
 				hidden_effect = {
 					set_country_flag = ameion_kheionization
@@ -2002,9 +2016,12 @@ G52_3 = {
 				area = zaernmaera_area
 			}
 			OR = {
+				area_for_scope_province = { NOT = { has_building = state_house } }
+				has_building = state_house
+			}
+			OR = {
 				NOT = { development = 20 }
 				NOT = { has_courthouse_building_trigger = yes }
-				area_for_scope_province = { NOT = { has_building = state_house } }
 				NOT = { culture_group = kheionai_ruinborn_elf }
 			}
 			has_discovered = ROOT
@@ -2098,6 +2115,10 @@ G52_3 = {
 		}
 		
 		effect = {
+			if = {
+				limit = { has_country_modifier = G52_mandated_kheionization }
+				remove_country_modifier = G52_mandated_kheionization
+			}
 			add_power_projection = {
 				type = mission_rewards_power_projection
 				amount = 25
@@ -2474,7 +2495,10 @@ G52_4 = {
 					area = katelperai_area
 				}
 			}
-			nanru_nakar_area = { owned_by = ROOT }
+			nanru_nakar_area = {
+				type = all
+				owned_by = ROOT 
+			}
 		}
 		
 		effect = {
@@ -2618,7 +2642,7 @@ G52_4 = {
 				has_building = impressment_offices
 				value = 10
 			}
-			naval_forcelimit = 200
+			naval_forcelimit = 150
 		}
 		
 		effect = {
@@ -2651,7 +2675,7 @@ G52_4 = {
 		position = 14
 		
 		provinces_to_highlight = {
-			owns_or_non_sovereign_subject_of = ROOT
+			country_or_non_sovereign_subject_holds = ROOT
 			superregion = effelai_superregion
 			trade_goods = tropical_wood
 			NOT = { has_building = mage_tower }
@@ -2659,25 +2683,54 @@ G52_4 = {
 		}
 		
 		trigger = {
-			OR = {
-				num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
-					value = 20
-					superregion = effelai_superregion
-					trade_goods = tropical_wood
-					has_building = mage_tower
+			if = {
+				limit = {
+					G20 = { is_subject_of = ROOT }
 				}
-				development_in_provinces = {
-					value = 200
-					superregion = effelai_superregion
-					trade_goods = tropical_wood
-					has_building = mage_tower
-				}
-				any_subject_country = {
-					development_in_provinces = {
-						value = 200
+				OR = {
+					num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
+						value = 15
 						superregion = effelai_superregion
 						trade_goods = tropical_wood
 						has_building = mage_tower
+					}
+					development_in_provinces = {
+						value = 150
+						superregion = effelai_superregion
+						trade_goods = tropical_wood
+						has_building = mage_tower
+					}
+					G20 = {
+						development_in_provinces = {
+							value = 150
+							superregion = effelai_superregion
+							trade_goods = tropical_wood
+							has_building = mage_tower
+						}
+					}
+				}
+			}
+			else = {
+				OR = {
+					num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
+						value = 15
+						superregion = effelai_superregion
+						trade_goods = tropical_wood
+						has_building = mage_tower
+					}
+					development_in_provinces = {
+						value = 150
+						superregion = effelai_superregion
+						trade_goods = tropical_wood
+						has_building = mage_tower
+					}
+					any_subject_country = {
+						development_in_provinces = {
+							value = 150
+							superregion = effelai_superregion
+							trade_goods = tropical_wood
+							has_building = mage_tower
+						}
 					}
 				}
 			}
@@ -2801,7 +2854,7 @@ G52_5 = {
 		position = 3
 		
 		provinces_to_highlight = {
-			NOT = { owns_or_non_sovereign_subject_of = ROOT }
+			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 			OR = {
 				region = southern_coast_region
 				region = yodhanchend_region
@@ -2812,7 +2865,7 @@ G52_5 = {
 		trigger = {
 			num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
 				value = 30
-			 	OR = {
+				OR = {
 					region = southern_coast_region
 					region = yodhanchend_region
 				}
@@ -3035,6 +3088,10 @@ G52_5 = {
 						else = { change_culture = thekvrystana }
 					}
 				}
+				create_subject = {
+					subject_type = crown_colony
+					subject = G79
+				}
 			}
 			add_historical_friend = G79
 			hidden_effect = { 
@@ -3115,8 +3172,16 @@ G52_5 = {
 		position = 13
 		
 		provinces_to_highlight = {
-			region = south_effelai_region
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
+			OR = {
+				AND = {
+					region = south_effelai_region
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					is_effelai_network_hub = yes
+					NOT = { fort_level = 4 }
+				}
+			}
 			has_discovered = ROOT
 		}
 		
