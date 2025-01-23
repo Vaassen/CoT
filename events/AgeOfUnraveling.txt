@@ -206,7 +206,7 @@ province_event = {
 			continent = new_world
 		}
 	}
-	immadiate = {
+	immediate = {
 		FROM = {
 			set_country_flag = unraveling.1_fired
 		}
@@ -247,6 +247,9 @@ province_event = {
 				FROM = {
 					is_part_of_hre = yes
 				}
+				A85 = {
+					total_development = 50
+				}
 			}
 			hidden_effect = {
 				A85 = {
@@ -261,11 +264,11 @@ province_event = {
 			hidden_effect = {
 				every_country = {
 					limit = {
+						NOT = {
+							has_global_flag = castellar_mural_discovered
+						}
 						capital_scope = {
 							continent = europe
-						}
-						NOT = {
-							tag = FROM
 						}
 						religion = regent_court
 					}
@@ -276,6 +279,7 @@ province_event = {
 					}
 					#Triggers global event for everyone
 				}
+				set_global_flag = castellar_mural_discovered
 			}
 		}
 	}
@@ -304,7 +308,6 @@ province_event = {
 		}
 		hidden_effect = {
 			FROM = {
-				set_country_flag = "hiding_castellos_is_dead"				# TODO this still needed?
 				capital_scope = {
 					set_province_flag = hiding_castellos_is_dead_prov
 					province_event = {
@@ -319,46 +322,34 @@ province_event = {
 }
 
 # Mural of Castellar - Kept it hidden but its out now
-country_event = {
+province_event = {
 	id = unraveling.2
 	title = unraveling.2.t
 	desc = unraveling.2.d
 	picture = KINGS_CHOICE_eventPicture
-	fire_only_once = yes
+	is_triggered_only = yes
 	trigger = {
-		has_country_flag = "hiding_castellos_is_dead"
-		any_owned_province = {
-			has_province_flag = hiding_castellos_is_dead_prov
+		has_province_flag = hiding_castellos_is_dead_prov
+		NOT = {
+			owner = {
+				has_global_flag = castellar_mural_discovered
+			}
 		}
 	}
-	mean_time_to_happen = {
-		months = 120
-		modifier = {
-			factor = 2.5
-			has_global_flag = magisterium_hid_death
-		}
-		modifier = {
-			factor = 0.1
-			has_institution = printing_press
-		}
+	immediate = {
+		clr_province_flag = hiding_castellos_is_dead_prov
 	}
 	option = {
 		name = "unraveling.2.a"		#The cat's out of the bag
 		reduce_stability_or_adm_power = yes
-		random_owned_province = {
-			limit = {
-				has_province_flag = hiding_castellos_is_dead_prov
-			}
-			clr_province_flag = hiding_castellos_is_dead_prov
-		}
 		hidden_effect = {
 			every_country = {
 				limit = {
+					NOT = {
+						has_global_flag = castellar_mural_discovered
+					}
 					capital_scope = {
 						continent = europe
-					}
-					NOT = {
-						tag = ROOT
 					}
 					religion = regent_court
 				}
@@ -368,13 +359,7 @@ country_event = {
 					random = 10
 				}
 			}
-			#			every_country = {
-			#				limit = {
-			#					capital_scope = { continent = africa }
-			#					religion_group = bulwari
-			#				}
-			#				country_event = { id = unraveling.3 days = 30 random = 300 }
-			#			}
+			set_global_flag = castellar_mural_discovered
 		}
 	}
 }
@@ -386,6 +371,8 @@ country_event = {
 	desc = unraveling.3.d
 	picture = DIPLOMAT_INTERROGATION_eventPicture
 	is_triggered_only = yes
+	immediate = {
+	}
 	option = {
 		name = unraveling.3.a
 		reduce_legitimacy_small_effect = yes
@@ -401,11 +388,6 @@ country_event = {
 	option = {
 		name = unraveling.3.c
 		add_dip_power = 25
-	}
-	after = {
-		hidden_effect = {
-			set_global_flag = castellar_mural_discovered
-		}
 	}
 }
 
@@ -601,36 +583,125 @@ province_event = {
 	title = unraveling.10.t
 	desc = unraveling.10.d
 	picture = KINGS_CHOICE_eventPicture
-	fire_only_once = yes
 	is_triggered_only = yes
 	trigger = {
 		has_province_flag = hiding_castellos_is_dead_prov
+		owner = {
+			NOT = {
+				has_global_flag = castellar_mural_discovered
+				has_country_flag = unraveling.1_fired
+			}
+		}
+	}
+	immediate = {
+		clr_province_flag = hiding_castellos_is_dead_prov
+		owner = {
+			set_country_flag = unraveling.1_fired
+		}
 	}
 	option = {
-		name = "unraveling.10.a"		#The cat's out of the bag
-		clr_province_flag = hiding_castellos_is_dead_prov
-		hidden_effect = {
-			every_country = {
-				limit = {
-					capital_scope = {
-						continent = europe
-					}
-					religion = regent_court
-				}
-				country_event = {
-					id = unraveling.3
-					days = 7
-					random = 14
+		name = "unraveling.1.a"		#Everyone must know of our findings!
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 0.1
+				FROM = {
+					is_rival = A85					#Magisterium
 				}
 			}
-			#			every_country = {
-			#				limit = {
-			#					capital_scope = { continent = africa }
-			#					religion_group = bulwari
-			#				}
-			#				country_event = { id = unraveling.3 days = 30 random = 30 }
-			#			}
+			modifier = {
+				factor = 10
+				FROM = {
+					alliance_with = A85					#Magisterium
+				}
+			}
+			modifier = {
+				factor = 2
+				FROM = {
+					OR = {
+						tag = A01						#Lorent
+						is_part_of_hre = yes
+					}
+				}
+			}
 		}
+		owner = {
+			add_prestige = 10
+		}
+		custom_tooltip = ct_hiding_castellos_is_dead.1
+		if = {
+			#Magisterium interception attempt
+			limit = {
+				owner = {
+					is_part_of_hre = yes
+				}
+				A85 = {
+					total_development = 50
+				}
+			}
+			hidden_effect = {
+				A85 = {
+					country_event = {
+						id = flavor_magisterium.33
+						days = 3
+					}
+				}
+			}
+		}
+		else = {
+			hidden_effect = {
+				every_country = {
+					limit = {
+						capital_scope = {
+							continent = europe
+						}
+						religion = regent_court
+					}
+					country_event = {
+						id = unraveling.3
+						days = 7
+						random = 14
+					}
+					#Triggers global event for everyone
+				}
+			}
+		}
+	}
+	option = {
+		name = "unraveling.1.b"		#We need to keep this secret as much as we can.
+		ai_chance = {
+			factor = 50
+			modifier = {
+				factor = 0.5
+				owner = {
+					NOT = {
+						religion = regent_court
+					}
+				}
+			}
+			modifier = {
+				factor = 0.1
+				owner = {
+					OR = {
+						religion = infernal_court
+						religion = kobold_dragon_cult
+						religion = mountain_watchers
+					}
+				}
+			}
+		}
+		hidden_effect = {
+			owner = {
+				capital_scope = {
+					set_province_flag = hiding_castellos_is_dead_prov
+					province_event = {
+						id = unraveling.2
+						days = 5475
+					}
+				}
+			}
+		}
+		custom_tooltip = ct_hiding_castellos_is_dead.2
 	}
 }
 
