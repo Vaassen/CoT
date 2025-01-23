@@ -1031,11 +1031,18 @@ define_hold_to_clear = {
 		set_province_flag = infested_@ROOT
 		save_event_target_as = infested3
 	}
-	random_owned_province = {
-		limit = { has_province_modifier = infested_hold is_city = yes NOT = { has_province_flag = infested_@ROOT } }
-		set_province_flag = option_infested_4_@ROOT
-		set_province_flag = infested_@ROOT
-		save_event_target_as = infested4
+	random_subject_country = {
+		limit = {
+			has_country_flag = owns_hold_province
+			any_owned_province = { has_province_modifier = infested_hold is_city = yes }
+		}
+		set_country_flag = infested_subject
+		random_owned_province = {
+			limit = { has_province_modifier = infested_hold is_city = yes NOT = { has_province_flag = infested_@ROOT } }
+			set_province_flag = option_infested_4_@ROOT
+			set_province_flag = infested_@ROOT
+			save_event_target_as = infested4
+		}
 	}
 }
 infested_hold_clearing = {
@@ -1061,7 +1068,30 @@ infested_hold_clearing = {
 				clr_province_flag = option_infested_3_@ROOT
 				clr_province_flag = option_infested_4_@ROOT
 			}
+			every_subject_country = {
+				limit = { has_country_flag = infested_subject }
+				clr_country_flag = infested_subject
+				every_owned_province = {
+					limit = { has_province_flag = infested_@ROOT }
+					clr_province_flag = infested_@ROOT
+					clr_province_flag = option_infested_4_@ROOT
+				}
+			}
 			clr_country_flag = open_infested_hold_menu
+			if = {
+				limit = { is_subject = yes }
+				clr_country_flag = infested_subject
+				overlord = {
+					every_owned_province = {
+						limit = { has_province_flag = infested_@ROOT }
+						clr_province_flag = infested_@ROOT
+						clr_province_flag = option_infested_1_@ROOT
+						clr_province_flag = option_infested_2_@ROOT
+						clr_province_flag = option_infested_3_@ROOT
+					}
+					clr_country_flag = open_infested_hold_menu
+				}
+			}
 		}
 	}
 }
@@ -8476,40 +8506,12 @@ update_runefather_allegiance_scripted_effect = {
 ##############
 ### Rails ###
 ##############
-construct_every_rail_road = { #Used in country scope
+rail_construct_every_rail_road = { #Used in country scope
 	every_owned_province = {
 		limit = {
-			has_province_modifier = $rail$
+			rail_province_eligibility_trigger = { rail_to_replace = $current_rail$ $upgraded_rail$ = yes }
 			NOT = { has_construction = any }
 			NOT = { has_colonist = yes }
-			is_city = yes
-			is_state = yes
-			any_neighbor_province = {
-				OR = {
-					[[repair]
-						has_province_modifier = restored_rail
-						has_province_modifier = advanced_rail
-						has_province_modifier = rocket_rail
-					]
-					[[upgrade]
-						has_province_modifier = advanced_rail
-						has_province_modifier = rocket_rail
-					]
-					[[rocket]
-						has_province_modifier = rocket_rail
-					]
-					AND = {
-						province_group = hold_province
-						OR = {
-							NOT = { has_province_modifier = ruined_hold }
-							has_province_modifier = blorc_war_camp
-						}
-						NOT = { has_province_modifier = infested_hold }
-					}
-				}
-				is_state = yes
-				owned_by = ROOT
-			}
 		}
 		add_building_construction = {
 			building = railway_work
