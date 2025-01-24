@@ -1801,7 +1801,7 @@ sedentarization_on_yearly_pulse = {
 			# Fire events
 			every_owned_province = {
 				limit = { sedentarization_province_has_outpost = yes }
-				area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
+				sedentarization_apply_min_autonomy_negating_modifier = yes
 				sedentarization_check_for_invalid_flags = yes
 				sedentarization_pick_yearly_event = yes
 			}
@@ -1836,7 +1836,7 @@ sedentarization_deduct_outpost_cost_from_country = {
 
 sedentarization_place_brand_new_outpost = {
 	# Apply a min autonomy-negating modifier if necessary (for territories and half-states)
-	area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
+	sedentarization_apply_min_autonomy_negating_modifier = yes
 	# Apply the outpost at the correct phase. It should be Phase One most of the time.
 	if = {
 		limit = {
@@ -1857,30 +1857,34 @@ sedentarization_place_brand_new_outpost = {
 sedentarization_apply_min_autonomy_negating_modifier = {
 	# Apply a modifier to negate the min autonomy from territories and half-states
 	hidden_effect = {
-		if = {
-			limit = { is_territory = yes }
-			add_province_modifier = {
-				name = sed_min_autonomy_from_territory_negation
-				duration = -1
-				hidden = yes
+		owner = { save_event_target_as = sed_outpost_owner }
+		area = {
+			limit = { owned_by = event_target:sed_outpost_owner }
+			if = {
+				limit = { is_territory = yes }
+				add_province_modifier = {
+					name = sed_min_autonomy_from_territory_negation
+					duration = -1
+					hidden = yes
+				}
+				remove_province_modifier = sed_min_autonomy_from_half_state_negation
 			}
-			remove_province_modifier = sed_min_autonomy_from_half_state_negation
-		}
-		else_if = {
-			limit = {
-				is_state = yes
-				NOT = { is_state_core = FROM }
+			else_if = {
+				limit = {
+					is_state = yes
+					NOT = { is_state_core = FROM }
+				}
+				add_province_modifier = {
+					name = sed_min_autonomy_from_half_state_negation
+					duration = -1
+					hidden = yes
+				}
+				remove_province_modifier = sed_min_autonomy_from_territory_negation
 			}
-			add_province_modifier = {
-				name = sed_min_autonomy_from_half_state_negation
-				duration = -1
-				hidden = yes
+			else = {
+				remove_province_modifier = sed_min_autonomy_from_territory_negation
+				remove_province_modifier = sed_min_autonomy_from_half_state_negation
 			}
-			remove_province_modifier = sed_min_autonomy_from_territory_negation
-		}
-		else = {
-			remove_province_modifier = sed_min_autonomy_from_territory_negation
-			remove_province_modifier = sed_min_autonomy_from_half_state_negation
 		}
 	}
 }
@@ -1971,7 +1975,7 @@ sedentarization_reset_province_outpost = {
 }
 
 # DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
-sedentarization_remove_outpost_modifiers = {
+sedentarization_INTERNAL_remove_outpost_modifiers = {
 	area = { remove_province_modifier = sed_outpost_areal_influence_phase_$phase$ }
 	remove_province_triggered_modifier = sed_triggered_outpost_phase_$phase$
 	remove_province_modifier = sed_outpost_phase_$phase$
@@ -2058,7 +2062,7 @@ sedentarization_check_for_invalid_flags = {
 
 sedentarization_unlock_raid_events = {
 	clr_province_flag = sed_friendly_warning
-	custom_tooltip = "Raid events may occur here, increasing autonomy."
+	custom_tooltip = "Raid events §RMAY§! occur here, slowing our progrees by increasing autonomy."
 	set_province_flag = sed_raid_events_unlocked
 }
 
@@ -2175,7 +2179,7 @@ sedentarization_clear_phase_three_flags = {
 
 sedentarization_outpost_try_phase_change = {
 	# Update the min autonomy-negating modifier
-	area = { sedentarization_apply_min_autonomy_negating_modifier = yes }
+	sedentarization_apply_min_autonomy_negating_modifier = yes
 	# Check for invalid progression flags, likely due to starting a purge/expulsion
 	sedentarization_check_for_invalid_flags = yes
 	if = {
@@ -2252,7 +2256,7 @@ sedentarization_reset_completion_flag = {
 sedentarization_neglecting_friendly_warning_effect = {
 	if = {
 		limit = { has_province_flag = sed_friendly_warning }
-		custom_tooltip = "By ignoring a 'friendly' warning from the centuars, this will provoke their raids"
+		custom_tooltip = "§OBy ignoring a \"friendly\" warning from the centuars, this will §Rprovoke§! their raids§!"
 		sedentarization_unlock_raid_events = yes
 	}
 }
@@ -2376,7 +2380,7 @@ sedentarization_outpost_completion_centaur_tribute_effect = {
 	}
 	else = {
 		[[culture_source]
-			custom_tooltip = "Gain minorities from the outpost's majority."	# TODO: this string repeats once in the events file
+			custom_tooltip = sedentarization.tt_add_minority_from_outpost
 			hidden_effect = {
 				$culture_source$ = {
 					add_matching_race_minority_size_to_scope = { scope = ROOT }
@@ -2393,26 +2397,30 @@ sedentarization_outpost_completion_nomadic_control_effect = {
 		duration = -1
 	}
 	[[culture_source]
-		custom_tooltip = sedentarization.310.area_will_convert
-		change_culture = $culture_source$
-		change_religion = $culture_source$
+		sedentarization_convert_culture_religion_to_source = { culture_source = $culture_source$ }
 	]
 	sedentarization_reset_completion_flag = { completeness = semi_complete }
+}
+
+sedentarization_convert_culture_religion_to_source = {
+	custom_tooltip = sedentarization.tt_convert_to_that_of_outpost
+	hidden_effect = {
+		change_culture = $culture_source$
+		change_religion = $culture_source$
+	}
 }
 
 sedentarization_outpost_completion_heavy_settlement_effect = {
 	sedentarization_remove_system_from_province = yes
 	[[culture_source]
-		custom_tooltip = sedentarization.310.area_will_convert
-		change_culture = $culture_source$
-		change_religion = $culture_source$
+		sedentarization_convert_culture_religion_to_source = { culture_source = $culture_source$ }
 	]
 	# This flag should be the only provincial script remnant from the system
 	sedentarization_reset_completion_flag = { completeness = complete }
 }
 
 sedentarization_remove_system_from_province = {
-	custom_tooltip = "This province will no longer be Forbidden."
+	custom_tooltip = "This province will §Gno longer§! be §YForbidden§!."
 	hidden_effect = {
 		remove_province_modifier = sed_forbidden
 		remove_province_modifier = sed_entrenched_centaur_nomadism
