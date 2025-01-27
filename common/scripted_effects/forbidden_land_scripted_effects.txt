@@ -1845,9 +1845,11 @@ sedentarization_place_brand_new_outpost = {
 				has_province_flag = sed_semi_complete_sedentarization
 			}
 		}
+		custom_tooltip = sed_place_brand_new_outpost_phase_one
 		sedentarization_reset_province_outpost = { reset_to_phase_one = yes }
 	}
 	else = {
+		custom_tooltip = sed_place_brand_new_outpost_phase_two
 		sedentarization_reset_province_outpost = { reset_to_phase_two = yes }
 		# Cleanup invalid Phase One flags; Phase Two and Three flags shouldn't exist because of our 'on_province_owner_change' effect.
 		sedentarization_check_for_invalid_flags = yes
@@ -1893,6 +1895,8 @@ sedentarization_apply_min_autonomy_negating_modifier = {
 #  - start a specific outpost phase,
 #  - restart a phase (but not reset intra-phase flags; use "sedentarization_clear_phase_[one/two/three]_flags" for that),
 #  - clear outpost modifiers and directly related flags (but not to remove the system; use "sedentarization_remove_system_from_province" for that).
+# NOTE: this effect doesn't produce a tooltip. If it's ever necessary to tell the player an outpost is being reset, place custom tooltips
+# inside the "reset_to_phase_N" brackets.
 sedentarization_reset_province_outpost = {
 	# Instead of the variables directly changing effects, the variables place flags which we then switch our logic on
 	[[reset_to_phase_one] set_province_flag = sed_reset_to_phase_one ]
@@ -1904,73 +1908,6 @@ sedentarization_reset_province_outpost = {
 	# this whole scripted effect into the following event instead.
 	hidden_effect = {
 		province_event = { id = sedentarization.20 }
-	}
-	# TODO: this tooltip (relevant for the Place Outpost button) likely doesn't work the way I want it to, since the province flags haven't been set yet
-	tooltip = {
-		if = {
-			limit = { has_province_flag = sed_reset_to_phase_one }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_i
-				old_min_autonomy = 100
-			}
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_to_phase_two }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_ii
-				old_min_autonomy = 80
-			}
-			set_province_flag = sed_trade_goods_upgrade_events_unlocked
-			# Set a queueing flag. Normally used for taking care of invalidated choices,
-			# it's also here for the edge-case that two provinces simultaneously progress.
-			set_province_flag = sed_outpost_type_event_queued
-			province_event = { id = sedentarization.200 }
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_to_phase_three }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_iii
-				old_min_autonomy = 65
-			}
-			# Another queueing flag. Same purpose as the one above.
-			set_province_flag = sed_settler_policy_event_queued
-			# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_outpost_type_event_queued }
-				}
-				province_event = { id = sedentarization.300 }
-			}
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_completion }
-			area = {
-				# This immediately blocks the ability to place new outposts in the area;
-				# necessary since other ways to detect a completed province won't get placed for a few days to a few months.
-				add_province_modifier = {
-					name = sed_system_completed
-					duration = -1
-					hidden = yes
-				}
-			}
-			owner = {
-				subtract_variable = {
-					which = sed_outpost_cap_usage
-					value = 1
-				}
-			}
-			# Another queueing flag. Same purpose as the ones above.
-			set_province_flag = sed_outpost_completion_event_queued
-			if = {
-				limit = {
-					NOT = {
-						has_province_flag = sed_outpost_type_event_queued
-						has_province_flag = sed_settler_policy_event_queued
-					}
-				}
-				province_event = { id = sedentarization.310 }
-			}
-		}
 	}
 }
 
@@ -2263,107 +2200,111 @@ sedentarization_neglecting_friendly_warning_effect = {
 
 sedentarization_phase_two_settlement_culture_effect = {
 	# Change the culture of the outpost based on owner culture; base case is owner's primary culture.
-	if = {
-		limit = { culture_group = triunic }
-		ROOT = {
-			change_culture = urmanki
-			change_religion = PREV
-		}
-	}
-	else_if = {
-		limit = {
-			primary_culture = sun_elf
-			any_owned_province = { culture = zanite }
-		}
-		random_owned_province = {
-			limit = { culture = zanite }
-			save_event_target_as = sed_religion_source
-		}
-		ROOT = {
-			change_culture = zanite
-			change_religion = event_target:sed_religion_source
-		}
-	}
-	else_if = {
-		limit = {
-			primary_culture = desert_elf
-			any_owned_province = { culture = surani }
-		}
-		random_owned_province = {
-			limit = { culture = surani }
-			save_event_target_as = sed_religion_source
-		}
-		ROOT = {
-			change_culture = surani
-			change_religion = event_target:sed_religion_source
-		}
-	}
-	else_if = {
-		limit = {
-			OR = {
-				primary_culture = rustroad_goblin
-				primary_culture = crawler_goblin
-				primary_culture = cave_goblin
-				# Maghargma can colonize with goblins if this mission's completed.
-				# Will be lost if they form another country or otherwise lose access to this mission (even if completed).
-				mission_completed = maghargma_the_little_brothers
+	owner = {
+		if = {
+			limit = { culture_group = triunic }
+			PREV = {
+				change_culture = urmanki
+				change_religion = owner
 			}
 		}
-		ROOT = {
-			change_culture = crawler_goblin
-			change_religion = PREV
+		else_if = {
+			limit = {
+				primary_culture = sun_elf
+				any_owned_province = { culture = zanite }
+			}
+			random_owned_province = {
+				limit = { culture = zanite }
+				save_event_target_as = sed_religion_source
+			}
+			PREV = {
+				change_culture = zanite
+				change_religion = event_target:sed_religion_source
+			}
 		}
-	}
-	else = {
-		ROOT = {
-			change_culture = PREV
-			change_religion = PREV
+		else_if = {
+			limit = {
+				primary_culture = desert_elf
+				any_owned_province = { culture = surani }
+			}
+			random_owned_province = {
+				limit = { culture = surani }
+				save_event_target_as = sed_religion_source
+			}
+			PREV = {
+				change_culture = surani
+				change_religion = event_target:sed_religion_source
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					primary_culture = rustroad_goblin
+					primary_culture = crawler_goblin
+					primary_culture = cave_goblin
+					# Maghargma can colonize with goblins if this mission's completed.
+					# Will be lost if they form another country or otherwise lose access to this mission (even if completed).
+					mission_completed = maghargma_the_little_brothers
+				}
+			}
+			PREV = {
+				change_culture = crawler_goblin
+				change_religion = owner
+			}
+		}
+		else = {
+			PREV = {
+				change_culture = owner
+				change_religion = owner
+			}
 		}
 	}
 }
 
 sedentarization_phase_two_nomadic_base_culture_effect = {
 	# Change the culture of the outpost based on owner culture; no base case - effect must be valid.
-	if = {
-		limit = { culture_group = triunic }
-		ROOT = {
-			change_culture = orachav
-			change_religion = PREV
-		}
-	}
-	# TODO: culture not implemented yet; uncomment when implemented
-	# else_if = {
-	# 	limit = {
-	# 		OR = {
-	# 			primary_culture = fathide_ogre
-	# 			primary_culture = wild_ogre
-	# 		}
-	# 	}
-	# 	ROOT = { change_culture = wild_ogre }
-	# }
-	else_if = {
-		limit = {
-			OR = {
-				primary_culture = sun_elf
-				primary_culture = desert_elf
-				culture_group = bulwari
+	owner = {
+		if = {
+			limit = { culture_group = triunic }
+			PREV = {
+				change_culture = orachav
+				change_religion = owner
 			}
-			any_owned_province = { culture = masnsih }
 		}
-		random_owned_province = {
-			limit = { culture = masnsih }
-			save_event_target_as = sed_religion_source
+		# TODO: culture not implemented yet; uncomment when implemented
+		# else_if = {
+		# 	limit = {
+		# 		OR = {
+		# 			primary_culture = fathide_ogre
+		# 			primary_culture = wild_ogre
+		# 		}
+		# 	}
+		# 	PREV = { change_culture = wild_ogre }
+		# }
+		else_if = {
+			limit = {
+				OR = {
+					primary_culture = sun_elf
+					primary_culture = desert_elf
+					culture_group = bulwari
+				}
+				any_owned_province = { culture = masnsih }
+			}
+			random_owned_province = {
+				limit = { culture = masnsih }
+				save_event_target_as = sed_religion_source
+			}
+			PREV = {
+				change_culture = masnsih
+				change_religion = event_target:sed_religion_source
+			}
 		}
-		ROOT = {
-			change_culture = masnsih
-			change_religion = event_target:sed_religion_source
-		}
-	}
-	else_if = {
-		limit = { primary_culture = plateau_runsukhi }	# AKA "Rukunai"
-		ROOT = {
-			change_culture = runsukhi
-			change_religion = PREV
+		else_if = {
+			limit = { primary_culture = plateau_runsukhi }	# AKA "Rukunai"
+			PREV = {
+				change_culture = runsukhi
+				change_religion = owner
+			}
 		}
 	}
 }
@@ -2402,7 +2343,7 @@ sedentarization_outpost_completion_nomadic_control_effect = {
 	sedentarization_reset_completion_flag = { completeness = semi_complete }
 }
 
-# This could be useful for stuff way beyond this system
+# TODO: This could be useful for stuff way beyond this system
 sedentarization_convert_culture_religion_to_source = {
 	custom_tooltip = sed_convert_to_that_of_outpost
 	hidden_effect = {
