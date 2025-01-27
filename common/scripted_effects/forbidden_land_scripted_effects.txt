@@ -2003,6 +2003,19 @@ sedentarization_unlock_raid_events = {
 	set_province_flag = sed_raid_events_unlocked
 }
 
+sedentarization_set_contact_complete = {
+	set_province_flag = sed_contact_complete
+	sedentarization_clear_progress_blocker = { blocker_modifier = sed_no_first_contact }
+}
+
+sedentarization_clear_progress_blocker = {
+	if = {
+		limit = { has_province_modifier = $blocker_modifier$ }
+		remove_province_modifier = $blocker_modifier$
+		remove_province_modifier = sed_outpost_progress_blocked
+	}
+}
+
 sedentarization_pick_yearly_event = {
 	random_list = {
 		# 69.3% chance per outpost no event happens each year
@@ -2053,6 +2066,7 @@ sedentarization_on_province_owner_change = {
 			}
 		}
 		# Housekeeping for province flags and modifiers and country variables
+		owner = { save_event_target_as = sed_outpost_owner }
 		if = {
 			limit = { sedentarization_province_has_outpost = yes }
 			# Maintain correct outpost_cap_usage for the loser
@@ -2071,6 +2085,20 @@ sedentarization_on_province_owner_change = {
 				sedentarization_clear_phase_three_flags = yes
 			}
 			sedentarization_reset_province_outpost = yes
+		}
+		else_if = {
+			limit = {
+				area_for_scope_province = { sedentarization_province_has_outpost = yes }
+				area_for_scope_province = {
+					type = all
+					owned_by = event_target:sed_outpost_owner
+				}
+			}
+			random_area_province = {
+				limit = { sedentarization_province_has_outpost = yes }
+				remove_province_modifier = sed_dont_own_whole_area
+				remove_province_modifier = sed_outpost_progress_blocked
+			}
 		}
 		# This is where a country's outpost cap is initiated. It's later updated in on_yearly_pulse
 		owner = {
@@ -2131,7 +2159,6 @@ sedentarization_outpost_try_phase_change = {
 					owned_by = event_target:sed_outpost_owner
 				}
 			}
-			remove_province_modifier = sed_dont_own_whole_area
 			# Check phase-specific progression eligibility
 			if = {
 				limit = {
@@ -2157,26 +2184,47 @@ sedentarization_outpost_try_phase_change = {
 					sedentarization_reset_province_outpost = { completion = yes }
 				]
 			}
-			# If ineligible to progress, don't check again for about a year
+			# If ineligible to progress, don't check again until the issue has been resolved
 			else = {
+				[[current_phase_is_one]
+					add_province_modifier = {
+						name = sed_no_first_contact
+						duration = -1
+						hidden = yes
+					}
+				]
+				[[current_phase_is_two]
+					add_province_modifier = {
+						name = sed_no_outpost_type
+						duration = -1
+						hidden = yes
+					}
+				]
+				[[current_phase_is_three]
+					add_province_modifier = {
+						name = sed_no_settler_policy
+						duration = -1
+						hidden = yes
+					}
+				]
 				add_province_modifier = {
 					name = sed_outpost_progress_blocked
-					duration = 360
+					duration = -1
 					hidden = yes
 				}
 			}
 		}
 		else = {
 			# The outer 'if' and this modifier are just for a custom loc trigger, because triggers can't set event 
-			# targets (the owner) needed to check area ownership. It's a modifier instead of a flag so I don't have to do manual cleanup.
+			# targets (the owner) needed to check areal ownership. It's a modifier instead of a flag so I don't have to do manual cleanup.
 			add_province_modifier = {
 				name = sed_dont_own_whole_area
-				duration = 360
+				duration = -1
 				hidden = yes
 			}
 			add_province_modifier = {
 				name = sed_outpost_progress_blocked
-				duration = 360
+				duration = -1
 				hidden = yes
 			}
 		}
