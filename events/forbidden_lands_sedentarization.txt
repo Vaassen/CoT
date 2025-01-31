@@ -26,11 +26,11 @@ namespace = sedentarization
 #  common\
 #   custom_gui\provinceview.txt
 #   event_modifiers\forbidden_lands_sedentarization_modifiers.txt
-#   province_triggered_modifiers\forbidden_lands_sedentarization_modifiers.txt
 #   scripted_effects\forbidden_land_scripted_effects.txt
 #   scripted_functions\00_scripted_functions.txt  (can_move_capital)
 #   scripted_triggers\anb_scripted_triggers_sedentarization.txt
 #  interface\provinceview.gui
+#  customizable_localization\anb_custom_loc_sedentarization.txt
 #  localisation\anb_forbidden_lands_l_english.yml
 
 # Startup event, only places province modifiers so *could* be moved to province history instead
@@ -238,6 +238,41 @@ province_event = {
 	}
 }
 
+# Check autonomy thresholds; called yearly (assuming no invalidation nor progress-blockers)
+province_event = {
+	id = sedentarization.19
+	title = none
+	desc = none
+	picture = none
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		if = {
+			limit = {
+				has_province_modifier = sed_outpost_phase_i
+				NOT = { local_autonomy = 80.01 }
+			}
+			sedentarization_outpost_try_phase_change = { current_phase_is_one = yes }
+		}
+		else_if = {
+			limit = {
+				has_province_modifier = sed_outpost_phase_ii
+				NOT = { local_autonomy = 65.01 }
+			}
+			sedentarization_outpost_try_phase_change = { current_phase_is_two = yes }
+		}
+		else_if = {
+			limit = {
+				has_province_modifier = sed_outpost_phase_iii
+				NOT = { local_autonomy = 50.01 }
+			}
+			sedentarization_outpost_try_phase_change = { current_phase_is_three = yes }
+		}
+	}
+}
+
 # Scripted effect "sedentarization_reset_province_outpost" turned into an event
 province_event = {
 	id = sedentarization.20	# regex "sedentarization\.20\b" to avoid "sedentarization.200"
@@ -249,31 +284,29 @@ province_event = {
 	hidden = yes
 
 	option = {
-		hidden_effect = {
-			# These are non-exclusive; and clearing should happen before any outpost placement
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_reset_to_phase_one }
-				}
-				sedentarization_INTERNAL_remove_outpost_modifiers = { phase = i }
+		# These are non-exclusive; and clearing should happen before any outpost placement
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_reset_to_phase_one }
 			}
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_reset_to_phase_two }
-				}
-				sedentarization_INTERNAL_remove_outpost_modifiers = { phase = ii }
-			}
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_reset_to_phase_three }
-				}
-				sedentarization_INTERNAL_remove_outpost_modifiers = { phase = iii }
-			}
-			clr_province_flag = sed_province_has_outpost
-			clr_province_flag = sed_outpost_type_event_queued
-			clr_province_flag = sed_settler_policy_event_queued
-			clr_province_flag = sed_outpost_completion_event_queued
+			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = i }
 		}
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_reset_to_phase_two }
+			}
+			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = ii }
+		}
+		if = {
+			limit = {
+				NOT = { has_province_flag = sed_reset_to_phase_three }
+			}
+			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = iii }
+		}
+		clr_province_flag = sed_province_has_outpost
+		clr_province_flag = sed_outpost_type_event_queued
+		clr_province_flag = sed_settler_policy_event_queued
+		clr_province_flag = sed_outpost_completion_event_queued
 		if = {
 			limit = { has_province_flag = sed_reset_to_phase_one }
 			sedentarization_INTERNAL_place_outpost = {

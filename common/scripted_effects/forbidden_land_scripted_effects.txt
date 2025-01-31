@@ -1798,11 +1798,28 @@ sedentarization_on_yearly_pulse = {
 					value = 1
 				}
 			}
-			# Fire events
+			# Yearly maintenance, check for valid Phase progression, and fire random events
 			every_owned_province = {
 				limit = { sedentarization_province_has_outpost = yes }
+				# Update the min autonomy-negating modifier
 				sedentarization_apply_min_autonomy_negating_modifier = yes
+				# Check for invalid progression flags, likely due to starting a purge/expulsion
 				sedentarization_check_for_invalid_flags = yes
+				# Highest level gates for Phase progression: was it not just invalidated nor blocked?
+				if = {
+					limit = {
+						NOT = {
+							has_province_modifier = sed_invalid_flag_caused_reset
+							has_province_modifier = sed_outpost_progress_blocked
+						}
+					}
+					# Check autonomy thresholds
+					province_event = {
+						id = sedentarization.19
+						days = 1
+						random = 334	# One month less than full year to give player time to respond if playing unpaused e.g. in MP
+					}
+				}
 				sedentarization_pick_yearly_event = yes
 			}
 		}
@@ -1921,16 +1938,13 @@ sedentarization_reset_province_outpost = {
 # DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
 sedentarization_INTERNAL_remove_outpost_modifiers = {
 	area = { remove_province_modifier = sed_outpost_areal_influence_phase_$phase$ }
-	remove_province_triggered_modifier = sed_triggered_outpost_phase_$phase$
 	remove_province_modifier = sed_outpost_phase_$phase$
 }
 
 # DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
 sedentarization_INTERNAL_place_outpost = {
 	set_province_flag = sed_province_has_outpost
-	hidden_effect = {	# TODO: this 'hidden effect' clause is maybe vestigial from when this was called from a UI button instead of a hidden event
-		owner = { save_event_target_as = sed_outpost_owner }
-	}
+	owner = { save_event_target_as = sed_outpost_owner }
 	area = {
 		limit = { owned_by = event_target:sed_outpost_owner }
 		# Bug: with an 'if NOT autonomy=100', it would always be false and never set the area to 100 autonomy for Phase One.
@@ -1953,7 +1967,6 @@ sedentarization_INTERNAL_place_outpost = {
 		name = sed_outpost_$phase_numeral$
 		duration = -1
 	}
-	hidden_effect = { add_province_triggered_modifier = sed_triggered_outpost_$phase_numeral$ }
 }
 
 sedentarization_check_for_invalid_flags = {
@@ -2152,9 +2165,9 @@ sedentarization_clear_phase_three_flags = {
 }
 
 sedentarization_outpost_try_phase_change = {
-	# Update the min autonomy-negating modifier
+	# We corrected min autonomy and checked for invalid flags in the yearly pulse, but
+	# let's check once more cause it's now up to almost a year later.
 	sedentarization_apply_min_autonomy_negating_modifier = yes
-	# Check for invalid progression flags, likely due to starting a purge/expulsion
 	sedentarization_check_for_invalid_flags = yes
 	if = {
 		limit = {
