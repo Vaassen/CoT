@@ -474,6 +474,10 @@ country_event = {
 			custom_tooltip = newshire_won_consolidation_tooltip
 		}
 	}
+
+	after = { #Fire Unified Market after 60 days with up to 60 additional days
+		hidden_effect = { country_event = { id = escanni_wars.307 days = 60 random = 60 } }
+	}
 }
 
 # Empire of Anbennar: 11-19 #
@@ -829,7 +833,6 @@ country_event = {
 			add_base_production = 2
 			add_base_manpower = 2
 		}
-		set_province_flag = refugees_fled_country
 	}
 
 	option = { #Attempt to stop them from fleeing
@@ -839,7 +842,6 @@ country_event = {
 				add_province_modifier = {
 					name = escanni_wars_emigration_disallowed
 					duration = 3650
-					desc = escanni_wars_emigration_disallowed.desc
 				}
 				spawn_rebels = {
 					type = anti_tax_rebels
@@ -865,7 +867,6 @@ country_event = {
 				}
 			}
 		}
-		set_province_flag = refugees_fled_country
 	}
   }
 
@@ -888,7 +889,6 @@ country_event = {
 		add_province_modifier = {
 			name = escanni_wars_massacred_province
 			duration = 7300
-			desc = desc_escanni_wars_massacred_province
 		}
 		owner = {
 			set_country_flag = escanni_wars_slaughter
@@ -899,9 +899,12 @@ country_event = {
 		name = escanni_wars.301.b
 		trigger = {
 			owner = {
-				technology_group = tech_undead
+				has_country_modifier = undead_military
 			}
 		}
+
+		highlight = yes
+
 		add_base_tax = -3
 		add_base_production = -3
 		add_base_manpower = -3
@@ -909,7 +912,6 @@ country_event = {
 		add_province_modifier = {
 			name = escanni_wars_massacred_province
 			duration = 7300
-			desc = desc_escanni_wars_massacred_province
 		}
 
 		owner = {
@@ -1266,6 +1268,7 @@ country_event = {
 
 	option = { #Accept union
 		name = escanni_wars.305.a
+		ai_chance = { factor = 20 }
 		create_union = event_target:junior_orc
 		add_liberty_desire = -30
 		set_country_flag = accepted_orcish_union
@@ -1273,6 +1276,7 @@ country_event = {
 
 	option = { #Reject union
 		name = escanni_wars.305.b
+		ai_chance = { factor =  80 }
 		add_prestige = 10
 		reverse_add_opinion = {
 			who = event_target:junior_orc
@@ -1292,6 +1296,7 @@ country_event = {
 
 	option = { #Make the target country a vassal
 		name = escanni_wars.306.a
+		ai_chance = { factor = 20 }
 		add_years_of_income = -2
 		add_manpower = -10
 		add_country_modifier = {
@@ -1304,6 +1309,7 @@ country_event = {
 	}
 	option = { #Refuse to vassalize the target country
 		name = escanni_wars.306.b
+		ai_chance = { factor =  80 }
 	}
   }
 
@@ -1416,25 +1422,23 @@ country_event = {
 	hidden = yes
 	
 	trigger = {
-		country_can_participate_in_escanni_wars = yes
 		has_global_flag = escanni_wars_global_flag
 		NOT = { has_global_flag = escanni_wars_end_global_flag }
+		country_can_participate_in_escanni_wars = yes
 	}
 
 	option = {
-		name = gophira.10.1
+		name = escanni_wars.308.a
 		random_list = {
 			1 = {	}
 			1 = { #Refugees Flee Province
 				trigger = {
 					any_owned_province = {
-						had_province_flag = {
-							flag = refugees_fled_country
-							days = 1825
-						}
+							devastation = 25
+							NOT = { fort_level = 1 }days = 1825
 					}
-
 				}
+				
 				random_owned_province = {
 					limit = {
 						devastation = 25
@@ -1497,6 +1501,21 @@ country_event = {
 					is_at_war = no
 					total_development = 400
 					NOT = { has_country_flag = accepted_orcish_union }
+					any_neighbor_country = {
+						culture = green_orc
+						is_subject = no
+						is_at_war = no
+						ai = yes
+						has_opinion = {
+							who = ROOT
+							value = 0
+						}
+						NOT = {
+							total_development = ROOT
+							land_forcelimit = ROOT
+						}
+						NOT = { has_country_flag = attempted_orcish_union }
+					}
 				}
 				random_neighbor_country = {
 					limit = {
@@ -1512,8 +1531,10 @@ country_event = {
 							total_development = ROOT
 							land_forcelimit = ROOT
 						}
+						NOT = { has_country_flag = attempted_orcish_union }
 					}
 					save_event_target_as = junior_orc
+					set_country_flag = attempted_orcish_union
 				}
 				country_event = { id = escanni_wars.305 }
 			}
@@ -1530,8 +1551,20 @@ country_event = {
 						culture = iron_dwarf
 						culture = stone_dwarf
 						culture = newfoot_halfling
-		
-						total_development = 401
+					}
+
+					total_development = 400
+
+					any_neighbor_country = {
+						OR = {
+							culture_group = escanni
+							culture = marrodic
+							culture = iron_dwarf
+							culture = stone_dwarf
+							culture = newfoot_halfling
+						}
+						NOT = { total_development = 100 }
+						NOT = { has_country_flag = sent_protection_request }
 					}
 				}
 				random_neighbor_country = {
@@ -1545,8 +1578,10 @@ country_event = {
 						}
 		
 						NOT = { total_development = 100 }
+						NOT = { has_country_flag = sent_protection_request }
 					}
 					save_event_target_as = protection_requested
+					set_country_flag = sent_protection_request
 				}
 				country_event = { id = escanni_wars.306 }
 			}
