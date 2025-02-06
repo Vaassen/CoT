@@ -164,64 +164,6 @@ country_event = {
 	}
 }
 
-# Event queue handler. Part of the system that takes care of invalidated choices and edge-case simultaneous outpost completion.
-# Can't be a scripted effect because of the "province_event" effects in elses.
-# TODO: hmm, this queuing system was originally coded to be resilient to a single province having both its Phase Two and Three flags invalidated then letting it continue from Phase Three, but now the system resets to the earliest invalidated Phase. This is possibly overbuilt now; maybe in "sedentarization_reset_province_outpost".
-province_event = {
-	id = sedentarization.15
-	title = none
-	desc = none
-	picture = none
-
-	is_triggered_only = yes
-	hidden = yes
-
-	option = {
-		# First Contact can only get queued if moving capital onto an outpost that hasn't had First Contact yet,
-		# i.e. it can ONLY queue onto a Phase One outpost, meaning it won't need to check itself for Phase Two nor Three queued events,
-		# Always go through the queued events for the current province before scoping to random other provinces
-		if = {
-			limit = { has_province_flag = sed_settler_policy_event_queued }
-			province_event = { id = sedentarization.300 }
-		}
-		else_if = {
-			limit = { has_province_flag = sed_outpost_completion_event_queued }
-			province_event = { id = sedentarization.310 }
-		}
-		# Finally, look for other provinces with either type of queued event
-		else = {
-			owner = {
-				random_owned_province = {
-					limit = {
-						OR = {
-							has_province_flag = sed_sudden_raid_event_queued
-							has_province_flag = sed_outpost_type_event_queued
-							has_province_flag = sed_settler_policy_event_queued
-							has_province_flag = sed_outpost_completion_event_queued
-						}
-					}
-					# Always fire the earlier-phase events before later ones (outpost type before settler policy)
-					if = {	# Look for the capital on an outpost with a queued First Contact event
-						limit = { has_province_flag = sed_sudden_raid_event_queued }
-						province_event = { id = sedentarization.100 }
-					}
-					else_if = {
-						limit = { has_province_flag = sed_outpost_type_event_queued }
-						province_event = { id = sedentarization.200 }
-					}
-					else_if = {
-						limit = { has_province_flag = sed_settler_policy_event_queued }
-						province_event = { id = sedentarization.300 }
-					}
-					else = {
-						province_event = { id = sedentarization.310 }
-					}
-				}
-			}
-		}
-	}
-}
-
 # Check autonomy thresholds; called yearly (assuming no invalidation nor progress-blockers)
 province_event = {
 	id = sedentarization.19
@@ -257,111 +199,6 @@ province_event = {
 	}
 }
 
-# Scripted effect "sedentarization_reset_province_outpost" turned into an event
-province_event = {
-	id = sedentarization.20	# regex "sedentarization\.20\b" to avoid "sedentarization.200"
-	title = none
-	desc = none
-	picture = none
-
-	is_triggered_only = yes
-	hidden = yes
-
-	option = {
-		# These are non-exclusive; and clearing should happen before any outpost placement
-		if = {
-			limit = {
-				NOT = { has_province_flag = sed_reset_to_phase_one }
-			}
-			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = i }
-		}
-		if = {
-			limit = {
-				NOT = { has_province_flag = sed_reset_to_phase_two }
-			}
-			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = ii }
-		}
-		if = {
-			limit = {
-				NOT = { has_province_flag = sed_reset_to_phase_three }
-			}
-			sedentarization_INTERNAL_remove_outpost_modifiers = { phase = iii }
-		}
-		clr_province_flag = sed_province_has_outpost
-		clr_province_flag = sed_outpost_type_event_queued
-		clr_province_flag = sed_settler_policy_event_queued
-		clr_province_flag = sed_outpost_completion_event_queued
-		if = {
-			limit = { has_province_flag = sed_reset_to_phase_one }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_i
-				old_min_autonomy = 100
-			}
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_to_phase_two }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_ii
-				old_min_autonomy = 80
-			}
-			set_province_flag = sed_trade_goods_upgrade_events_unlocked
-			# Set a queueing flag. Normally used for taking care of invalidated choices,
-			# it's also here for the edge-case that two provinces simultaneously progress.
-			set_province_flag = sed_outpost_type_event_queued
-			province_event = { id = sedentarization.200 }
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_to_phase_three }
-			sedentarization_INTERNAL_place_outpost = {
-				phase_numeral = phase_iii
-				old_min_autonomy = 65
-			}
-			# Another queueing flag. Same purpose as the one above.
-			set_province_flag = sed_settler_policy_event_queued
-			# Don't fire simultaneous events on the same province; refire settler policy event after outpost type event finishes.
-			if = {
-				limit = {
-					NOT = { has_province_flag = sed_outpost_type_event_queued }
-				}
-				province_event = { id = sedentarization.300 }
-			}
-		}
-		else_if = {
-			limit = { has_province_flag = sed_reset_completion }
-			area = {
-				# This immediately blocks the ability to place new outposts in the area;
-				# necessary since other ways to detect a completed province won't get placed for a few days to a few months.
-				add_province_modifier = {
-					name = sed_system_completed
-					duration = -1
-					hidden = yes
-				}
-			}
-			owner = {
-				subtract_variable = {
-					which = sed_outpost_cap_usage
-					value = 1
-				}
-			}
-			# Another queueing flag. Same purpose as the ones above.
-			set_province_flag = sed_outpost_completion_event_queued
-			if = {
-				limit = {
-					NOT = {
-						has_province_flag = sed_outpost_type_event_queued
-						has_province_flag = sed_settler_policy_event_queued
-					}
-				}
-				province_event = { id = sedentarization.310 }
-			}
-		}
-		clr_province_flag = sed_reset_to_phase_one
-		clr_province_flag = sed_reset_to_phase_two
-		clr_province_flag = sed_reset_to_phase_three
-		clr_province_flag = sed_reset_completion
-	}
-}
-
 ### Phase One
 ## First Contact Events
 # Sudden Raid
@@ -369,7 +206,7 @@ province_event = {
 	id = sedentarization.100
 	title = sedentarization.100.t
 	desc = {
-		trigger = { has_province_flag = sed_sudden_raid_event_queued }
+		trigger = { has_province_flag = sed_sudden_raid_from_moving_capital }
 		desc = sedentarization.100.d_moved_capital
 	}
 	desc = sedentarization.100.d
@@ -385,17 +222,7 @@ province_event = {
 		}
 		sedentarization_unlock_raid_events = yes
 		sedentarization_set_contact_complete = yes
-	}
-
-	after = {
-		# This is the only First Contact event that needs to be part of the queuing system because
-		# it needs to fire ASAP if moving your capital onto an outpost; this event is hardcoded to be THE First Contact if moving capital.
-		if = {
-			limit = { has_province_flag = sed_sudden_raid_event_queued }
-			# Fire other queued events, part of the system that takes care of invalidated choices
-			clr_province_flag = sed_sudden_raid_event_queued
-			province_event = { id = sedentarization.15}
-		}
+		clr_province_flag = sed_sudden_raid_from_moving_capital
 	}
 }
 
@@ -565,7 +392,7 @@ province_event = {
 	id = sedentarization.200
 	title = sedentarization.200.t
 	desc = {
-		trigger = { has_province_flag = sed_phase_two_invalidated }
+		trigger = { has_province_modifier = sed_invalid_flag_caused_reset }
 		desc = sedentarization.200.d_invalidated
 	}
 	desc = sedentarization.200.d
@@ -636,46 +463,13 @@ province_event = {
 	}
 	
 	after = {
-		set_local_autonomy = 80	# TODO: temp(?) fix for 'real' autonomy reportedly sometimes going up to 100 after phase change
+		remove_province_modifier = sed_invalid_flag_caused_reset
+		sedentarization_reset_province_outpost = { reset_to = phase_two }
+		# Reaching Phase Two immediately sets the entire area to Incomplete Sedentarization, only ever changing once the system completes
+		area = {
+			sedentarization_reset_completion_flag = { completeness = incomplete }
+		}
 		set_province_flag = sed_outpost_type_selected
-		sedentarization_clear_progress_blocker = { blocker_modifier = sed_no_outpost_type }
-		clr_province_flag = sed_phase_two_invalidated
-		# Check that the AI didn't pick the first option when it's invalid
-		if = {
-			limit = {
-				has_province_flag = sed_outpost_type_gozabhar
-				sedentarization_province_valid_for_centaur_friendly_options = no
-			}
-			clr_province_flag = sed_outpost_type_gozabhar
-			random_list = {
-				1 = {
-					set_province_flag = sed_outpost_type_settlement
-					owner = { add_dip_power = -25 }
-					sedentarization_phase_two_settlement_culture_effect = yes
-				}
-				1 = {
-					trigger = { sedentarization_phase_two_nomadic_control_is_valid = yes }
-					set_province_flag = sed_outpost_type_nomadic_base
-					owner = { add_mil_power = -25 }
-					sedentarization_phase_two_nomadic_base_culture_effect = yes
-				}
-				1 = {
-					trigger = {
-						owner = { primary_culture = fathide_ogre }
-					}
-					set_province_flag = sed_outpost_type_kelaktar
-					owner = { add_mil_power = -25 }
-					change_culture = fathide_ogre
-					change_religion = ROOT
-				}
-			}
-		}
-		if = {
-			limit = { has_province_flag = sed_outpost_type_event_queued }
-			# Fire other queued events, part of the system that takes care of invalidated choices
-			clr_province_flag = sed_outpost_type_event_queued
-			province_event = { id = sedentarization.15}
-		}
 	}
 }
 
@@ -741,7 +535,7 @@ province_event = {
 	id = sedentarization.300
 	title = sedentarization.300.t
 	desc = {
-		trigger = { has_province_flag = sed_phase_three_invalidated }
+		trigger = { has_province_modifier = sed_invalid_flag_caused_reset }
 		desc = sedentarization.300.d_invalidated
 	}
 	desc = sedentarization.300.d
@@ -791,34 +585,9 @@ province_event = {
 	}
 	
 	after = {
-		set_local_autonomy = 65	# TODO: temp(?) fix for 'real' autonomy reportedly sometimes going up to 100 after phase change
+		remove_province_modifier = sed_invalid_flag_caused_reset
+		sedentarization_reset_province_outpost = { reset_to = phase_three }
 		set_province_flag = sed_settler_policy_selected
-		sedentarization_clear_progress_blocker = { blocker_modifier = sed_no_settler_policy }
-		clr_province_flag = sed_phase_three_invalidated
-		# Check that the AI didn't pick the first option when it's invalid
-		if = {
-			limit = {
-				has_province_flag = sed_settler_policy_centaur_tribute
-				sedentarization_province_valid_for_centaur_friendly_options = no
-			}
-			clr_province_flag = sed_settler_policy_centaur_tribute
-			random_list = {
-				1 = {
-					set_province_flag = sed_settler_policy_nomadic_control
-					owner = { add_mil_power = -10 }
-				}
-				1 = {
-					set_province_flag = sed_settler_policy_heavy_settlement
-					owner = { add_dip_power = -40 }
-				}
-			}
-		}
-		if = {
-			limit = { has_province_flag = sed_settler_policy_event_queued }
-			# Fire other queued events, part of the system that takes care of invalidated choices
-			clr_province_flag = sed_settler_policy_event_queued
-			province_event = { id = sedentarization.15}
-		}
 	}
 }
 
@@ -899,13 +668,7 @@ province_event = {
 	}
 	
 	after = {
-		set_local_autonomy = 50	# TODO: temp(?) fix for 'real' autonomy reportedly sometimes going up to 100 after phase change
-		if = {
-			limit = { has_province_flag = sed_outpost_completion_event_queued }
-			# Fire other queued events, part of the system that takes care of invalidated choices
-			clr_province_flag = sed_outpost_completion_event_queued
-			province_event = { id = sedentarization.15}
-		}
+		sedentarization_reset_province_outpost = { reset_to = completion }
 	}
 }
 
