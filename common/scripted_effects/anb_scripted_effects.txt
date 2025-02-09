@@ -4644,27 +4644,6 @@ add_mercantilism_excess_to_diplo_power_effect = {
 	}
 }
 
-#Skurkokli
-ogre_battle_count_win = {
-	if = {
-		limit = { tag = J47 has_ruler_flag = is_rancor }
-		change_variable = { nbCharge = 1 }
-		change_variable = { totalBattle = 1 }
-		set_variable = {
-			which = battleWinRate
-			which = nbCharge
-		}
-		divide_variable = {
-			which = battleWinRate
-			which = totalBattle
-		}
-		multiply_variable = {
-			which = battleWinRate
-			value = 100
-		}
-	}
-}
-
 add_mercantilism_excess_to_diplo_power_effect = {
 	tooltip = { add_mercantilism = $VAL$ }
 	custom_tooltip = add_mercantilism_excess_to_diplo_power_effect_tt
@@ -5247,6 +5226,11 @@ anb_on_development_effect = {
 			chance = 10
 			add_base_manpower = 1
 		}
+	}
+	#Wyvernheart
+	if = {
+		limit = { has_province_modifier = estate_wyvernheart_culture_of_the_heart_mod has_construction = mage_tower }
+		add_construction_progress = 0.10
 	}
 
 	#Ikogshaantus
@@ -6154,39 +6138,16 @@ switch_bayvic_to_bayvek = {
 }
 
 select_highest_dev_province_with_limit = {
-	set_variable = {
-		which = highest_province_dev
-		value = 0
-	}
 	every_owned_province = {
 		limit = { $limit$ }
-		export_to_variable = {
-			which = temp_dev_check
-			value = development
-		}
-		ROOT = {
-			set_variable = {
-				which = temp_dev_check
-				which = PREV
-			}
-		}
 		if = {
-			limit = {
-				ROOT = {
-					check_variable = {
-						which = temp_dev_check
-						which = highest_province_dev
-					}
-				}
+			limit = { has_saved_event_target = highest_dev_province_with_limit }
+			if = {
+				limit = { event_target:highest_dev_province_with_limit = { NOT = { higher_development_than = PREV } } }
+				save_event_target_as = highest_dev_province_with_limit
 			}
-			ROOT = {
-				set_variable = {
-					which = highest_province_dev
-					which = temp_dev_check
-				}
-			}
-			save_event_target_as = highest_dev_province_with_limit
 		}
+		else = { save_event_target_as = highest_dev_province_with_limit }
 	}
 	[[effect] event_target:highest_dev_province_with_limit = { $effect$ }]
 }
@@ -8012,4 +7973,46 @@ pirate_republic_estate_crownland_setup = {
 		estate = estate_mages
 		share = 30
 	}
+}
+
+anb_block_heir_death = { #Blocks heirs from dying, barring events
+	[[country] #Is only removable through effects or expiration
+		add_country_modifier = {
+			name = anb_heir_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+	[[ruler] #Removed through effects or when ruler dies and expiration (Yes, using has_country_modifier works on this )
+		add_ruler_modifier = {
+			name = anb_heir_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+}
+
+anb_block_consort_death = {  #Blocks consorts from dying, barring events
+	[[country] #Is only removable through effects or expiration
+		add_country_modifier = {
+			name = anb_consort_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+	[[ruler] #Removed through effects or when ruler dies and expiration (Yes, using has_country_modifier works on this )
+		add_ruler_modifier = {
+			name = anb_consort_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+}
+
+anb_allow_heir_death = { #Allows heirs to die again
+	remove_country_modifier = anb_heir_cannot_die
+}
+
+anb_allow_consort_death = { #Allows consorts to die again (P.S if consort is above 100, they are removed from existence, no notif)
+	remove_country_modifier = anb_consort_cannot_die
 }
