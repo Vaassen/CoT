@@ -1986,7 +1986,7 @@ sedentarization_reset_province_outpost = {
 				}
 				sedentarization_INTERNAL_place_outpost = {
 					phase_numeral = phase_i
-					old_min_autonomy = 100
+					reset_autonomy_plus_one = 101
 				}
 			}
 			# If this reset was caused by the invalidation effect, leave autonomy as is so that
@@ -2003,7 +2003,7 @@ sedentarization_reset_province_outpost = {
 				}
 				sedentarization_INTERNAL_place_outpost = {
 					phase_numeral = phase_ii
-					old_min_autonomy = 80
+					reset_autonomy_plus_one = 81
 				}
 			}
 			# If this reset was caused by the invalidation effect, leave autonomy as is so that
@@ -2017,7 +2017,7 @@ sedentarization_reset_province_outpost = {
 			limit = { has_province_flag = sed_reset_to_phase_three }
 			sedentarization_INTERNAL_place_outpost = {
 				phase_numeral = phase_iii
-				old_min_autonomy = 65
+				reset_autonomy_plus_one = 66
 			}
 		}
 		[[reset_to] clr_province_flag = sed_reset_to_$reset_to$ ]
@@ -2044,16 +2044,18 @@ sedentarization_INTERNAL_place_outpost = {
 			name = sed_outpost_areal_influence_$phase_numeral$
 			duration = -1
 		}
-		[[old_min_autonomy]
-			# Bug: with an 'if NOT autonomy=100', it would always be false and never set the area to 100 autonomy for Phase One.
+		[[reset_autonomy_plus_one]
 			if = {
 				limit = {
 					OR = {
-						NOT = { local_autonomy_above_min = 0.01 }
-						sedentarization_province_has_outpost = yes
+						# Check for "< min_autonomy+1" because "< min_autonomy" fails to catch provinces at minimum autonomy that
+						# have their "real" (hidden) autonomy below minimum.
+						NOT = { local_autonomy = $reset_autonomy_plus_one$ }
+						sedentarization_province_has_outpost = yes	# Whatever the Outpost's autonomy, ensure it's correct for the new phase
 					}
 				}
-				set_local_autonomy = $old_min_autonomy$
+				set_local_autonomy = $reset_autonomy_plus_one$
+				add_local_autonomy = -1
 			}
 		]
 	}
