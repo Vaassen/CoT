@@ -752,17 +752,13 @@ province_event = {
 	mean_time_to_happen = {
 		years = 3
 		modifier = {
-			factor = 10
-			
-			owner = { ai = yes }
-		}
-		modifier = {
 			factor = 1.5
 			owner = { has_country_modifier = remnant_army }
 		}
 	}
 	
 	trigger = {
+		owner = { ai = no }
 		continent = serpentspine
 		is_colony = yes
 		NOT = { has_construction = siberian }
@@ -1573,9 +1569,12 @@ country_event = {
 					add_base_manpower = 1
 					add_base_tax = 1
 					add_base_production = 1
-					remove_province_triggered_modifier = flooded_province
-					add_province_triggered_modifier = efficient_irrigation
+					remove_province_modifier = flooded_province
+					remove_province_modifier = flooded_province_inactive
+					clr_province_flag = flooded_province
 					change_trade_goods = grain
+					add_permanent_province_modifier = { name = efficient_irrigation duration = -1 }
+					set_province_flag = efficient_irrigation
 				}
 			}
 			hidden_effect = { set_global_flag = irrigation_north_done }
@@ -1591,9 +1590,12 @@ country_event = {
 					add_base_manpower = 1
 					add_base_tax = 1
 					add_base_production = 1
-					remove_province_triggered_modifier = flooded_province
-					add_province_triggered_modifier = efficient_irrigation
+					remove_province_modifier = flooded_province
+					remove_province_modifier = flooded_province_inactive
+					clr_province_flag = flooded_province
 					change_trade_goods = grain
+					add_permanent_province_modifier = { name = efficient_irrigation duration = -1 }
+					set_province_flag = efficient_irrigation
 				}
 			}
 			hidden_effect = { set_global_flag = irrigation_south_done }
@@ -1607,9 +1609,12 @@ country_event = {
 				add_base_manpower = 1
 				add_base_tax = 1
 				add_base_production = 1
-				remove_province_triggered_modifier = flooded_province
-				add_province_triggered_modifier = efficient_irrigation
+				remove_province_modifier = flooded_province
+				remove_province_modifier = flooded_province_inactive
+				clr_province_flag = flooded_province
 				change_trade_goods = grain
+				add_permanent_province_modifier = { name = efficient_irrigation duration = -1 }
+				set_province_flag = efficient_irrigation
 			}
 			hidden_effect = { set_global_flag = irrigation_west_done }
 		}
@@ -1622,9 +1627,12 @@ country_event = {
 				add_base_manpower = 1
 				add_base_tax = 1
 				add_base_production = 1
-				remove_province_triggered_modifier = flooded_province
-				add_province_triggered_modifier = efficient_irrigation
+				remove_province_modifier = flooded_province
+				remove_province_modifier = flooded_province_inactive
+				clr_province_flag = flooded_province
 				change_trade_goods = grain
+				add_permanent_province_modifier = { name = efficient_irrigation duration = -1 }
+				set_province_flag = efficient_irrigation
 			}
 			hidden_effect = { set_global_flag = irrigation_east_done }
 		}
@@ -1885,11 +1893,16 @@ country_event = {
 	option = {
         name = diggy.48.e
         ai_chance = { factor = 5 }
-		trigger = { any_owned_province = { has_province_flag = option_infested_4_@ROOT is_city = yes } }
+		trigger = {
+			any_subject_country = { has_country_flag = infested_subject }
+		}
 		goto = infested4
-		random_owned_province = {
-			limit = { has_province_flag = option_infested_4_@ROOT is_city = yes }
-			infested_hold_clearing = yes
+		random_subject_country = {
+			limit = { has_country_flag = infested_subject }
+			random_owned_province = {
+				limit = { has_province_flag = option_infested_4_@ROOT is_city = yes }
+				infested_hold_clearing = yes
+			}
 		}
 	}
 	
@@ -1904,7 +1917,15 @@ country_event = {
 				clr_province_flag = option_infested_1_@ROOT
 				clr_province_flag = option_infested_2_@ROOT
 				clr_province_flag = option_infested_3_@ROOT
-				clr_province_flag = option_infested_4_@ROOT
+			}
+			random_subject_country = {
+				limit = { has_country_flag = infested_subject }
+				clr_country_flag = infested_subject
+				every_owned_province = {
+					limit = { has_province_flag = infested_@ROOT }
+					clr_province_flag = infested_@ROOT
+					clr_province_flag = option_infested_4_@ROOT
+				}
 			}
 			clr_country_flag = open_infested_hold_menu
 		}
@@ -3386,17 +3407,11 @@ country_event = {
 	
 	trigger = {
 		OR = {
-			OR = {
-				has_country_modifier = dwarven_administration
-				capital_scope = { has_integrated_dwarven_pop_trigger = yes }
-			}
-			AND = {
-				capital_scope = { has_integrated_dwarven_pop_trigger = yes }
-				adm_tech = 7
-			}
+			has_country_modifier = dwarven_administration
+			capital_scope = { has_integrated_dwarven_pop_trigger = yes }
 			AND = {
 				capital_scope = { has_subterranean_race = yes }
-				adm_tech = 7 #bugfix. Passive hold dev gain starts at adm 7 for noncap holds
+				adm_tech = 4 #1 tech earlier than digging
 			}
 		}
 		OR = {
@@ -3545,6 +3560,10 @@ province_event = {
 			AND = { NOT = { development = 100 } has_province_modifier = dig_7 }
 		}
 		is_capital = no
+		NOT = { 
+			has_province_modifier = incomplete_hold
+			has_province_modifier = incomplete_hold_0
+		}
 	}
 	
 	#Profit
@@ -3733,6 +3752,28 @@ country_event = {
 		}
 	}
 }
+
+### Hold Owner check
+country_event = {
+	id = diggy.111
+	title = diggy.111.t
+	desc = diggy.111.d
+	picture = ARTWORK_eventPicture
+	
+	is_triggered_only = yes
+	
+	hidden = yes
+	option = {
+		name = diggy.111.a
+		ai_chance = { factor = 1 }
+
+		if = {
+			limit = { NOT = { any_owned_province = { province_group = hold_province } } }
+			clr_country_flag = owns_hold_province
+		}
+	}
+}
+
 
 ###Marrhold setup
 country_event = {
@@ -6071,6 +6112,7 @@ country_event = {
 	option = {
         name = diggy.504.a
         ai_chance = { factor = 50 }
+		custom_tooltip = diggy.504.a.tt
 		add_prestige = 15
 		capital_scope = {
 			#hidden_effect = { set_province_flag = permanent_damestear } #no perma damestear in the dwarovar
@@ -8557,6 +8599,15 @@ country_event = {
 		days = 1
 	}
 
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = { has_terrain = cavern }
+				save_event_target_as = event_province
+			}
+		}
+	}
+
 	#loot the gear
 	option = {
 		name = diggy.564.a
@@ -8603,6 +8654,7 @@ country_event = {
 		capital_scope = { continent = serpentspine }
 		any_owned_province = { 
 			has_province_modifier = expedition_target
+			is_city = yes
 			NOT = { has_province_flag = sent_expedition_@owner }
 			NOT = { has_province_modifier = dwarovar_unwanted_guests }
 		}
@@ -8618,6 +8670,7 @@ country_event = {
 			random_owned_province = {
 				limit = { 
 					has_province_modifier = expedition_target
+					is_city = yes
 					NOT = { has_province_flag = sent_expedition_@owner }
 					NOT = { has_province_modifier = dwarovar_unwanted_guests }
 				}
@@ -10089,6 +10142,7 @@ country_event = {
 			continent = serpentspine
 			base_production = 5
 			NOT = {
+				province_id = 2978
 				trade_goods = gold
 				trade_goods = mithril
 				province_group = hold_province
@@ -12228,6 +12282,10 @@ country_event = { #Hidden event to make the squatters start colonizing
 		4106 = { #West Greatcavern
             create_colony = 50
         }
+		add_country_modifier = {
+			name = squatter_cheap_colonies
+			duration = 9125 #25 years
+		}
 	}
 
 	option = { #Dursikari
@@ -12239,6 +12297,24 @@ country_event = { #Hidden event to make the squatters start colonizing
 		4288 = { #Greatbeard Cavern
             create_colony = 50
         }
+		add_country_modifier = {
+			name = squatter_cheap_colonies
+			duration = 9125 #25 years
+		}
+	}
+	option = { #Skewered Drake
+		name = diggy.200.b
+        ai_chance = { factor = 100 }
+		trigger = {
+			tag = H73
+		}
+		2886 = { #Dwarovrod |27|
+            create_colony = 50
+        }
+		add_country_modifier = {
+			name = squatter_cheap_colonies
+			duration = 9125 #25 years
+		}
 	}
 }
 
@@ -12287,9 +12363,9 @@ country_event = { #Event manager for autorails
 				duration = 1825 
 				hidden = yes 
 			}
-			construct_every_rail_road = {
-				rail = dwarovar_rail
-				repair = yes
+			rail_construct_every_rail_road = {
+				current_rail = dwarovar_rail
+				upgraded_rail = repair
 				speed = 1
 				cost = 1
 			}
@@ -12303,9 +12379,9 @@ country_event = { #Event manager for autorails
 		custom_tooltip = rebuild_road_tooltip
 		hidden_effect = {
 			set_country_flag = auto_build_rail
-			construct_every_rail_road = {
-				rail = dwarovar_rail
-				repair = yes
+			rail_construct_every_rail_road = {
+				current_rail = dwarovar_rail
+				upgraded_rail = repair
 				speed = 1
 				cost = 1
 			}

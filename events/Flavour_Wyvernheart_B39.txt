@@ -174,6 +174,11 @@ country_event = {#Rumours of Power A7
 			NOT = { religion = infernal_court }
 		}
 		change_religion = infernal_court
+		hidden_effect = {
+			every_owned_province = {
+				remove_province_modifier = religious_zeal_at_conv
+			}
+		}
 		add_stability = -2
 		add_country_modifier = {
 			name = wyvernheart_khizriel_leads_the_way
@@ -353,6 +358,17 @@ country_event = {#The New Face of Magic D5
 	trigger = {
 		tag = B39
 	}
+
+	immediate = {
+		hidden_effect = {
+			generic_end_purge = { race = goblin }
+			generic_end_expulsion = { race = goblin }
+			generic_end_purge = { race = orcish  }
+			generic_end_expulsion = { race = orcish }
+			generic_end_purge = { race = half_orcish }
+			generic_end_expulsion = { race = half_orcish }
+		}
+	}
 	
 	#Option A
 	option = {
@@ -425,10 +441,21 @@ country_event = {#The Means of Experimentation E5.2
 	option = {
 		name = "flavour_wyvernheart.106.a"
 		ai_chance = { factor = 1 }
-		840 = {
-			spawn_rebels = {
-				size = 1
-				type = wyverns_rebels
+		if = {
+			limit = { 840 = { owned_by = ROOT } }
+			840 = {
+				spawn_rebels = {
+					size = 1
+					type = wyverns_rebels
+				}
+			}
+		}
+		else = {
+			729 = {
+				spawn_rebels = {
+					size = 1
+					type = wyverns_rebels
+				}
 			}
 		}
 		country_event = {
@@ -498,7 +525,14 @@ country_event = {#A Wyvern's Heart Pumping Burning Blood E5.3
 country_event = {#Raiding the Citadel C8.1
 	id = flavour_wyvernheart.108
 	title = flavour_wyvernheart.108.t
-	desc = flavour_wyvernheart.108.d
+	desc = {
+		trigger = { NOT = { mission_completed = stones_of_power } }
+		desc = flavour_wyvernheart.108.d1
+	}
+	desc = {
+		trigger = { mission_completed = stones_of_power }
+		desc = flavour_wyvernheart.108.d2
+	}
 	picture = FIREBALL_eventPicture
 
 	is_triggered_only = yes
@@ -511,12 +545,18 @@ country_event = {#Raiding the Citadel C8.1
 	option = {
 		name = "flavour_wyvernheart.108.a"
 		ai_chance = { factor = 1 }
-		840 = {
-			spawn_rebels = {
-				size = 3
-				type = wyverns_rebels
+		if = {
+			limit = { mission_completed = stones_of_power }
+			change_innovativeness = 5
+		}
+		else = {
+			840 = {
+				spawn_rebels = {
+					size = 3
+					type = wyverns_rebels
+				}
+				add_devastation = 20
 			}
-			add_devastation = 20
 		}
 		country_event = {
 			id = flavour_wyvernheart.109
@@ -579,7 +619,7 @@ country_event = {#The Castanbane Meteor
 	}
 	
 	#Option A
-	option = {
+	option = {#MAGICREWORK
 		name = "flavour_wyvernheart.110.a"
 		ai_chance = { factor = 1 }
 		set_country_flag = destroyed_the_trialmount
@@ -726,6 +766,9 @@ country_event = {#Calm After the Storm
 	option = {
 		name = "flavour_wyvernheart.112.a"
 		ai_chance = { factor = 1 }
+		trigger = {
+			has_ruler_flag = wyvernheart_the_regent
+		}
 		add_stability_or_adm_power = yes
 		add_devotion = 20
 		custom_tooltip = wyvernheart_A9_event_tt
@@ -740,6 +783,19 @@ country_event = {#Calm After the Storm
 				duration = -1
 			}
 		}
+		swap_non_generic_missions = yes
+	}
+	#Option B
+	option = {
+		name = "flavour_wyvernheart.112.b"
+		ai_chance = { factor = 1 }
+		trigger = {
+			NOT = { has_ruler_flag = wyvernheart_the_regent }
+		}
+		add_stability_or_adm_power = yes
+		add_devotion = 20
+		custom_tooltip = wyvernheart_A9_event_tt
+		set_country_flag = had_court_and_country
 		swap_non_generic_missions = yes
 	}
 }
@@ -790,7 +846,7 @@ province_event = {#Free Core from gov mechanic
 		ai_chance = { factor = 1 }
 		add_core = owner
 		add_random_development = -3
-		custom_tooltip = wyvernheart_no_separatism_tt
+		add_nationalism = -30
 	}
 	#Option B
 	option = {
@@ -1044,6 +1100,25 @@ country_event = {#Select clique for Overseer
 				type = simple
 				name = "§TFactional§! Overseer"
 			}
+			if = {
+				limit = { check_variable = { which = pointsWitchKing value = 26 } }
+				add_estate_loyalty = {
+					estate = estate_mages
+					loyalty = 10
+				}
+				add_estate_loyalty = {
+					estate = estate_acolytes
+					loyalty = 10
+				}
+				take_estate_land_share_medium = { estate = all } #2%
+				if = {
+					limit = { NOT = { has_ruler_modifier = witch_king_modifier } } #MAGICREWORK
+					country_event = {
+						id =  witch_king.0
+					}
+				}
+			}
+			else = { increase_witch_king_points_medium = yes } #2 points
 		}
 	}
 	
@@ -1070,10 +1145,14 @@ country_event = {#Select clique for Overseer
 		}
 		if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 701 } }
+			
 			alenic_reach_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1081,8 +1160,11 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 728 } }
 			west_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1090,8 +1172,11 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 227 } }
 			alenic_frontier_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1099,8 +1184,11 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 777 } }
 			forlorn_vale_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1108,8 +1196,11 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 840 } }
 			inner_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1117,8 +1208,11 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 817 } }
 			south_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
-				else = { add_nationalism = -10 }
+				hidden_effect = {
+					if = { limit = { local_autonomy = 15 } add_local_autonomy = -30 }
+					else = { add_nationalism = -10 }
+				}
+				custom_tooltip = wyvernheart_appoint_hardliner_nationalism_tt
 			}
 			add_rebel_progress = { value = -10 }
 		}
@@ -1128,6 +1222,7 @@ country_event = {#Select clique for Overseer
 			name = "Hardliner Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1210,6 +1305,7 @@ country_event = {#Select clique for Overseer
 			name = "Technocrat Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1242,120 +1338,138 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 701 } }
 			alenic_reach_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 728 } }
 			west_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 227 } }
 			alenic_frontier_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 777 } }
 			forlorn_vale_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 840 } }
 			inner_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 817 } }
 			south_castanor_region = {
 				limit = { owned_by = ROOT }
-				if = {
-					limit = { devastation = 5 }
-					add_devastation = -5
-				}
-				else = {
-					add_prosperity = 5
-				}
-				if = {
-					limit = { area_for_scope_province = { is_prosperous = yes } }
-					random = {
-						chance = 17
-						add_random_development = 1
+				hidden_effect = {
+					if = {
+						limit = { devastation = 5 }
+						add_devastation = -5
+					}
+					else = {
+						add_prosperity = 5
+					}
+					if = {
+						limit = { area_for_scope_province = { is_prosperous = yes } }
+						random = {
+							chance = 17
+							add_random_development = 1
+						}
 					}
 				}
+				custom_tooltip = wyvernheart_appoint_heartmage_effect_tt
 			}
 		}
 		set_saved_name = {
@@ -1364,6 +1478,7 @@ country_event = {#Select clique for Overseer
 			name = "Heartmage Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1402,42 +1517,60 @@ country_event = {#Select clique for Overseer
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 701 } }
 			alenic_reach_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+					hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 728 } }
 			west_castanor_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+				hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 227 } }
 			alenic_frontier_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+				hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 777 } }
 			forlorn_vale_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+				hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 840 } }
 			inner_castanor_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+				hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		else_if = {
 			limit = { event_target:wyvernheart_overseer_target_timer = { province_id = 817 } }
 			south_castanor_region = {
 				limit = { owned_by = ROOT }
-				add_prosperity = 5
+				hidden_effect = {
+					add_prosperity = 5
+				}
+				custom_tooltip = wyvernheart_appoint_devout_effect_tt
 			}
 		}
 		set_saved_name = {
@@ -1446,6 +1579,7 @@ country_event = {#Select clique for Overseer
 			name = "Devout Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1491,6 +1625,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1503,6 +1638,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt
 					add_base_production = 3
 				}
 			}
@@ -1525,6 +1661,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt					
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1537,6 +1674,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt					
 					add_base_production = 3
 				}
 			}
@@ -1559,6 +1697,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1571,6 +1710,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_base_production = 3
 				}
 			}
@@ -1593,6 +1733,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1605,6 +1746,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_base_production = 3
 				}
 			}
@@ -1627,6 +1769,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1639,6 +1782,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_base_production = 3
 				}
 			}
@@ -1661,6 +1805,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { NOT = { has_building = mage_tower } owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_building_construction = {
 						building = mage_tower
 						cost = 0
@@ -1673,6 +1818,7 @@ country_event = {#Select clique for Overseer
 					type = random
 					amount = 1
 					limit = { owned_by = ROOT }
+					custom_tooltip = wyvernheart_appoint_scion_effect_tt	
 					add_base_production = 3
 				}
 			}
@@ -1684,6 +1830,7 @@ country_event = {#Select clique for Overseer
 			name = "Wealthy Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1767,6 +1914,7 @@ country_event = {#Select clique for Overseer
 			name = "Ambitious Overseer"
 		}
 		wyvernheart_define_war_wizard = yes
+		custom_tooltip = wyvernheart_not_warwizard
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.500
@@ -1800,6 +1948,12 @@ country_event = {#The Scions of Wyvernheart
 			country_event = {#Prerolls schools for the third button
 				id = flavour_wyvernheart.501
 			}
+			generic_end_purge = { race = goblin }
+			generic_end_expulsion = { race = goblin }
+			generic_end_purge = { race = orcish  }
+			generic_end_expulsion = { race = orcish }
+			generic_end_purge = { race = half_orcish }
+			generic_end_expulsion = { race = half_orcish }
 		}
 	}
 
@@ -1807,9 +1961,23 @@ country_event = {#The Scions of Wyvernheart
 	option = {
 		name = "flavour_wyvernheart.117.a"
 		ai_chance = { factor = 1 }
+		trigger = {
+			NOT = {
+				num_of_owned_provinces_with = {
+					value = 20
+					has_building = mage_tower
+				}
+			}
+			NOT = { crown_land_share = 60 }
+		}
 		if = {
 			limit = { NOT = { has_ruler_flag = wyvernheart_the_regent } }
 			add_mil_power = -200
+		}
+		if = {
+			limit = { NOT = { government = theocracy } }
+			change_government = theocracy
+			add_government_reform = magocracy_reform
 		}
 		set_country_flag = scions_completed
 		add_government_reform = floodborn_council_reform_theocracy
@@ -1818,15 +1986,21 @@ country_event = {#The Scions of Wyvernheart
 	option = {
 		name = "flavour_wyvernheart.117.b"
 		ai_chance = { factor = 1 }
-		trigger = { 
+		trigger = {
 			num_of_owned_provinces_with = {
 				value = 20
 				has_building = mage_tower
 			}
+			NOT = { crown_land_share = 60 }
 		}
 		if = {
 			limit = { NOT = { has_ruler_flag = wyvernheart_the_regent } }
 			add_mil_power = -200
+		}
+		if = {
+			limit = { NOT = { government = theocracy } }
+			change_government = theocracy
+			add_government_reform = magocracy_reform
 		}
 		take_estate_land_share_gigantic = { estate = all } #10%
 		set_country_flag = scions_completed
@@ -1836,10 +2010,17 @@ country_event = {#The Scions of Wyvernheart
 	option = {
 		name = "flavour_wyvernheart.117.c"
 		ai_chance = { factor = 1 }
-		trigger = { crown_land_share = 60 }
+		trigger = {
+			crown_land_share = 60
+		}
 		if = {
 			limit = { NOT = { has_ruler_flag = wyvernheart_the_regent } }
 			add_mil_power = -200
+		}
+		if = {
+			limit = { NOT = { government = theocracy } }
+			change_government = theocracy
+			add_government_reform = magocracy_reform
 		}
 		tooltip = {
 			add_government_power = {
@@ -1878,10 +2059,7 @@ country_event = {#The Promised Mage
 			dynasty = ROOT
 			age = 9
 		}
-		add_country_modifier = {
-			name = heir_mage_personality_mod
-			duration = -1
-		}
+		set_heir_mage_effect = yes
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.201
@@ -1913,6 +2091,15 @@ country_event = {#A Simple Accident
 		tag = B39
 	}
 	
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { has_ruler_modifier = witch_king_modifier }
+				set_country_flag = ruler_was_witchking
+			}
+		}
+	}
+
 	#Option A
 	option = {
 		name = "flavour_wyvernheart.201.a"
@@ -1928,12 +2115,26 @@ country_event = {#A Simple Accident
 			religion = ROOT
 			culture = ROOT
 		}
+		set_ruler_flag = evocation_1
 		add_ruler_personality = mage_personality
+		if = {
+			limit = {
+				has_country_flag = ruler_was_witchking
+			}
+			add_ruler_modifier = {
+				name = witch_king_modifier
+			}
+			clr_country_flag = ruler_was_witchking
+		}
 		custom_tooltip = wyvernheart_201_event_tt
 		hidden_effect = {
 			country_event = {
 				id = flavour_wyvernheart.202
 				days = 365
+			}
+			country_event = {#roll schools
+				id = flavour_wyvernheart.501
+				days = 2
 			}
 		}
 	}
@@ -1998,6 +2199,19 @@ country_event = {#Tyrant's Fall
 			siege = 7
 			trait = war_wizard_personality
 		}
+		define_heir = {
+			dynasty = "of Wyvernheart"
+			religion = ROOT
+			culture = ROOT
+		}
+		set_ruler_flag = evocation_1
+		set_ruler_flag = evocation_2
+		set_ruler_flag = evocation_3
+		set_ruler_flag = transmutation_1
+		set_ruler_flag = transmutation_2
+		set_ruler_flag = conjuration_1
+		set_ruler_flag = abjuration_1
+		set_ruler_flag = abjuration_2
 		add_stability = -2
 		add_war_exhaustion = 10
 		hidden_effect = {
@@ -2005,7 +2219,12 @@ country_event = {#Tyrant's Fall
 				id = flavour_wyvernheart.203
 				days = 365
 			}
+			country_event = {#roll schools
+				id = flavour_wyvernheart.501
+				days = 2
+			}
 		}
+		custom_tooltip = wyvernheart_202_event_tt
 	}
 }
 country_event = {#Victory or Death
@@ -2104,19 +2323,37 @@ country_event = {#Event manager for the flavour events
 		ai_chance = { factor = 1 }
 		random_list = {
 			1000 = {
-				trigger = { NOT = { AND = { has_country_flag = wyvernheart_crisis_of_devotion has_global_flag = crimson_deluge_is_over } } }
+				trigger = {
+					AND = {
+						NOT = {
+							has_country_flag = wyvernheart_crisis_of_devotion
+						}
+						has_global_flag = crimson_deluge_is_over
+					}
+				}
 				country_event = {
 					id = flavour_wyvernheart.302
 				}
 			}
 			1000 = {
-				trigger = { NOT = { AND = { has_country_flag = wyvernheart_new_face_of_magic mission_completed = the_red_flood } } }
+				trigger = {
+					NOT = {
+						AND = {
+							has_country_flag = wyvernheart_new_face_of_magic
+							mission_completed = a_new_seat_of_power
+						}
+					}
+					castonath_area = {
+						owned_by = ROOT
+					}
+				}
 				country_event = {
 					id = flavour_wyvernheart.303
 				}
 			}
 			1 = {
 				trigger = {
+					NOT = { has_country_flag = had_wyvernheart_304_last }
 					OR = {
 						has_active_estate_agenda = estate_mages_wyvernheart_invest_in_critical_materials
 						has_active_estate_agenda = estate_mages_wyvernheart_research_new_spells
@@ -2131,24 +2368,58 @@ country_event = {#Event manager for the flavour events
 				country_event = {
 					id = flavour_wyvernheart.304
 				}
-			}
-			1 = {
-				country_event = {
-					id = flavour_wyvernheart.305
-				}
-			}
-			1 = {
-				country_event = {
-					id = flavour_wyvernheart.306
-				}
-			}
-			1 = {
-				country_event = {
-					id = flavour_wyvernheart.307
-				}
+				clr_country_flag = had_wyvernheart_309_last
+				clr_country_flag = had_wyvernheart_308_last
+				clr_country_flag = had_wyvernheart_307_last
+				clr_country_flag = had_wyvernheart_306_last
+				clr_country_flag = had_wyvernheart_305_last
+				set_country_flag = had_wyvernheart_304_last
 			}
 			1 = {
 				trigger = {
+					NOT = { has_country_flag = had_wyvernheart_305_last }
+				}
+				country_event = {
+					id = flavour_wyvernheart.305
+				}
+				clr_country_flag = had_wyvernheart_309_last
+				clr_country_flag = had_wyvernheart_308_last
+				clr_country_flag = had_wyvernheart_307_last
+				clr_country_flag = had_wyvernheart_306_last
+				set_country_flag = had_wyvernheart_305_last
+				clr_country_flag = had_wyvernheart_304_last
+			}
+			1 = {
+				trigger = {
+					NOT = { has_country_flag = had_wyvernheart_306_last }
+				}
+				country_event = {
+					id = flavour_wyvernheart.306
+				}
+				clr_country_flag = had_wyvernheart_309_last
+				clr_country_flag = had_wyvernheart_308_last
+				clr_country_flag = had_wyvernheart_307_last
+				set_country_flag = had_wyvernheart_306_last
+				clr_country_flag = had_wyvernheart_305_last
+				clr_country_flag = had_wyvernheart_304_last
+			}
+			1 = {
+				trigger = {
+					NOT = { has_country_flag = had_wyvernheart_307_last }
+				}
+				country_event = {
+					id = flavour_wyvernheart.307
+				}
+				clr_country_flag = had_wyvernheart_309_last
+				clr_country_flag = had_wyvernheart_308_last
+				set_country_flag = had_wyvernheart_307_last
+				clr_country_flag = had_wyvernheart_306_last
+				clr_country_flag = had_wyvernheart_305_last
+				clr_country_flag = had_wyvernheart_304_last
+			}
+			1 = {
+				trigger = {
+					NOT = { has_country_flag = had_wynverheart_308_last }
 					OR = {
 						AND = {#Hardliner vs Technocrat
 							OR = {
@@ -2281,12 +2552,28 @@ country_event = {#Event manager for the flavour events
 				country_event = {
 					id = flavour_wyvernheart.308
 				}
+				clr_country_flag = had_wyvernheart_309_last
+				set_country_flag = had_wyvernheart_308_last
+				clr_country_flag = had_wyvernheart_307_last
+				clr_country_flag = had_wyvernheart_306_last
+				clr_country_flag = had_wyvernheart_305_last
+				clr_country_flag = had_wyvernheart_304_last
 			}
 			1 = {
+				trigger = {
+					NOT = { has_country_flag = had_wyvernheart_309_last }
+				}
 				country_event = {
 					id = flavour_wyvernheart.309
 				}
+				set_country_flag = had_wyvernheart_309_last
+				clr_country_flag = had_wyvernheart_308_last
+				clr_country_flag = had_wyvernheart_307_last
+				clr_country_flag = had_wyvernheart_306_last
+				clr_country_flag = had_wyvernheart_305_last
+				clr_country_flag = had_wyvernheart_304_last
 			}
+			5 = {}
 		}
 	}
 }
@@ -2361,7 +2648,7 @@ country_event = {#A Crisis in Devotion
 	#Option A
 	option = {
 		name = "flavour_wyvernheart.302.a"
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 3 }
 		add_stability = -1
 		add_country_modifier = {
 			name = wyvernheart_faith_in_the_flood_questionned
@@ -2395,6 +2682,78 @@ country_event = {#A Crisis in Devotion
 					change_religion = black_doctrine
 				}
 			"
+		}
+	}
+	#Option C - AI only
+	option = {
+		name = "flavour_wyvernheart.302.c"
+		ai_chance = { factor = 3 }
+		trigger = {
+			ai = yes
+			NOT = {
+				num_of_owned_provinces_with = {
+					value = 20
+					is_core = ROOT
+				}
+			}
+		}
+		add_country_modifier = {
+			name = wyvernheart_faith_in_magic_reinforced
+			duration = 7300
+		}
+		custom_tooltip = wyvernheart_black_doctrine_provinces
+		for = {
+			amount = 10
+			effect = "
+				random_owned_province = {
+					limit = { NOT = { religion = black_doctrine } }
+					change_religion = black_doctrine
+				}
+			"
+		}
+		change_religion = black_doctrine
+		hidden_effect = {
+			every_owned_province = {
+				remove_province_modifier = religious_zeal_at_conv
+			}
+		}
+	}
+	#Option D - BD
+	option = {
+		name = "flavour_wyvernheart.302.c"
+		ai_chance = { factor = 3 }
+		trigger = {
+			calc_true_if = {#MAGICREWORK
+				amount = 2
+				is_divination_3 = yes
+				is_conjuration_3 = yes
+				is_abjuration_3 = yes
+				is_enchantment_3 = yes
+				is_transmutation_3 = yes
+				is_illusion_3 = yes
+				is_necromancy_3 = yes
+				is_conjuration_3 = yes
+			}
+		}
+		add_country_modifier = {
+			name = wyvernheart_faith_in_magic_reinforced
+			duration = 7300
+		}
+		custom_tooltip = wyvernheart_black_doctrine_provinces
+		for = {
+			amount = 10
+			effect = "
+				random_owned_province = {
+					limit = { NOT = { religion = black_doctrine } }
+					change_religion = black_doctrine
+				}
+			"
+		}
+		change_religion = black_doctrine
+		hidden_effect = {
+			every_owned_province = {
+				remove_province_modifier = religious_zeal_at_conv
+			}
 		}
 	}
 }
@@ -2461,7 +2820,7 @@ country_event = {#The New Face of the Council
 			duration = 9125
 		}
 		custom_tooltip = add_magic_study_modifier_25_tt
-		update_magic_study_experience_modifier = { value = 25 }
+		update_magic_study_experience_modifier = { value = 25 } #MAGICREWORK
 	}
 }
 
@@ -2570,10 +2929,26 @@ country_event = {#The Council's Challenge
 	option = {
 		name = "flavour_wyvernheart.306.b"
 		ai_chance = { factor = 1 }
-		castonath_area = {
-			spawn_rebels = {
-				size = 2
-				type = pretender_rebels
+		if = {
+			limit = {
+				castonath_area = {
+					type = all
+					owned_by = ROOT
+				}
+			}
+			castonath_area = {
+				spawn_rebels = {
+					size = 2
+					type = pretender_rebels
+				}
+			}
+		}
+		else = {
+			athfork_area = {
+				spawn_rebels = {
+					size = 2
+					type = pretender_rebels
+				}
 			}
 		}
 	}
@@ -2582,16 +2957,16 @@ country_event = {#The Council's Challenge
 		name = "flavour_wyvernheart.306.c"
 		ai_chance = { factor = 1 }
 		trigger = {
-			calc_true_if = {
+			calc_true_if = {#MAGICREWORK
 				amount = 2
-				has_ruler_flag = divination_3
-				has_ruler_flag = conjuration_3
-				has_ruler_flag = abjuration_3
-				has_ruler_flag = enchantment_3
-				has_ruler_flag = transmutation_3
-				has_ruler_flag = illusion_3
-				has_ruler_flag = necromancy_3
-				has_ruler_flag = conjuration_3
+				is_divination_3 = yes
+				is_conjuration_3 = yes
+				is_abjuration_3 = yes
+				is_enchantment_3 = yes
+				is_transmutation_3 = yes
+				is_illusion_3 = yes
+				is_necromancy_3 = yes
+				is_conjuration_3 = yes
 			}
 		}
 		highlight = yes
@@ -3094,6 +3469,21 @@ province_event = {#A Heartman Home
 					duration = 2890 #8years - 1 month
 				}
 			}
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_4 } add_company_manpower = 0.01 }
 			set_country_flag = wyvernheart_401_recent
 			clr_country_flag = wyvernheart_402_recent
 			clr_country_flag = wyvernheart_403_recent
@@ -3131,6 +3521,21 @@ province_event = {#A Dream Realised
 					duration = 2890 #8years - 1 month
 				}
 			}
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_4 } add_company_manpower = 0.01 }
 			set_country_flag = wyvernheart_402_recent
 			clr_country_flag = wyvernheart_401_recent
 			clr_country_flag = wyvernheart_403_recent
@@ -3179,6 +3584,21 @@ province_event = {#Away With the Old
 					duration = 2890 #8years - 1 month
 				}
 			}
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_4 } add_company_manpower = 0.01 }
 			set_country_flag = wyvernheart_403_recent
 			clr_country_flag = wyvernheart_402_recent
 			clr_country_flag = wyvernheart_401_recent
@@ -3216,6 +3636,21 @@ province_event = {#A Forceful Assimilation
 					duration = 2890 #8years - 1 month
 				}
 			}
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_2_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_3_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_4_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_5_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_1 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_2 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_3 } add_company_manpower = 0.01 }
+			random_hired_mercenary_company = { limit = { template = merc_wyvernheart_burnblood_company_6_4 } add_company_manpower = 0.01 }
 			set_country_flag = wyvernheart_404_recent
 			clr_country_flag = wyvernheart_402_recent
 			clr_country_flag = wyvernheart_403_recent
@@ -3462,7 +3897,7 @@ country_event = {#Rolls magic schools for the manifest the flood gov power
 
 	immediate = {
 		if = {
-			limit = {
+			limit = {#MAGICREWORK
 				OR = {
 					NOT = {
 						has_country_flag = wyvernheart_manifest_the_flood_divination
@@ -3516,7 +3951,7 @@ country_event = {#Rolls magic schools for the manifest the flood gov power
 			clr_country_flag = wyvernheart_manifest_the_flood_transmutation
 			clr_country_flag = wyvernheart_manifest_the_flood_evocation
 			clr_country_flag = wyvernheart_manifest_the_flood_illusion
-			random_list = {
+			random_list = {#MAGICREWORK
 				1 = {
 					trigger = {
 						NOT = { is_divination_3 = yes }
