@@ -1786,7 +1786,6 @@ sedentarization_on_yearly_pulse = {
 					}
 					save_event_target_as = sed_ai_new_outpost_province
 				}
-				ROOT = { sedentarization_deduct_outpost_cost_from_country = yes }
 				event_target:sed_ai_new_outpost_province = { sedentarization_place_brand_new_outpost = yes }
 			}
 		}
@@ -1868,8 +1867,9 @@ sedentarization_place_brand_new_outpost = {
 		}
 		custom_tooltip = sed_place_brand_new_outpost_phase_one
 		sedentarization_reset_province_outpost = { reset_to = phase_one }
+		owner = { sedentarization_deduct_outpost_cost_from_country = yes }
 	}
-	else_if = {
+	if = {	# Can't use else_if because firing an event
 		limit = {
 			OR = {
 				has_province_flag = sed_incomplete_sedentarization
@@ -1877,7 +1877,10 @@ sedentarization_place_brand_new_outpost = {
 			}
 		}
 		custom_tooltip = sed_place_brand_new_outpost_phase_two
-		sedentarization_reset_province_outpost = { reset_to = phase_two }
+		hidden_effect = {
+			owner = { set_country_flag = sed_placing_new_phase_two_outpost }
+			province_event = { id = sedentarization.200 }
+		}
 		# Cleanup invalid Phase One flags; Phase Two and Three flags shouldn't exist because of our 'on_province_owner_change' effect.
 		sedentarization_check_for_invalid_flags = yes
 	}
@@ -1969,6 +1972,13 @@ sedentarization_reset_province_outpost = {
 						duration = -1
 						hidden = yes
 					}
+					# Ensure "real" (hidden) autonomy doesn't cheat past the intended minimum
+					if = {
+						limit = {
+							NOT = { local_autonomy = 50.1 }
+						 }
+						 set_local_autonomy = 50
+					}
 				}
 				owner = {
 					subtract_variable = {
@@ -1986,7 +1996,7 @@ sedentarization_reset_province_outpost = {
 				}
 				sedentarization_INTERNAL_place_outpost = {
 					phase_numeral = phase_i
-					old_min_autonomy = 100
+					reset_autonomy_plus_one = 101
 				}
 			}
 			# If this reset was caused by the invalidation effect, leave autonomy as is so that
@@ -2003,7 +2013,7 @@ sedentarization_reset_province_outpost = {
 				}
 				sedentarization_INTERNAL_place_outpost = {
 					phase_numeral = phase_ii
-					old_min_autonomy = 80
+					reset_autonomy_plus_one = 81
 				}
 			}
 			# If this reset was caused by the invalidation effect, leave autonomy as is so that
@@ -2017,7 +2027,7 @@ sedentarization_reset_province_outpost = {
 			limit = { has_province_flag = sed_reset_to_phase_three }
 			sedentarization_INTERNAL_place_outpost = {
 				phase_numeral = phase_iii
-				old_min_autonomy = 65
+				reset_autonomy_plus_one = 66
 			}
 		}
 		[[reset_to] clr_province_flag = sed_reset_to_$reset_to$ ]
@@ -2026,7 +2036,13 @@ sedentarization_reset_province_outpost = {
 
 # DO NOT USE unless you know you shouldn't be using "sedentarization_reset_province_outpost" instead
 sedentarization_INTERNAL_remove_outpost_modifiers = {
-	area = { remove_province_modifier = sed_outpost_areal_influence_phase_$phase$ }
+	# If this is Phase Three progressing to completion, don't remove areal modifiers until the propagation effect happens
+	if = {
+		limit = {
+			NOT = { has_province_flag = sed_reset_to_completion }
+		}
+		area = { remove_province_modifier = sed_outpost_areal_influence_phase_$phase$ }
+	}
 	remove_province_modifier = sed_outpost_phase_$phase$
 }
 
@@ -2044,16 +2060,25 @@ sedentarization_INTERNAL_place_outpost = {
 			name = sed_outpost_areal_influence_$phase_numeral$
 			duration = -1
 		}
-		[[old_min_autonomy]
-			# Bug: with an 'if NOT autonomy=100', it would always be false and never set the area to 100 autonomy for Phase One.
+		[[reset_autonomy_plus_one]
 			if = {
 				limit = {
 					OR = {
-						NOT = { local_autonomy_above_min = 0.01 }
-						sedentarization_province_has_outpost = yes
+						# Check for "< min_autonomy+1" because "< min_autonomy" fails to catch provinces at minimum autonomy that
+						# have their "real" (hidden) autonomy below minimum.
+						NOT = { local_autonomy = $reset_autonomy_plus_one$ }
+						sedentarization_province_has_outpost = yes	# Whatever the Outpost's autonomy, ensure it's correct for the new phase
 					}
 				}
-				set_local_autonomy = $old_min_autonomy$
+				set_local_autonomy = $reset_autonomy_plus_one$
+				# Subtract one to get the actual threshold autonomy but not if it's Phase One (since trying to set autonomy to 101%
+				# leaves it at 100% due to a hardcoded upper limit; don't subtract to 99%).
+				if = {
+					limit = {
+						NOT = { local_autonomy = 100 }
+					}
+					add_local_autonomy = -1
+				}
 			}
 		]
 	}
@@ -2115,8 +2140,8 @@ sedentarization_set_contact_complete = {
 	set_province_flag = sed_contact_complete
 	hidden_effect = {
 		if = {
-			limit = { has_province_modifier = $blocker_modifier$ }
-			remove_province_modifier = $blocker_modifier$
+			limit = { has_province_modifier = sed_no_first_contact }
+			remove_province_modifier = sed_no_first_contact
 			remove_province_modifier = sed_outpost_progress_blocked
 		}
 	}
@@ -2138,6 +2163,10 @@ sedentarization_pick_yearly_event = {
 					has_province_flag = sed_contact_complete
 					local_autonomy = 82.4
 				}
+			}
+			modifier = {
+				factor = 2
+				has_country_flag = J52_more_sedentarization_flag #Ikogshaantus
 			}
 			# Outpost owner is used for some triggers (currently just Phase Two)
 			owner = { save_event_target_as = sed_outpost_owner }
@@ -2190,8 +2219,14 @@ sedentarization_on_province_owner_change = {
 					value = 1
 				}
 			}
+			# If Phase One, clear Phase One flags; don't clear these in future Phases
 			if = {
-				limit = { has_province_modifier = sed_outpost_phase_i }
+				limit = {
+					NOT = {
+						has_province_flag = sed_incomplete_sedentarization
+						has_province_flag = sed_semi_complete_sedentarization
+					}
+				}
 				sedentarization_clear_phase_one_flags = yes
 			}
 			else = {
@@ -2453,6 +2488,17 @@ sedentarization_phase_two_nomadic_base_culture_effect = {
 		}
 		change_culture = runsukhi
 		change_religion = owner
+	}
+}
+
+sedentarization_outpost_completion_generic_propagation = {
+	area = {
+		limit = {
+			NOT = { province_id = ROOT }
+		}
+		sedentarization_outpost_completion_$completion_effect$ = { culture_source = event_target:sed_outpost }
+		set_local_autonomy = 50
+		remove_province_modifier = sed_outpost_areal_influence_phase_iii
 	}
 }
 
