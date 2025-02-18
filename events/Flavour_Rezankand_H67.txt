@@ -272,6 +272,10 @@ country_event = {
 	picture = COURT_eventPicture
 	is_triggered_only = yes
 
+	trigger = {
+		has_reform = exemplar_state
+	}
+
 	immediate = {
 		hidden_effect = {
 			define_exiled_ruler = { 
@@ -279,15 +283,20 @@ country_event = {
 				culture = ROOT
 				religion = ROOT
 				option = 0
+				min_age = 350
+				max_age = 400
 			}
 			random_owned_province = { #firebringers
 				limit = {
 					culture_is_ruinborn = yes
-					has_owner_accepted_culture = yes
+					OR = {
+						has_owner_accepted_culture = yes
+						culture = vaikazelhi #Fallback
+					}
 				}
 				ROOT = {
 					define_exiled_ruler = { 
-						exiled_as = firebringer_candidate
+						exiled_as = firebringers_candidate
 						culture = PREV
 						religion = ROOT
 						option = 1
@@ -297,7 +306,10 @@ country_event = {
 			random_owned_province = { #sundancers
 				limit = {
 					culture_is_ruinborn = yes
-					has_owner_accepted_culture = yes
+					OR = {
+						has_owner_accepted_culture = yes
+						culture = vaikazelhi #Fallback
+					}
 				}
 				ROOT = {
 					define_exiled_ruler = { 
@@ -311,28 +323,34 @@ country_event = {
 			random_owned_province = { #avengers
 				limit = {
 					culture_is_ruinborn = yes
-					has_owner_accepted_culture = yes
+					OR = {
+						has_owner_accepted_culture = yes
+						culture = vaikazelhi #Fallback
+					}
 				}
 				ROOT = {
 					define_exiled_ruler = { 
 						exiled_as = avengers_candidate
 						culture = PREV
 						religion = ROOT
-						option = 2
+						option = 3
 					}
 				}
 			}
 			random_owned_province = { #avengers
 				limit = {
 					culture_is_ruinborn = yes
-					has_owner_accepted_culture = yes
+					OR = {
+						has_owner_accepted_culture = yes
+						culture = vaikazelhi #Fallback
+					}
 				}
 				ROOT = {
 					define_exiled_ruler = { 
 						exiled_as = phoenixes_candidate
 						culture = PREV
 						religion = ROOT
-						option = 2
+						option = 4
 					}
 				}
 			}
@@ -385,6 +403,52 @@ country_event = {
 		add_ruler_modifier = {
 			name = rezankand_phoenixes_ruler_mod
 			duration = -1
+		}
+	}
+}
+
+#Handler event for On stuff
+country_event = {
+	id = flavor_rezankand.1004
+	title = flavor_rezankand.1004.t
+	desc = flavor_rezankand.1004.d
+	picture = COURT_eventPicture
+
+	hidden = yes 
+	is_triggered_only = yes
+
+	trigger = {
+		tag = H67 #Rezankand
+		has_country_flag = rezankand_supported_on
+	}
+
+	mean_time_to_happen = { days = 1 }
+
+	option = { 
+		name = flavor_rezankand.1004.a
+		random_list = {
+			1 = {
+				trigger = {
+					any_owned_province = {
+						superregion = taychend_superregion
+						NOT = { religion = oren_nayiru }
+					}
+				}
+				country_event = { id = flavor_rezankand.14}
+			}
+			1 = {
+				country_event = { id = flavor_rezankand.15}
+			}
+			1 = {
+				trigger = {
+					taychend_superregion = {
+						NOT = { owned_by = ROOT }
+						is_city = yes
+						NOT = { religion = oren_nayiru }
+					}
+				}
+				country_event = { id = flavor_rezankand.16}
+			}
 		}
 	}
 }
@@ -864,19 +928,9 @@ country_event = {
 					}
 					NOT = { religion = oren_nayiru }
 				}
-				if = {
-					limit = { is_subject_of = ROOT }
-					change_religion = oren_nayiru
-					add_aggressive_expansion = {
-						who = ROOT 
-						value = -1000
-					}
-				}
-				else = {
-					add_country_modifier = {
-						name = rezankand_dispel_the_dark_modifier
-						duration = 36500 #100 years
-					}
+				add_country_modifier = {
+					name = rezankand_dispel_the_dark_modifier
+					duration = 36500 #100 years
 				}
 			}
 			custom_tooltip = rezankand_dispel_the_dark_religion_bonus_tt
@@ -1103,6 +1157,11 @@ country_event = {
 			}
 		}
 		end_incident = incident_trapped_in_shadows
+		remove_country_modifier = rezankand_new_exemplars_modifier
+		custom_tooltip = rezankand_new_clergy_privilege_tt
+		rezailan_area = {
+			add_permanent_claim = ROOT
+		}
 
 		hidden_effect = {
 			clr_country_flag = rezankand_jaherian_landing_flag
@@ -1138,8 +1197,12 @@ country_event = {
 	fire_only_once = yes
 
 	trigger = {
-		OR = {
-			tag = H66 #Jaherian Exemplars
+		tag = H66 #Jaherian Exemplars
+	}
+
+	immediate = {
+		hidden_effect = {
+			add_devotion = 100 #They start at 0 for some reason
 		}
 	}
 
@@ -1246,6 +1309,7 @@ country_event = { #Choosing Sides
 
 	option = { #Side with them
 		name = flavor_rezankand.13.a
+		custom_tooltip = rezankand_one_sun_tt
 		set_country_flag = rezankand_supported_on
 		nsc_update_incident_value = {
 			decrease = yes
@@ -1284,6 +1348,7 @@ country_event = { #Choosing Sides
 
 	option = { #Denounce Them
 		name = flavor_rezankand.13.b
+		custom_tooltip = rezankand_one_sun_tt
 		set_country_flag = rezankand_stomping_on
 		nsc_update_incident_value = {
 			increase = yes
@@ -1318,27 +1383,13 @@ country_event = { #Oren Nayiru Request Weapons
 	desc = flavor_rezankand.14.d
 	picture = COURT_eventPicture
 	is_triggered_only = yes
-	trigger = {
-		tag = H67
-		has_country_flag = rezankand_supported_on
-		any_owned_province = {
-			OR = {
-				religion = gods_of_the_taychend
-				religion = gods_of_the_taychend_reformed
-			}
-		}
-	}
-
-	mean_time_to_happen = { days = 1 }
 
 	immediate = {
 		hidden_effect = {
 			random_owned_province = {
 				limit = {
-					OR = {
-						religion = gods_of_the_taychend
-						religion = gods_of_the_taychend_reformed
-					}
+					superregion = taychend_superregion
+					NOT = { religion = oren_nayiru }
 				}
 				save_event_target_as = rezankand_on_takeover_target
 			}
@@ -1391,8 +1442,6 @@ country_event = { #Oren Nayiru Civilians Request Asylum
 		tag = H67
 		has_country_flag = rezankand_supported_on
 	}
-
-	mean_time_to_happen = { days = 1 }
 
 	option = { #Help them
 		name = flavor_rezankand.15.a
@@ -1448,16 +1497,6 @@ country_event = { #Oren Nayiru Request Weapons
 	desc = flavor_rezankand.16.d
 	picture = COURT_eventPicture
 	is_triggered_only = yes
-	trigger = {
-		tag = H67
-		has_country_flag = rezankand_supported_on
-		taychend_superregion = {
-			NOT = { owned_by = ROOT }
-			NOT = { religion = oren_nayiru }
-		}
-	}
-
-	mean_time_to_happen = { days = 1 }
 
 	immediate = {
 		hidden_effect = {
@@ -1465,13 +1504,14 @@ country_event = { #Oren Nayiru Request Weapons
 				limit = {
 					NOT = { owned_by = ROOT }
 					NOT = { religion = oren_nayiru }
+					is_city = yes
 				}
 				save_event_target_as = rezankand_on_rebel_target
 			}
 		}
 	}
 
-	goto = event_target:rezankand_on_rebel_target
+	goto = rezankand_on_rebel_target
 
 	option = { #Aid them
 		name = flavor_rezankand.16.a
@@ -1552,6 +1592,7 @@ country_event = { #Exemplars' Charge
 	desc = flavor_rezankand.19.d
 	picture = COURT_eventPicture
 	is_triggered_only = yes
+	goto = 2487
 
 	option = { #Side with ON
 		name = flavor_rezankand.19.a
@@ -1596,8 +1637,7 @@ country_event = { #In Utter Darkness
 	picture = COURT_eventPicture
 	is_triggered_only = yes
 
-	option = { 
-		name = flavor_rezankand.20.a
+	immediate = {
 		hidden_effect = {
 			effelai_superregion = {
 				limit = { has_province_modifier = effelai_roots_dormant }
@@ -1609,8 +1649,10 @@ country_event = { #In Utter Darkness
 			}
 			effelai_superregion = {
 				limit = {
+					is_effelai_network_province = yes
 					is_effelai_network_burned = no
 				}
+				add_core = G20
 				cede_province = G20 #Araya
 			}
 			G20 = { 
@@ -1619,6 +1661,8 @@ country_event = { #In Utter Darkness
 					who = ROOT
 					casus_belli = cb_war_for_the_singing_jungle
 				}
+				add_treasury = 1000
+				add_mil_power = 100
 				capital_scope = {
 					build_to_forcelimit = {
 						infantry = 0.65
@@ -1628,6 +1672,9 @@ country_event = { #In Utter Darkness
 				}
 			}
 		}
+	}
+	option = { 
+		name = flavor_rezankand.20.a
 	}
 }
 
@@ -1640,17 +1687,24 @@ country_event = { #Alone
 
 	option = { 
 		name = flavor_rezankand.21.a
-		G20 = {
-			every_owned_province = {
-				limit = {
-					OR = {
-						region = east_effelai_region
-						region = south_effelai_region
+		custom_tooltip = rezankand_effelai_alone_tt
+		hidden_effect {
+			G20 = {
+				every_owned_province = {
+					limit = {
+						OR = {
+							region = south_effelai_region
+							region = east_effelai_region
+						}
 					}
+					remove_core = G20
+					cede_province = ROOT
 				}
-				cede_province = ROOT
+				every_owned_province = {
+					remove_core = G20
+					cede_province = previous_owner
+				}
 			}
-			release_all_possible_countries = yes
 		}
 		effelai_superregion = {
 			change_native_size = -9999
@@ -1668,6 +1722,7 @@ country_event = { #Purification
 
 	option = { 
 		name = flavor_rezankand.22.a
+		custom_tooltip = rezankand_purification_tt
 		set_global_flag = effelai_blooming_over
 		clr_global_flag = effelai_blooming_happening
 		set_country_flag = unlocked_artifice_invention_rezankand_colossus
