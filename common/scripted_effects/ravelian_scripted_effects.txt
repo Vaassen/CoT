@@ -188,14 +188,13 @@ add_or_upgrade_ravelian_society = {
 
 select_ravelian_lodge_province_in_region = {
 	# modelled on select_highest_dev_province_with_limit
-	set_variable = {
-		which = highest_province_dev
-		value = 0
-	}
 	$region$ = {
 		type = all
 		limit = {
 			has_province_modifier = ravelian_society
+			NOT = {
+				has_province_flag = ravelian_lodge_invited
+			}
 			owner = {
 				NOT = {
 					has_country_flag = denied_ravelian_society
@@ -205,31 +204,22 @@ select_ravelian_lodge_province_in_region = {
 			religion_group = cannorian
 			development = 20
 		}
-		export_to_variable = {
-			which = temp_dev_check
-			value = development
-		}
-		ROOT = {
-			set_variable = {
-				which = temp_dev_check
-				which = PREV
-			}
-		}
 		if = {
 			limit = {
-				ROOT = {
-					check_variable = {
-						which = temp_dev_check
-						which = highest_province_dev
+				has_saved_event_target = ravelian_lodge_province_$region$
+			}
+			if = {
+				limit = {
+					event_target:ravelian_lodge_province_$region$ = {
+						NOT = {
+							higher_development_than = PREV
+						}
 					}
 				}
+				save_event_target_as = ravelian_lodge_province_$region$
 			}
-			ROOT = {
-				set_variable = {
-					which = highest_province_dev
-					which = temp_dev_check
-				}
-			}
+		}
+		else = {
 			save_event_target_as = ravelian_lodge_province_$region$
 		}
 	}
@@ -241,9 +231,11 @@ invite_ravelian_lodge_province_in_region = {
 			has_saved_event_target = ravelian_lodge_province_$region$
 		}
 		event_target:ravelian_lodge_province_$region$ = {
+			set_province_flag = ravelian_lodge_invited
 			province_event = {
 				id = ravelian.2
 			}
+			clr_province_flag = ravelian_lodge_invited
 		}
 	}
 }
