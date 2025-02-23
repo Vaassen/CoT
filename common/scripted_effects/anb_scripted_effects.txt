@@ -2112,6 +2112,7 @@ clear_adventurers_organization_effect = {
 		remove_estate_privilege = estate_adventurers_organization_exploration_society
 		remove_estate_privilege = estate_adventurers_suhuskar_palace
 		remove_estate_privilege = estate_adventurers_organization_stone_army
+		remove_estate_privilege = estate_adventurers_organization_heroes_guild
 	}
 }
 
@@ -5232,6 +5233,24 @@ anb_on_development_effect = {
 		limit = { has_province_modifier = estate_wyvernheart_culture_of_the_heart_mod has_construction = mage_tower }
 		add_construction_progress = 0.10
 	}
+
+	if = {
+		limit = {
+			owner = { has_estate_privilege = estate_lowercastes_khedarid_architecture }
+			development = 30
+		}
+		add_province_modifier = { name = lowercastes_khedarid_architecture_mod_2 duration = -1 }
+	}
+
+	#Ikogshaantus
+	if = {
+		limit = { has_province_modifier = J52_conglomerate_people_into_cities_good_mod }
+		random = {
+			chance = 33
+			add_base_$development$ = 1
+			add_next_institution_embracement_scaled = 5
+		}
+	}
 }
 
 create_vassal_with_religion_and_culture = {
@@ -5722,7 +5741,10 @@ golden_highway_start_construction = {
 		set_global_flag = golden_highway_far_salahad_started
 		if = {
 			limit = {
-				has_golden_highway_discount_50_percent = yes
+				OR = {
+					has_golden_highway_discount_50_percent = yes
+					has_country_flag = mulen_highway_discount
+				}
 			}
 			add_treasury = -525 # 7 provs
 			add_adm_power = -100
@@ -6131,39 +6153,16 @@ switch_bayvic_to_bayvek = {
 }
 
 select_highest_dev_province_with_limit = {
-	set_variable = {
-		which = highest_province_dev
-		value = 0
-	}
 	every_owned_province = {
 		limit = { $limit$ }
-		export_to_variable = {
-			which = temp_dev_check
-			value = development
-		}
-		ROOT = {
-			set_variable = {
-				which = temp_dev_check
-				which = PREV
-			}
-		}
 		if = {
-			limit = {
-				ROOT = {
-					check_variable = {
-						which = temp_dev_check
-						which = highest_province_dev
-					}
-				}
+			limit = { has_saved_event_target = highest_dev_province_with_limit }
+			if = {
+				limit = { event_target:highest_dev_province_with_limit = { NOT = { higher_development_than = PREV } } }
+				save_event_target_as = highest_dev_province_with_limit
 			}
-			ROOT = {
-				set_variable = {
-					which = highest_province_dev
-					which = temp_dev_check
-				}
-			}
-			save_event_target_as = highest_dev_province_with_limit
 		}
+		else = { save_event_target_as = highest_dev_province_with_limit }
 	}
 	[[effect] event_target:highest_dev_province_with_limit = { $effect$ }]
 }
@@ -7989,4 +7988,46 @@ pirate_republic_estate_crownland_setup = {
 		estate = estate_mages
 		share = 30
 	}
+}
+
+anb_block_heir_death = { #Blocks heirs from dying, barring events
+	[[country] #Is only removable through effects or expiration
+		add_country_modifier = {
+			name = anb_heir_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+	[[ruler] #Removed through effects or when ruler dies and expiration (Yes, using has_country_modifier works on this )
+		add_ruler_modifier = {
+			name = anb_heir_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+}
+
+anb_block_consort_death = {  #Blocks consorts from dying, barring events
+	[[country] #Is only removable through effects or expiration
+		add_country_modifier = {
+			name = anb_consort_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+	[[ruler] #Removed through effects or when ruler dies and expiration (Yes, using has_country_modifier works on this )
+		add_ruler_modifier = {
+			name = anb_consort_cannot_die
+			duration = $duration$
+			hidden = yes
+		}
+	]
+}
+
+anb_allow_heir_death = { #Allows heirs to die again
+	remove_country_modifier = anb_heir_cannot_die
+}
+
+anb_allow_consort_death = { #Allows consorts to die again (P.S if consort is above 100, they are removed from existence, no notif)
+	remove_country_modifier = anb_consort_cannot_die
 }
