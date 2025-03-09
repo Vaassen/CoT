@@ -46,7 +46,6 @@ on_startup = {
 		diggy.108				#Dwarovar Claimer event
 		diggy.110				#Dwarovar setup event
 		verkalgulan_events.1		#Verkal Gulan setup
-		rahenraj.0				#Setup for the Raj
 		jaddari_missions.1000	#AI boost for Jaddari
 		centaur.3				#Horde modifier for centaur
 		flavor_maghargma.1		#Adds Reign of Ziltagh to Maghargma
@@ -1067,6 +1066,7 @@ on_war_won = {
 					OR = {
 						is_subject_of_type = daimyo_vassal
 						is_subject_of_type = great_daimyo_vassal
+						is_subject_of_type = vizier_vassal
 					}
 				}
 				grant_independence = yes
@@ -1084,6 +1084,7 @@ on_war_won = {
 					OR = {
 						is_subject_of_type = daimyo_vassal
 						is_subject_of_type = great_daimyo_vassal
+						is_subject_of_type = vizier_vassal
 					}
 				}
 			}
@@ -1094,6 +1095,7 @@ on_war_won = {
 					OR = {
 						is_subject_of_type = daimyo_vassal
 						is_subject_of_type = great_daimyo_vassal
+						is_subject_of_type = vizier_vassal
 					}
 				}
 				grant_independence = yes
@@ -1170,17 +1172,7 @@ on_war_won = {
 	#Raja winning war
 	if = {
 		limit = { has_government_attribute = is_raja }
-		FROM = { raj_cohesion_change = { amount = 10 non_monthly = yes } }
 		every_subject_country = {
-			# make sure all subjects of the Raja get truces with the party.
-			if = {
-				limit = {
-					NOT = { FROM = { is_subject_of = ROOT } }	# make sure FROM is external party
-					NOT = { truce_with = FROM } 			# check for truces
-				}
-				add_truce_with = FROM						# add truce with external party
-				FROM = { add_truce_with = PREV }			# add truce with subject
-			}
 			if = {
 				limit = { is_subject_of_type = daimyo_vassal }
 				if = {
@@ -1409,17 +1401,6 @@ on_war_won = {
 		remove_country_modifier = black_overseer_4
 		remove_country_modifier = black_overseer_5
 		remove_country_modifier = black_overseer_6
-	}
-
-	#Raj internal wars
-	if = {
-		limit = {
-			OR = {
-				has_government_attribute = is_raja
-				overlord = { has_government_attribute = is_raja }
-			}
-		}
-		raj_calc_internal_wars = yes
 	}
 
 	# Its a Feiten war counter cause why not
@@ -1792,7 +1773,7 @@ on_separate_war_won = {
 on_war_lost = {
 	#ROOT = { country_event = { id = flavor_cri.6 } }
 	ROOT = { country_event = { id = tributary_events.32 } }
-	ROOT = { country_event = { id = rahenraj.1000 } }
+	# ROOT = { country_event = { id = rahenraj.1000 } }
 	ROOT = { country_event = { id = xhazobkult_events.1 } } #Xhazobkult tributaries
 	ROOT = { country_event = { id = anb_miscevents.21 } } #Removing corinite buff during league war
 
@@ -1837,27 +1818,6 @@ on_war_lost = {
 		}
 		country_event = {
 			id = diggy.122
-		}
-	}
-
-	#Raja losing war
-	if = {
-		limit = { has_government_attribute = is_raja }
-		FROM = { raj_cohesion_change = { amount = -10 non_monthly = yes } }
-
-		if = {
-			# make sure all subjects of the Raja get truces with the party.
-			limit = { NOT = { FROM = { is_subject_of = ROOT } } }		# make sure FROM is external party
-
-			every_subject_country = {
-				if = {
-					limit = {
-						NOT = { truce_with = FROM } 			# check for truces
-					}
-					add_truce_with = FROM						# add truce with external party
-					FROM = { add_truce_with = PREV }			# add truce with subject
-				}
-			}
 		}
 	}
 
@@ -2846,6 +2806,20 @@ on_siege_lost_province =  {
 			province_event = { id = escanni_wars.301 }
 		}
 	}
+
+	if = {	#vizier challenge war
+		limit = {
+			OR = {
+				province_id = 4411
+				has_province_flag = raja_new_castle
+			}
+			FROM = { has_country_flag = has_vizier_won }
+		}
+		event_target:raj_vizier_global_target = {
+			country_event = { id = rahenraj.5001 }
+		}
+		clr_province_flag = raja_new_castle
+	}
 }
 
 # province
@@ -2889,8 +2863,8 @@ on_new_monarch = {
 		#flavor_sugamber.15		# Pro-Ethelbert rebels win the war
 		flavor_sugamber.999		# Lisolette's legitimacy called into question
 
-		rahenraj.5				#To ensure Harimari rulers in Rahen
-		rahenraj.1000			#To make sure newly independent Prabhi and Senapti have the proper government
+		#rahenraj.5				#To ensure Harimari rulers in Rahen
+		#rahenraj.1000			#To make sure newly independent Prabhi and Senapti have the proper government
 		the_command.3			#Hobgoblin faction influence
 		flavor_blademarches.3 	#Blademarches succession event
 		aelnar.82				#Sicrheior Son
@@ -3897,7 +3871,7 @@ on_new_heir = {
 	country_event = { id = racial_misc.3 days = 2 }		# Human heirs for half-elf human marriages
 	country_event = { id = racial_misc.4 days = 2 }		# Harpy heirs for harpy marriages
 	country_event = { id = racial_misc.10 days = 1 }	# Heirs are set to their parents race since event heirs are given primary culture instead
-	country_event = { id = rahenraj.6 days = 5 }		# Replace heir if incorrect race for Senapti
+	# country_event = { id = rahenraj.6 days = 5 }		# Replace heir if incorrect race for Senapti
 	country_event = { id = anb_ruler.101 days = 3 }		# Immortal/long-lived trait
 	if = {
 		limit = {
@@ -5544,11 +5518,18 @@ on_monthly_pulse = {
 		remove_country_modifier = imperial_mage_election
 	}
 
+	# if = {
+	# 	limit = {
+	# 		has_government_attribute = is_raja
+	# 	}
+	# 	4411 = { raj_monthy_calc = yes }
+	# }
+
 	if = {
 		limit = {
 			has_government_attribute = is_raja
 		}
-		4411 = { raj_monthy_calc = yes }
+		rahen_raj_calc_cohesion = yes
 	}
 
 	if = {
@@ -6483,8 +6464,8 @@ on_bi_yearly_pulse = {
 	events = {
 		center_of_revolution.2950
 		center_of_revolution.3000
-		rahenraj.2000
-		rahenraj.2001
+		# rahenraj.2000
+		# rahenraj.2001
 		jaddari_missions.1003
 		# jaddari_missions.1004
 		bulwar_flavour.0
@@ -6506,7 +6487,7 @@ on_bi_yearly_pulse = {
 		the_hunt_events.101 #tolerance privilege monsters
 	}
 	if = { limit = { ruler_can_revive = yes } save_ruler_stats = yes }
-	if = { limit = { capital = 4411 has_government_attribute = is_raja } country_event = { id = rahenraj.2000 days = 365 } }
+	#if = { limit = { capital = 4411 has_government_attribute = is_raja } country_event = { id = rahenraj.2000 days = 365 } }
 	if = {
 		limit = {
 			owns_core_province = 4565
@@ -8534,7 +8515,6 @@ on_thri_yearly_pulse_4 = {
 	random_events = {
 		10 = rahenraj.2111
 		10 = rahenraj.2113
-		10 = rahenraj.2115
 		10 = rahenraj.2117
 		10 = rahenraj.2121
 		10 = rahenraj.2123
@@ -10413,7 +10393,6 @@ on_five_year_pulse_2 = {
 		100 = rajministries.11 #Bonus
 		100 = rajministries.12 #Bonus
 		400 = rajministries.101 #Raja pissed off ministries
-		400 = rajministries.102 #Subject of the Raj slipping away
 		800 = rajministries.2022 #A wedding
 
 		# Castes
@@ -12347,6 +12326,13 @@ on_province_owner_change = {
 		}
 		province_event = { id = spirit_forts.04 }
 	}
+	# Raj 3.0
+	if = { limit = { owner = { is_subject_of_type = great_daimyo_vassal } FROM = { overlord = { NOT = { has_government_attribute = is_raja } } } }
+		change_variable = { which = senapti_external_expansion value = 1 }
+	}
+	if = { limit = { FROM = { overlord = { has_government_attribute = is_raja } } owner = { overlord = { has_government_attribute = is_raja } } }
+		owner = { reverse_add_opinion = { who = overlord modifier = raja_opinion_unlawful_territory } }
+	}
 }
 
 # country 1.35
@@ -13698,6 +13684,7 @@ on_dependency_gained = {
 				NOT = { has_reform = oracular_order_reform } 		# Tughayasa has their own thing.
 				NOT = { is_subject_of_type = great_daimyo_vassal }	# Do nothing if already correct type.
 				NOT = { is_subject_of_type = daimyo_vassal }		# Do nothing if already correct type.
+				NOT = { is_subject_of_type = vizier_vassal }		# Do nothing if already correct type.
 			}
 		}
 		# logic moved into event to prevent crashes
@@ -14108,8 +14095,7 @@ on_dependency_lost = {
 	FROM = {
 		update_nsc_level_secondary_effects = yes
 
-		if = { limit = { has_country_flag = raj_vizier }
-			raj_clear_vizier = yes
+		if = { limit = { tag = event_target:raj_vizier_global_target NOT = { war_with = event_target:raj_raja_global_target } }
 			ROOT = { country_event = { id = rahenraj.2100 days = 1 } }
 		}
 		if = { limit = { ROOT = { has_government_attribute = is_raja } }
@@ -17783,6 +17769,82 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 			}
 		}
 		remove_country_modifier = Y26_onwards_lingyuk_mod
+	}
+
+	if = {	#vizier raja war
+		limit = {
+			has_country_flag = has_vizier_won
+			FROM = { has_government_attribute = is_raja }
+		}
+		if = {
+			limit = { tag = event_target:raj_vizier_global_target }
+			every_known_country = {
+				limit = { has_country_flag = has_vizier_won }
+				clr_country_flag = has_vizier_won
+				raj_become_senapti = yes				
+			}
+			add_country_modifier = {
+				name = vizier_lost_promotion_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+		if = {
+			limit = { tag = event_target:raj_vizier_global_target ai = no }
+			clr_country_flag = has_vizier_won
+			FROM = {
+				create_subject = {
+					subject_type = vizier_vassal
+					subject = ROOT
+				}
+			}
+		}
+		else = {
+			clr_country_flag = has_vizier_won
+			FROM = {
+				create_subject = {
+					subject_type = daimyo_vassal
+					subject = ROOT
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			FROM = { has_country_flag = has_vizier_won }
+			has_government_attribute = is_raja
+		}
+		if = {
+			limit = { FROM = { tag = event_target:raj_vizier_global_target } }
+			every_known_country = {
+				limit = { has_country_flag = has_vizier_won }
+				clr_country_flag = has_vizier_won
+				raj_demote_to_prabhi = yes			
+			}
+			FROM = {
+				add_country_modifier = {
+					name = vizier_lost_promotion_mod
+					duration = 3650
+					hidden = yes
+				}
+			}
+		}
+		if = {
+			limit = { FROM = { tag = event_target:raj_vizier_global_target ai = no } }
+			FROM = { clr_country_flag = has_vizier_won }
+			create_subject = {
+				subject_type = vizier_vassal
+				subject = ROOT
+			}
+		}
+		else = {
+			FROM = {
+				clr_country_flag = has_vizier_won
+				raj_demote_to_prabhi = yes
+			}
+			clear_global_event_target = raj_vizier_global_target
+			country_event = { id = rahenraj.2100 }
+		}
 	}
 }
 
