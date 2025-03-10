@@ -1317,8 +1317,21 @@ on_new_monarch_effect = { #1.35
 			OR = {
 				has_reform = isolated_kingdom_reform
 				has_reform = compact_of_menjaeng_reform
-				tag = Y26
-				AND = { was_tag = Y26 mission_completed = Y26_the_dakini }
+				AND = { tag = Y26 NOT = { has_ruler_flag = is_holi } NOT = { has_ruler_flag = is_sado } }
+				AND = { 
+					mission_completed = Y26_the_dakini
+					OR = {
+						has_ruler_flag = is_holi
+						has_ruler_flag = is_sado
+					} 
+				}
+			}
+			OR = { #Avoid patron trial the first time sado elected
+				NOT = { has_country_flag = Y26_sado_elected_once }
+				had_country_flag = {
+					flag = Y26_sado_elected_once
+					days = 5
+				}
 			}
 		}
 		country_event = { id = patrons_on_action.0 }
@@ -2683,6 +2696,51 @@ on_province_religion_changed_effect = {
 		}
 		remove_province_modifier = J84_ravelianism_tolerated
 	}
+	
+	if = {
+		limit = { province_group = infernal_court_temples }
+		infernal_deity_upgrade_effect = yes
+	}
+
+	#Rezankand
+	if = {
+		limit = {
+			religion = oren_nayiru
+			owner = { is_incident_active = incident_one_sun }
+		}
+		if = {
+			limit = {
+				owner = { has_country_flag = rezankand_supported_on }
+			}
+			add_province_modifier = {
+				name = rezankand_supporting_oren_prov_mod
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				owner = { has_country_flag = rezankand_stomping_on }
+			}
+			add_province_modifier = {
+				name = rezankand_stomping_oren_prov_mod
+				duration = -1
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			NOT = { religion = oren_nayiru }
+		}
+		if = {
+			limit = { has_province_modifier = rezankand_stomping_oren_prov_mod }
+			remove_province_modifier = rezankand_stomping_oren_prov_mod
+		}
+		else_if = {
+			limit = { has_province_modifier = rezankand_supporting_oren_prov_mod }
+			remove_province_modifier = rezankand_supporting_oren_prov_mod
+		}
+	}
 }
 
 on_province_religion_converted_effect = {
@@ -3501,6 +3559,45 @@ on_battle_won_country_effect = {
 			value = 1
 		}
 	}
+	if = { 
+		limit = { 
+			tag = H66 #Jaherian Exemplars
+			FROM = { 
+				culture_group = taychendi_ruinborn_elf
+			}
+		}
+		change_variable = { which = RezankandJahersDuty value = 1 }
+	}
+	if = { 
+		limit = { 
+			tag = H66 #Jaherian Exemplars
+			FROM = { 
+				tag = G52 #Ameion
+			}
+		}
+		change_variable = { which = RezankandFirstClash value = 1 }
+	}
+	if = { 
+		limit = { 
+			tag = H67 #Rezankand
+			FROM = { 
+				OR = {
+					culture_group = taychendi_ruinborn_elf
+					culture_group = kheionai_ruinborn_elf
+				}
+			}
+		}
+		change_variable = { which = RezankandMarchingWest value = 1 }
+	}
+	if = {
+		limit = {
+			has_country_flag = awakened_lapnam
+		}
+		change_variable = {
+			which = lapnam_amrik_battle_counter
+			value = 1
+		}
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -3773,7 +3870,6 @@ on_battle_won_province_effect = {
 			}
 		}
 	}
-	
 }
 
 on_battle_lost_province_effect = {
@@ -4231,6 +4327,22 @@ on_religion_change_effect = {
 		}
 		add_historical_friend = overlord
 		overlord = { add_historical_friend = ROOT }
+	}
+
+	if = {
+		limit = { religion = suhans_praxis }
+		set_country_flag = was_suhans_praxis
+		every_owned_province = {
+			limit = { province_group = raheni_school_origin_provinces }
+			add_province_modifier = { name = raheni_school_origin_suhans_praxis duration = -1 }
+		}
+	}
+	else_if = {
+		limit = { has_country_flag = was_suhans_praxis }
+		every_owned_province = {
+			limit = { province_group = raheni_school_origin_provinces }
+			remove_province_modifier = raheni_school_origin_suhans_praxis
+		}
 	}
 }
 
@@ -4973,6 +5085,25 @@ on_war_declaration_effect = {
 			}
 		}
 	}
+
+	if = { #Yinquan/Lingyuk
+		limit = {
+			mission_completed = Y26_onwards_lingyuk
+			OR = {
+				is_in_war = {
+					casus_belli = cb_rending
+				}
+				is_in_war = {
+					casus_belli = cb_eternal_blossom
+				}
+			}
+			NOT = { has_country_modifier = Y26_onwards_lingyuk_mod }
+		}
+		add_country_modifier = {
+			name = Y26_onwards_lingyuk_mod
+			duration = -1
+		}
+	}
 }
 
 remove_all_age_of_discovery_modifiers = {
@@ -5140,6 +5271,18 @@ on_harmonized_effect = {
 		every_subject_country = {
 			limit = { religion = kalyin_worshippers }
 			kalsyto_pan_harmonize = yes
+		}
+	}
+	if = {
+		limit = { religion = the_thought }
+
+		if = {
+			limit = { any_subject_country = { religion = the_thought } }
+			country_event = { id = thought_harmonize.203 }
+		}
+		if = {
+			limit = { is_subject = yes overlord = { religion = the_thought } }
+			overlord = { country_event = { id = thought_harmonize.203 } }
 		}
 	}
 }
@@ -5608,6 +5751,21 @@ on_colony_finished_effect = {
 			change_culture = roaming_harimari
 		}
 	}
+
+	if = { #Rezankand
+		limit = {
+			has_province_flag = rezankand_convert_to_vaikazelhi
+		}
+		change_culture = vaikazelhi
+		clr_province_flag = rezankand_convert_to_vaikazelhi
+	}
+	
+	if = {#Rezankand
+		limit = {
+			owner = { has_country_modifier = rezankand_new_exemplars_modifier }
+		}
+		add_base_manpower = 1
+	}
 }
 
 on_colonist_boosting_colony_effect = {
@@ -5832,6 +5990,12 @@ on_adm_development_effect = {
 			add_church_power = 4
 		}
 	}
+	if = {
+		limit = {
+			province_group = spirit_forts_province_group
+		}
+		spirit_fort_awakening_effect = yes
+	}
 	#Isobelin urban renewal
 	if = {
 		limit = {
@@ -5917,6 +6081,12 @@ on_dip_development_effect = {
 			}
 			add_church_power = 4
 		}
+	}
+	if = {
+		limit = {
+			province_group = spirit_forts_province_group
+		}
+		spirit_fort_awakening_effect = yes
 	}
 	if = {
 		limit = {
@@ -6012,6 +6182,12 @@ on_mil_development_effect = {
 			}
 			add_church_power = 4
 		}
+	}
+	if = {
+		limit = {
+			province_group = spirit_forts_province_group
+		}
+		spirit_fort_awakening_effect = yes
 	}
 	#Ayarallen
 	if = {
@@ -6169,7 +6345,11 @@ on_parliament_debate_reset_effect = {
 		name = reset_parliament_debate_modifier
 		duration = 3650
 	}
-	add_corruption = 2
+	if = {
+		limit = { has_government_attribute = corruption_loss_on_reset }
+		add_corruption = -1
+	}
+	else = { add_corruption = 2 }
 	if = {
 		limit = {
 			has_government_mechanic = parliament_vs_monarchy_mechanic
@@ -7316,7 +7496,27 @@ startup_1444_effects = {
 		update_heir_racial_flag = yes
 		update_consort_racial_flag = yes
 
-
+		if = {
+			limit = {
+				OR = {
+					has_reform = adventurer_reform
+					tag = B55
+					tag = B36
+				}
+			}
+			country_event = { id = corinite.100 days = 365}
+		}
+		if = {
+			limit = {
+				capital_scope = { superregion = western_cannor_superregion }
+				NOT = {
+					has_reform = adventurer_reform
+					tag = B55
+					tag = B36
+				}
+			}
+			country_event = { id = corinite.101 days = 365}
+		}
 		if = {
 			limit = {
 				OR = {
@@ -7708,7 +7908,7 @@ startup_1444_effects = {
 				id = flavor_azjakuma.15
 				days = 15
 			}
-			set_country_flag = oni_truce_happened #cleared when event is fired, it has fire_only_once
+			set_country_flag = oni_truce_happened #cleared when truce stops happening, it has fire_only_once
 		}
 	
 		#Remnant colonist removal
@@ -8074,6 +8274,15 @@ startup_1444_effects = {
 				value = 0
 			}
 		}
+		
+		if = {
+			limit = { tag = Y58 } #Lot Dekkhang
+			set_country_flag = awakened_lapnam
+			set_variable = {
+				which = lapnam_amrik_battle_counter
+				value = 0
+			}
+		}
 
 		#Gotiriei
 		if = {
@@ -8083,6 +8292,11 @@ startup_1444_effects = {
 
 		# Applying Flooded Depths to Ovdal Tûngr.
 		526 = { add_province_modifier = { name = F23_flooded_depths duration = -1 } }
+
+		if = {
+			limit = { tag = R11 }
+			country_event = { id = khadisrapur.1 days = 30 random = 30 }
+		}
 	}
 }
 
@@ -8142,18 +8356,6 @@ on_province_owner_change_effect = {
 			}
 		}
 		4462 = { owner = { country_event = { id = rahen.1 days = 60 } } } #delay so ai attitude switches from unknown
-	}
-
-	if = {
-		limit = {
-			owner = { has_country_flag = rezankand_jungle_research }
-			has_terrain = jungle
-			is_city = no
-		}
-		add_province_modifier = {
-			name = rezankand_jungle_specialist
-			duration = 3650
-		}
 	}
 
 	if = {
@@ -9543,6 +9745,57 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
+	if = {#failsave for beast hunt if player dont go intended way
+		limit = {
+			owner = { 
+				is_or_was_tag = { tag = G18 }
+				religion = tswohvwohii
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					province_id = 2219
+					province_id = 2265
+					province_id = 2225
+					province_id = 2211
+				}
+			}
+			owner = {
+				country_event = {
+					id = effelai_worship.533 #leechden
+					days = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					province_id = 2344
+					province_id = 2338
+					province_id = 2294
+					province_id = 2225
+				}
+			}
+			owner = {
+				country_event = {
+					id = effelai_worship.534 #East 
+					days = 1
+				}	
+			}
+		}
+		if = {
+			limit = {
+					province_id = 2211
+				}
+			owner = {
+				country_event = {
+					id = effelai_worship.532 # West
+					days = 1
+				}
+			}
+		}
+	}
 	#Effelai Settlers Culture And Religion Fix
 	if = {
 		limit = {
@@ -10550,7 +10803,8 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
-	else_if = { #Raheni holy sites
+	
+	if = { #Raheni holy sites
 		limit = {
 			province_group = raheni_school_origin_provinces
 			owner = { religion = suhans_praxis }
@@ -10635,7 +10889,220 @@ on_province_owner_change_effect = {
 		FROM = { country_event = { id = kheionism.5 } }
 	}
 
+	#Rezankand
+	if = {
+		limit = {
+			religion = oren_nayiru
+			owner = { is_incident_active = incident_one_sun }
+		}
+		if = {
+			limit = {
+				owner = { has_country_flag = rezankand_supported_on }
+			}
+			add_province_modifier = {
+				name = rezankand_supporting_oren_prov_mod
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				owner = { has_country_flag = rezankand_stomping_on }
+			}
+			add_province_modifier = {
+				name = rezankand_stomping_oren_prov_mod
+				duration = -1
+			}
+		}
+	}
+
 	command_dewuhyunization_effect = yes
+
+	#Khadisrapur
+	if = {
+		limit = { owned_by = R11 }
+		if = {
+			limit = { region = shamakhad_region }
+			if = {
+				limit = {
+					has_province_flag = rajnadhaga_rightful_territory #Gambit to Unification
+					R07 = {
+						OR = {
+							exists = no
+							alliance_with = R11
+						}
+					}
+				}
+				owner = { country_event = { id = khadisrapur.17 } }
+			}
+			if = {
+				limit = { owner = { has_estate_privilege = estate_uppercastes_khedarid_architecture } }
+				trigger_switch = {
+					on_trigger = has_terrain
+					mountain = { add_province_modifier = { name = uppercastes_khedarid_architecture_mod_1 duration = -1 } }
+					hills = { add_province_modifier = { name = uppercastes_khedarid_architecture_mod_2 duration = -1 } }
+					highlands = { add_province_modifier = { name = uppercastes_khedarid_architecture_mod_2 duration = -1 } }
+				}
+			}
+			else_if = {
+				limit = { owner = { has_estate_privilege = estate_middlecastes_khedarid_architecture } }
+				if = {
+					limit = { has_terrain = desert }
+					add_province_modifier = { name = middlecastes_khedarid_architecture_mod_2 duration = -1 }
+				}
+				else_if = {
+					limit = { has_winter = mild_winter }
+					add_province_modifier = { name = middlecastes_khedarid_architecture_mod_1 duration = -1 }
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_terrain = farmlands
+							has_terrain = grasslands
+							has_terrain = drylands
+							has_terrain = savannah
+							has_terrain = steppe
+							has_terrain = dwarven_road
+						}
+					}
+					add_province_modifier = { name = middlecastes_khedarid_architecture_mod_3 duration = -1 }
+				}
+			}
+			else_if = {
+				limit = { owner = { has_estate_privilege = estate_lowercastes_khedarid_architecture } }
+				if = {
+					limit = { province_group = temple_province_group }
+					add_province_modifier = { name = lowercastes_khedarid_architecture_mod_1 duration = -1 }
+				}
+				if = {
+					limit = {
+						OR = {
+							development = 30
+							has_terrain = city_terrain
+						}
+					}
+					add_province_modifier = { name = lowercastes_khedarid_architecture_mod_2 duration = -1 }
+				}
+			}
+		}
+		if = {
+			limit = {
+				province_has_center_of_trade_of_level = 1
+				has_estate_privilege = estate_adventurers_escort_missions
+			}
+			add_province_modifier = { name = trade_escort_missions_mod duration = -1 }
+		}
+	}
+	#Ikogshaantus
+	if = {
+		limit = { owner = { is_or_was_tag = { tag = J52 } } } #Ikogshaantus
+		if = {
+			limit = { owner = { has_country_flag = J52_release_zabutodask_flag } }
+			owner = { country_event = { id = ikogshaantus_events.7 } }
+		}
+		if = {
+			limit = { 
+				owner = { has_estate_privilege = estate_merchant_J52_nuzurbokh_argiculture_guild } 
+				region = nuzurbokh_region
+				J52_is_agriculture_province = yes
+			}
+			add_province_modifier = {
+				name = J52_nuzurbokh_argiculture_guild_mod
+				duration = -1
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						owner = { has_country_flag = J52_integrating_eagle_hobgoblins_flag }
+						culture = eagle_command
+					}
+					AND = {
+						owner = { has_country_flag = J52_integrating_soulseeker_ogres_flag }
+						culture = soulseeker_ogre
+					}
+				}
+			}
+			add_province_modifier = {
+				name = J52_integration_efforts
+				duration = -1
+			}
+		}
+	}
+
+	#Rezankand
+	if = {
+		limit = {
+			owner = { 
+				tag = H67 
+			}
+			has_building = mage_tower
+		}
+		if = {
+			limit = {
+				owner = { 
+					mission_completed = rezankand_architects_of_the_future 
+					mission_completed = rezankand_faster_than_thought 
+				}
+			}
+			add_province_modifier = {
+				name = rezankand_light_matrix_upgraded
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				owner = { 
+					mission_completed = rezankand_architects_of_the_future 
+				}
+			}
+			add_province_modifier = {
+				name = rezankand_light_matrix
+				duration = -1
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			FROM = { 
+				tag = H67
+				OR = {
+					has_estate_privilege = artifice_invention_light_matrix_supply
+					has_estate_privilege = artifice_invention_light_matrix_logistic 
+				}  
+			} 
+			has_building = mage_tower
+		}
+		every_neighbor_province = {
+			limit = {
+				owned_by = H67
+				NOT = {
+					any_neighbor_province = {
+						owned_by = H67
+						has_building = mage_tower
+					}
+				}
+			}
+			remove_province_modifier = rezankand_light_matrix_supply
+			remove_province_modifier = rezankand_light_matrix_supply_upgraded
+			remove_province_modifier = rezankand_light_matrix_logistic
+			remove_province_modifier = rezankand_light_matrix_logistic_upgraded
+		}
+	}
+
+	#Copperlords
+	if = {
+		limit = {
+			owner = { has_reform = copperlord_reform }
+			trade_goods = copper
+		}
+		add_province_modifier = { 
+			name = copperlord_copper
+			duration = -1
+			hidden = yes
+		}
+	}
 }
 
 on_primary_culture_changed_effect = {
