@@ -142,17 +142,6 @@ is_remnant_hold = {
 	}
 }
 
-runefather_conversion_exempt = {
-	OR = {
-		tag = H81 #masked butcher
-		tag = I19 #ovdal-az-an
-		tag = H90 #spiderwretch
-		tag = I05 #mithradhum
-		tag = I07 #khugdihr
-		tag = J32 #mire maw
-		tag = R62 #the command
-	}
-}
 
 runelink_upkeep_maintained = {
 	if = {
@@ -509,8 +498,7 @@ dwarovar_orc_culture_accepted = {
 owns_jorkad_dam = {
 	custom_trigger_tooltip = {
 		tooltip = owns_built_jorkad_dam_tt
-		owns = 676
-		676 = { has_great_project = { type = jorkad_dam tier = 3 } }
+		676 = { has_province_modifier = the_jorkad_dam owned_by = owner }
 	}
 }
 
@@ -665,7 +653,7 @@ can_upgrade_hold = {
 	NOT = { owner = { dwarovar_orc_culture_primary = yes } }
 	custom_trigger_tooltip = {
 		tooltip = not_diggy_locked_tooltip
-		NOT = { has_province_modifier = F23_flooded_depths }
+		NOT = { has_province_flag = cannot_dig }
 		NOT = { has_province_modifier = incomplete_hold }
 		NOT = { has_province_modifier = incomplete_hold_0 }
 	}
@@ -743,7 +731,7 @@ can_upgrade_hold_capital = {
 	
 	hidden_trigger = {
 		if = {
-			limit = { OR = { province_id = 4119 province_id = 4311 AND = { province_id = 2931 OWNER = { has_country_flag = I98_may_come_down_flag } } } } #Big and Second capital
+			limit = { OR = { province_id = 4119 province_id = 4311 AND = { province_id = 2931 OWNER = { has_country_flag = I98_may_come_down_flag }}} } #Big and Second capital
 			NOT = { has_province_modifier = dig_11 }
 		}
 		else = {
@@ -990,7 +978,7 @@ has_dwarovkron_fragment = {
 
 has_special_expedition = {
 	OR = {
-		province_id = 4033
+		has_province_flag = block_dungeon_spawn_flag
 		has_province_flag = khug_expedition_1_created 
 		has_province_flag = khug_expedition_2_created 
 		has_province_flag = krakazol_1st_exp 
@@ -1228,14 +1216,8 @@ blorc_can_be_plundered = {
 	}
 	NOT = {
 		has_province_modifier = blorc_plunder_camp
+		has_province_modifier = blorc_war_camp
 		has_province_modifier = infested_hold
-	}
-	OR = {
-		base_tax = 2
-		base_production = 2
-		base_manpower = 2
-		NOT = { has_province_modifier = ruined_hold }
-		NOT = { has_province_modifier = blorc_war_camp }
 	}
 }
 
@@ -1310,69 +1292,4 @@ has_old_dookan_omen = {
 }
 
 
-##############
-### Rails ###
-##############
-# This trigger is used to determine when a country can see a decision to upgrade rail.
-rail_potential_trigger = {
-	[[adm_tech_req]
-		adm_tech = $adm_tech_req$
-	]
-	OR = {
-		ai = no
-		capital_scope = { continent = serpentspine }
-	}
-	any_owned_province = { has_province_modifier = $rail_to_replace$ }
-	NOT = { has_reform = roadwarrior_great_convoy }
-}
 
-# This trigger determines whether a province can have its rail upgraded. 
-# Checks for construction have been commented out, as this is also used for highlighting where such provinces should be shown. 
-rail_province_eligibility_trigger = {
-	# NOT = { has_construction = any }
-	# NOT = { has_colonist = yes }
-	has_province_modifier = $rail_to_replace$
-	is_core = ROOT
-	is_city = yes
-	owned_by = ROOT
-	any_neighbor_province = {
-		is_core = ROOT
-		owned_by = ROOT
-		OR = {
-			[[repair]
-				has_province_modifier = restored_rail
-				has_province_modifier = advanced_rail
-				has_province_modifier = rocket_rail
-			]
-			[[upgrade]
-				has_province_modifier = advanced_rail
-				has_province_modifier = rocket_rail
-			]
-			[[rocket]
-				has_province_modifier = rocket_rail
-			]
-			AND = {
-				province_group = hold_province
-				NOT = { has_province_modifier = infested_hold }
-				if = { limit = { ROOT = { has_country_flag = blorc_plunder_capital_set } }
-					OR = {
-						NOT = { has_province_modifier = ruined_hold }
-						has_province_modifier = blorc_war_camp
-					}
-				}
-				else = {
-					NOT = { has_province_modifier = ruined_hold }
-				}
-			}
-		}
-	}
-}
-
-# This trigger checks whether any owned province can have its rail upgraded.
-rail_can_construct = {
-	any_owned_province = {
-		rail_province_eligibility_trigger = { rail_to_replace = $current_rail$ $upgraded_rail$ = yes }
-		NOT = { has_construction = any }
-		NOT = { has_colonist = yes }
-	}
-}
