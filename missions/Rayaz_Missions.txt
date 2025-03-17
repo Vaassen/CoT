@@ -480,8 +480,8 @@ rayaz_3 = {
 			} 
 			custom_tooltip = rayaz_thanats_upgraded_tt
 			hidden_effect = {
-				set_country_flag = rayaz_thanats_upgraded
 				remove_estate_privilege = estate_burghers_thanats_mutation
+				set_country_flag = rayaz_thanats_upgraded
 				set_estate_privilege = estate_burghers_thanats_upgraded_mutation
 			}
 		} 
@@ -617,7 +617,7 @@ rayaz_4 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {  
-			has_estate_privilege = rayaz_clerical_inwards_focus
+			has_estate_privilege = estate_church_administrative_privileges
 			num_of_estate_agendas_completed = {
 				estate = estate_church
 				value = 1
@@ -666,7 +666,7 @@ rayaz_4 = {
 				infantry_in_province = 4
 			}
 			OR = { 
-				development = 300 
+				total_development = 300 
 				num_of_subjects = 6 
 			}
 			calc_true_if = {
@@ -692,18 +692,18 @@ rayaz_4 = {
 					type = infantry
 				}
 				add_base_tax = 2 add_base_production = 1 add_base_manpower = 1
-				add_country_modifier = {
-					name = disharmonious
-					duration = 9125
-				}
-				simple_dynamic_effect = {
-					first_custom_tooltip = rayaz_vassal_effect_tt
-					first_limit = "num_of_subjects = 6"
-					first_effect = "add_country_modifier = { name = disharmonious duration = 9125 }"
-					second_custom_tooltip = rayaz_development_effect_tt
-					second_limit = "development = 300"
-					second_effect = "add_country_modifier = { name = disharmonious duration = 9125 }"
-				}
+			}
+			add_country_modifier = {
+				name = disharmonious
+				duration = 9125
+			}
+			simple_dynamic_effect = {
+				first_custom_tooltip = rayaz_vassal_effect_tt
+				first_limit = "num_of_subjects = 6"
+				first_effect = "add_country_modifier = { name = disharmonious duration = 9125 }"
+				second_custom_tooltip = rayaz_development_effect_tt
+				second_limit = "development = 300"
+				second_effect = "add_country_modifier = { name = disharmonious duration = 9125 }"
 			}
 		} 
 	}
@@ -720,7 +720,7 @@ rayaz_4 = {
 		trigger = {  
 			NOT = {
 				taneyas_superregion = {
-					culture = arraskay_culture
+					culture = arraskay_lizardfolk
 					NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
 				}
 			}
@@ -735,21 +735,27 @@ rayaz_4 = {
 			remove_estate_privilege = estate_church_independent_inquisition
 			remove_estate_privilege = estate_church_clerical_education
 			set_estate_privilege = estate_clergy_imperial_court
+			set_variable = {
+				which = rayaz_vassal_development
+				value = 0
+			}
 			every_subject_country = {
-				limit = { culture = arraskay_culture }
-				hidden_effect = {
-					export_to_variable = {
-						which = rayaz_vassal_development
-						value = trigger_value:total_development
-					}
-					multiply_variable = {
-						which = rayaz_vassal_development
-						value = -6
-					}
+				limit = { culture = arraskay_lizardfolk }
+				export_to_variable = {
+					which = rayaz_e
+					value = trigger_value:total_development
+				}
+				change_variable = {
+					which = rayaz_vassal_development
+					which = rayaz_e
 				}
 				ROOT = { inherit = PREV } #Rayaz inherits every_subject_country
-				add_dip_power = variable:rayaz_vassal_development
 			}
+			multiply_variable = {
+				which = rayaz_vassal_development
+				value = -6
+			}
+			add_dip_power = variable:rayaz_vassal_development #This doesn't work FIX ME TOMORROW
 		} 
 	}
 }
@@ -765,9 +771,24 @@ rayaz_5 = {
 		position = 1
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			tolerance_to_this = 10
+			kapashan_area = { has_state_edict = edict_religious_unity }
+			has_estate_privilege = estate_church_enforced_one_faith
+			has_estate_privilege = estate_church_one_faith_one_culture
+		} 
 
-		effect = {  } 
+		effect = {  
+			kapashan_area = { 
+				every_province_in_state = {
+					add_nationalism = -24
+					add_province_modifier = {
+						name = disharmonious
+						duration = 7300
+					}
+				}
+			}
+		} 
 	}
 
 	rayaz_5_3 = {
@@ -779,9 +800,127 @@ rayaz_5 = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			OR = {
+				any_known_country = {
+					culture = ashhana_lizardfolk
+					total_development = 50
+					has_spy_network_from = {
+						who = ROOT #Rayaz
+						value = 40
+					}
+					has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
+					OR = {
+						alliance_with = ROOT #Rayaz
+						guaranteed_by = ROOT #Rayaz
+					}
+				}
+				calc_true_if = {
+					all_known_country = {
+						culture = ashhana_lizardfolk
+						has_spy_network_from = {
+							who = ROOT #Rayaz
+							value = 40
+						}
+						has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
+						OR = {
+							alliance_with = ROOT #Rayaz
+							guaranteed_by = ROOT #Rayaz
+						}
+					}
+					amount = 3
+				}
+				AND = {
+					calc_true_if = {
+						all_owned_provinces = {
+							culture = ashhana_lizardfolk
+							has_state_edict = edict_religious_unity
+						}
+						amount = 15
+					}
+					num_of_estate_agendas_completed = {
+						estate = estate_church
+						value = 3
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			custom_tooltip = rayaz_vassal_tt
+			tooltip = {
+				add_country_modifier = {
+					name = disharmonious
+					duration = 9125
+				}
+			}
+			custom_tooltip = rayaz_vassal_tt
+			tooltip = {
+				add_country_modifier = {
+					name = disharmonious
+					duration = 9125
+				}
+			}
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						culture = ashhana_lizardfolk
+						has_spy_network_from = {
+							who = ROOT #Rayaz
+							value = 40
+						}
+						has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
+						OR = {
+							alliance_with = ROOT #Rayaz
+							guaranteed_by = ROOT #Rayaz
+						}
+					}
+					add_opinion = {
+						who = ROOT #Rayaz
+						modifier = renounced_as_heretics
+					}
+					random = {
+						chance = 20
+						change_religion = anzalkatsa
+					}
+					every_owned_province = {
+						chance = 50
+						change_religion = anzalkatsa
+					}
+				}
+				every_owned_province = { #Rayaz's provinces
+					limit = { religion = zaradyrra }
+					chance = 50
+					change_religion = anzalkatsa
+				}
+				if = {
+					limit = {
+						random_known_country = {
+							culture = ashhana_lizardfolk
+							has_spy_network_from = {
+								who = ROOT #Rayaz
+								value = 40
+							}
+							has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
+							OR = {
+								alliance_with = ROOT #Rayaz
+								guaranteed_by = ROOT #Rayaz
+							}
+						}
+					}
+					add_country_modifier = {
+						name = disharmonious
+						duration = 9125
+					}
+				}
+				else = {
+					add_country_modifier = {
+						name = disharmonious
+						duration = 9125
+					}
+				}
+			}
+		} 
 	}
 
 	rayaz_5_4 = {
@@ -793,8 +932,72 @@ rayaz_5 = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			estate_loyalty = {
+				estate = estate_nobles
+				loyalty = 60
+			}
+			estate_loyalty = {
+				estate = estate_burghers
+				loyalty = 60
+			}
+			NOT = {
+				estate_influence = {
+					estate = estate_nobles
+					influence = 40
+				}
+			}
+			NOT = {
+				estate_influence = {
+					estate = estate_burghers
+					influence = 40
+				}
+			}
+			L80 = { #Zulbur
+				OR = {
+					NOT = { 
+						num_of_cities = 5
+						num_of_subjects = 1
+					}
+					is_subject_of = ROOT
+					humiliated_by = ROOT
+					AND = {
+						exists = no
+						S70 = { humiliated_by = ROOT }
+					}
+				}
+			}
+			L84 = { #Shalazar
+				OR = {
+					NOT = { 
+						num_of_cities = 5
+						num_of_subjects = 1
+					}
+					is_subject_of = ROOT
+					humiliated_by = ROOT
+					AND = {
+						exists = no
+						S70 = { humiliated_by = ROOT }
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			remove_estate_privilege = estate_church_naga_mutation
+			set_country_flag = rayaz_naga_upgraded
+			set_estate_privilege = estate_church_naga_upgraded_mutation
+			custom_tooltip = rayaz_ashhana_anzalkatsa_reward_tt
+			#Put in the Blood Curse Reward Later!!!!!!!!!
+			hidden_effect = {
+				every_subject_country = {
+					limit = {
+						culture = ashhana_lizardfolk
+						religion = anzalkatsa
+					}
+					ROOT = { add_dip_mana = 50 add_prestige = 5 }
+				}
+			}
+		} 
 	}
 }
