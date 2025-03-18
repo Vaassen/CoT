@@ -196,7 +196,14 @@ country_event = {
 	#Remove Claim
 	option = {
 		name = monstrous.4.a
-		ai_chance = { factor = 1 }
+		ai_chance = {
+			factor = 1
+			
+			modifier = {
+				factor = 0
+				tag = R62 #Command giving up perma-claims can break camapaigns
+			}
+		}
 		decrease_monstrous_1 = yes
 		add_adm_power = -20
 		event_target:province = {
@@ -211,6 +218,7 @@ country_event = {
 			
 			modifier = {
 				factor = 0
+				NOT = { tag = R62 } #Command giving up perma-claims can break camapaigns
 				want_to_decrease_monstrous = yes
 			}
 		}
@@ -1285,7 +1293,13 @@ country_event = {
 	#Let's convert
 	option = {
 		name = monstrous.22.a
-		ai_chance = { factor = 1 }
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				tag = R62 #this replaces what was previously an AI bypass
+			}
+		}
 		decrease_monstrous_10 = yes
 		change_government_reform_progress = 25
 		if = {
@@ -1318,6 +1332,7 @@ country_event = {
 			
 			modifier = {
 				factor = 0
+				NOT = { tag = R62 }
 				want_to_decrease_monstrous = yes
 			}
 		}
@@ -1491,106 +1506,6 @@ country_event = {
 	}
 }
 
-#Hero Party kill our Ruler
-country_event = {
-	id = monstrous.25
-	title = monstrous.25.t
-	desc = monstrous.25.d
-	picture = MONARCH_CHILD_WITH_REGENT_eventPicture
-	
-	mean_time_to_happen = {
-		years = 400
-		
-		# These don't really make much sense, why is a mage ruler easier to kill?
-		modifier = {
-			factor = 0.5
-			
-			ruler_has_mage_personality = yes
-		}
-		
-		modifier = {
-			factor = 0.5
-			
-			has_ruler_modifier = lich_ruler
-		}
-		
-		modifier = {
-			factor = 0.5
-			
-			has_ruler_modifier = witch_king_modifier
-		}
-	}
-	
-	trigger = {
-		has_country_modifier = monstrous_nation
-		has_regency = no
-		any_known_country = { NOT = { has_country_modifier = monstrous_nation } }
-		NOT = { has_ruler_flag = chaingrasper_lichdom_quest } #Don't kill Dak please
-	}
-	
-	#Let's go
-	option = {
-		name = monstrous.25.a
-		ai_chance = { factor = 20 }
-		#if = {
-		#	limit = { has_ruler_modifier = lich_ruler }
-		#	country_event = { id = magic_project_lichdom.14 days = 1 }
-		#}
-		#else = {
-		#	kill_ruler = yes
-		#}
-		random_list = {
-			35 = {
-				modifier = {
-					factor = 1.5
-					ruler_has_mage_personality = yes
-				}
-				modifier = {
-					factor = 1.5
-					has_ruler_modifier = lich_ruler
-				}
-				modifier = {
-					factor = 1.5
-					mil = 5
-				}
-				modifier = {
-					factor = 1.5
-					mil = 6
-				}
-				add_prestige = 20
-				add_legitimacy = 30
-				add_republican_tradition = 10
-				add_devotion = 30
-				add_horde_unity = 30
-			}
-			65 = {
-				modifier = {
-					factor = 1.5
-					ruler_has_personality = craven_personality
-				}
-				modifier = {
-					factor = 1.5
-					NOT = { mil = 3 }
-				}
-				modifier = {
-					factor = 1.5
-					NOT = { mil = 2 }
-				}
-				modifier = {
-					factor = 1.5
-					NOT = { mil = 1 }
-				}
-				kill_ruler = yes
-				add_prestige = -20
-				add_legitimacy = -30
-				add_republican_tradition = -10
-				add_devotion = -30
-				add_horde_unity = -30
-			}
-		}
-	}
-
-}
 
 #End the events if you don't demonsterize and just take the good options
 country_event = {
@@ -1647,7 +1562,7 @@ country_event = {
 	hidden = yes
 	
 	trigger = {
-		NOT = { has_country_flag = setup_monstrous_opinion }
+		NOT = { has_country_modifier = setup_monstrous_opinion }
 		#NOT = {
 		#	any_country = {
 		#		has_opinion_modifier = {
@@ -1660,7 +1575,14 @@ country_event = {
 	}
 	
 	immediate = {
-		hidden_effect = { set_country_flag = setup_monstrous_opinion }
+		hidden_effect = {
+			add_country_modifier = {
+				name = setup_monstrous_opinion
+				duration = -1
+				hidden = yes
+			}
+			# must be a modifier and not a flag so it disappears if the nation is annexed and released again
+		}
 	}
 	
 	#Do it
@@ -2136,6 +2058,7 @@ country_event = {
 			NOT = {
 				tag = S70	#Yezel Mora
 				tag = I46	#Tugund-Darakh
+				religion = xhazobkult #Has it's own event for changing religion
 				has_ruler_flag = xhazob_patron	#Great Xhaz
 			}
 			any_neighbor_country = {
@@ -2367,11 +2290,8 @@ country_event = {
 			NOT = {
 				tag = S70	#Yezel Mora
 				tag = I46	#Tugund-Darakh
+				religion = xhazobkult
 				has_ruler_flag = xhazob_patron	#Great Xhaz
-			}
-			if = {
-				limit = { tag = R62 ai = yes }	#The Command
-				NOT = { total_development = 400 }
 			}
 			NOT = {
 				religion = ravelian
@@ -2448,5 +2368,16 @@ country_event = {
 			NOT = { has_heir_flag = monstrous_foreign_education }
 		}
 		country_event = { id = monstrous.23 }
+	}
+
+	option = {
+		name = monstrous.1000.a
+		ai_chance = { factor = 100 }
+		trigger = {
+			stability = 0
+			religion = xhazobkult
+			NOT = { has_country_flag = xhazobkult_rejected_conversion }
+		}
+		country_event = { id = xhazobkult_events.2 }
 	}
 }
