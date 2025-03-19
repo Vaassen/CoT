@@ -1178,18 +1178,7 @@ country_event = {
 		name = rinta_seeker_events.202.a
 		custom_tooltip = rinta_seeker_events.202_tt
 		goto = 6679
-		if = {
-			limit = { 
-				6679 = { NOT = {  has_province_modifier = rinta_infernal_resonance }}
-			}
-			hidden_effect = {
-				REB = {
-					set_variable = {
-						which = rinta_factor
-						value = 1
-					}
-				}
-			}
+		tooltip = {
 			6679 = {
 				add_permanent_province_modifier = {
 					name = rinta_infernal_resonance
@@ -1197,18 +1186,34 @@ country_event = {
 				}
 			}
 		}
-
 		hidden_effect = {
-			country_event = {
-				id = rinta_seeker_events.203
-				days = 365
-				random = 10
+			if = {
+				limit = {
+					6679 = { NOT = {  has_province_modifier = rinta_infernal_resonance }}
+				}
+				REB = {
+					set_variable = {
+						which = rinta_factor
+						value = 1
+					}
+				}
+				6679 = {
+					add_permanent_province_modifier = {
+						name = rinta_infernal_resonance
+						duration = -1
+					}
+				}
+				country_event = {
+					id = rinta_seeker_events.203
+					days = 365
+					random = 10
+				}
+				country_event = {
+					id = rinta_seeker_events.204
+					days = 3650
+				}
+				set_global_flag = darkmagicks_flag
 			}
-			country_event = {
-				id = rinta_seeker_events.204
-				days = 3650
-			}
-			set_global_flag = darkmagicks_flag
 		}
 		ai_chance = { factor = 1 }
 	}
@@ -1510,6 +1515,25 @@ country_event = {
 		hidden_effect = {
 			if = {
 				limit = { S93 = { NOT = { exists = yes } } }
+				if = {
+					limit = {
+						any_country = {
+							religion = rinta_seekers
+							total_development = 800
+						} 
+					}
+					set_global_flag = rinta_boss_music
+				}
+				else_if = {
+					limit = { 
+						any_country = {
+						religion = rinta_seekers
+						total_development = 400
+						} 
+					}
+					set_global_flag = rinta_double
+				}
+
 				every_province = {
 					limit = { has_province_modifier = rinta_infernal_resonance
 					}
@@ -1518,6 +1542,12 @@ country_event = {
 					set_local_autonomy = 0
 				}
 				S93 = {
+					clear_racial_military = yes
+					add_country_modifier = {
+						name = human_military
+						duration = -1
+						hidden = yes
+					}
 					change_religion = genie_cult
 					change_primary_culture = guryadagga
 					change_government = theocracy
@@ -1537,39 +1567,78 @@ country_event = {
 						name = "Alefisol"
 						dynasty = "'the Vengeful'"
 					}
-					capital_scope = {
-						if = {
-							limit = { }
+					#Conqueror
+					if = {
+						limit = { has_global_flag = mythical_conqueror }
+						add_ruler_personality = mythical_conqueror
+					}
+					else_if = {
+						limit = { has_global_flag = great_conqueror }
+						add_ruler_personality = great_conqueror_personality
+					}
+					else = {
+						add_ruler_personality = conqueror_personality
+					}
+					#Choosing Capital 
+					if = {
+						limit = {
+							any_owned_province = { development = 20 }
+						}
+						random_owned_province = {
+							limit = {
+								development = 20
+							}
+							save_event_target_as = rinta_new_capital
+						}
+						set_capital = event_target:rinta_new_capital
+					}
+					else = {
+						capital_scope = {
+							add_base_tax = 2
+							add_base_production = 2
+							add_base_manpower = 2
 						}
 					}
-					random_owned_province = {
+					#Starting for Capital
+					capital_scope = {
+						if = {
+							limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
+							add_latest_building = { builder = ROOT fort = yes }
+						}
+						if = {
+							limit = { NOT = { has_building = ramparts } }
+							add_building = ramparts
+						}
 						spawn_alefisol_army = yes
+						change_religion = genie_cult
 					}
-					random_owned_province = {
+					#Forts if dont have many
+					if = {
+						limit = { 
+							NOT = {
+								num_of_owned_provinces_with = {
+									province_has_current_tech_fort_trigger = yes
+									value = 3
+								} 
+							}
+						}
+						random_owned_province = {
+							limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
+							add_latest_building = { builder = ROOT fort = yes }
+						}
+						random_owned_province = {
+							limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
+							add_latest_building = { builder = ROOT fort = yes }
+						}
+					}
+					#Units 
+					#####################
+					random_owned_province = { #Starting 
+						limit = { province_has_current_tech_fort_trigger = yes }
 						spawn_alefisol_army = yes
-					}
-					random_owned_province = {
-						spawn_alefisol_army = yes
-					}
-					random_owned_province = {
-						spawn_alefisol_army = yes
-					}
-					define_general = {
-						shock = 0
-						fire = 6
-						manuever = 0
-						siege = 6
-						female = yes
-						name = "Kiviz Nahte 'the Opposed'"
 					}
 					create_general = {
-						tradition = 100
-					}
-					create_general = {
-						tradition = 66
-					}
-					create_general = {
-						tradition = 0
+						tradition = 10
 					}
 					create_war_wizard_effect = yes
 					if = {
@@ -1578,6 +1647,65 @@ country_event = {
 							spawn_alefisol_fleet = yes
 						}
 					}
+					#####################
+					if = { #Max potencial 
+						limit = { has_global_flag = rinta_boss_music }
+						random_owned_province = {
+							spawn_alefisol_army = yes
+						}
+						random_owned_province = {
+							spawn_alefisol_army = yes
+						}
+						define_general = {
+							shock = 0
+							fire = 6
+							manuever = 0
+							siege = 6
+							female = yes
+							name = "Kiviz Nahte 'the Opposed'"
+						}
+						create_general = {
+							tradition = 100
+						}
+						if = {
+							limit = { any_owned_province = { has_port = yes }}
+							random_owned_province = {
+								limit = {
+									has_port = yes
+								}
+								spawn_alefisol_fleet = yes
+								spawn_alefisol_fleet = yes
+							}
+						}
+					}
+					#####################
+					else_if = { #Medium
+						limit = { OR = { has_global_flag = rinta_double has_global_flag = rinta_boss_music }}
+						random_owned_province = {
+							limit = { province_has_current_tech_fort_trigger = yes }
+							if = {
+								limit = { NOT = { has_building = ramparts } }
+								add_building = ramparts
+							}
+							spawn_alefisol_army = yes
+						}
+						create_general = {
+							tradition = 66
+						}
+					}
+					#####################
+					if = { #Bonus for number of resonance
+						limit = { 
+							num_of_owned_provinces_with = {
+								has_province_modifier = rinta_infernal_resonance
+								value = 16
+							}
+						}
+						random_owned_province = {
+							spawn_alefisol_army = yes
+						}
+					}
+					#####################
 					country_event = { #War on everyone
 						id = 6504
 						days = 2
@@ -1585,6 +1713,16 @@ country_event = {
 					update_unit_sprites_for_racial_mil = yes
 					remove_country_modifier = restructuring_military
 					remove_country_modifier = restructuring_administration
+					every_owned_province = {
+						limit = {
+							has_province_modifier = rinta_infernal_resonance
+						}
+						remove_province_modifier = rinta_infernal_resonance
+						add_province_modifier = {
+							name = rinta_infernal_hotspot
+							duration = -1
+						}
+					}
 				}
 			}
 		}
