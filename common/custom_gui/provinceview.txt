@@ -454,65 +454,28 @@ custom_icon = {
 	tooltip = diggy_hole_progress_tt
 }
 
-#Sedentarization
-custom_button = { #Continental
-	name = sedentarization_make_outpost
-	tooltip = sed_establish_outpost_button
-	potential = {
-		has_province_modifier = sed_forbidden
-		owner = {
-			tag = FROM
-			culture_is_centaur = no
-		}
-		NOT = { has_province_modifier = sed_system_completed }
-	}
-	trigger = {
-		# Hide the normal requirements if there's already an outpost
-		if = {
-			limit = { sedentarization_province_has_outpost = no }
-			FROM = { sedentarization_country_can_place_outpost = yes }
-			sedentarization_province_can_recieve_outpost = { owner_scope = FROM }
-			if = {
-				limit = {
-					OR = {
-						has_province_flag = sed_incomplete_sedentarization
-						has_province_flag = sed_semi_complete_sedentarization
-					}
-					owner = { has_country_flag = sed_placing_new_phase_two_outpost }
-				}
-				custom_trigger_tooltip = {
-					tooltip = sed_placing_new_phase_two_outpost_tt
-					always = no
-				}
-			}
-		}
-		# Show the system explainer instead. (TODO probably temporary)
-		else = {
-			custom_trigger_tooltip = {
-				tooltip = sedentarization.explainer
-				always = no
-			}
-		}
-	}
-	effect = {
-		if = {
-			limit = { sedentarization_province_has_outpost = no }
-			sedentarization_place_brand_new_outpost = yes
-		}
-	}
-}
-
 ### PROVINCE UI GLOBAL
+# to add a button here you need to add three versions, _closed for when the province UI is closed, _no_monument for province without monument
+# and _with_monument for when there is a monument.
+# You need to add them in the right slot with all three duplicates, the closed one must check that the owner has province_button_UI_opened flag
+# _with_monument has to check for has_great_project = { type = any tier = 0 } in the potential
+# _no_monument has no special checks
+# otherwise these behave like decisions
+# after that you need to add them in provinceview.gui, in three spots, do it like it's already done there to find the places CTRL+F sedentarization_make_outpost in the gui file
+
 #Background and generic assets
 custom_icon = { #Background for provinces with a monument
-	name = GFX_province_button_frame_bg_yes_monument
+	name = GFX_province_button_frame_bg_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	tooltip = ""
@@ -527,7 +490,10 @@ custom_icon = { #Background for provinces without a monument
 			}
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	tooltip = ""
@@ -536,8 +502,13 @@ custom_icon = { #Background for provinces when building UI is closed
 	name = GFX_province_button_frame_bg_vertical
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = {
+				has_country_flag = province_button_UI_opened
+			}
 		}
 	}
 }
@@ -546,24 +517,34 @@ custom_button = { #Button for the UI when building UI is closed
 	tooltip = ""
 	potential = {
 		owner = {
-			tag = FROM
-			NOT = { has_country_flag = province_button_UI_opened }
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = {
+				NOT = { has_country_flag = province_button_UI_opened }
+			}
 		}
 	}
 	trigger = { }
-	effect = { owner = { set_country_flag = province_button_UI_opened } }
+	effect = { FROM = { set_country_flag = province_button_UI_opened } }
 }
 custom_button = { #Button to close the UI when building UI is closed
 	name = province_button_close_button
 	tooltip = ""
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = {
+				has_country_flag = province_button_UI_opened
+			}
 		}
 	}
 	trigger = { }
-	effect = { owner = { clr_country_flag = province_button_UI_opened } }
+	effect = { FROM = { clr_country_flag = province_button_UI_opened } }
 }
 
 #Slot 1 - Continent wide button
@@ -571,8 +552,13 @@ custom_button = { #Dummy closed
 	name = GFX_province_button_dummy_1_closed
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = {
+				has_country_flag = province_button_UI_opened
+			}
 		}
 	}
 	trigger = {
@@ -591,7 +577,10 @@ custom_button = { #Dummy no monument
 		# 	}
 		# }
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -601,14 +590,17 @@ custom_button = { #Dummy no monument
 	tooltip = unified_province_ui_no_continent_button_tt
 }
 custom_button = { #Dummy with monument
-	name = GFX_province_button_dummy_1_yes_monument
+	name = GFX_province_button_dummy_1_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -623,9 +615,14 @@ custom_button = { #Sedentarization closed
 	potential = {
 		has_province_modifier = sed_forbidden
 		owner = {
-			tag = FROM
 			culture_is_centaur = no
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = {
+				has_country_flag = province_button_UI_opened
+			}
 		}
 		NOT = { has_province_modifier = sed_system_completed }
 	}
@@ -670,7 +667,10 @@ custom_button = { #Sedentarization no monument
 	potential = {
 		has_province_modifier = sed_forbidden
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			culture_is_centaur = no
 		}
 		NOT = { has_province_modifier = sed_system_completed }
@@ -720,7 +720,10 @@ custom_button = { #Sedentarization with monument
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			culture_is_centaur = no
 		}
 		NOT = { has_province_modifier = sed_system_completed }
@@ -766,7 +769,10 @@ custom_button = { #Dummy closed
 	name = GFX_province_button_dummy_2_closed
 	potential = {
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			has_country_flag = province_button_UI_opened
 		}
 	}
@@ -786,7 +792,10 @@ custom_button = { #Dummy no monument
 		# 	}
 		# }
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -796,14 +805,17 @@ custom_button = { #Dummy no monument
 	tooltip = unified_province_ui_no_province_specific_button_tt
 }
 custom_button = { #Dummy with monument
-	name = GFX_province_button_dummy_2_yes_monument
+	name = GFX_province_button_dummy_2_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -826,7 +838,7 @@ custom_button = { #Diggy with ui closed
 				government = native
 				is_nomad = yes
 			}
-			has_country_flag = province_button_UI_opened
+			FROM = { has_country_flag = province_button_UI_opened }
 		}
 		#Blorcs can't repair non-capital holds
 		OR = {
@@ -1005,7 +1017,6 @@ custom_button = { #Diggy with monument ui open
 				government = native
 				is_nomad = yes
 			}
-			has_country_flag = province_button_UI_opened
 		}
 		#Blorcs can't repair non-capital holds
 		OR = {
@@ -1085,8 +1096,11 @@ custom_button = { #Dummy closed
 	name = GFX_province_button_dummy_3_closed
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = { has_country_flag = province_button_UI_opened }
 		}
 	}
 	trigger = {
@@ -1098,14 +1112,11 @@ custom_button = { #Dummy closed
 custom_button = { #Dummy no monument
 	name = GFX_province_button_dummy_3_no_monument
 	potential = {
-		# NOT = {
-		# 	has_great_project = {
-		# 		type = any
-		# 		tier = 0
-		# 	}
-		# }
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -1115,14 +1126,17 @@ custom_button = { #Dummy no monument
 	tooltip = unified_province_ui_no_religion_button_tt
 }
 custom_button = { #Dummy with monument
-	name = GFX_province_button_dummy_3_yes_monument
+	name = GFX_province_button_dummy_3_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -1135,9 +1149,12 @@ custom_button = { #Transmutative Path UI closed
 	name = transmutative_path_infuse_chi_button_closed
 	potential = {
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			religion = transmutative_path
-			has_country_flag = province_button_UI_opened
+			FROM = { has_country_flag = province_button_UI_opened }
 		}
 	}
 	trigger = {
@@ -1161,7 +1178,10 @@ custom_button = { #Transmutative Path no monument ui open
 	name = transmutative_path_infuse_chi_button_no_monument
 	potential = {
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			religion = transmutative_path
 		}
 	}
@@ -1186,7 +1206,10 @@ custom_button = { #Transmutative Path with monument ui open
 	name = transmutative_path_infuse_chi_button_with_monument
 	potential = {
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 			religion = transmutative_path
 		}
 		has_great_project = {
@@ -1217,8 +1240,11 @@ custom_button = { #Dummy closed
 	name = GFX_province_button_dummy_4_closed
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = { has_country_flag = province_button_UI_opened }
 		}
 	}
 	trigger = {
@@ -1230,14 +1256,11 @@ custom_button = { #Dummy closed
 custom_button = { #Dummy no monument
 	name = GFX_province_button_dummy_4_no_monument
 	potential = {
-		# NOT = {
-		# 	has_great_project = {
-		# 		type = any
-		# 		tier = 0
-		# 	}
-		# }
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -1247,14 +1270,17 @@ custom_button = { #Dummy no monument
 	tooltip = unified_province_ui_no_culture_button_tt
 }
 custom_button = { #Dummy with monument
-	name = GFX_province_button_dummy_4_yes_monument
+	name = GFX_province_button_dummy_4_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -1269,8 +1295,11 @@ custom_button = { #Dummy closed
 	name = GFX_province_button_dummy_5_closed
 	potential = {
 		owner = {
-			tag = FROM
-			has_country_flag = province_button_UI_opened
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
+			FROM = { has_country_flag = province_button_UI_opened }
 		}
 	}
 	trigger = {
@@ -1282,14 +1311,11 @@ custom_button = { #Dummy closed
 custom_button = { #Dummy no monument
 	name = GFX_province_button_dummy_5_no_monument
 	potential = {
-		# NOT = {
-		# 	has_great_project = {
-		# 		type = any
-		# 		tier = 0
-		# 	}
-		# }
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
@@ -1299,14 +1325,17 @@ custom_button = { #Dummy no monument
 	tooltip = unified_province_ui_no_tag_button_tt
 }
 custom_button = { #Dummy with monument
-	name = GFX_province_button_dummy_5_yes_monument
+	name = GFX_province_button_dummy_5_with_monument
 	potential = {
 		has_great_project = {
 			type = any
 			tier = 0
 		}
 		owner = {
-			tag = FROM
+			OR = {
+				tag = FROM
+				is_subject_of = FROM
+			}
 		}
 	}
 	trigger = {
