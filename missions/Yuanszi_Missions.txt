@@ -265,14 +265,19 @@ yuanszi_2_missions = {
 				spymaster = 1
 				dip_power = 50
 			}
-			4538 = {
-				OR = {
-					owner = { has_spy_network_from = { who = ROOT value = 50 } }
-					AND = {
-						owner = { has_spy_network_from = { who = ROOT value = 25 } }
-						controller = { offensive_war_with = R62 }
+			if = {
+				limit = { owns = 4538 }
+				owns = 4538 
+			}
+			else = {
+				4538 = {
+					OR = {
+						owner = { has_spy_network_from = { who = ROOT value = 50 } }
+						AND = {
+							owner = { has_spy_network_from = { who = ROOT value = 25 } }
+							controller = { offensive_war_with = R62 }
+						}
 					}
-					hidden_trigger = { owned_by = ROOT }
 				}
 			}
 		}
@@ -282,15 +287,18 @@ yuanszi_2_missions = {
 				limit = { NOT = { spymaster = 1 } }
 				add_dip_power = -50
 			}
-			4538 = {
-				if = {
-					limit = { controller = { offensive_war_with = R62 } }
-					owner = { add_spy_network_from = { who = ROOT value = -25 } }
-				}
-				else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
-				owner = {
-					kill_ruler = yes
-					add_country_modifier = { name = yuanszi_folly_boarborn duration = 3650 }
+			if = {
+				limit = { NOT = { owns = 4538 } }
+				4538 = {
+					if = {
+						limit = { controller = { offensive_war_with = R62 } }
+						owner = { add_spy_network_from = { who = ROOT value = -25 } }
+					}
+					else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
+					owner = {
+						kill_ruler = yes
+						add_country_modifier = { name = yuanszi_folly_boarborn duration = 3650 }
+					}
 				}
 			}
 			add_army_tradition = 15
@@ -310,16 +318,23 @@ yuanszi_2_missions = {
 				AND = {
 					owned_by = ROOT
 					has_manpower_building_trigger = no
-					ROOT = { NOT = { barracks = 4 training_fields = 4 } }
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 4
+								has_manpower_building_trigger = yes
+							}
+						}
+					}
 				}
 			}
 		}
 
 		trigger = {
 			num_of_times_used_pillage_capital = 1
-			OR = {
-				barracks = 4
-				training_fields = 4
+			num_of_owned_provinces_with = {
+				value = 4
+				has_manpower_building_trigger = yes
 			}
 			num_of_owned_provinces_with = {
 				value = 15
@@ -340,7 +355,10 @@ yuanszi_2_missions = {
 		required_missions = { yuanszi_the_gauntlet } 
 		provinces_to_highlight = {
 			is_capital = yes
-			owner = { is_subject_of = ROOT }
+			owner = {
+				is_subject_of = ROOT
+				NOT = { religion = devouring_path }
+			}
 			NOT = { num_of_units_in_province = { who = ROOT type = infantry amount = 5 } }
 		}
 
@@ -602,12 +620,15 @@ yuanszi_2_missions = {
 		}
 
 		trigger = {
-			num_of_owned_provinces_with = {
-				value = 15
-				has_manpower_building_trigger = yes
-				has_tax_building_trigger = yes
-				base_manpower = 8
-				has_state_edict = edict_promote_military_recruitment
+			OR = {
+				always = yes
+				num_of_owned_provinces_with = {
+					value = 15
+					has_manpower_building_trigger = yes
+					has_tax_building_trigger = yes
+					base_manpower = 8
+					has_state_edict = edict_promote_military_recruitment
+				}
 			}
 		}
 
@@ -622,45 +643,7 @@ yuanszi_2_missions = {
 						num_of_times_expanded_infrastructure = 1
 						has_province_modifier = rightful_xia_territory
 					}
-					if = {
-						limit = { NOT = { has_province_modifier = yuanszi_specialized } }
-						add_province_modifier = { name = yuanszi_body_strengthened duration = -1 }
-						add_province_modifier = { name = yuanszi_specialized duration = -1 hidden = yes }
-					}
-					else = {
-						export_to_variable = {
-							which = base_production_var
-							value = base_production
-						}
-						export_to_variable = {
-							which = base_tax_var
-							value = base_tax
-						}
-						export_to_variable = {
-							which = base_manpower_var
-							value = base_manpower
-						}
-						if = { #We do NOT want tiebreaks here which is why we do it like this
-							limit = {
-								NOT = {
-									AND = {
-										check_variable = { which = base_tax_var which = base_manpower_var }
-										owner = { mission_completed = yuanszi_blight_extremities }
-									}
-									AND = {
-										check_variable = { which = base_production_var which = base_manpower_var }
-										owner = { mission_completed = yuanszi_prosperity_faithful }
-									}
-								}
-							}
-							if = {
-								limit = { has_province_modifier = yuanszi_heart_alight }
-								remove_province_modifier = yuanszi_heart_alight
-							}
-							else = { remove_province_modifier = yuanszi_mind_honed }
-							add_province_modifier = { name = yuanszi_body_strengthened duration = -1 }
-						}
-					}
+					yuanszi_attempt_mil_specialization = yes
 				}
 			}
 		}
@@ -774,51 +757,68 @@ yuanszi_2_missions = {
 			else = {
 				4539 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } }
 			}
-			OR = {
-				hidden_trigger = {
-					AND = {
-						OR = {
-							owns = 4361
-							has_global_flag = golden_highway_rahen_coast_started
-						}
-						OR = {
-							owns = 4408
-							has_global_flag = golden_highway_dhujat_started
-						}
-						OR = {
-							owns = 4826
-							has_global_flag = golden_highway_upper_yanshen_started
-						}
-						OR = {
-							owns = 4873
-							has_global_flag = golden_highway_yanshen_coast_started
-						}
+			if = {
+				limit = {
+					OR = {
+						owns = 4361
+						has_global_flag = golden_highway_rahen_coast_started
+					}
+					OR = {
+						owns = 4408
+						has_global_flag = golden_highway_dhujat_started
+					}
+					OR = {
+						owns = 4826
+						has_global_flag = golden_highway_upper_yanshen_started
+					}
+					OR = {
+						owns = 4873
+						has_global_flag = golden_highway_yanshen_coast_started
 					}
 				}
-				if = {
-					limit = { has_global_flag = golden_highway_rahen_coast_started }
-					hidden_trigger = { always = no }
+				OR = {
+					owns = 4361
+					has_global_flag = golden_highway_rahen_coast_started
 				}
-				else = { 4361 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
-
-				if = {
-					limit = { has_global_flag = golden_highway_dhujat_started }
-					hidden_trigger = { always = no }
+				OR = {
+					owns = 4408
+					has_global_flag = golden_highway_dhujat_started
 				}
-				else = { 4408 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
-
-				if = {
-					limit = { has_global_flag = golden_highway_upper_yanshen_started }
-					hidden_trigger = { always = no }
+				OR = {
+					owns = 4826
+					has_global_flag = golden_highway_upper_yanshen_started
 				}
-				else = { 4826 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
-
-				if = {
-					limit = { has_global_flag = golden_highway_yanshen_coast_started }
-					hidden_trigger = { always = no }
+				OR = {
+					owns = 4873
+					has_global_flag = golden_highway_yanshen_coast_started
 				}
-				else = { 4873 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
+			}
+			else = {
+				OR = {
+					if = {
+						limit = { has_global_flag = golden_highway_rahen_coast_started }
+						hidden_trigger = { always = no }
+					}
+					else = { 4361 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
 
+					if = {
+						limit = { has_global_flag = golden_highway_dhujat_started }
+						hidden_trigger = { always = no }
+					}
+					else = { 4408 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
+
+					if = {
+						limit = { has_global_flag = golden_highway_upper_yanshen_started }
+						hidden_trigger = { always = no }
+					}
+					else = { 4826 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
+
+					if = {
+						limit = { has_global_flag = golden_highway_yanshen_coast_started }
+						hidden_trigger = { always = no }
+					}
+					else = { 4873 = { owner = { has_spy_network_from = { who = ROOT value = 95 } } } }
+				}
 			}
 		}
 
@@ -955,7 +955,10 @@ yuanszi_3_missions = {
 		required_missions = { yuanszi_shadows_will } 
 		provinces_to_highlight = {
 			OR = {
-				province_id = 4630 #Sarilavhan
+				AND = {
+					province_id = 4630 #Sarilavhan
+					exists = R62
+				}
 				AND = {
 					province_id = 4532 #Kradhungur
 					NOT = { exists = R62 }
@@ -970,26 +973,36 @@ yuanszi_3_missions = {
 			}
 			if = {
 				limit = { exists = R62 }
-				4630 = { #We still write it this way to give the player the incentive to siege it down
-					OR = {
-						owner = { has_spy_network_from = { who = ROOT value = 50 } }
-						AND = {
-							owner = { has_spy_network_from = { who = ROOT value = 25 } }
-							controller = { offensive_war_with = R62 }
+				if = {
+					limit = { owns = 4630 }
+					owns = 4630
+				}
+				else = {
+					4630 = { #We still write it this way to give the player the incentive to siege it down
+						OR = {
+							owner = { has_spy_network_from = { who = ROOT value = 50 } }
+							AND = {
+								owner = { has_spy_network_from = { who = ROOT value = 25 } }
+								controller = { offensive_war_with = R62 }
+							}
 						}
-						hidden_trigger = { owned_by = ROOT }
 					}
 				}
 			}
 			else = {
-				4532 = {
-					OR = {
-						owner = { has_spy_network_from = { who = ROOT value = 50 } }
-						AND = {
-							owner = { has_spy_network_from = { who = ROOT value = 25 } }
-							controlled_by = ROOT
+				if = {
+					limit = { owns = 4532 }
+					owns = 4532
+				}
+				else = {
+					4532 = {
+						OR = {
+							owner = { has_spy_network_from = { who = ROOT value = 50 } }
+							AND = {
+								owner = { has_spy_network_from = { who = ROOT value = 25 } }
+								controlled_by = ROOT
+							}
 						}
-						hidden_trigger = { owned_by = ROOT }
 					}
 				}
 			}
@@ -1002,23 +1015,29 @@ yuanszi_3_missions = {
 			}
 			if = {
 				limit = { exists = R62 }
-				4630 = {
-					if = {
-						limit = { controller = { offensive_war_with = R62 } }
-						owner = { add_spy_network_from = { who = ROOT value = -25 } }
+				if = {
+					limit = { NOT = { owns = 4630 } }
+					4630 = {
+						if = {
+							limit = { controller = { offensive_war_with = R62 } }
+							owner = { add_spy_network_from = { who = ROOT value = -25 } }
+						}
+						else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
+						owner = { add_country_modifier = { name = yuanszi_doubts_wolfborn duration = 3650 } }
 					}
-					else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
-					owner = { add_country_modifier = { name = yuanszi_doubts_wolfborn duration = 3650 } }
 				}
 			}
 			else = {
-				4532 = {
-					if = {
-						limit = { controlled_by = ROOT }
-						owner = { add_spy_network_from = { who = ROOT value = -25 } }
+				if = {
+					limit = { NOT = { owns = 4532 } }
+					4532 = {
+						if = {
+							limit = { controlled_by = ROOT }
+							owner = { add_spy_network_from = { who = ROOT value = -25 } }
+						}
+						else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
+						owner = { add_country_modifier = { name = yuanszi_doubts_wolfborn duration = 3650 } }
 					}
-					else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
-					owner = { add_country_modifier = { name = yuanszi_doubts_wolfborn duration = 3650 } }
 				}
 			}
 			jade_mines_region = { discover_country = ROOT }
@@ -1041,14 +1060,22 @@ yuanszi_3_missions = {
 				AND = {
 					owned_by = ROOT
 					has_tax_building_trigger = no
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 2
+								has_tax_building_trigger = yes
+							}
+						}
+					}
 				}
 			}
 		}
 
 		trigger = {
-			OR = {
-				temple = 2
-				cathedral = 2
+			num_of_owned_provinces_with = {
+				value = 2
+				has_tax_building_trigger = yes
 			}
 			army_size_percentage = 1
 			has_leader_with = { total_pips = 7 }
@@ -1193,16 +1220,24 @@ yuanszi_3_missions = {
 			has_adm_advisor_2 = yes
 			has_dip_advisor_2 = yes
 			has_mil_advisor_2 = yes
+			if = {
+				limit = { owns = 4633 }
+				owns = 4633
+			}
 			4633 = {
 				owner = {
 					OR = {
 						has_spy_network_from = { who = ROOT value = 50 }
 						overlord = { has_spy_network_from = { who = ROOT value = 50 } }
-						hidden_trigger = { tag = ROOT }
 					}
 				}
 			}
-			shamakhad_region = { any_neighbor_province = { infantry_in_province = ROOT } }
+			shamakhad_region = {
+				any_neighbor_province = {
+					NOT = { region = shamakhad_region }
+					infantry_in_province = ROOT
+				}
+			}
 		}
 
 		effect = { country_event = { id = yuanszi.9 } }
@@ -1377,45 +1412,7 @@ yuanszi_3_missions = {
 							num_of_times_expanded_infrastructure = 1
 						}
 					}
-					if = {
-						limit = { NOT = { has_province_modifier = yuanszi_specialized } }
-						add_province_modifier = { name = yuanszi_mind_honed duration = -1 }
-						add_province_modifier = { name = yuanszi_specialized duration = -1 hidden = yes }
-					}
-					else = {
-						export_to_variable = {
-							which = base_production_var
-							value = base_production
-						}
-						export_to_variable = {
-							which = base_tax_var
-							value = base_tax
-						}
-						export_to_variable = {
-							which = base_manpower_var
-							value = base_manpower
-						}
-						if = { #We do NOT want tiebreaks here which is why we do it like this
-							limit = {
-								NOT = {
-									AND = {
-										check_variable = { which = base_production_var which = base_tax_var }
-										owner = { mission_completed = yuanszi_prosperity_faithful }
-									}
-									AND = {
-										check_variable = { which = base_manpower_var which = base_tax_var }
-										owner = { mission_completed = yuanszi_black_monks }
-									}
-								}
-							}
-							if = {
-								limit = { has_province_modifier = yuanszi_body_strengthened }
-								remove_province_modifier = yuanszi_body_strengthened
-							}
-							else = { remove_province_modifier = yuanszi_heart_alight }
-							add_province_modifier = { name = yuanszi_mind_honed duration = -1 }
-						}
-					}
+					yuanszi_attempt_adm_specialization = yes
 				}
 			}
 		}
@@ -1579,45 +1576,7 @@ yuanszi_3_missions = {
 								num_of_times_expanded_infrastructure = 1
 							}
 						}
-						if = {
-							limit = { NOT = { has_province_modifier = yuanszi_specialized } }
-							add_province_modifier = { name = yuanszi_heart_alight duration = -1 }
-							add_province_modifier = { name = yuanszi_specialized duration = -1 hidden = yes }
-						}
-						else = {
-							export_to_variable = {
-								which = base_production_var
-								value = base_production
-							}
-							export_to_variable = {
-								which = base_tax_var
-								value = base_tax
-							}
-							export_to_variable = {
-								which = base_manpower_var
-								value = base_manpower
-							}
-							if = { #We do NOT want tiebreaks here which is why we do it like this
-								limit = {
-									NOT = {
-										AND = {
-											check_variable = { which = base_tax_var which = base_production_var }
-											owner = { mission_completed = yuanszi_blight_extremities }
-										}
-										AND = {
-											check_variable = { which = base_manpower_var which = base_production_var }
-											owner = { mission_completed = yuanszi_black_monks }
-										}
-									}
-								}
-								if = {
-									limit = { has_province_modifier = yuanszi_body_strengthened }
-									remove_province_modifier = yuanszi_body_strengthened
-								}
-								else = { remove_province_modifier = yuanszi_mind_honed }
-								add_province_modifier = { name = yuanszi_heart_alight duration = -1 }
-							}
-						}
+						yuanszi_attempt_dip_specialization = yes
 					}
 				}
 			}
@@ -1710,32 +1669,42 @@ yuanszi_4_missions = {
 			}
 			if = {
 				limit = { 4635 = { has_province_flag = command_lion_warcamp } }
-				4635 = {
-					OR = {
-						owner = { has_spy_network_from = { who = ROOT value = 50 } }
-						AND = {
-							owner = { has_spy_network_from = { who = ROOT value = 25 } }
-							OR = {
-								controlled_by = ROOT
-								controlled_by = R78
+				if = {
+					limit = { owns = 4635 }
+					owns = 4635
+				}
+				else = {
+					4635 = {
+						OR = {
+							owner = { has_spy_network_from = { who = ROOT value = 50 } }
+							AND = {
+								owner = { has_spy_network_from = { who = ROOT value = 25 } }
+								OR = {
+									controlled_by = ROOT
+									controlled_by = R78
+								}
 							}
 						}
-						hidden_trigger = { owned_by = ROOT }
 					}
 				}
 			}
 			else = {
-				4311 = {
-					OR = {
-						owner = { has_spy_network_from = { who = ROOT value = 50 } }
-						AND = {
-							owner = { has_spy_network_from = { who = ROOT value = 25 } }
-							OR = {
-								controlled_by = ROOT
-								controller = { offensive_war_with = R62 }
+				if = {
+					limit = { owns = 4311 }
+					owns = 4311
+				}
+				else = {
+					4311 = {
+						OR = {
+							owner = { has_spy_network_from = { who = ROOT value = 50 } }
+							AND = {
+								owner = { has_spy_network_from = { who = ROOT value = 25 } }
+								OR = {
+									controlled_by = ROOT
+									controller = { offensive_war_with = R62 }
+								}
 							}
 						}
-						hidden_trigger = { owned_by = ROOT }
 					}
 				}
 			}
@@ -1748,32 +1717,38 @@ yuanszi_4_missions = {
 			}
 			if = {
 				limit = { 4635 = { has_province_flag = command_lion_warcamp } }
-				4635 = {
-					if = {
-						limit = {
-							OR = {
-								controlled_by = ROOT
-								controller = { offensive_war_with = R62 }
+				if = {
+					limit = { NOT = { owns = 4635 }}
+					4635 = {
+						if = {
+							limit = {
+								OR = {
+									controlled_by = ROOT
+									controller = { offensive_war_with = R62 }
+								}
 							}
+							owner = { add_spy_network_from = { who = ROOT value = -25 } }
 						}
-						owner = { add_spy_network_from = { who = ROOT value = -25 } }
+						else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
 					}
-					else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
 				}
 				capital_scope = { add_permanent_province_modifier = { name = yuanszi_insight_lionborn duration = 3650 } }
 			}
 			else = {
-				4311 = {
-					if = {
-						limit = {
-							OR = {
-								controlled_by = ROOT
-								controller = { offensive_war_with = R62 }
+				if = {
+					limit = { owns = 4311 }
+					4311 = {
+						if = {
+							limit = {
+								OR = {
+									controlled_by = ROOT
+									controller = { offensive_war_with = R62 }
+								}
 							}
+							owner = { add_spy_network_from = { who = ROOT value = -25 } }
 						}
-						owner = { add_spy_network_from = { who = ROOT value = -25 } }
+						else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
 					}
-					else = { owner = { add_spy_network_from = { who = ROOT value = -50 } } }
 				}
 				capital_scope = { add_permanent_province_modifier = { name = yuanszi_insight_lionborn duration = 3650 } }
 			}
@@ -1801,10 +1776,10 @@ yuanszi_4_missions = {
 						}
 						NOT = { has_spy_network_from = { who = ROOT value = 50 } }
 					}
-					NOT = {
-						calc_true_if = {
-							amount = 2
-							ROOT = {
+					ROOT = {
+						NOT = {
+							calc_true_if = {
+								amount = 2
 								all_known_country = {
 									has_spy_network_from = { who = ROOT value = 50 }
 									any_neighbor_country = {
@@ -1828,7 +1803,7 @@ yuanszi_4_missions = {
 			}
 			OR = {
 				has_reform = wulin
-				overlord = { has_100_opinion_improved_relation = { target = ROOT } }
+				overlord = { has_95_opinion_improved_relation = { target = ROOT } }
 			}
 			calc_true_if = {
 				amount = 2
@@ -2096,33 +2071,25 @@ yuanszi_4_missions = {
 		icon = mission_magadna_and_varanasi
 		position = 9
 		required_missions = { yuanszi_secrets_ancients } 
-		provinces_to_highlight = {
-			province_id = 4500 #Sarisung
-			NOT = {
-				AND = {
-					owner = {
-						OR = {
-							has_spy_network_from = { who = ROOT value = 50 }
-							overlord = { has_spy_network_from = { who = ROOT value = 50 } }
-							hidden_trigger = { tag = ROOT }
-						}
-					}
-					has_merchant = ROOT
-				}
-			}
-		}
+		provinces_to_highlight = { province_id = 4500 } #Sarisung
 
 		trigger = {
 			has_adm_advisor_3 = yes
 			has_dip_advisor_3 = yes
 			has_mil_advisor_3 = yes
-			4500 = {
-				has_merchant = ROOT
-				owner = {
-					OR = {
-						has_spy_network_from = { who = ROOT value = 50 }
-						overlord = { has_spy_network_from = { who = ROOT value = 50 } }
-						hidden_trigger = { tag = ROOT }
+			if = {
+				limit = { owns = 4500 }
+				4500 = { has_merchant = ROOT }
+				owns = 4500
+			}
+			else = {
+				4500 = {
+					has_merchant = ROOT
+					owner = {
+						OR = {
+							has_spy_network_from = { who = ROOT value = 50 }
+							overlord = { has_spy_network_from = { who = ROOT value = 50 } }
+						}
 					}
 				}
 			}
@@ -2283,6 +2250,14 @@ yuanszi_4_missions = {
 		}
 
 		effect = {
+			if = {
+				limit = { NOT = { court_mage = 4 } }
+				add_adm_power = -150
+			}
+			if = {
+				limit = { NOT = { spymaster = 4 } }
+				add_dip_power = -150
+			}
 			country_event = { id = yuanszi.16 }
 			custom_tooltip = EVENT_INSIGHT_INTRO
 			custom_tooltip = yuanszi_blackened_eyes_effect_tt
@@ -2487,22 +2462,32 @@ yuanszi_5_missions = {
 
 		trigger = {
 			trading_policy_in_node = { node = 1361 policy = hostile_trading }
-			4420 = {
-				owner = {
-					OR = {
-						has_spy_network_from = { who = ROOT value = 50 }
-						overlord = { has_spy_network_from = { who = ROOT value = 50 } }
-						hidden_trigger = { tag = ROOT }
+			if = {
+				limit = { owns = 4420 }
+				owns = 4420
+			}
+			else = {
+				4420 = {
+					owner = {
+						OR = {
+							has_spy_network_from = { who = ROOT value = 50 }
+							overlord = { has_spy_network_from = { who = ROOT value = 50 } }
+						}
 					}
 				}
 			}
 			trading_policy_in_node = { node = 1372 policy = hostile_trading }
-			4871 = {
-				owner = {
-					OR = {
-						has_spy_network_from = { who = ROOT value = 50 }
-						overlord = { has_spy_network_from = { who = ROOT value = 50 } }
-						hidden_trigger = { tag = ROOT }
+			if = {
+				limit = { owns = 4871 }
+				owns = 4871
+			}
+			else = {
+				4871 = {
+					owner = {
+						OR = {
+							has_spy_network_from = { who = ROOT value = 50 }
+							overlord = { has_spy_network_from = { who = ROOT value = 50 } }
+						}
 					}
 				}
 			}
