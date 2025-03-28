@@ -10,9 +10,13 @@ LRM_1_1 = {
 		position = 1
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			devastation = 1
-			has_fort_building_trigger = no
-		} 
+			NOT = {
+				AND = {
+					NOT = { devastation = 1 }
+					has_fort_building_trigger = yes
+				}
+			}
+		}
 
 		trigger = {
 			capital_scope = {
@@ -89,10 +93,7 @@ LRM_1_bellacaire = {
 			owner = { is_luna_river_minor = yes }
 			NOT = {
 				owner = { 
-					has_opinion_modifier = {
-						who = ROOT
-						modifier = sent_gift
-					} 
+					has_any_opinion_sent_gift = { target = ROOT }
 				}
 			}
 		} 
@@ -103,10 +104,7 @@ LRM_1_bellacaire = {
 			all_known_country = {
 				OR = {
 					NOT = { is_luna_river_minor = yes }
-					has_opinion_modifier = {
-						who = ROOT
-						modifier = sent_gift
-					} 
+					has_any_opinion_sent_gift = { target = ROOT } 
 				}
 			}
 		} 
@@ -145,8 +143,9 @@ LRM_1_bellacaire = {
 		effect = {
 			custom_tooltip = LRM_bellacaire_2_tt
 			hidden_effect = {
+				set_country_flag = LRM_bellacaire_privilege
 				remove_estate_privilege = estate_church_religious_diplomats
-				set_estate_privilege = estate_clergy_lrm_bellacaire_the_pink_stripe
+				set_estate_privilege = estate_church_lrm_bellacaire_the_pink_stripe
 				every_known_country = {
 					limit = { is_luna_river_minor = yes }
 					add_stability_or_adm_power = yes
@@ -154,11 +153,9 @@ LRM_1_bellacaire = {
 						add_random_development = 1
 					}
 				}
-				ROOT = {
-					add_stability_or_adm_power = yes
-					capital_scope = {
-						add_random_development = 1
-					}
+				add_stability_or_adm_power = yes
+				capital_scope = {
+					add_random_development = 1
 				}
 			}
 		} 
@@ -183,9 +180,22 @@ LRM_1_bluehart = {
 			is_capital = yes
 			owner = {
 				OR = {
-					tag = A38
-					primary_culture = east_damerian
-					primary_culture = west_damerian
+					AND = {
+						tag = A38
+						NOT = { has_any_opinion_sent_gift = { target = ROOT } }
+					}
+					AND = {
+						OR = {
+							primary_culture = east_damerian
+							primary_culture = west_damerian
+						}
+						NOT = {
+							has_opinion = {
+								who = ROOT
+								value = 100
+							}
+						}
+					}
 				}
 			}
 		} 
@@ -205,10 +215,10 @@ LRM_1_bluehart = {
 					}
 				}
 			}
-			A38 = {
-				has_opinion_modifier = {
-					who = ROOT
-					modifier = sent_gift
+			if = {
+				limit = { exists = A38 }
+				A38 = {
+					has_any_opinion_sent_gift = { target = ROOT }
 				}
 			}
 		} 
@@ -249,6 +259,7 @@ LRM_1_bluehart = {
 		effect = {
 			custom_tooltip = LRM_bluehart_2_tt
 			hidden_effect = {
+				set_country_flag = LRM_bluehart_privilege
 				set_estate_privilege = estate_nobles_emulants_of_the_hartlord
 				remove_estate_privilege = estate_nobles_officer_corp
 			}
@@ -324,6 +335,7 @@ LRM_1_menibor = {
 		effect = {
 			custom_tooltip = LRM_menibor_2_tt
 			hidden_effect = {
+				set_country_flag = LRM_menibor_privilege
 				remove_estate_privilege = estate_adventurers_free_company_rosters
 				set_estate_privilege = estate_adventurers_the_wider_loop
 				add_historical_friend = A33
@@ -400,6 +412,7 @@ LRM_1_napesbay = {
 			custom_tooltip = LRM_napesbay_2_tt
 			add_or_upgrade_shipyard_building = yes
 			hidden_effect = {
+				set_country_flag = LRM_napesbay_privilege
 				remove_estate_privilege = estate_burghers_private_trade_fleets
 				set_estate_privilege = estate_burghers_supremacy_of_napesfleet
 			}
@@ -622,8 +635,10 @@ LRM_2 = {
 		provinces_to_highlight = {
 			province_group = luna_river_cities_provinces
 			NOT = {
-				country_or_vassal_holds = ROOT
-				development = 20
+				AND = {
+					development = 20
+					country_or_non_sovereign_subject_holds = ROOT
+				}
 			}
 		} 
 
@@ -817,13 +832,13 @@ LRM_3 = {
 		}
 		provinces_to_highlight = {
 			province_group = luna_river_cities_provinces
-			NOT = { country_or_vassal_holds = ROOT }
+			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 		} 
 
 		trigger = {
 			luna_river_cities_provinces = {
 				type = all
-				country_or_vassal_holds = ROOT
+				country_or_non_sovereign_subject_holds = ROOT
 			}
 			prestige = 50
 			OR = {
@@ -972,7 +987,7 @@ LRM_4 = {
 			}
 			complex_dynamic_effect_without_alternative = {
 				first_custom_tooltip = LRM_eyes_in_every_corner_spy_network_tt
-				first_limit = "all_known_country = { limit = { any_owned_province = { province_group = luna_river_cities_provinces } } }"
+				first_limit = "luna_river_cities_provinces = { type = all OR = { owned_by = ROOT owner = { has_spy_network_from = { who = ROOT value = 25 } } } }"
 				first_effect = "gain_2_sway = yes"
 			}
 		} 
@@ -987,6 +1002,18 @@ LRM_4 = {
 			LRM_starve_the_vultures
 		}
 
+		provinces_to_highlight = {
+			owner = {
+				is_luna_river_minor = yes
+				NOT = {
+					has_opinion = {
+						who = ROOT
+						value = 100
+					}
+				}
+			}
+		}
+
 		trigger = {
 			treasury = 100
 			reform_level = 3
@@ -994,10 +1021,7 @@ LRM_4 = {
 				amount = 3
 				all_known_country = {
 					is_luna_river_minor = yes
-					has_opinion = {
-						who = ROOT
-						value = 100
-					}
+					
 				}
 			}
 		} 
@@ -1185,42 +1209,30 @@ LRM_5 = {
 		}
 		provinces_to_highlight = {
 			province_group = luna_river_cities_provinces
-			NOT = { has_production_building_trigger = yes }
 			OR = {
+				NOT = { has_production_building_trigger = yes }
 				AND = {
-					province_id = 282
+					OR = {
+						province_id = 282
+						province_id = 296
+						province_id = 394
+					}
 					NOT = { num_of_times_improved = 3 }
 				}
 				AND = {
-					province_id = 296
-					NOT = { num_of_times_improved = 3 }
-				}
-				AND = {
-					province_id = 394
-					NOT = { num_of_times_improved = 3 }
-				}
-				AND = {
-					province_id = 50
+					OR = {
+						province_id = 50
+						province_id = 569
+					}
 					NOT = { num_of_times_improved = 2 }
 				}
 				AND = {
-					province_id = 569
-					NOT = { num_of_times_improved = 2 }
-				}
-				AND = {
-					province_id = 109
-					NOT = { num_of_times_improved = 1 }
-				}
-				AND = {
-					province_id = 284
-					NOT = { num_of_times_improved = 1 }
-				}
-				AND = {
-					province_id = 329
-					NOT = { num_of_times_improved = 1 }
-				}
-				AND = {
-					province_id = 587
+					OR = {
+						province_id = 109
+						province_id = 284
+						province_id = 329
+						province_id = 587
+					}
 					NOT = { num_of_times_improved = 1 }
 				}
 			}
@@ -1261,10 +1273,7 @@ LRM_5 = {
 		provinces_to_highlight = {
 			owner = {
 				capital_scope = { region = esmaria_region }
-				NOT = { 
-					has_opinion_modifier = { who = ROOT modifier = insulted }
-					has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } 
-				}
+				has_been_insulted_by_root = no
 			}
 		} 
 
@@ -1274,8 +1283,7 @@ LRM_5 = {
 				all_known_country = {
 					OR = {
 						NOT = { capital_scope = { region = esmaria_region } }
-						has_opinion_modifier = { who = ROOT modifier = insulted }
-						has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } 
+						has_been_insulted_by_root = yes
 					}
 				}
 			}
