@@ -1657,10 +1657,15 @@ magic_study_clear_study_effects = {
 	
 	hidden_effect = {
 		set_variable = {
-			which = ruler_study_experience 
+			which = ruler_study_experience
+			value = 0
+		}
+		set_variable = {
+			which = current_experience_percent
 			value = 0
 		}
 		
+
 		if = { limit = { has_country_flag = patron_xp_bonus }
 			update_magic_study_experience_modifier = { type = ruler value = -25 }
 			clr_country_flag = patron_xp_bonus
@@ -2212,6 +2217,17 @@ update_mana_calc = {
 		which = manaRegenerationRate
 	}
 	cap_mana = yes #prevent mana overflow. We'll be doing this a lot.
+
+	#Update player mana bar
+	if = { limit = { ai = no }
+		update_mana_bar = yes
+	}
+}
+
+update_mana_bar = {
+	set_variable = { which = current_mana_percent which = currentMana }
+	divide_variable = { which = current_mana_percent which = manaCapacity }
+	multiply_variable = { current_mana_percent = 100 }
 }
 
 #for if mana exceeds mana capacity
@@ -2233,34 +2249,41 @@ cap_mana = {
 #checking magical infrastructure to increase mana capacity.
 update_mana_cap = {
 	if = {
-		limit = { magical_infrastructure_level = { level = 4 } }
+		limit = { magical_infrastructure_level = { level = 5 } }
 		set_variable = {
 			which = manaCapacity
 			value = 400
 		}
 	}
 	else_if = {
-		limit = { magical_infrastructure_level = { level = 3 } }
+		limit = { magical_infrastructure_level = { level = 4 } }
 		set_variable = {
 			which = manaCapacity
 			value = 350
 		}
 	}
 	else_if = {
-		limit = { magical_infrastructure_level = { level = 2 } }
+		limit = { magical_infrastructure_level = { level = 3 } }
 		set_variable = {
 			which = manaCapacity
 			value = 300
 		}
 	}
 	else_if = {
-		limit = { magical_infrastructure_level = { level = 1 } }
+		limit = { magical_infrastructure_level = { level = 2 } }
 		set_variable = {
 			which = manaCapacity
 			value = 250
 		}
 	}
-	else = {
+	else_if = {
+		limit = { magical_infrastructure_level = { level = 1 } }
+		set_variable = {
+			which = manaCapacity
+			value = 200
+		}
+	}
+	else = { #TODO Jothell remove fallback once infrastructure is in place
 		set_variable = {
 			which = manaCapacity
 			value = 200
@@ -2268,13 +2291,21 @@ update_mana_cap = {
 	}
 }
 
+# Triggered by magic_estate.107
 update_mana_regen = {
 	hidden_effect = {
 		set_variable = {
 			which = manaRegenerationRate
-			value = 1
+			value = 0.8
 		}
 		if = {
+			limit = { magical_infrastructure_level = { level = 5 } }
+			change_variable = {
+				which = manaRegenerationRate
+				value = 1
+			}
+		}
+		else_if = {
 			limit = { magical_infrastructure_level = { level = 4 } }
 			change_variable = {
 				which = manaRegenerationRate
@@ -2338,8 +2369,22 @@ initialize_magic_system = {
 	}
 	set_variable = { ruler_experience_modifier = 0 }
 	set_variable = { country_experience_modifier = 0 }
+	initialize_infrastructure = yes
 	update_mana_cap = yes
 	update_mana_regen = yes
+}
+
+initialize_infrastructure = {
+	set_variable = { which = magicalInfrastructure value = 1 }
+
+	#Tag specific infrastructure setup
+	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
+	if = {
+		limit = { tag = A85 } #Magisterium
+		# One level each call - includes total estate school levels
+		level_up_magical_infrastructure = yes
+		level_up_magical_infrastructure = yes
+	}
 }
 
 #for spells, MT effects, etc. use this. e.g. change_mana = { amount = 10 } to increase it by 10.
@@ -2519,7 +2564,7 @@ passive_study_progress = {
 		}
 		update_magic_study_experience_modifier = { type = ruler }
 		if = {
-			limit = { 
+			limit = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
@@ -2531,6 +2576,7 @@ passive_study_progress = {
 			which = ruler_study_experience
 			value = magic_study_xp
 		}
+		update_study_progress_bar = { type = ruler }
 	}
 	else_if = {
 		limit = { has_heir_flag = magic_study }
@@ -2549,7 +2595,7 @@ passive_study_progress = {
 		}
 		update_magic_study_experience_modifier = { type = ruler }
 		if = {
-			limit = { 
+			limit = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
@@ -2561,6 +2607,7 @@ passive_study_progress = {
 			which = heir_study_experience
 			value = magic_study_xp
 		}
+		update_study_progress_bar = { type = heir }
 	}
 	else_if = {
 		limit = { has_country_flag = magic_study }
@@ -2570,7 +2617,7 @@ passive_study_progress = {
 		}
 		update_magic_study_experience_modifier = { type = country }
 		if = {
-			limit = { 
+			limit = {
 				NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = country_experience_modifier }
@@ -2583,12 +2630,34 @@ passive_study_progress = {
 			value = magic_study_xp
 		}
 	}
+	update_study_progress_bar = { type = country }
 }
 
+update_study_progress_bar = {
+	if = {
+		limit = { has_$type$_flag = magical_study_1 }
+		set_variable = { magic_xp_divisor = 350 }
+	}
+	else_if = {
+		limit = { has_$type$_flag = magical_study_2 }
+		set_variable = { magic_xp_divisor = 600 }
+	}
+	else_if = {
+		limit = { has_$type$_flag = magical_study_3 }
+		set_variable = { magic_xp_divisor = 850 }
+	}
+	set_variable = { which = expFoo which = $type$_study_experience }
+	divide_variable = { which = expFoo which = magic_xp_divisor }
+	multiply_variable = { expFoo = 100 }
+	set_variable = { which = current_experience_percent which = expFoo }
+}
+
+
 #TODO Jothell put this into use
+# Also check "maximum_estate_spell_schools"
 level_up_magical_infrastructure = {
 	custom_tooltip = level_up_magical_infrastructure_tt
-	change_variable = { which = magical_infrastructure_level value = 1 }
+	change_variable = { which = magicalInfrastructure value = 1 }
 	change_variable = { which = maximum_estate_spell_schools value = 2 }
 	update_mana_cap = yes
 	update_mana_regen = yes
@@ -3039,38 +3108,38 @@ divination_1_0_randomization_effect = {
 }
 divination_1_0_hire_sub_effect = { #this COULD be a binary search tree... seems excessive though
 	if = {
-		limit = { magical_infrastructure_level = { level = 4 } }
+		limit = { magical_infrastructure_level = { level = 5 } }
 		define_advisor = {
 			type = $type$
 			skill = 5
 			discount = yes
 		}
 	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 3 } }
+	else_if = { magical_infrastructure_level = { level = 4 } }
+		limit = {
 		define_advisor = {
 			type = $type$
 			skill = 4
 			discount = yes
 		}
 	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 2 } }
+	else_if = { magical_infrastructure_level = { level = 3 } }
+		limit = {
 		define_advisor = {
 			type = $type$
 			skill = 3
 			discount = yes
 		}
 	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 1 } }
+	else_if = { magical_infrastructure_level = { level = 2 } }
+		limit = {
 		define_advisor = {
 			type = $type$
 			skill = 2
 			discount = yes
 		}
 	}
-	else = {
+	else = { #magical_infrastructure_level = { level = 1 } }
 		define_advisor = {
 			type = $type$
 			skill = 1
