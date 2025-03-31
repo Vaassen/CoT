@@ -2225,9 +2225,14 @@ update_mana_calc = {
 }
 
 update_mana_bar = {
-	set_variable = { which = current_mana_percent which = currentMana }
-	divide_variable = { which = current_mana_percent which = manaCapacity }
-	multiply_variable = { current_mana_percent = 100 }
+	if = { limit = { check_variable = { which = currentMana value = 0 } }
+		set_variable = { which = current_mana_percent which = currentMana }
+		divide_variable = { which = current_mana_percent which = manaCapacity }
+		multiply_variable = { current_mana_percent = 100 }
+	}
+	else = {
+		set_variable = { current_mana_percent = 0 }
+	}
 }
 
 #for if mana exceeds mana capacity
@@ -2396,6 +2401,44 @@ change_mana = {
 	cap_mana = yes
 }
 
+magic_study_selection_clear_school_flags = {
+	clr_country_flag = study_setup_abjuration_flag
+	clr_country_flag = study_setup_conjuration_flag
+	clr_country_flag = study_setup_divination_flag
+	clr_country_flag = study_setup_enchantment_flag
+	clr_country_flag = study_setup_evocation_flag
+	clr_country_flag = study_setup_illusion_flag
+	clr_country_flag = study_setup_necromancy_flag
+	clr_country_flag = study_setup_transmutation_flag
+}
+magic_study_selection_clear_type_flags = {
+	clr_country_flag = study_setup_ruler_flag
+	clr_country_flag = study_setup_heir_flag
+	clr_country_flag = study_setup_estate_flag
+}
+
+magic_study_selection_confirm_first_effect = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		study_setup_abjuration_flag = { magic_study_selection_confirm_second_effect = { school = abjuration } }
+		study_setup_conjuration_flag = { magic_study_selection_confirm_second_effect = { school = conjuration } }
+		study_setup_divination_flag = { magic_study_selection_confirm_second_effect = { school = divination } }
+		study_setup_enchantment_flag = { magic_study_selection_confirm_second_effect = { school = enchantment } }
+		study_setup_evocation_flag = { magic_study_selection_confirm_second_effect = { school = evocation } }
+		study_setup_illusion_flag = { magic_study_selection_confirm_second_effect = { school = illusion } }
+		study_setup_necromancy_flag = { magic_study_selection_confirm_second_effect = { school = necromancy } }
+		study_setup_transmutation_flag = { magic_study_selection_confirm_second_effect = { school = transmutation } }
+	}
+}
+magic_study_selection_confirm_second_effect = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		study_setup_ruler_flag = { start_magic_study = { type = ruler school = $school$ } }
+		study_setup_heir_flag = { start_magic_study = { type = heir school = $school$ } }
+		study_setup_estate_flag = { start_magic_study = { type = country school = $school$ } } #estate = country
+	}
+}
+
 # example use case: start_magic_study = { type = country school = abjuration }
 # the three acceptable types are country, ruler, and heir.
 start_magic_study = {
@@ -2482,14 +2525,14 @@ finish_magic_study_sub_effect = {
 # 		if = {
 # 			limit = { NOT = { has_country_flag = study_modifier_set } }
 # 			set_country_flag = study_modifier_set
-# 			set_variable = { experienceModifier = 0 }
+# 			set_variable = { experience_modifier = 0 }
 # 		}
 # 		[[value]
-# 			change_variable = { experienceModifier = $value$ } 							# This handle negative. Value must be whole, so +10% = 10
+# 			change_variable = { experience_modifier = $value$ } 							# This handle negative. Value must be whole, so +10% = 10
 # 		]
 # 		if = {
-# 			limit = { NOT = { check_variable = { experienceModifier = -100 } } }		# We never go under -100%
-# 			set_variable = { experienceModifier = -100 }
+# 			limit = { NOT = { check_variable = { experience_modifier = -100 } } }		# We never go under -100%
+# 			set_variable = { experience_modifier = -100 }
 # 		}
 # 	}
 # }
@@ -2574,7 +2617,7 @@ passive_study_progress = {
 		}
 		change_variable = {
 			which = ruler_study_experience
-			value = magic_study_xp
+			which = magic_study_xp
 		}
 		update_study_progress_bar = { type = ruler }
 	}
@@ -2605,7 +2648,7 @@ passive_study_progress = {
 		}
 		change_variable = {
 			which = heir_study_experience
-			value = magic_study_xp
+			which = magic_study_xp
 		}
 		update_study_progress_bar = { type = heir }
 	}
@@ -2627,10 +2670,10 @@ passive_study_progress = {
 		}
 		change_variable = {
 			which = country_study_experience
-			value = magic_study_xp
+			which = magic_study_xp
 		}
+		update_study_progress_bar = { type = country }
 	}
-	update_study_progress_bar = { type = country }
 }
 
 update_study_progress_bar = {
@@ -2851,6 +2894,7 @@ generic_cast_spell = {
 	]
 
 	$school$_$level$_$id$_effect = yes
+	update_mana_bar = yes
 }
 pay_mana_for_level_0_spell = {
 	if = {
@@ -3115,24 +3159,24 @@ divination_1_0_hire_sub_effect = { #this COULD be a binary search tree... seems 
 			discount = yes
 		}
 	}
-	else_if = { magical_infrastructure_level = { level = 4 } }
-		limit = {
+	else_if = {
+		limit = { magical_infrastructure_level = { level = 4 } }
 		define_advisor = {
 			type = $type$
 			skill = 4
 			discount = yes
 		}
 	}
-	else_if = { magical_infrastructure_level = { level = 3 } }
-		limit = {
+	else_if = {
+		limit = { magical_infrastructure_level = { level = 3 } }
 		define_advisor = {
 			type = $type$
 			skill = 3
 			discount = yes
 		}
 	}
-	else_if = { magical_infrastructure_level = { level = 2 } }
-		limit = {
+	else_if = {
+		limit = { magical_infrastructure_level = { level = 2 } }
 		define_advisor = {
 			type = $type$
 			skill = 2
