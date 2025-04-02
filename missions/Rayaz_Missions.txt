@@ -8,6 +8,8 @@ rayaz_1 = {
 	rayaz_1_1 = {
 		icon = mission_confrontation
 		position = 1
+		
+		provinces_to_highlight = { is_capital_of = L96 }
 
 		trigger = {  
 			OR = {
@@ -32,13 +34,8 @@ rayaz_1 = {
 			ninu_ra_kyik_area = { add_permanent_claim = ROOT } #Rayaz
 			karassk_tara_area = { add_permanent_claim = ROOT } #Rayaz
 			narasad_area = { add_permanent_claim = ROOT } #Rayaz
-			if = { 
-				limit = {
-					L96 = { #Asarta
-						is_hiring_condottiere_from = ROOT #Rayaz
-						has_any_opinion_sent_gift = { target = ROOT } #Rayaz
-					}
-				} 
+			custom_tooltip = rayaz_1_1_condotierri_tt
+			tooltip = {
 				add_prestige = 20
 				add_splendor = 200
 				add_country_modifier = {
@@ -46,7 +43,34 @@ rayaz_1 = {
 					duration = 14600
 				}
 			}
-			else = { vassalize = L96 } #Asarta 
+			custom_tooltip = mission_alternatively_tt
+			custom_tooltip = rayaz_1_1_failure_tt
+			tooltip = {
+				country_event = {
+					id = rayaz_event.6 #Asarta vassalisation
+				} 
+			}
+			hidden_effect = {
+				if = { 
+					limit = {
+						L96 = { #Asarta
+							is_hiring_condottiere_from = ROOT #Rayaz
+							has_any_opinion_sent_gift = { target = ROOT } #Rayaz
+						}
+					} 
+					add_prestige = 20
+					add_splendor = 200
+					add_country_modifier = {
+						name = rayaz_trusted_by_mercenaries
+						duration = 14600
+					}
+				}
+				else = { 
+					country_event = {
+						id = rayaz_event.6 #Asarta vassalisation
+					} 
+				}
+			}
 		} 
 	}
 
@@ -54,7 +78,10 @@ rayaz_1 = {
 		icon = mission_swear_fealty_knight
 		position = 2
 		required_missions = { rayaz_1_1 } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			province_id = 5912
+			NOT = { development = 12 } #Arazinik
+		} 
 
 		trigger = { 
 			OR = {
@@ -169,7 +196,7 @@ rayaz_1 = {
 					}
 					5921 = { #Zerat, as a trade node
 						add_trade_modifier = {
-							who = PREV_PREV
+							who = PREV
 							duration = 18250
 							power = -20
 							key = rayaz_blockade
@@ -177,7 +204,7 @@ rayaz_1 = {
 					}
 					1458 = { #Gulf of Adzalan, trade node
 						add_trade_modifier = {
-							who = PREV_PREV
+							who = PREV
 							duration = 18250
 							power = -20
 							key = rayaz_blockade
@@ -229,20 +256,26 @@ rayaz_2 = {
 		}
 		provinces_to_highlight = {  
 			OR = {
-				area = khugra_tara_area
-				area = nepa_tressik_area
+				AND = {
+					OR = {
+						area = khugra_tara_area
+						area = nepa_tressik_area
+						#5898 implicitly owned because of required missions
+					}
+					NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
+				}
 				AND = {
 					province_id = 5898 #Karassk
 					unrest = 0
 				}
 			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
+			
 		} 
 
 		trigger = {  
 			khugra_tara_area = { type = all country_or_non_sovereign_subject_holds = ROOT } #Rayaz
 			nepa_tressik_area = { type = all country_or_non_sovereign_subject_holds = ROOT } #Rayaz
-			num_of_rebel_armies = 0
+			NOT = { num_of_rebel_armies = 1 }
 			5898 = { NOT = { unrest = 0 } } #Karassk
 			OR = {
 				5914 = { #Khugra, city
@@ -282,15 +315,21 @@ rayaz_2 = {
 		}
 		provinces_to_highlight = {  
 			OR = {
-				area = inner_rankaty_islands_area
-				area = outer_rankaty_islands_area
+				AND = {
+					OR = {
+						area = inner_rankaty_islands_area
+						area = outer_rankaty_islands_area
+					}
+					is_city = yes
+					NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
+				}
 				AND = {
 					province_id = 5834 #Karshyr
 					NOT = { development = 20 }
+					#5834 is in inner_rankaty_islands_area no need to check for ownership
 				}
 			}
-			is_city = yes
-			NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
+			
 		} 
 
 		trigger = {  
@@ -298,7 +337,7 @@ rayaz_2 = {
 			outer_rankaty_islands_area = { type = all is_city = yes country_or_non_sovereign_subject_holds = ROOT } #Rayaz
 			5834 = { development = 20 } #Karshyr
 			treasury = 300
-			3258 = { infantry_in_province = 2 } #Cheneshkad
+			3258 = { num_of_units_in_province = { who = ROOT type = infantry amount = 2 } } #Cheneshkad
 		} 
 
 		effect = {  
@@ -331,25 +370,35 @@ rayaz_3 = {
 		}
 		provinces_to_highlight = {  
 			OR = {
-				owned_by = L69 #Zerat
-				owned_by = L90 #Ashkha
-				owned_by = L99 #Katsanada
-				area = rakshas_area
-				area = rakirap_srap_area
-				area = pshorkitsa_area
-				province_id = 6024 #Asparimu
-			}
-			OR = {
-				NOT = { 
-					owned_by = ROOT #Rayaz
-					NOT = { unrest = 0 }
-				} 
-				owner = { 
-					NOT = { vassal_of = L95 } #Rayaz
-					liberty_desire = 50 
-					has_embargo_rivals = no
-					has_scutage = no
-				}
+				AND = {
+					OR = {
+						owned_by = L69 #Zerat
+						owned_by = L90 #Ashkha
+						owned_by = L99 #Katsanada
+					}
+					owner = { 
+						OR = {
+							NOT = { vassal_of = ROOT } #Rayaz
+							liberty_desire = 50 
+							has_embargo_rivals = no
+							has_scutage = no
+						}
+					}
+			   }
+			   AND = {
+					OR = {
+						area = rakshas_area
+						area = rakirap_srap_area
+						area = pshorkitsa_area
+						province_id = 6024 #Asparimu
+				   }
+					NOT = { 
+						AND = {
+							owned_by = ROOT #Rayaz
+							NOT = { unrest = 0 }
+						}
+					} 
+			   }
 			}
 		} 
 
@@ -358,13 +407,13 @@ rayaz_3 = {
 			OR = {
 				AND = {
 					L90 = { #Ashkha
-						vassal_of = L95 #Rayaz
+						vassal_of = ROOT #Rayaz
 						NOT = { liberty_desire = 50 }
 						has_embargo_rivals = yes
 						has_scutage = yes
 					}
 					L99 = { #Katsanada
-						vassal_of = L95 #Rayaz
+						vassal_of = ROOT #Rayaz
 						NOT = { liberty_desire = 50 }
 						has_embargo_rivals = yes
 						has_scutage = yes
@@ -374,19 +423,23 @@ rayaz_3 = {
 					rakshas_area = {
 						type = all
 						NOT = { unrest = 0 }
+						country_or_non_sovereign_subject_holds = ROOT #Rayaz
 					}
 					rakirap_srap_area = {
 						type = all
 						NOT = { unrest = 0 }
+						country_or_non_sovereign_subject_holds = ROOT #Rayaz
 					}
 					pshorkitsa_area = {
 						type = all
 						NOT = { unrest = 0 }
+						country_or_non_sovereign_subject_holds = ROOT #Rayaz
 					}
 					6024 = { #Asparimu
 						NOT = { unrest = 0 }
+						country_or_non_sovereign_subject_holds = ROOT #This one specifically is technically redundant since you own it from the start
 					}
-					num_of_rebel_armies = 0
+					NOT = { num_of_rebel_armies = 1 }
 				}
 			}
 			5921 = { NOT = { devastation = 0.01 } } #Zerat, province
@@ -442,9 +495,13 @@ rayaz_3 = {
 				province_id = 5932 #Lasadzanazh
 				province_id = 5965 #Khogadash
 			}
-			NOT = { development = 18 }
-			has_tax_building_trigger = no 
-			has_trade_building_trigger = no
+			NOT = {
+				AND = {
+					development = 18
+					has_tax_building_trigger = yes
+					has_trade_building_trigger = yes
+				}
+			}
 		} 
 
 		trigger = {  
@@ -516,26 +573,29 @@ rayaz_3 = {
 		}
 		provinces_to_highlight = {  
 			OR = {
-				province_id = 5938 #Tsish Nagaya  
-				province_id = 5940 #Ksad Nazhni   
 				AND = {
-					province_id = 5941 #Nazhni        
-					has_tax_building_trigger = no
+					OR = {
+						province_id = 5938 #Tsish Nagaya  
+						province_id = 5940 #Ksad Nazhni 
+						province_id = 5942 #Tata Azkherass
+						province_id = 5948 #Ra Sharitsaya 
+						province_id = 6031 #Kethenkad     
+						province_id = 6033 #Raznykan
+					}    
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
 				}
-				province_id = 5942 #Tata Azkherass
 				AND = {
-					province_id = 5943 #Nazhni Tressik
-					has_tax_building_trigger = no
+					OR = {
+						province_id = 5941 #Nazhni
+						province_id = 5943 #Nazhni Tressik
+						province_id = 5947 #Zatsuti
+					}
+					AND = {
+						has_tax_building_trigger = no
+						NOT = { country_or_non_sovereign_subject_holds = ROOT }
+					}
 				}
-				AND = {
-					province_id = 5947 #Zatsuti
-					has_tax_building_trigger = no
-				}
-				province_id = 5948 #Ra Sharitsaya 
-				province_id = 6031 #Kethenkad     
-				province_id = 6033 #Raznykan      		
 			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 		} 
 
 		trigger = {  
@@ -640,8 +700,7 @@ rayaz_4 = {
 				value = 1
 			}
 			calc_true_if = {
-				all_known_country = {
-					alliance_with = ROOT #Rayaz
+				all_ally = {
 					NOT = { tag = L96 } #Asarta
 					has_opinion = {
 						who = ROOT #Rayaz
@@ -684,7 +743,7 @@ rayaz_4 = {
 				religion = anzalkatsa 
 			}
 			kapashan_area = {
-				type = any
+				type = any #Redundant, stays here for readability
 				has_tax_building_trigger = yes
 				infantry_in_province = 4
 			}
@@ -692,13 +751,15 @@ rayaz_4 = {
 				total_development = 300 
 				num_of_subjects = 6 
 			}
-			calc_true_if = {
-				all_owned_province = {
-					culture = arraskay_lizardfolk
-					has_tax_building_trigger = yes
-					infantry_in_province = 4
+			num_of_owned_provinces_with = {
+				culture = arraskay_lizardfolk
+				has_tax_building_trigger = yes
+				num_of_units_in_province = {
+					who = ROOT
+					type = infantry
+					amount = 4
 				}
-				amount = 2
+				value = 2
 			}
 		} 
 
@@ -771,7 +832,7 @@ rayaz_4 = {
 		trigger = {  
 			NOT = {
 				taneyas_superregion = {
-					type = any
+					type = any #Redundant, stays here for readability
 					is_city = yes
 					culture = arraskay_lizardfolk
 					NOT = { country_or_non_sovereign_subject_holds = ROOT } #Rayaz
@@ -839,7 +900,13 @@ rayaz_5 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {  
-			tolerance_to_this = 10
+			custom_trigger_tooltip = {
+				tooltip = rayaz_has_10_totf_tt
+				has_global_modifier_value = {
+					which = tolerance_own
+					value = 10
+				}
+			}
 			kapashan_area = { has_state_edict = edict_religious_unity }
 			has_estate_privilege = estate_church_enforced_one_faith
 			has_estate_privilege = estate_church_one_faith_one_culture
@@ -847,12 +914,10 @@ rayaz_5 = {
 
 		effect = {  
 			kapashan_area = { 
-				every_province_in_state = {
-					add_nationalism = -24
-					add_province_modifier = {
-						name = rayaz_remind_them_of_our_ways
-						duration = 7300
-					}
+				add_nationalism = -24
+				add_province_modifier = {
+					name = rayaz_remind_them_of_our_ways
+					duration = 7300
 				}
 			}
 		} 
@@ -870,12 +935,10 @@ rayaz_5 = {
 		trigger = {  
 			OR = {
 				AND = {
-					calc_true_if = {
-						all_owned_province = {
-							culture = ashhana_lizardfolk
-							has_state_edict = edict_religious_unity
-						}
-						amount = 15
+					num_of_owned_provinces_with = {
+						culture = ashhana_lizardfolk
+						has_state_edict = edict_religious_unity
+						value = 15
 					}
 					num_of_estate_agendas_completed = {
 						estate = estate_church
@@ -884,22 +947,10 @@ rayaz_5 = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = rayaz_5_3_trigger_tt
-					any_known_country = {
-						culture = ashhana_lizardfolk
-						total_development = 50
-						has_spy_network_from = {
-							who = ROOT #Rayaz
-							value = 40
-						}
-						has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
-						OR = {
-							alliance_with = ROOT #Rayaz
-							guaranteed_by = ROOT #Rayaz
-						}
-					}
-					calc_true_if = {
-						all_known_country = {
+					OR = {
+						any_known_country = {
 							culture = ashhana_lizardfolk
+							total_development = 50
 							has_spy_network_from = {
 								who = ROOT #Rayaz
 								value = 40
@@ -910,7 +961,21 @@ rayaz_5 = {
 								guaranteed_by = ROOT #Rayaz
 							}
 						}
-						amount = 3
+						calc_true_if = {
+							all_known_country = {
+								culture = ashhana_lizardfolk
+								has_spy_network_from = {
+									who = ROOT #Rayaz
+									value = 40
+								}
+								has_15_opinion_getting_subsidies = { target = ROOT } #Rayaz
+								OR = {
+									alliance_with = ROOT #Rayaz
+									guaranteed_by = ROOT #Rayaz
+								}
+							}
+							amount = 3
+						}
 					}
 				}
 			}
