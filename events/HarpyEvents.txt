@@ -1,6 +1,80 @@
 
 namespace = harpy_events
 
+# Hidden event to make AI harpies upgrade their roosts, as well as harpy setup.
+country_event = {
+	id = harpy_events.0
+	title = harpy_events.0.t
+	desc = harpy_events.0.d
+	picture = HARPY_TOWN_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		primary_culture = harpy
+		ai = yes
+	}
+	
+	immediate = {
+		harpy_roost_se_setup = yes
+
+        export_to_variable = {
+            which = harpy_roost_own_and_subject_development
+            value = trigger_value:total_own_and_non_tributary_subject_development
+        }
+
+		# Check for eligible CoTs.
+		if = { limit = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } }
+			every_owned_province = {
+				if = {
+					limit = {
+						province_has_center_of_trade_of_level = 1
+						harpy_roost_st_terrain_is_valid = yes
+						harpy_roost_st_has_no_or_fledgling_roost = yes
+					}
+					if = { limit = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } }
+						if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
+							harpy_roost_se_add_roost_tier_1 = yes
+						}
+						harpy_roost_se_add_roost_tier_2 = yes
+					}
+				}
+			}
+		}
+
+		# If more roosts can still be constructed, find the eligible province with the most development, then build a roost there.
+		if = { limit = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } }
+			every_owned_province = {
+				if = {
+					limit = {
+						harpy_roost_st_terrain_is_valid = yes
+						harpy_roost_st_has_no_or_fledgling_roost = yes
+					}
+					if = { limit = { has_saved_event_target = harpy_roost_et_highest_development }
+						if = { limit = { higher_development_than = event_target:harpy_roost_et_highest_development }
+							save_event_target_as = harpy_roost_et_highest_development
+						}
+					}
+					else = {
+						save_event_target_as = harpy_roost_et_highest_development
+					}
+				}
+			}
+		}
+		event_target:harpy_roost_et_highest_development = {
+			if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
+				harpy_roost_se_add_roost_tier_1 = yes
+			}
+			harpy_roost_se_add_roost_tier_2 = yes
+		}
+	}
+	
+	option = {
+		name = harpy_events.0.a
+	}
+}
+
 #Build Roost
 country_event = {
 	id = harpy_events.1
