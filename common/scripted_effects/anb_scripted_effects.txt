@@ -8541,3 +8541,119 @@ anb_gain_permanent_claims_on_continent = {
 	}
 	]
 }
+
+gain_yearly_tribute = { #Effect similar to the yearly tribute
+	hidden_effect = {
+		[[ducats]
+			#12.5% of yearly income rounded down
+			export_to_variable = {
+				which = tributary_monthly_income
+				value = trigger_value:monthly_income
+			}
+			multiply_variable = {
+				which = tributary_monthly_income
+				value = 12
+			}
+			multiply_variable = {
+				which = tributary_monthly_income
+				value = 0.125
+			}
+			round_variable = {
+				which = tributary_monthly_income
+				value = -1
+			}
+			overlord = {
+				set_variable = {
+					which = tributary_monthly_income
+					which = PREV
+				}
+				var_effect = { effect = add_treasury var = tributary_monthly_income sign = + }
+			}
+		]
+		[[manpower]
+		#25% of yearly manpower - (Max Manpower * (1 + Manpower Recovery Speed))/10
+			export_to_variable = {
+				which = tributary_max_manpower
+				value = trigger_value:max_manpower
+			}
+			export_to_variable = {
+				which = tributary_manpower_recovery
+				value = modifier:manpower_recovery_speed
+			}
+			change_variable = {
+				which = tributary_manpower_recovery
+				value = 1
+			}
+			multiply_variable = {
+				which = tributary_max_manpower
+				which = tributary_manpower_recovery
+			}
+			divide_variable = {
+				which = tributary_max_manpower
+				value = 10
+			}
+			multiply_variable = {
+				which = tributary_max_manpower
+				value = 0.25
+			}
+			overlord = {
+				set_variable = {
+					which = tributary_max_manpower
+					which = PREV
+				}
+				var_effect_granular = { effect = add_manpower var = tributary_max_manpower sign = + }
+			}
+		]
+		[[mana]
+			#Adm/Dip/Mil - Total Development/33 (Max 12 + Monarch Power Tribute) 
+			export_to_variable = {
+				which = tributary_total_dev
+				value = trigger_value:total_development
+			}
+			divide_variable = {
+				which = tributary_total_dev
+				value = 33
+			}
+			export_to_variable = {
+				which = overlord_bonus_tribute_power
+				value = modifier:monarch_power_tribute
+				who = overlord
+			}
+			if = { #If the total monarch power is above 12, decrease it
+				limit = {
+					check_variable = {
+						which = tributary_total_dev
+						value = 12
+					}
+				}
+				set_variable = {
+					which = tributary_total_dev
+					value = 12
+				}
+			}
+			change_variable = {
+				which = tributary_total_dev
+				which = overlord_bonus_tribute_power
+			}
+			while = {
+				limit = {
+					check_variable = {
+						which = tributary_total_dev
+						value = 1
+					}
+				}
+				overlord = {
+					random_list = {
+						1 = { add_adm_power = 1 }
+						1 = { add_dip_power = 1 }
+						1 = { add_mil_power = 1 }
+					}
+				}
+				change_variable = {
+					which = tributary_total_dev
+					value = -1
+				}
+			}
+		]
+	}
+}
