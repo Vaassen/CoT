@@ -1,6 +1,6 @@
 namespace = shadowswamp
 ##############################################################
-# 000-099 = debug/misc
+# 000-099 = handler and helper events
 # 100-150 = flavour events
 ##############################################################
 country_event = {
@@ -933,10 +933,6 @@ province_event = { #Kindred Spirits
 	}
 	option = {
 		name = shadowswamp.111.c
-		highlight = yes
-		trigger = {
-			has_global_flag = shadowtree_purified
-		}
 		area = {
 			limit = { owned_by = FROM }
 			add_local_autonomy = 10
@@ -1084,17 +1080,6 @@ province_event = { #Coeurl
 	option = {
 		name = shadowswamp.115.b
 		highlight = yes
-		area = {
-			limit = { owned_by = FROM }
-			add_unrest = 10
-		}
-		ai_chance = {
-			factor = 5
-		}
-	}
-	option = {
-		name = shadowswamp.115.c
-		highlight = yes
 		trigger = {
 			has_global_flag = shadowtree_purified
 		}
@@ -1104,6 +1089,17 @@ province_event = { #Coeurl
 				name = shadowswamp_chained_coeurl
 				duration = 3650
 			}
+		}
+		
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = shadowswamp.115.c
+		area = {
+			limit = { owned_by = FROM }
+			add_unrest = 10
 		}
 		ai_chance = {
 			factor = 5
@@ -1141,16 +1137,16 @@ province_event = { #Swamp Lobster
 	}
 }
 
+#This starts the doppelganger event chain
 country_event = { #In search of the perfect life
 	id = shadowswamp.117
 	title = shadowswamp.117.t
 	desc = shadowswamp.117.d
 	picture = FARMING_eventPicture
-	goto = ROOT
 	is_triggered_only = yes
 	option = {
 		name = shadowswamp.117.a
-		add_manpower = -2
+		add_manpower = -0.002
 		hidden_effect = {
 			country_event = {
 				id = shadowswamp.118
@@ -1158,6 +1154,7 @@ country_event = { #In search of the perfect life
 				random = 305
 			}
 		}
+		set_country_flag = shadowswamp_doppelganger
 		ai_chance = {
 			factor = 5
 		}
@@ -1169,7 +1166,6 @@ country_event = { #More mutilated corpses
 	title = shadowswamp.118.t
 	desc = shadowswamp.118.d
 	picture = FARMING_eventPicture
-	goto = ROOT
 	is_triggered_only = yes
 	option = {
 		name = shadowswamp.118.a
@@ -1186,9 +1182,9 @@ country_event = { #More mutilated corpses
 			factor = 5
 		}
 	}
-	option = {
+	option = { #fire event to ignore it
 		name = shadowswamp.118.b
-		add_years_of_income = -0.5
+		set_country_flag = shadowswamp_doppelganger_80
 		custom_tooltip = shadowswamp_doppelganger_no_investigation_tt
 		hidden_effect = {
 			country_event = {
@@ -1203,7 +1199,17 @@ country_event = { #More mutilated corpses
 	}
 	option = {
 		name = shadowswamp.118.c
-		add_years_of_income = -0.5
+		highlight = yes
+		trigger = {
+			estate_influence = {
+				estate = estate_mages
+				influence = 60
+			}
+			estate_loyalty = {
+				estate = estate_mages
+				loyalty = 60
+			}
+		}
 		custom_tooltip = shadowswamp_doppelganger_investigation_tt
 		hidden_effect = {
 			country_event = {
@@ -1218,7 +1224,17 @@ country_event = { #More mutilated corpses
 	}
 	option = {
 		name = shadowswamp.118.e
-		add_years_of_income = -0.5
+		highlight = yes
+		trigger = {
+			estate_influence = {
+				estate = estate_adventurers
+				influence = 60
+			}
+			estate_loyalty = {
+				estate = estate_adventurers
+				loyalty = 60
+			}
+		}
 		custom_tooltip = shadowswamp_doppelganger_investigation_tt
 		hidden_effect = {
 			country_event = {
@@ -1238,21 +1254,307 @@ country_event = { #disappearances continue
 	title = shadowswamp.119.t
 	desc = shadowswamp.119.d
 	picture = FARMING_eventPicture
-	goto = ROOT
 	is_triggered_only = yes
-	option = {
-		name = shadowswamp.119.a
-		add_years_of_income = -0.5
-		custom_tooltip = shadowswamp_doppelganger_investigation_tt
+	immediate = { #kill a random advisor or general if available
+		random_list = {
+			10 = {
+				trigger = {
+					has_advisor = yes
+				}
+				kill_advisor = random
+			}
+			10 = {
+				trigger = {
+					has_leaders = {
+						value = 1
+						type = general
+						include_monarch = no
+						include_heir = no
+					}
+				}
+				kill_leader = {
+					type = general
+				}
+			}
+			10 = {
+				trigger = {
+					has_leaders = {
+						value = 1
+						type = admiral
+						include_monarch = no
+						include_heir = no
+					}
+				}
+				kill_leader = {
+					type = admiral
+				}
+			}
+		}
+		trigger_switch = {
+			on_trigger = has_country_flag
+			shadowswamp_doppelganger_80 = {
+				clr_country_flag = shadowswamp_doppelganger_80
+				set_country_flag = shadowswamp_doppelganger_60
+			}
+			shadowswamp_doppelganger_60 = {
+				clr_country_flag = shadowswamp_doppelganger_60
+				set_country_flag = shadowswamp_doppelganger_40
+			}
+			shadowswamp_doppelganger_40 = {
+				clr_country_flag = shadowswamp_doppelganger_40
+				set_country_flag = shadowswamp_doppelganger_20
+			}
+		}
 		hidden_effect = {
 			country_event = {
-				id = shadowswamp.119
-				days = 300
-				random = 65
+				id = shadowswamp.010
+				days = 1
+			}
+		}
+	}
+	option = {
+		name = shadowswamp.119.a
+		custom_tooltip = shadowswamp_doppelganger_no_investigation_tt
+		set_country_flag = shadowswamp_doppelganger_give_up
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = shadowswamp.119.b
+		add_years_of_income = -0.5
+		custom_tooltip = shadowswamp_doppelganger_investigation_tt
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = shadowswamp.119.c
+		highlight = yes
+		trigger = {
+			estate_influence = {
+				estate = estate_mages
+				influence = 60
+			}
+			estate_loyalty = {
+				estate = estate_mages
+				loyalty = 60
+			}
+		}
+		custom_tooltip = shadowswamp_doppelganger_investigation_tt
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = shadowswamp.119.e
+		highlight = yes
+		trigger = {
+			estate_influence = {
+				estate = estate_adventurers
+				influence = 60
+			}
+			estate_loyalty = {
+				estate = estate_adventurers
+				loyalty = 60
+			}
+		}
+		custom_tooltip = shadowswamp_doppelganger_investigation_tt
+		ai_chance = {
+			factor = 5
+		}
+	}
+}
+
+country_event = { #handle search cycle
+	id = shadowswamp.010
+	title = shadowswamp.010.t
+	desc = shadowswamp.010.d
+	picture = FAMINE_eventPicture
+
+	hidden = yes
+	is_triggered_only = yes
+
+	after = {
+		clr_country_flag = shadowswamp_doppelganger_give_up
+	}
+
+	option = {
+		trigger = {
+			has_country_flag = shadowswamp_doppelganger_give_up
+		}
+		random_list = {
+			50 = { #redo
+				country_event = {
+					id = shadowswamp.011
+					days = 1
+				}
+			}
+			50 = { #its over
+				trigger_switch = {
+					on_trigger = has_country_flag
+					shadowswamp_doppelganger_80 = {
+						clr_country_flag = shadowswamp_doppelganger_80
+					}
+					shadowswamp_doppelganger_60 = {
+						clr_country_flag = shadowswamp_doppelganger_60
+					}
+					shadowswamp_doppelganger_40 = {
+						clr_country_flag = shadowswamp_doppelganger_40
+					}
+					shadowswamp_doppelganger_20 = {
+						clr_country_flag = shadowswamp_doppelganger_20
+					}
+				}
 			}
 		}
 		ai_chance = {
-			factor = 5
+			factor = 100
+		}
+	}
+	option = {
+		trigger = {
+			NOT = {
+				has_country_flag = shadowswamp_doppelganger_give_up
+			}
+		}
+		random_list = {
+			33 = { #success
+				modifier = {
+					factor = 2.42
+					has_country_flag = shadowswamp_doppelganger_80
+				}
+				modifier = {
+					factor = 1.82
+					has_country_flag = shadowswamp_doppelganger_60
+				}
+				modifier = {
+					factor = 1.21
+					has_country_flag = shadowswamp_doppelganger_40
+				}
+				modifier = {
+					factor = 0.61
+					has_country_flag = shadowswamp_doppelganger_20
+				}
+				country_event = {
+					id = shadowswamp.120
+					days = 60
+				}
+			}
+			33 = { #redo
+				modifier = {
+					factor = 0.30
+					has_country_flag = shadowswamp_doppelganger_80
+				}
+				modifier = {
+					factor = 0.60
+					has_country_flag = shadowswamp_doppelganger_60
+				}
+				modifier = {
+					factor = 0.90
+					has_country_flag = shadowswamp_doppelganger_40
+				}
+				modifier = {
+					factor = 0
+					has_country_flag = shadowswamp_doppelganger_20
+				}
+				country_event = {
+					id = shadowswamp.011
+					days = 1
+				}
+			}
+			33 = { #its over
+				modifier = {
+					factor = 0.30
+					has_country_flag = shadowswamp_doppelganger_80
+				}
+				modifier = {
+					factor = 0.60
+					has_country_flag = shadowswamp_doppelganger_60
+				}
+				modifier = {
+					factor = 0.90
+					has_country_flag = shadowswamp_doppelganger_40
+				}
+				modifier = {
+					factor = 2.42
+					has_country_flag = shadowswamp_doppelganger_20
+				}
+				trigger_switch = {
+					on_trigger = has_country_flag
+					shadowswamp_doppelganger_80 = {
+						clr_country_flag = shadowswamp_doppelganger_80
+					}
+					shadowswamp_doppelganger_60 = {
+						clr_country_flag = shadowswamp_doppelganger_60
+					}
+					shadowswamp_doppelganger_40 = {
+						clr_country_flag = shadowswamp_doppelganger_40
+					}
+					shadowswamp_doppelganger_20 = {
+						clr_country_flag = shadowswamp_doppelganger_20
+					}
+				}
+			}
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+}
+
+country_event = { #handle redo
+	id = shadowswamp.011
+	title = shadowswamp.011.t
+	desc = shadowswamp.011.d
+	picture = FAMINE_eventPicture
+
+	hidden = yes
+	is_triggered_only = yes
+
+	option = {
+		trigger = {
+			has_country_flag = shadowswamp_doppelganger_80
+		}
+		hidden_effect = {
+			country_event = {
+				id = shadowswamp.119
+				days = 700
+				random = 30
+			}
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+	option = {
+		trigger = {
+			has_country_flag = shadowswamp_doppelganger_60
+		}
+		hidden_effect = {
+			country_event = {
+				id = shadowswamp.119
+				days = 700
+				random = 30
+			}
+		}
+		ai_chance = {
+			factor = 100
+		}
+	}
+	option = {
+		trigger = {
+			has_country_flag = shadowswamp_doppelganger_40
+		}
+		hidden_effect = {
+			country_event = {
+				id = shadowswamp.119
+				days = 1400
+				random = 60
+			}
+		}
+		ai_chance = {
+			factor = 100
 		}
 	}
 }
@@ -1262,21 +1564,552 @@ country_event = { #Cornered at Last
 	title = shadowswamp.120.t
 	desc = shadowswamp.120.d
 	picture = FARMING_eventPicture
-	goto = ROOT
 	is_triggered_only = yes
 	option = {
 		name = shadowswamp.120.a
-		add_years_of_income = -0.5
-		custom_tooltip = shadowswamp_doppelganger_investigation_tt
-		hidden_effect = {
-			country_event = {
-				id = shadowswamp.120
-				days = 300
-				random = 65
+		trigger = {
+			NOT = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
 			}
+		}
+		add_stability = 1
+		add_estate_loyalty_by_class_adm = {
+			loyalty = 10
+		}
+		add_estate_loyalty_by_class_dip = {
+			loyalty = 10
+		}
+		add_estate_loyalty_by_class_mil = {
+			loyalty = 10
 		}
 		ai_chance = {
 			factor = 5
 		}
+	}
+	option = {
+		name = shadowswamp.120.b
+		trigger = {
+			NOT = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			has_estate = estate_mages
+		}
+		add_estate_loyalty_modifier = {
+			estate = estate_mages
+			desc = local_mages_pleased
+			loyalty = 20
+			duration = 3650
+		}
+		add_estate_influence_modifier = { # switch to mana gain 50
+			estate = estate_mages
+			influence = 20
+			duration = 3650
+		}
+		ai_chance = {
+			factor = 5
+		}
+	}
+	option = {
+		name = shadowswamp.120.c
+		trigger = {
+			NOT = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+		}
+		add_years_of_income = 1
+		add_prestige = 20
+	}
+	option = {
+		name = shadowswamp.120.e
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+		}
+		if = {
+			limit = {
+				has_estate = estate_nobility
+			}
+			add_estate_loyalty_modifier = {
+				estate = estate_nobility
+				desc = local_noblesty_pleased
+				loyalty = 20
+				duration = 3650
+			}
+			add_estate_influence_modifier = {
+				estate = estate_nobility
+				influence = -10
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = {
+				has_estate = estate_burghers
+			}
+			add_estate_loyalty_modifier = {
+				estate = estate_burghers
+				desc = local_nobles_pleased
+				loyalty = 20
+				duration = 3650
+			}
+			add_estate_influence_modifier = {
+				estate = estate_burghers
+				influence = -10
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = {
+				has_estate = estate_monstrous_tribes
+			}
+			add_estate_loyalty_modifier = {
+				estate = estate_monstrous_tribes
+				desc = local_tribes_pleased
+				loyalty = 20
+				duration = 3650
+			}
+			add_estate_influence_modifier = {
+				estate = estate_monstrous_tribes
+				influence = -10
+				duration = 3650
+			}
+		}
+		add_years_of_income = 0.7
+	}
+	option = {
+		name = shadowswamp.120.g
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+		}
+		if = {
+			limit = {
+				has_leaders = {
+					value = 1
+					type = general
+					include_monarch = no
+					include_heir = no
+				}
+			}
+			kill_leader = {
+				type = general
+			}
+		}
+		define_general = {
+			fire = 3
+			shock = 5
+			manuever = 2
+			siege = 3
+			trait = planetouched_commander_personality 
+		}
+	}
+	option = {
+		name = shadowswamp.120.h
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			num_of_total_ports = 1
+		}
+		if = {
+			limit = {
+				has_leaders = {
+					value = 1
+					type = admiral
+					include_monarch = no
+					include_heir = no
+				}
+			}
+			kill_leader = {
+				type = admiral
+			}
+		}
+		define_admiral = {
+			fire = 2
+			shock = 2
+			manuever = 4
+			siege = 5
+		}	
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = treasurer }
+		}
+		if = { limit = { employed_advisor = { type = treasurer skill = 1 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 2 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 3 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 4 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 4 discount = yes } }
+		else = { kill_advisor = treasurer hire_advisor = { type = treasurer skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = philosopher }
+		}
+		if = { limit = { employed_advisor = { type = philosopher skill = 1 } } kill_advisor = philosopher hire_advisor = { type = philosopher skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = philosopher skill = 2 } } kill_advisor = philosopher hire_advisor = { type = philosopher skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = philosopher skill = 3 } } kill_advisor = philosopher hire_advisor = { type = philosopher skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = philosopher skill = 4 } } kill_advisor = philosopher hire_advisor = { type = philosopher skill = 4 discount = yes } }
+		else = { kill_advisor = philosopher hire_advisor = { type = philosopher skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = natural_scientist }
+		}
+		if = { limit = { employed_advisor = { type = natural_scientist skill = 1 } } kill_advisor = natural_scientist hire_advisor = { type = natural_scientist skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = natural_scientist skill = 2 } } kill_advisor = natural_scientist hire_advisor = { type = natural_scientist skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = natural_scientist skill = 3 } } kill_advisor = natural_scientist hire_advisor = { type = natural_scientist skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = natural_scientist skill = 4 } } kill_advisor = natural_scientist hire_advisor = { type = natural_scientist skill = 4 discount = yes } }
+		else = { kill_advisor = natural_scientist hire_advisor = { type = natural_scientist skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = artist }
+		}
+		if = { limit = { employed_advisor = { type = artist skill = 1 } } kill_advisor = artist hire_advisor = { type = artist skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = artist skill = 2 } } kill_advisor = artist hire_advisor = { type = artist skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = artist skill = 3 } } kill_advisor = artist hire_advisor = { type = artist skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = artist skill = 4 } } kill_advisor = artist hire_advisor = { type = artist skill = 4 discount = yes } }
+		else = { kill_advisor = artist hire_advisor = { type = artist skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = treasurer }
+		}
+		if = { limit = { employed_advisor = { type = treasurer skill = 1 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 2 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 3 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = treasurer skill = 4 } } kill_advisor = treasurer hire_advisor = { type = treasurer skill = 4 discount = yes } }
+		else = { kill_advisor = treasurer hire_advisor = { type = treasurer skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = theologian }
+		}
+		if = { limit = { employed_advisor = { type = theologian skill = 1 } } kill_advisor = theologian hire_advisor = { type = theologian skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = theologian skill = 2 } } kill_advisor = theologian hire_advisor = { type = theologian skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = theologian skill = 3 } } kill_advisor = theologian hire_advisor = { type = theologian skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = theologian skill = 4 } } kill_advisor = theologian hire_advisor = { type = theologian skill = 4 discount = yes } }
+		else = { kill_advisor = theologian hire_advisor = { type = theologian skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = master_of_mint }
+		}
+		if = { limit = { employed_advisor = { type = master_of_mint skill = 1 } } kill_advisor = master_of_mint hire_advisor = { type = master_of_mint skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = master_of_mint skill = 2 } } kill_advisor = master_of_mint hire_advisor = { type = master_of_mint skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = master_of_mint skill = 3 } } kill_advisor = master_of_mint hire_advisor = { type = master_of_mint skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = master_of_mint skill = 4 } } kill_advisor = master_of_mint hire_advisor = { type = master_of_mint skill = 4 discount = yes } }
+		else = { kill_advisor = master_of_mint hire_advisor = { type = master_of_mint skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = inquisitor }
+		}
+		if = { limit = { employed_advisor = { type = inquisitor skill = 1 } } kill_advisor = inquisitor hire_advisor = { type = inquisitor skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = inquisitor skill = 2 } } kill_advisor = inquisitor hire_advisor = { type = inquisitor skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = inquisitor skill = 3 } } kill_advisor = inquisitor hire_advisor = { type = inquisitor skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = inquisitor skill = 4 } } kill_advisor = inquisitor hire_advisor = { type = inquisitor skill = 4 discount = yes } }
+		else = { kill_advisor = inquisitor hire_advisor = { type = inquisitor skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = statesman }
+		}
+		if = { limit = { employed_advisor = { type = statesman skill = 1 } } kill_advisor = statesman hire_advisor = { type = statesman skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = statesman skill = 2 } } kill_advisor = statesman hire_advisor = { type = statesman skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = statesman skill = 3 } } kill_advisor = statesman hire_advisor = { type = statesman skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = statesman skill = 4 } } kill_advisor = statesman hire_advisor = { type = statesman skill = 4 discount = yes } }
+		else = { kill_advisor = statesman hire_advisor = { type = statesman skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = naval_reformer }
+		}
+		if = { limit = { employed_advisor = { type = naval_reformer skill = 1 } } kill_advisor = naval_reformer hire_advisor = { type = naval_reformer skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = naval_reformer skill = 2 } } kill_advisor = naval_reformer hire_advisor = { type = naval_reformer skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = naval_reformer skill = 3 } } kill_advisor = naval_reformer hire_advisor = { type = naval_reformer skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = naval_reformer skill = 4 } } kill_advisor = naval_reformer hire_advisor = { type = naval_reformer skill = 4 discount = yes } }
+		else = { kill_advisor = naval_reformer hire_advisor = { type = naval_reformer skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = trader }
+		}
+		if = { limit = { employed_advisor = { type = trader skill = 1 } } kill_advisor = trader hire_advisor = { type = trader skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = trader skill = 2 } } kill_advisor = trader hire_advisor = { type = trader skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = trader skill = 3 } } kill_advisor = trader hire_advisor = { type = trader skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = trader skill = 4 } } kill_advisor = trader hire_advisor = { type = trader skill = 4 discount = yes } }
+		else = { kill_advisor = trader hire_advisor = { type = trader skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = spymaster }
+		}
+		if = { limit = { employed_advisor = { type = spymaster skill = 1 } } kill_advisor = spymaster hire_advisor = { type = spymaster skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = spymaster skill = 2 } } kill_advisor = spymaster hire_advisor = { type = spymaster skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = spymaster skill = 3 } } kill_advisor = spymaster hire_advisor = { type = spymaster skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = spymaster skill = 4 } } kill_advisor = spymaster hire_advisor = { type = spymaster skill = 4 discount = yes } }
+		else = { kill_advisor = spymaster hire_advisor = { type = spymaster skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = colonial_governor }
+		}
+		if = { limit = { employed_advisor = { type = colonial_governor skill = 1 } } kill_advisor = colonial_governor hire_advisor = { type = colonial_governor skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = colonial_governor skill = 2 } } kill_advisor = colonial_governor hire_advisor = { type = colonial_governor skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = colonial_governor skill = 3 } } kill_advisor = colonial_governor hire_advisor = { type = colonial_governor skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = colonial_governor skill = 4 } } kill_advisor = colonial_governor hire_advisor = { type = colonial_governor skill = 4 discount = yes } }
+		else = { kill_advisor = colonial_governor hire_advisor = { type = colonial_governor skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = diplomat }
+		}
+		if = { limit = { employed_advisor = { type = diplomat skill = 1 } } kill_advisor = diplomat hire_advisor = { type = diplomat skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = diplomat skill = 2 } } kill_advisor = diplomat hire_advisor = { type = diplomat skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = diplomat skill = 3 } } kill_advisor = diplomat hire_advisor = { type = diplomat skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = diplomat skill = 4 } } kill_advisor = diplomat hire_advisor = { type = diplomat skill = 4 discount = yes } }
+		else = { kill_advisor = diplomat hire_advisor = { type = diplomat skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = navigator }
+		}
+		if = { limit = { employed_advisor = { type = navigator skill = 1 } } kill_advisor = navigator hire_advisor = { type = navigator skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = navigator skill = 2 } } kill_advisor = navigator hire_advisor = { type = navigator skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = navigator skill = 3 } } kill_advisor = navigator hire_advisor = { type = navigator skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = navigator skill = 4 } } kill_advisor = navigator hire_advisor = { type = navigator skill = 4 discount = yes } }
+		else = { kill_advisor = navigator hire_advisor = { type = navigator skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = army_reformer }
+		}
+		if = { limit = { employed_advisor = { type = army_reformer skill = 1 } } kill_advisor = army_reformer hire_advisor = { type = army_reformer skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_reformer skill = 2 } } kill_advisor = army_reformer hire_advisor = { type = army_reformer skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_reformer skill = 3 } } kill_advisor = army_reformer hire_advisor = { type = army_reformer skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_reformer skill = 4 } } kill_advisor = army_reformer hire_advisor = { type = army_reformer skill = 4 discount = yes } }
+		else = { kill_advisor = army_reformer hire_advisor = { type = army_reformer skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = army_organiser }
+		}
+		if = { limit = { employed_advisor = { type = army_organiser skill = 1 } } kill_advisor = army_organiser hire_advisor = { type = army_organiser skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_organiser skill = 2 } } kill_advisor = army_organiser hire_advisor = { type = army_organiser skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_organiser skill = 3 } } kill_advisor = army_organiser hire_advisor = { type = army_organiser skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = army_organiser skill = 4 } } kill_advisor = army_organiser hire_advisor = { type = army_organiser skill = 4 discount = yes } }
+		else = { kill_advisor = army_organiser hire_advisor = { type = army_organiser skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = commandant }
+		}
+		if = { limit = { employed_advisor = { type = commandant skill = 1 } } kill_advisor = commandant hire_advisor = { type = commandant skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = commandant skill = 2 } } kill_advisor = commandant hire_advisor = { type = commandant skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = commandant skill = 3 } } kill_advisor = commandant hire_advisor = { type = commandant skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = commandant skill = 4 } } kill_advisor = commandant hire_advisor = { type = commandant skill = 4 discount = yes } }
+		else = { kill_advisor = commandant hire_advisor = { type = commandant skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = quartermaster }
+		}
+		if = { limit = { employed_advisor = { type = quartermaster skill = 1 } } kill_advisor = quartermaster hire_advisor = { type = quartermaster skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = quartermaster skill = 2 } } kill_advisor = quartermaster hire_advisor = { type = quartermaster skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = quartermaster skill = 3 } } kill_advisor = quartermaster hire_advisor = { type = quartermaster skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = quartermaster skill = 4 } } kill_advisor = quartermaster hire_advisor = { type = quartermaster skill = 4 discount = yes } }
+		else = { kill_advisor = quartermaster hire_advisor = { type = quartermaster skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = recruitmaster }
+		}
+		if = { limit = { employed_advisor = { type = recruitmaster skill = 1 } } kill_advisor = recruitmaster hire_advisor = { type = recruitmaster skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = recruitmaster skill = 2 } } kill_advisor = recruitmaster hire_advisor = { type = recruitmaster skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = recruitmaster skill = 3 } } kill_advisor = recruitmaster hire_advisor = { type = recruitmaster skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = recruitmaster skill = 4 } } kill_advisor = recruitmaster hire_advisor = { type = recruitmaster skill = 4 discount = yes } }
+		else = { kill_advisor = recruitmaster hire_advisor = { type = recruitmaster skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = fortification_expert }
+		}
+		if = { limit = { employed_advisor = { type = fortification_expert skill = 1 } } kill_advisor = fortification_expert hire_advisor = { type = fortification_expert skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = fortification_expert skill = 2 } } kill_advisor = fortification_expert hire_advisor = { type = fortification_expert skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = fortification_expert skill = 3 } } kill_advisor = fortification_expert hire_advisor = { type = fortification_expert skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = fortification_expert skill = 4 } } kill_advisor = fortification_expert hire_advisor = { type = fortification_expert skill = 4 discount = yes } }
+		else = { kill_advisor = fortification_expert hire_advisor = { type = fortification_expert skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = grand_captain }
+		}
+		if = { limit = { employed_advisor = { type = grand_captain skill = 1 } } kill_advisor = grand_captain hire_advisor = { type = grand_captain skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = grand_captain skill = 2 } } kill_advisor = grand_captain hire_advisor = { type = grand_captain skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = grand_captain skill = 3 } } kill_advisor = grand_captain hire_advisor = { type = grand_captain skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = grand_captain skill = 4 } } kill_advisor = grand_captain hire_advisor = { type = grand_captain skill = 4 discount = yes } }
+		else = { kill_advisor = grand_captain hire_advisor = { type = grand_captain skill = 5 discount = yes } }
+	}
+	option = {
+		name = shadowswamp.120.f
+		trigger = {
+			OR = {
+				religion = shadow_pact
+				religion = night_coven
+				religion = xhazobkult
+			}
+			employed_advisor = { type = court_mage }
+		}
+		if = { limit = { employed_advisor = { type = court_mage skill = 1 } } kill_advisor = court_mage hire_advisor = { type = court_mage skill = 1 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = court_mage skill = 2 } } kill_advisor = court_mage hire_advisor = { type = court_mage skill = 2 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = court_mage skill = 3 } } kill_advisor = court_mage hire_advisor = { type = court_mage skill = 3 discount = yes } }
+		else_if = { limit = { employed_advisor = { type = court_mage skill = 4 } } kill_advisor = court_mage hire_advisor = { type = court_mage skill = 4 discount = yes } }
+		else = { kill_advisor = court_mage hire_advisor = { type = court_mage skill = 5 discount = yes } }
 	}
 }
