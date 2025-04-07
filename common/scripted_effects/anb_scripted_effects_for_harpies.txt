@@ -11,6 +11,14 @@ harpy_roost_se_allow_construction_of_extra_roost = {
 	}
 }
 
+harpy_roost_se_negative_extra_roost = {
+	custom_tooltip = harpy_roost_se_negative_extra_roost_tt
+	hidden_effect = {
+		change_variable = { which = harpy_roost_var_free_roosts value = -1 }
+		change_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required }
+	}
+}
+
 # Province scope, for adding a flourishing (tier 2) roost to a province, but without increasing the development 
 # threshold for building additional roosts.
 harpy_roost_se_add_free_flourishing_roost_to_province = {
@@ -124,7 +132,7 @@ harpy_roost_se_setup = {
 					}
 				}
 				set_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost
-				harpy_roost_se_allow_construction_of_extra_roost = yes				
+				harpy_roost_se_allow_construction_of_extra_roost = yes
 			}
 		}
 	}
@@ -192,6 +200,8 @@ harpy_roost_se_set_flourishing_roost_inactive = {
 # Root = province, FROM = previous owner
 harpy_roost_se_on_province_owner_change = {
 	if = { limit = { has_province_flag = harpy_roost_present }
+		harpy_roost_se_queens_throne_conquest = yes # Heunthume starts as Flourishing Roost, so this check can be thrown in here. Saves a bit of performance.
+
 		if = { limit = { owner = { NOT = { culture_group = harpy } } }
 			trigger_switch = {
 				on_trigger = has_province_modifier
@@ -220,8 +230,57 @@ harpy_roost_se_on_province_owner_change = {
 	}
 }
 
+harpy_roost_se_queens_throne_conquest = {
+	if = { limit = { province_id = 660 }
+		FROM = {
+			if = { limit = { has_country_flag = harpy_roost_queens_throne_has_tier_3_free_roost }
+				clr_country_flag = harpy_roost_queens_throne_has_tier_3_free_roost
+				harpy_roost_se_negative_extra_roost = yes
+			}
+			if = { limit = { has_country_flag = harpy_roost_queens_throne_has_tier_2_free_roost }
+				clr_country_flag = harpy_roost_queens_throne_has_tier_2_free_roost
+				harpy_roost_se_negative_extra_roost = yes
+			}
+			if = { limit = { has_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost }
+				clr_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost
+				harpy_roost_se_negative_extra_roost = yes
+			}
+		}
+		if = { 
+			limit = { 
+				has_great_project = { type = queens_throne tier = 3 } 
+				NOT = { owner = { has_country_flag = harpy_roost_queens_throne_has_tier_3_free_roost } } 
+			}
+			owner = { 
+				set_country_flag = harpy_roost_queens_throne_has_tier_3_free_roost
+				harpy_roost_se_allow_construction_of_extra_roost = yes
+			}
+		}
+		if = { 
+			limit = { 
+				has_great_project = { type = queens_throne tier = 2 } 
+				NOT = { owner = { has_country_flag = harpy_roost_queens_throne_has_tier_2_free_roost } } 
+			}
+			owner = { 
+				set_country_flag = harpy_roost_queens_throne_has_tier_2_free_roost
+				harpy_roost_se_allow_construction_of_extra_roost = yes
+			}
+		}
+		if = { 
+			limit = { 
+				has_great_project = { type = queens_throne tier = 1 } 
+				NOT = { owner = { has_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost } } 
+			}
+			owner = { 
+				set_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost
+				harpy_roost_se_allow_construction_of_extra_roost = yes
+			}
+		}
+	}	
+}
+
 # Root = province
-harpy_roost_se_on_province_culture_changed = {
+harpy_roost_se_on_province_culture_changed = { # Why did I make this?
 	if = { limit = { has_province_flag = harpy_roost_present }
 		if = { limit = { NOT = { culture_group = harpy } has_province_modifier = harpy_roost_mod_roost_flourishing_active } 
 			harpy_roost_se_set_flourishing_roost_inactive = yes
