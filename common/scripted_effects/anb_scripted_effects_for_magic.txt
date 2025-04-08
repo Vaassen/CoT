@@ -2212,6 +2212,7 @@ kill_mil_homunculus = {
 
 #monthly mana calc, updates for all countries with mages
 update_mana_calc = {
+	update_mana_regen = yes
 	change_variable = {
 		which = currentMana
 		which = manaRegenerationRate
@@ -2380,7 +2381,8 @@ initialize_magic_system = {
 }
 
 initialize_infrastructure = {
-	set_variable = { which = magicalInfrastructure value = 1 }
+	set_variable = { which = magicalInfrastructure value = 1 } #Base level
+	set_variable = { which = maximum_estate_spell_schools value = 4 } #Base value
 
 	#Tag specific infrastructure setup
 	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
@@ -2399,6 +2401,39 @@ change_mana = {
 		value = $amount$
 	}
 	cap_mana = yes
+}
+
+calc_estate_spell_levels = {
+	set_variable = { estate_spell_schools = 0 }
+	calc_estate_spell_levels_sub = { school = abjuration }
+	calc_estate_spell_levels_sub = { school = conjuration }
+	calc_estate_spell_levels_sub = { school = divination }
+	calc_estate_spell_levels_sub = { school = enchantment }
+	calc_estate_spell_levels_sub = { school = evocation }
+	calc_estate_spell_levels_sub = { school = illusion }
+	calc_estate_spell_levels_sub = { school = necromancy }
+	calc_estate_spell_levels_sub = { school = transmutation }
+}
+calc_estate_spell_levels_sub = {
+	if = { limit = { has_country_flag = $school$_1 } change_variable = { estate_spell_schools = 1 } }
+	if = { limit = { has_country_flag = $school$_2 } change_variable = { estate_spell_schools = 2 } }
+	if = { limit = { has_country_flag = $school$_3 } change_variable = { estate_spell_schools = 3 } }
+}
+generic_calc_spell_levels = {
+	set_variable = { $type$_spell_schools = 0 }
+	generic_calc_spell_levels_sub = { school = abjuration type = $type$ }
+	generic_calc_spell_levels_sub = { school = conjuration type = $type$ }
+	generic_calc_spell_levels_sub = { school = divination type = $type$ }
+	generic_calc_spell_levels_sub = { school = enchantment type = $type$ }
+	generic_calc_spell_levels_sub = { school = evocation type = $type$ }
+	generic_calc_spell_levels_sub = { school = illusion type = $type$ }
+	generic_calc_spell_levels_sub = { school = necromancy type = $type$ }
+	generic_calc_spell_levels_sub = { school = transmutation type = $type$ }
+}
+generic_calc_spell_levels_sub = {
+	if = { limit = { has_$type$_flag = $school$_1 } change_variable = { $type$_spell_schools = 1 } }
+	if = { limit = { has_$type$_flag = $school$_2 } change_variable = { $type$_spell_schools = 2 } }
+	if = { limit = { has_$type$_flag = $school$_3 } change_variable = { $type$_spell_schools = 3 } }
 }
 
 magic_activity_selection_clear_school_flags = {
@@ -2487,7 +2522,6 @@ magic_study_selection_set_school_effect = {
 	}
 }
 magic_study_selection_set_study_level_first = {
-	log = "magic_study_selection_set_study_level_first"
 	trigger_switch = {
 		on_trigger = has_country_flag
 		magic_activity_setup_abjuration_flag = { magic_study_selection_set_study_level_second = { school = abjuration } }
@@ -2502,7 +2536,6 @@ magic_study_selection_set_study_level_first = {
 }
 
 magic_study_selection_set_study_level_second = {
-	log = "magic_study_selection_set_study_level_second"
 	##Shamelessly copied 3x
 	if = { limit = { has_country_flag = magic_activity_setup_estate_flag }
 		if = {
@@ -2729,6 +2762,7 @@ finish_magic_study = {
 	}
 	
 	magic_activity_abort_all_effect = yes
+	calc_estate_spell_levels = yes
 	country_event = { id = magic_study.2 }
 }
 
@@ -2837,6 +2871,7 @@ magic_project_level_up = {
 		set_$type$_flag = $project$_1
 		custom_tooltip = tooltip_$project$_1_level_up
 	}
+	calc_completed_projects = yes
 	magic_activity_abort_all_effect = yes
 }
 
@@ -2847,6 +2882,18 @@ magic_infrastructure_level_up = {
 	update_mana_cap = yes
 	update_mana_regen = yes
 	magic_activity_abort_all_effect = yes
+}
+
+calc_completed_projects = {
+	set_variable = { magic_projects_completed = 0 }
+	if = { limit = { has_country_flag = magical_fortress_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = elite_elementals_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = orb_of_omniscience_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = enchant_legendary_artifact_3 } 	change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = battlemage_academy_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = theatre_of_simulacra_3 } 		change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = lichdom_3 } 					change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = homunculus_3 } 					change_variable = { magic_projects_completed = 1 } }
 }
 
 #TODO Jothell add magic_artificery_mixed multiply by 0.8

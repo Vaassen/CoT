@@ -33,7 +33,7 @@ custom_window = {
 	}
 }
 
-# Spellbook selection
+# Spellbook selection windows
 	custom_window = {
 		name = magic_menu_spellbook_divination
 		potential = {
@@ -82,7 +82,7 @@ custom_window = {
 			has_country_flag = magic_menu_spellbook_conjuration_flag
 		}
 	}
-#End spellbook selection
+#End spellbook selection windows
 
 ##########
 ##########
@@ -241,11 +241,11 @@ custom_button = {
 			always = yes
 		}
 		effect = {
-			custom_tooltip = close_magic_menu_tt
 			hidden_effect = {
 				clr_country_flag = magic_menu_main_flag
 			}
 		}
+		tooltip = close_magic_menu_tt
 	}
 	custom_button = { #Main Menu Open Study Menu Button
 		name = magic_menu_study_button_main
@@ -253,12 +253,13 @@ custom_button = {
 			always = yes
 		}
 		effect = {
-			custom_tooltip = open_study_menu_tt
 			hidden_effect = {
 				set_country_flag = magic_menu_study_flag
 				set_country_flag = magic_menu_spellbook_divination_flag ## Jothell temp
+				calc_completed_projects = yes
 			}
 		}
+		tooltip = open_study_menu_tt
 	}
 
 	custom_button = { #Main Menu Open Spellbook Button
@@ -267,11 +268,11 @@ custom_button = {
 			always = yes
 		}
 		effect = {
-			custom_tooltip = open_spellbook_menu_tt
 			hidden_effect = {
 				set_country_flag = magic_menu_spellbook_flag
 			}
 		}
+		tooltip = open_spellbook_menu_tt
 	}
 	custom_button = { #Main Menu Open Patron Button
 		name = magic_menu_patron_button_main
@@ -279,8 +280,11 @@ custom_button = {
 			always = yes
 		}
 		effect = {
-			country_event = { id = patrons_events.1 }
+			hidden_effect = {
+				country_event = { id = patrons_events.1 }
+			}
 		}
+		tooltip = open_patron_menu_tt
 	}
 ## End magic_menu buttons
 
@@ -893,25 +897,6 @@ custom_text_box = {
 	}
 ## End scripted icons for main menu
 
-custom_text_box = { #Magical Infrastructure Level Loc
-	name = magic_menu_infrastructure_level
-	potential = {
-		always = yes
-	}
-}
-custom_button = { #Magical Infrastructure Button
-	name = magic_menu_invisible_button_infrastructure
-	potential = {
-		always = yes
-	}
-	effect = {
-		custom_tooltip = open_magical_project_magical_infrstructure_tt
-		hidden_effect = {
-			set_country_flag = magic_menu_study_flag
-		}
-	}
-}
-
 
 ##################
 ### STUDY MENU ###
@@ -923,22 +908,22 @@ custom_button = { #Study Menu Back Main Menu Button
 		always = yes
 	}
 	effect = {
-		custom_tooltip = close_study_menu_tt
 		hidden_effect = {
 			clr_country_flag = magic_menu_study_flag
 		}
 	}
+	tooltip = close_study_menu_tt
 }
 custom_button = { #Study Menu Close Window Button
 	name = magic_menu_close_window_button_study
 	potential = { always = yes }
 	effect = {
-		custom_tooltip = close_magic_menu_tt
 		hidden_effect = {
 			clr_country_flag = magic_menu_study_flag
 			clr_country_flag = magic_menu_main_flag
 		}
 	}
+	tooltip = close_magic_menu_tt
 }
 
 
@@ -997,6 +982,7 @@ custom_button = {
 				which = magic_experience_target
 			}
 		}
+		passive_study_progress = yes
 	}
 	tooltip = "Debug: Finish study"
 }
@@ -1006,23 +992,52 @@ custom_button = {
 	potential = { always = yes }
 	trigger = { NOT = { is_studying_magic = yes } }
 	effect = {
-		custom_tooltip = open_study_pop_up_tt
 		hidden_effect = {
 			set_country_flag = magic_menu_study_pop_up_flag
 			set_country_flag = magic_activity_setup_study_activity_flag
 			magic_activity_selection_clear_school_flags = yes
 			magic_activity_selection_clear_type_flags = yes
+
+			generic_calc_spell_levels = { type = ruler }
+			generic_calc_spell_levels = { type = heir }
+			calc_estate_spell_levels = yes
 		}
 	}
+	tooltip = open_study_pop_up_tt
 }
 
 custom_button = {
 	name = magic_infrastructure_button
 	potential = { always = yes }
-	trigger = { always = yes }
+	trigger = {
+		if = { limit = { NOT = { check_variable = { magicalInfrastructure = 5 } } }
+			custom_trigger_tooltip = {
+				tooltip = magicalInfrastructure_maxed_school_levels
+				check_variable = { which = estate_spell_schools which = maximum_estate_spell_schools }
+			}
+		}
+		if = { limit = { check_variable = { magicalInfrastructure = 5 } }
+			can_upgrade_magical_infrastructure_5 = yes
+		}
+		else_if = { limit = { check_variable = { magicalInfrastructure = 4 } }
+			can_upgrade_magical_infrastructure_4 = yes
+		}
+		else_if = { limit = { check_variable = { magicalInfrastructure = 3 } }
+			can_upgrade_magical_infrastructure_3 = yes
+		}
+		else_if = { limit = { check_variable = { magicalInfrastructure = 2 } }
+			can_upgrade_magical_infrastructure_2 = yes
+		}
+		else_if = { limit = { check_variable = { magicalInfrastructure = 1 } }
+			can_upgrade_magical_infrastructure_1 = yes
+		}
+	
+	}
 	effect = {
-		if = { limit = { NOT = { is_studying_magic = yes } }
-			start_infrastructure_activity = yes
+		hidden_effect = { #Hide the variable stuff inside
+			if = { limit = { NOT = { is_studying_magic = yes } }
+				start_infrastructure_activity = yes
+			}
 		}
 	}
 	tooltip = magical_infrastructure_icon_tt
@@ -1033,7 +1048,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_1
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = magical_fortress } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = magical_fortress_project
@@ -1062,7 +1077,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_2
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = elite_elementals } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = elite_elementals_project
@@ -1091,7 +1106,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_3
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = orb_of_omniscience } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = orb_of_omniscience_project
@@ -1120,7 +1135,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_4
 		potential = { always = yes }
-		trigger = { always = no }
+		trigger = { can_upgrade_project = { project = enchant_legendary_artifact } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = enchant_legendary_artifact_project
@@ -1149,7 +1164,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_5
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = battlemage_academy } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = battlemage_academy_project
@@ -1178,7 +1193,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_6
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = theatre_of_simulacra } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = theatre_of_simulacra_project
@@ -1207,7 +1222,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_7
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = lichdom } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = lichdom_project
@@ -1236,7 +1251,7 @@ custom_button = {
 	custom_button = {
 		name = magic_project_button_8
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = homunculus } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = homunculus_project
@@ -1300,7 +1315,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_1
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_1_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_1_project
@@ -1329,7 +1344,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_2
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_2_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_2_project
@@ -1358,7 +1373,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_3
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_3_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_3_project
@@ -1387,7 +1402,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_4
 		potential = { always = yes }
-		trigger = { always = no }
+		trigger = { can_upgrade_project = { project = unique_project_4_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_4_project
@@ -1416,7 +1431,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_5
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_5_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_5_project
@@ -1445,7 +1460,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_6
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_6_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_6_project
@@ -1474,7 +1489,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_7
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_7_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_7_project
@@ -1503,7 +1518,7 @@ custom_button = {
 	custom_button = {
 		name = magic_unique_project_button_8
 		potential = { always = yes }
-		trigger = { always = yes }
+		trigger = { can_upgrade_project = { project = unique_project_8_flag } }
 		effect = {
 			if = { limit = { NOT = { is_studying_magic = yes } }
 				set_country_flag = unique_8_project
@@ -1580,8 +1595,12 @@ custom_button = {
 			number = 2
 			trigger = { has_country_flag = magic_activity_setup_ruler_flag }
 		}
-		trigger = { hidden_trigger = { ruler_has_mage_personality = yes } }
+		trigger = {
+			is_ruler_eligible_to_study = yes
+			generic_spell_school_levels_trigger = { type = ruler }
+		}
 		effect = {
+			custom_tooltip = magic_ruler_spell_levels
 			if = { limit = { has_country_flag = magic_activity_setup_ruler_flag }
 				clr_country_flag = magic_activity_setup_ruler_flag
 			}
@@ -1604,8 +1623,12 @@ custom_button = {
 			number = 2
 			trigger = { has_country_flag = magic_activity_setup_heir_flag }
 		}
-		trigger = { hidden_trigger = { heir_has_mage_personality = yes } }
+		trigger = {
+			is_heir_eligible_to_study = yes
+			generic_spell_school_levels_trigger = { type = heir }
+		}
 		effect = {
+			custom_tooltip = magic_heir_spell_levels
 			if = { limit = { has_country_flag = magic_activity_setup_heir_flag }
 				clr_country_flag = magic_activity_setup_heir_flag
 			}
@@ -1628,8 +1651,12 @@ custom_button = {
 			number = 2
 			trigger = { has_country_flag = magic_activity_setup_estate_flag }
 		}
-		trigger = { hidden_trigger = { always = yes } }
+		trigger = {
+			is_estate_eligible_to_study = yes
+			generic_spell_school_levels_trigger = { type = country }
+		}
 		effect = {
+			custom_tooltip = magic_estate_spell_levels
 			if = { limit = { has_country_flag = magic_activity_setup_estate_flag }
 				clr_country_flag = magic_activity_setup_estate_flag
 			}
@@ -1653,7 +1680,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_abjuration_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = abjuration }
+			generic_any_spell_school_levels_trigger = { type = ruler school = abjuration }
+			generic_any_spell_school_levels_trigger = { type = heir school = abjuration }
+			generic_any_spell_school_levels_trigger = { type = country school = abjuration }
+			hidden_trigger = {
+				can_select_school_to_study = { school = abjuration }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_abjuration_flag }
@@ -1678,7 +1710,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_conjuration_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = conjuration }
+			generic_any_spell_school_levels_trigger = { type = ruler school = conjuration }
+			generic_any_spell_school_levels_trigger = { type = heir school = conjuration }
+			generic_any_spell_school_levels_trigger = { type = country school = conjuration }
+			hidden_trigger = {
+				can_select_school_to_study = { school = conjuration }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_conjuration_flag }
@@ -1703,7 +1740,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_divination_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = divination }
+			generic_any_spell_school_levels_trigger = { type = ruler school = divination }
+			generic_any_spell_school_levels_trigger = { type = heir school = divination }
+			generic_any_spell_school_levels_trigger = { type = country school = divination }
+			hidden_trigger = {
+				can_select_school_to_study = { school = divination }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_divination_flag }
@@ -1728,7 +1770,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_enchantment_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = enchantment }
+			generic_any_spell_school_levels_trigger = { type = ruler school = enchantment }
+			generic_any_spell_school_levels_trigger = { type = heir school = enchantment }
+			generic_any_spell_school_levels_trigger = { type = country school = enchantment }
+			hidden_trigger = {
+				can_select_school_to_study = { school = enchantment }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_enchantment_flag }
@@ -1753,7 +1800,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_evocation_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = evocation }
+			generic_any_spell_school_levels_trigger = { type = ruler school = evocation }
+			generic_any_spell_school_levels_trigger = { type = heir school = evocation }
+			generic_any_spell_school_levels_trigger = { type = country school = evocation }
+			hidden_trigger = {
+				can_select_school_to_study = { school = evocation }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_evocation_flag }
@@ -1778,7 +1830,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_illusion_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = illusion }
+			generic_any_spell_school_levels_trigger = { type = ruler school = illusion }
+			generic_any_spell_school_levels_trigger = { type = heir school = illusion }
+			generic_any_spell_school_levels_trigger = { type = country school = illusion }
+			hidden_trigger = {
+				can_select_school_to_study = { school = illusion }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_illusion_flag }
@@ -1803,7 +1860,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_necromancy_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = necromancy }
+			generic_any_spell_school_levels_trigger = { type = ruler school = necromancy }
+			generic_any_spell_school_levels_trigger = { type = heir school = necromancy }
+			generic_any_spell_school_levels_trigger = { type = country school = necromancy }
+			hidden_trigger = {
+				can_select_school_to_study = { school = necromancy }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_necromancy_flag }
@@ -1828,7 +1890,12 @@ custom_button = {
 			trigger = { has_country_flag = magic_activity_setup_transmutation_flag }
 		}
 		trigger = {
-			can_select_to_study = { school = transmutation }
+			generic_any_spell_school_levels_trigger = { type = ruler school = transmutation }
+			generic_any_spell_school_levels_trigger = { type = heir school = transmutation }
+			generic_any_spell_school_levels_trigger = { type = country school = transmutation }
+			hidden_trigger = {
+				can_select_school_to_study = { school = transmutation }
+			}
 		}
 		effect = {
 			if = { limit = { has_country_flag = magic_activity_setup_transmutation_flag }
@@ -2006,11 +2073,11 @@ custom_button = { #Spellbook Menu Back Main Menu Button
 		always = yes
 	}
 	effect = {
-		custom_tooltip = close_spellbook_menu_tt
 		hidden_effect = {
 			clr_country_flag = magic_menu_spellbook_flag
 		}
 	}
+	tooltip = close_spellbook_menu_tt
 }
 
 custom_text_box = { #Spellbook Menu XP Max Text
@@ -2028,94 +2095,133 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 
 
 # Choose spellbook buttons
-
-	custom_button = { #Spellbook Change School Divination Button
-		name = magic_menu_button_change_school_divination_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_divination
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_divination_flag
-			}
-		}
-	}
-	custom_button = { #Spellbook Change School Enchantment Button
-		name = magic_menu_button_change_school_enchantment_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_enchantment
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_enchantment_flag
-			}
-		}
-	}
 	custom_button = { #Spellbook Change School Abjuration Button
 		name = magic_menu_button_change_school_abjuration_spellbook
 		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = abjuration }
+			generic_any_spell_school_levels_trigger = { type = heir school = abjuration }
+			generic_any_spell_school_levels_trigger = { type = country school = abjuration }
+		}
 		effect = {
-			custom_tooltip = change_school_abjuration
 			hidden_effect = {
 				clear_spellbook_flags = yes
 				set_country_flag = magic_menu_spellbook_abjuration_flag
 			}
 		}
-	}
-	custom_button = { #Spellbook Change School Transmutation Button
-		name = magic_menu_button_change_school_transmutation_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_transmutation
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_transmutation_flag
-			}
-		}
-	}
-	custom_button = { #Spellbook Change School Evocation Button
-		name = magic_menu_button_change_school_evocation_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_evocation
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_evocation_flag
-			}
-		}
-	}
-	custom_button = { #Spellbook Change School Illusion Button
-		name = magic_menu_button_change_school_illusion_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_illusion
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_illusion_flag
-			}
-		}
-	}
-	custom_button = { #Spellbook Change School Necromancy Button
-		name = magic_menu_button_change_school_necromancy_spellbook
-		potential = { always = yes }
-		effect = {
-			custom_tooltip = change_school_necromancy
-			hidden_effect = {
-				clear_spellbook_flags = yes
-				set_country_flag = magic_menu_spellbook_necromancy_flag
-			}
-		}
+		tooltip = open_abjuration_spellbook_tt
 	}
 	custom_button = { #Spellbook Change School Conjuration Button
 		name = magic_menu_button_change_school_conjuration_spellbook
 		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = conjuration }
+			generic_any_spell_school_levels_trigger = { type = heir school = conjuration }
+			generic_any_spell_school_levels_trigger = { type = country school = conjuration }
+		}
 		effect = {
-			custom_tooltip = change_school_conjuration
 			hidden_effect = {
 				clear_spellbook_flags = yes
 				set_country_flag = magic_menu_spellbook_conjuration_flag
 			}
 		}
+		tooltip = open_conjuration_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Divination Button
+		name = magic_menu_button_change_school_divination_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = divination }
+			generic_any_spell_school_levels_trigger = { type = heir school = divination }
+			generic_any_spell_school_levels_trigger = { type = country school = divination }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_divination_flag
+			}
+		}
+		tooltip = open_divination_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Enchantment Button
+		name = magic_menu_button_change_school_enchantment_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = enchantment }
+			generic_any_spell_school_levels_trigger = { type = heir school = enchantment }
+			generic_any_spell_school_levels_trigger = { type = country school = enchantment }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_enchantment_flag
+			}
+		}
+		tooltip = open_enchantment_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Evocation Button
+		name = magic_menu_button_change_school_evocation_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = evocation }
+			generic_any_spell_school_levels_trigger = { type = heir school = evocation }
+			generic_any_spell_school_levels_trigger = { type = country school = evocation }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_evocation_flag
+			}
+		}
+		tooltip = open_evocation_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Illusion Button
+		name = magic_menu_button_change_school_illusion_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = illusion }
+			generic_any_spell_school_levels_trigger = { type = heir school = illusion }
+			generic_any_spell_school_levels_trigger = { type = country school = illusion }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_illusion_flag
+			}
+		}
+		tooltip = open_illusion_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Necromancy Button
+		name = magic_menu_button_change_school_necromancy_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = necromancy }
+			generic_any_spell_school_levels_trigger = { type = heir school = necromancy }
+			generic_any_spell_school_levels_trigger = { type = country school = necromancy }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_necromancy_flag
+			}
+		}
+		tooltip = open_necromancy_spellbook_tt
+	}
+	custom_button = { #Spellbook Change School Transmutation Button
+		name = magic_menu_button_change_school_transmutation_spellbook
+		potential = { always = yes }
+		trigger = {
+			generic_any_spell_school_levels_trigger = { type = ruler school = transmutation }
+			generic_any_spell_school_levels_trigger = { type = heir school = transmutation }
+			generic_any_spell_school_levels_trigger = { type = country school = transmutation }
+		}
+		effect = {
+			hidden_effect = {
+				clear_spellbook_flags = yes
+				set_country_flag = magic_menu_spellbook_transmutation_flag
+			}
+		}
+		tooltip = open_transmutation_spellbook_tt
 	}
 # End change spellbook buttons
 
