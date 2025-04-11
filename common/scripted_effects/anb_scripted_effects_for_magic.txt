@@ -2211,8 +2211,8 @@ kill_mil_homunculus = {
 ##############################
 
 #monthly mana calc, updates for all countries with mages
-update_mana_calc = {
-	update_mana_regen = yes
+regen_mana_effect = {
+	update_mana_regen_vars = yes
 	change_variable = {
 		which = currentMana
 		which = manaRegenerationRate
@@ -2225,7 +2225,52 @@ update_mana_calc = {
 	}
 }
 
+# Triggered by magic_estate.107
+update_mana_regen_vars = {
+	hidden_effect = {
+		export_to_variable = {
+			variable_name = manaRegenerationRate
+			value = modifier:mages_mana_regen
+		}
+		export_to_variable = {
+			variable_name = manaRegenerationMultiplier
+			value = modifier:mages_mana_regen_mult
+		}
+		change_variable = { manaRegenerationMultiplier	= 1 }
+		multiply_variable = {
+			which = manaRegenerationRate
+			which = manaRegenerationMultiplier
+		}
+		# 'mages_mana_capacity' is updated in 'cap_mana' so it can be called independently
+
+		#TODO Jothell - the undead military modifier is already INCREDIBLY stacked
+		# Possibly add a magic system modifier for the upkeep?
+		# Flavour it by reducing study experience gain as many mages are busy in the military
+		#
+			# 	if = {
+			# 		limit = { has_country_modifier = undead_military }
+			# 		change_variable = {
+			# 			which = manaRegenerationRate
+			# 			value = -0.5
+			# 		}
+			# 	}
+			#
+
+		#TODO Jothell if this is a country modifier then it doesn't need to be specifically accounted for
+		if = { #This single thing is the reason why we need to update mana regen each time (instead of changing the variable as appropriate)
+			limit = { has_country_flag = magic_artificery_mixed }
+			divide_variable = {
+				which = manaRegenerationRate
+				value = 2
+			}
+		}
+	}
+}
+
+
+
 update_mana_bar = {
+	#This prevents the framevar going negative and then showing 100% mana
 	if = { limit = { check_variable = { which = currentMana value = 0 } }
 		set_variable = { which = current_mana_percent which = currentMana }
 		divide_variable = { which = current_mana_percent which = manaCapacity }
@@ -2240,6 +2285,18 @@ update_mana_bar = {
 cap_mana = {
 	if = {
 		limit = {
+			NOT = {
+				check_variable = { currentMana = 0 }
+			}
+		}
+		log = "[This.GetName] has Mana out of bounds (currenaMana = [This.currentMana.GetValue]). Please contact Devs."
+	}
+	export_to_variable = {
+		variable_name = manaCapacity
+		value = modifier:mages_mana_capacity
+	}
+	if = {
+		limit = {
 			check_variable = {
 				which = currentMana
 				which = manaCapacity
@@ -2252,138 +2309,49 @@ cap_mana = {
 	}
 }
 
-#checking magical infrastructure to increase mana capacity.
-update_mana_cap = {
-	if = {
-		limit = { magical_infrastructure_level = { level = 5 } }
-		set_variable = {
-			which = manaCapacity
-			value = 400
-		}
+#for spells, MT effects, etc. use this. e.g. change_mana = { amount = 10 } to increase it by 10.
+change_mana = {
+	change_variable = {
+		which = currentMana
+		value = $amount$
 	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 4 } }
-		set_variable = {
-			which = manaCapacity
-			value = 350
-		}
-	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 3 } }
-		set_variable = {
-			which = manaCapacity
-			value = 300
-		}
-	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 2 } }
-		set_variable = {
-			which = manaCapacity
-			value = 250
-		}
-	}
-	else_if = {
-		limit = { magical_infrastructure_level = { level = 1 } }
-		set_variable = {
-			which = manaCapacity
-			value = 200
-		}
-	}
-	else = { #TODO Jothell remove fallback once infrastructure is in place
-		set_variable = {
-			which = manaCapacity
-			value = 200
-		}
-	}
+	cap_mana = yes
 }
 
-# Triggered by magic_estate.107
-update_mana_regen = {
-	hidden_effect = {
-		set_variable = {
-			which = manaRegenerationRate
-			value = 0.8
-		}
-		if = {
-			limit = { magical_infrastructure_level = { level = 5 } }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 1
-			}
-		}
-		else_if = {
-			limit = { magical_infrastructure_level = { level = 4 } }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 0.8
-			}
-		}
-		else_if = {
-			limit = { magical_infrastructure_level = { level = 3 } }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 0.6
-			}
-		}
-		else_if = {
-			limit = { magical_infrastructure_level = { level = 2 } }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 0.4
-			}
-		}
-		else_if = {
-			limit = { magical_infrastructure_level = { level = 1 } }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 0.2
-			}
-		}
 
-		if = {
-			limit = { has_country_modifier = necromancy_1_0_mod }
-			change_variable = {
-				which = manaRegenerationRate
-				value = 0.5
-			}
-		}
-
-		if = {
-			limit = { has_country_modifier = undead_military }
-			change_variable = {
-				which = manaRegenerationRate
-				value = -0.5
-			}
-		}
-
-		if = { #This single thing is the reason why we need to update mana regen each time (instead of changing the variable as appropriate)
-			limit = { has_country_flag = magic_artificery_mixed }
-			divide_variable = {
-				which = manaRegenerationRate
-				value = 2
-			}
-		}
-	}
-}
 
 #TODO Jothell how is the magic system initialised if magic becomes available to a country?
 initialize_magic_system = {
 	set_country_flag = magic_system_initialized
-	set_variable = {
-		which = currentMana
-		value = 0
-	}
+	#Initialise vars for Linux
+	set_variable = { currentMana = 0 }
+	set_variable = { manaRegenerationMultiplier	= 0 }
 	set_variable = { ruler_experience_modifier = 0 }
 	set_variable = { country_experience_modifier = 0 }
-	initialize_infrastructure = yes
-	update_mana_cap = yes
-	update_mana_regen = yes
-}
-
-initialize_infrastructure = {
+	
 	set_variable = { which = magicalInfrastructure value = 1 } #Base level
 	set_variable = { which = maximum_estate_spell_schools value = 4 } #Base value
 
+	add_country_modifier = {
+		name = magic_system_base_mana_modifier
+		duration = -1
+		hidden = yes
+	}
+
+	# set_variable = { ruler_experience_modifier = 0 }
+	# set_variable = { country_experience_modifier = 0 }
+	initialize_infrastructure = yes
+	cap_mana = yes
+	update_mana_regen_vars = yes
+}
+
+initialize_infrastructure = {
+
+
+	add_country_modifier = {
+		name = magical_infrastructure_1
+		duration = -1
+	}
 	#Tag specific infrastructure setup
 	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
 	if = {
@@ -2392,15 +2360,6 @@ initialize_infrastructure = {
 		level_up_magical_infrastructure = yes
 		level_up_magical_infrastructure = yes
 	}
-}
-
-#for spells, MT effects, etc. use this. e.g. change_mana = { amount = 10 } to increase it by 10.
-change_mana = {
-	change_variable = {
-		which = currentMana
-		value = $amount$
-	}
-	cap_mana = yes
 }
 
 calc_estate_spell_levels = {
@@ -2878,12 +2837,20 @@ magic_project_level_up = {
 	magic_activity_abort_all_effect = yes
 }
 
+#Finish project effect
 magic_infrastructure_level_up = {
 	custom_tooltip = level_up_magical_infrastructure_tt
-	change_variable = { which = magicalInfrastructure value = 1 }
-	change_variable = { which = maximum_estate_spell_schools value = 2 }
-	update_mana_cap = yes
-	update_mana_regen = yes
+	trigger_switch = {
+		on_trigger = has_country_modifier
+		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
+		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
+		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
+		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
+	}
+	# change_variable = { which = magicalInfrastructure value = 1 }
+	# change_variable = { which = maximum_estate_spell_schools value = 2 }
+	cap_mana = yes
+	update_mana_regen_vars = yes
 	magic_activity_abort_all_effect = yes
 }
 
@@ -3028,14 +2995,21 @@ update_study_progress_bar = {
 
 
 #TODO Jothell put this into use
-# Also check "maximum_estate_spell_schools"
-level_up_magical_infrastructure = {
-	custom_tooltip = level_up_magical_infrastructure_tt
-	change_variable = { which = magicalInfrastructure value = 1 }
-	change_variable = { which = maximum_estate_spell_schools value = 2 }
-	update_mana_cap = yes
-	update_mana_regen = yes
-}
+# # Also check "maximum_estate_spell_schools"
+# level_up_magical_infrastructure = {
+# 	trigger_switch = {
+# 		on_trigger = has_country_modifier
+# 		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
+# 		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
+# 		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
+# 		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
+# 	}
+# 	custom_tooltip = level_up_magical_infrastructure_tt
+# 	# change_variable = { which = magicalInfrastructure value = 1 }
+# 	# change_variable = { which = maximum_estate_spell_schools value = 2 }
+# 	# cap_mana = yes
+# 	# update_mana_regen_vars = yes
+# }
 
 ### Spells ###
 
@@ -3752,12 +3726,12 @@ necromancy_0_0_effect = {
 		}
 	}
 }
+
+#TODO Jothell note: removed the update mana event because the mana effect was added to the spell modifier
 necromancy_1_0_effect = {
 	custom_tooltip = necromancy_1_0_spell
 	add_country_modifier = { name = necromancy_1_0_mod duration = 3650 }
-	custom_tooltip = necromancy_1_0_spell_effect_tt
-	update_mana_regen = yes
-	hidden_effect = { country_event = { id = magic_estate.107 days = 3651 } }
+	# custom_tooltip = necromancy_1_0_spell_effect_tt
 }
 necromancy_1_1_effect = {
 	custom_tooltip = necromancy_1_1_spell
@@ -3876,7 +3850,7 @@ necromancy_3_0_effect = {
 		}
 	}
 
-	update_mana_regen = yes
+	update_mana_regen_vars = yes
 }
 
 transmutation_0_0_effect = {
@@ -4118,6 +4092,144 @@ update_patron_study_experience_modifier = { #Check what the actual buff/malus is
 	else_if = { limit = { has_ruler_flag = patron_disfavored_$school$ } hidden_effect = { change_variable = { ruler_experience_modifier = -25 } } custom_tooltip = patron_magic_xp_mod_neg }
 }
 
-
+#Recreating this here rn to not break too many things
+create_war_wizard_interaction = {
+	custom_tooltip = war_wizard_tooltip
+	hidden_effect = {
+		set_saved_name = {
+			key = root_name_male
+			type = advisor
+			scope = ROOT
+		}
+		set_saved_name = {
+			key = root_name_female
+			type = advisor
+			female = yes
+			scope = ROOT
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = battlemage_academy_1
+					has_country_flag = battlemage_academy_2
+					has_country_flag = battlemage_academy_3
+				}
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 7
+						manuever = 4
+						siege = 1
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 7
+						manuever = 4
+						siege = 1
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_1
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 8
+						manuever = 5
+						siege = 1
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 8
+						manuever = 5
+						siege = 1
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_2
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 8
+						manuever = 6
+						siege = 2
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 8
+						manuever = 6
+						siege = 2
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_3
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 9
+						manuever = 7
+						siege = 3
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 9
+						manuever = 7
+						siege = 3
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		clear_saved_name = root_name_male
+		clear_saved_name = root_name_female
+	}
+}
 
 
