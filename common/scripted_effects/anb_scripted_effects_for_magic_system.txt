@@ -1,0 +1,1137 @@
+
+# Country flags and ruler flags are ENTIRELY separate things.
+# You can set a country flag named "A" and a ruler flag named "A" and they will be tracked separately.
+# A ruler flag named "A" will NOT fulfill the requirements for has_country_flag = A,
+# and the clr_country_flag effect will NOT clear ruler flags.
+
+# The same, however, is NOT true of modifiers.
+# A ruler modifier "A" WILL fulfill the requirements for has_country_modifier = A.
+# It can be removed with the remove_country_modifier effect (there is no remove_ruler_modfier effect).
+# A country modifier will NOT count as a ruler modifier for the purposes of has_ruler_modfier trigger,
+# but you ALSO cannot use the add_ruler_modifier effect in any meaningful way while you have a country modifier of the same name.
+
+##############################
+### NEW SYSTEM STUFF BELOW ###
+##############################
+
+#TODO Jothell how is the magic system initialised if magic becomes available to a country?
+initialize_magic_system = {
+	set_country_flag = magic_system_initialized
+	#Initialise vars for Linux
+	set_variable = { currentMana = 0 }
+	set_variable = { manaRegenerationMultiplier	= 0 }
+	set_variable = { ruler_experience_modifier = 0 }
+	set_variable = { country_experience_modifier = 0 }
+	
+	# set_variable = { which = magicalInfrastructure value = 1 } #Base level
+	# set_variable = { which = maximum_estate_spell_schools value = 4 } #Base value
+
+	add_country_modifier = {
+		name = magic_system_base_mana_modifier
+		duration = -1
+		hidden = yes
+	}
+
+	initialize_infrastructure = yes
+	cap_mana = yes
+	update_mana_regen_vars = yes
+}
+
+initialize_infrastructure = {
+	add_country_modifier = {
+		name = magical_infrastructure_1
+		duration = -1
+	}
+	#Tag specific infrastructure setup
+	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
+	if = {
+		limit = { tag = A85 } #Magisterium
+		# One level each call - includes total estate school levels
+		# level_up_magical_infrastructure = yes
+		# level_up_magical_infrastructure = yes
+		magic_infrastructure_level_up = yes
+		magic_infrastructure_level_up = yes
+	}
+}
+
+#monthly mana calc, updates for all countries with mages
+regen_mana_effect = {
+	update_mana_regen_vars = yes
+	change_variable = {
+		which = currentMana
+		which = manaRegenerationRate
+	}
+	cap_mana = yes #prevent mana overflow. We'll be doing this a lot.
+
+	#Update player mana bar
+	if = { limit = { ai = no }
+		update_mana_bar = yes
+	}
+}
+
+# Triggered by magic_estate.107
+update_mana_regen_vars = {
+	hidden_effect = {
+		export_to_variable = {
+			variable_name = manaRegenerationRate
+			value = modifier:mages_mana_regen
+		}
+		export_to_variable = {
+			variable_name = manaRegenerationMultiplier
+			value = modifier:mages_mana_regen_mult
+		}
+		change_variable = { manaRegenerationMultiplier	= 1 }
+		multiply_variable = {
+			which = manaRegenerationRate
+			which = manaRegenerationMultiplier
+		}
+		# 'mages_mana_capacity' is updated in 'cap_mana' so it can be called independently
+
+		#TODO Jothell - the undead military modifier is already INCREDIBLY stacked
+		# Possibly add a magic system modifier for the upkeep?
+		# Flavour it by reducing study experience gain as many mages are busy in the military
+		#
+			# 	if = {
+			# 		limit = { has_country_modifier = undead_military }
+			# 		change_variable = {
+			# 			which = manaRegenerationRate
+			# 			value = -0.5
+			# 		}
+			# 	}
+			#
+
+		#TODO Jothell if this is a country modifier then it doesn't need to be specifically accounted for
+		if = { #This single thing is the reason why we need to update mana regen each time (instead of changing the variable as appropriate)
+			limit = { has_country_flag = magic_artificery_mixed }
+			divide_variable = {
+				which = manaRegenerationRate
+				value = 2
+			}
+		}
+	}
+}
+
+#for if mana exceeds mana capacity
+cap_mana = {
+	if = {
+		limit = {
+			NOT = {
+				check_variable = { currentMana = 0 }
+			}
+		}
+		log = "[This.GetName] has Mana out of bounds (currenaMana = [This.currentMana.GetValue]). Please contact Devs."
+	}
+	export_to_variable = {
+		variable_name = manaCapacity
+		value = modifier:mages_mana_capacity
+	}
+	if = {
+		limit = {
+			check_variable = {
+				which = currentMana
+				which = manaCapacity
+			}
+		}
+		set_variable = {
+			which = currentMana
+			which = manaCapacity
+		}
+	}
+}
+
+#for spells, MT effects, etc. use this. e.g. change_mana = { amount = 10 } to increase it by 10.
+change_mana = {
+	change_variable = {
+		which = currentMana
+		value = $amount$
+	}
+	cap_mana = yes
+	update_mana_bar = yes
+}
+
+update_mana_bar = {
+	#This prevents the framevar going negative and then showing 100% mana
+	if = { limit = { check_variable = { which = currentMana value = 0 } }
+		set_variable = { which = current_mana_percent which = currentMana }
+		divide_variable = { which = current_mana_percent which = manaCapacity }
+		multiply_variable = { current_mana_percent = 100 }
+	}
+	else = {
+		set_variable = { current_mana_percent = 0 }
+	}
+}
+
+calc_estate_spell_levels = {
+	set_variable = { estate_spell_schools = 0 }
+	calc_estate_spell_levels_sub = { school = abjuration }
+	calc_estate_spell_levels_sub = { school = conjuration }
+	calc_estate_spell_levels_sub = { school = divination }
+	calc_estate_spell_levels_sub = { school = enchantment }
+	calc_estate_spell_levels_sub = { school = evocation }
+	calc_estate_spell_levels_sub = { school = illusion }
+	calc_estate_spell_levels_sub = { school = necromancy }
+	calc_estate_spell_levels_sub = { school = transmutation }
+}
+calc_estate_spell_levels_sub = {
+	if = { limit = { has_country_flag = $school$_1 } change_variable = { estate_spell_schools = 1 } }
+	if = { limit = { has_country_flag = $school$_2 } change_variable = { estate_spell_schools = 2 } }
+	if = { limit = { has_country_flag = $school$_3 } change_variable = { estate_spell_schools = 3 } }
+}
+generic_calc_spell_levels = {
+	set_variable = { $type$_spell_schools = 0 }
+	generic_calc_spell_levels_sub = { school = abjuration type = $type$ }
+	generic_calc_spell_levels_sub = { school = conjuration type = $type$ }
+	generic_calc_spell_levels_sub = { school = divination type = $type$ }
+	generic_calc_spell_levels_sub = { school = enchantment type = $type$ }
+	generic_calc_spell_levels_sub = { school = evocation type = $type$ }
+	generic_calc_spell_levels_sub = { school = illusion type = $type$ }
+	generic_calc_spell_levels_sub = { school = necromancy type = $type$ }
+	generic_calc_spell_levels_sub = { school = transmutation type = $type$ }
+}
+generic_calc_spell_levels_sub = {
+	if = { limit = { has_$type$_flag = $school$_1 } change_variable = { $type$_spell_schools = 1 } }
+	if = { limit = { has_$type$_flag = $school$_2 } change_variable = { $type$_spell_schools = 2 } }
+	if = { limit = { has_$type$_flag = $school$_3 } change_variable = { $type$_spell_schools = 3 } }
+}
+
+magic_activity_selection_clear_school_flags = {
+	clr_country_flag = magic_activity_setup_abjuration_flag
+	clr_country_flag = magic_activity_setup_conjuration_flag
+	clr_country_flag = magic_activity_setup_divination_flag
+	clr_country_flag = magic_activity_setup_enchantment_flag
+	clr_country_flag = magic_activity_setup_evocation_flag
+	clr_country_flag = magic_activity_setup_illusion_flag
+	clr_country_flag = magic_activity_setup_necromancy_flag
+	clr_country_flag = magic_activity_setup_transmutation_flag
+}
+magic_activity_selection_clear_type_flags = {
+	clr_country_flag = magic_activity_setup_ruler_flag
+	clr_country_flag = magic_activity_setup_heir_flag
+	clr_country_flag = magic_activity_setup_estate_flag
+}
+magic_activity_selection_clear_activity_flags = {
+	clr_country_flag = magic_activity_setup_study_activity_flag
+	clr_country_flag = magic_activity_setup_project_activity_flag
+	clr_country_flag = magic_activity_setup_infrastructure_activity_flag
+}
+magic_activity_selection_set_project_flags_effect = {
+	set_country_flag = magic_activity_setup_$school$_flag
+	set_country_flag = magic_activity_setup_$project$_flag
+}
+
+magic_activity_finish_clr_type_flags = {
+	#Activity type
+	clr_$type$_flag = magic_study
+	clr_$type$_flag = magic_study_activity
+	clr_$type$_flag = magic_project_activity
+	clr_$type$_flag = magic_infrastructure_activity
+	#School
+	clr_$type$_flag = abjuration_activity
+	clr_$type$_flag = conjuration_activity
+	clr_$type$_flag = divination_activity
+	clr_$type$_flag = enchantment_activity
+	clr_$type$_flag = evocation_activity
+	clr_$type$_flag = illusion_activity
+	clr_$type$_flag = necromancy_activity
+	clr_$type$_flag = transmutation_activity
+	clr_$type$_flag = studying_abjuration
+	clr_$type$_flag = studying_conjuration
+	clr_$type$_flag = studying_divination
+	clr_$type$_flag = studying_enchantment
+	clr_$type$_flag = studying_evocation
+	clr_$type$_flag = studying_illusion
+	clr_$type$_flag = studying_necromancy
+	clr_$type$_flag = studying_transmutation
+	#Project
+	clr_country_flag = magical_fortress_project
+	clr_country_flag = elite_elementals_project
+	clr_country_flag = orb_of_omniscience_project
+	clr_country_flag = enchant_legendary_artifact_project
+	clr_country_flag = battlemage_academy_project
+	clr_country_flag = theatre_of_simulacra_project
+	clr_country_flag = lichdom_project
+	clr_country_flag = homunculus_project
+	#Experience
+	set_variable = { $type$_study_experience = 0 }
+	set_variable = { magic_experience_target = 0 }
+	set_variable = { current_experience_percent = 0 }
+}
+magic_activity_abort_all_effect = {
+	magic_activity_finish_clr_type_flags = { type = ruler }
+	magic_activity_finish_clr_type_flags = { type = heir }
+	magic_activity_finish_clr_type_flags = { type = country }
+}
+
+
+magic_study_selection_set_school_effect = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		magic_activity_setup_abjuration_flag = { magic_set_flag_on_target = { flag = studying_abjuration } }
+		magic_activity_setup_conjuration_flag = { magic_set_flag_on_target = { flag = studying_conjuration } }
+		magic_activity_setup_divination_flag = { magic_set_flag_on_target = { flag = studying_divination } }
+		magic_activity_setup_enchantment_flag = { magic_set_flag_on_target = { flag = studying_enchantment } }
+		magic_activity_setup_evocation_flag = { magic_set_flag_on_target = { flag = studying_evocation } }
+		magic_activity_setup_illusion_flag = { magic_set_flag_on_target = { flag = studying_illusion } }
+		magic_activity_setup_necromancy_flag = { magic_set_flag_on_target = { flag = studying_necromancy } }
+		magic_activity_setup_transmutation_flag = { magic_set_flag_on_target = { flag = studying_transmutation } }
+	}
+}
+magic_set_flag_on_target = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		magic_activity_setup_estate_flag = { set_country_flag = $flag$ }  # $school$_activity }
+		magic_activity_setup_ruler_flag = { set_ruler_flag = $flag$ }  # $school$_activity }
+		magic_activity_setup_heir_flag = { set_heir_flag = $flag$ }  # $school$_activity }
+	}
+}
+
+magic_study_selection_set_study_level_first = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		magic_activity_setup_abjuration_flag = { magic_study_selection_set_study_level_second = { school = abjuration } }
+		magic_activity_setup_conjuration_flag = { magic_study_selection_set_study_level_second = { school = conjuration } }
+		magic_activity_setup_divination_flag = { magic_study_selection_set_study_level_second = { school = divination } }
+		magic_activity_setup_enchantment_flag = { magic_study_selection_set_study_level_second = { school = enchantment } }
+		magic_activity_setup_evocation_flag = { magic_study_selection_set_study_level_second = { school = evocation } }
+		magic_activity_setup_illusion_flag = { magic_study_selection_set_study_level_second = { school = illusion } }
+		magic_activity_setup_necromancy_flag = { magic_study_selection_set_study_level_second = { school = necromancy } }
+		magic_activity_setup_transmutation_flag = { magic_study_selection_set_study_level_second = { school = transmutation } }
+	}
+}
+
+magic_study_selection_set_study_level_second = {
+	set_country_flag = $school$_activity
+	##Shamelessly copied 3x
+	if = { limit = { has_country_flag = magic_activity_setup_estate_flag }
+		if = {
+			limit = { has_country_flag = $school$_3 } #if already legendary, only return a tooltip
+			custom_tooltip = tooltip_has_$school$_3
+		}
+		else = {
+			set_country_flag = magic_study
+			if = {
+				limit = { has_country_flag = $school$_2 } #if renowned, start legendary study
+				set_country_flag = magical_study_3
+			}
+			else_if = {
+				limit = { has_country_flag = $school$_1 } #if proficient, start renowned study
+				set_country_flag = magical_study_2
+			}
+			else = { #if novice, start proficient study
+				set_country_flag = magical_study_1
+			}
+		}
+	}
+	else_if = { limit = { has_country_flag = magic_activity_setup_ruler_flag }
+		if = {
+			limit = { has_ruler_flag = $school$_3 } #if already legendary, only return a tooltip
+			custom_tooltip = tooltip_has_$school$_3
+		}
+		else = {
+			set_ruler_flag = magic_study
+			if = {
+				limit = { has_ruler_flag = $school$_2 } #if renowned, start legendary study
+				set_ruler_flag = magical_study_3
+			}
+			else_if = {
+				limit = { has_ruler_flag = $school$_1 } #if proficient, start renowned study
+				set_ruler_flag = magical_study_2
+			}
+			else = { #if novice, start proficient study
+				set_ruler_flag = magical_study_1
+			}
+		}
+	}
+	else_if = { limit = { has_country_flag = magic_activity_setup_heir_flag }
+		if = {
+			limit = { has_heir_flag = $school$_3 } #if already legendary, only return a tooltip
+			custom_tooltip = tooltip_has_$school$_3
+		}
+		else = {
+			set_heir_flag = magic_study
+			if = {
+				limit = { has_heir_flag = $school$_2 } #if renowned, start legendary study
+				set_heir_flag = magical_study_3
+			}
+			else_if = {
+				limit = { has_heir_flag = $school$_1 } #if proficient, start renowned study
+				set_heir_flag = magical_study_2
+			}
+			else = { #if novice, start proficient study
+				set_heir_flag = magical_study_1
+			}
+		}
+	}
+}
+
+
+start_magical_research = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		magic_activity_setup_study_activity_flag = { start_study_activity = yes }
+		magic_activity_setup_project_activity_flag = { start_project_activity = yes }
+		magic_activity_setup_infrastructure_activity_flag = { start_infrastructure_activity = yes }
+	}
+}
+start_study_activity = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		magic_activity_setup_ruler_flag = { start_study_activity_sub = { type = ruler } }
+		magic_activity_setup_heir_flag = { start_study_activity_sub = { type = heir } }
+		magic_activity_setup_estate_flag = { start_study_activity_sub = { type = country } }
+	}
+}
+
+start_study_activity_sub = { #type = [ruler,heir,country]
+	set_$type$_flag = magic_study
+	set_country_flag = magic_study_activity
+	set_magic_experience_target = { type = $type$ }
+	set_variable = { which = $type$_study_experience value = 0 }
+}
+start_project_activity = { #Country only
+	set_country_flag = magic_study
+	set_country_flag = magic_project_activity
+	set_magic_experience_target = { type = country }
+	set_variable = { which = country_study_experience value = 0 }
+}
+start_infrastructure_activity = { #Country only
+	set_country_flag = magic_study
+	set_country_flag = magic_infrastructure_activity #same effects probably?
+	set_magic_experience_target = { type = country infrastructure = yes }
+	set_variable = { which = country_study_experience value = 0 }
+}
+
+
+# example use case: start_magic_study = { type = country school = abjuration }
+# the three acceptable types are country, ruler, and heir.
+start_magic_study = {
+	if = {
+		limit = { has_$type$_flag = $school$_3 } #if already legendary, only return a tooltip
+		custom_tooltip = tooltip_has_$school$_3
+	}
+	else = {
+		set_$type$_flag = magic_study
+		# set_$type$_flag = studying_$school$
+		if = {
+			limit = { has_$type$_flag = $school$_2 } #if renowned, start legendary study
+			set_$type$_flag = magical_study_3
+		}
+		else_if = {
+			limit = { has_$type$_flag = $school$_1 } #if proficient, start renowned study
+			set_$type$_flag = magical_study_2
+		}
+		else = { #if novice, start proficient study
+			set_$type$_flag = magical_study_1
+		}
+
+		set_magic_experience_target = { type = $type$ }
+		set_variable = { which = $type$_study_experience value = 0 }
+	}
+}
+
+# Tooltips handle values: 1,2,5,7,10,12,15,17,20,25,33,50,100
+# Tooltips handle sources: government, mission, ruler, provinces, temporary
+# Everything will be consolidated into one tooltip per source per type
+# e.g. if you have a mission that gives +20% country and another one that gives -10% country, the tooltip will read +10%
+# you can make more sources but it's complicated
+
+update_magic_study_experience_modifier = {
+	[[value]
+		change_variable = { $type$_experience_modifier = $value$ }				# This handle negative. Value must be whole, so +10% = 10
+#		change_variable = { $source$_$type$_experience_modifier = $value$ }
+		if = {
+			limit = { 6168 = { base_tax = $value$ } }	#Returns true if $value$ is 0 or less, returns false otherwise
+#			custom_tooltip = add_$source$_$type$_magic_study_modifier_$value$_tt
+		}
+#		else = { custom_tooltip = remove_$source$_$type$_magic_study_modifier_$value$_tt }
+	]
+	if = {
+		limit = { NOT = { check_variable = { $type$_experience_modifier = -100 } } }		# We never go under -100%
+		set_variable = { $type$_experience_modifier = -100 }
+	}
+}
+
+
+# executed by magic_study.100 when magic_study_done = yes
+finish_magic_study = {
+	if = { limit = { has_country_flag = magic_study_activity }
+		if = {
+			limit = { has_ruler_flag = magic_study }
+			finish_magic_study_sub_effect = { type = ruler }
+		}
+		else_if = {
+			limit = { has_heir_flag = magic_study }
+			finish_magic_study_sub_effect = { type = heir }
+		}
+		else_if = {
+			limit = { has_country_flag = magic_study }
+			finish_magic_study_sub_effect = { type = country }
+		}
+	}
+	else_if = { limit = { has_country_flag = magic_project_activity }
+		finish_magic_project_sub = { type = country }
+		set_variable = { country_study_experience = 0 }
+	}
+	else_if = { limit = { has_country_flag = magic_infrastructure_activity }
+		magic_infrastructure_level_up = yes
+		set_variable = { country_study_experience = 0 }
+	}
+	
+	magic_activity_abort_all_effect = yes
+	calc_estate_spell_levels = yes
+	country_event = { id = magic_study.2 }
+}
+
+finish_magic_study_sub_effect = {
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+	
+		studying_abjuration = { magic_study_level_up = { type = $type$ school = abjuration } }
+		studying_conjuration = { magic_study_level_up = { type = $type$ school = conjuration } }
+		studying_divination = { magic_study_level_up = { type = $type$ school = divination } }
+		studying_enchantment = { magic_study_level_up = { type = $type$ school = enchantment } }
+		studying_evocation = { magic_study_level_up = { type = $type$ school = evocation } }
+		studying_illusion = { magic_study_level_up = { type = $type$ school = illusion } }
+		studying_necromancy = { magic_study_level_up = { type = $type$ school = necromancy } }
+		studying_transmutation = { magic_study_level_up = { type = $type$ school = transmutation } }
+	}
+}
+
+magic_study_level_up = {
+	set_variable = { $type$_study_experience = 0 }
+	if = {
+		limit = { has_$type$_flag = $school$_2 }
+		set_$type$_flag = $school$_3
+		clr_$type$_flag = $school$_2
+		custom_tooltip = tooltip_$school$_3_level_up
+	}
+	else_if = {
+		limit = { has_$type$_flag = $school$_1 }
+		set_$type$_flag = $school$_2
+		clr_$type$_flag = $school$_1
+		custom_tooltip = tooltip_$school$_2_level_up
+	}
+	#TODO Jothell - `limit = { is_abjuration_0 = yes }` was added to fix tooltip, check it in-game
+	# f5e7d6d3d9803d0373d83e4e0530a3c6b64b4351
+	else_if = {
+		limit = { NOT = { has_$type$_flag = $school$_3 } }
+		set_$type$_flag = $school$_1
+		custom_tooltip = tooltip_$school$_1_level_up
+	}
+
+	if = {
+		limit = { has_ruler_flag = magic_study }
+		ruler_clear_saved_spell_schools = yes
+		ruler_save_spell_schools = yes
+	}
+
+	if = {
+		limit = {
+			has_$type$_flag = magic_study
+			has_$type$_flag = studying_$school$
+		}
+		magic_study_clear_study_effects = yes
+	}
+}
+
+finish_magic_project_sub = {
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+	
+		magical_fortress_project = { magic_project_level_up = { type = $type$ project = magical_fortress } }
+		elite_elementals_project = { magic_project_level_up = { type = $type$ project = elite_elementals } }
+		orb_of_omniscience_project = { magic_project_level_up = { type = $type$ project = orb_of_omniscience } }
+		enchant_legendary_artifact_project = { magic_project_level_up = { type = $type$ project = enchant_legendary_artifact } }
+		battlemage_academy_project = { magic_project_level_up = { type = $type$ project = battlemage_academy } }
+		theatre_of_simulacra_project = { magic_project_level_up = { type = $type$ project = theatre_of_simulacra } }
+		lichdom_project = { magic_project_level_up = { type = $type$ project = lichdom } }
+		homunculus_project = { magic_project_level_up = { type = $type$ project = homunculus } }
+		unique_1_project = { magic_project_level_up = { type = $type$ project = unique_project_1_flag } }
+		unique_2_project = { magic_project_level_up = { type = $type$ project = unique_project_2_flag } }
+		unique_3_project = { magic_project_level_up = { type = $type$ project = unique_project_3_flag } }
+		unique_4_project = { magic_project_level_up = { type = $type$ project = unique_project_4_flag } }
+		unique_5_project = { magic_project_level_up = { type = $type$ project = unique_project_5_flag } }
+		unique_6_project = { magic_project_level_up = { type = $type$ project = unique_project_6_flag } }
+		unique_7_project = { magic_project_level_up = { type = $type$ project = unique_project_7_flag } }
+		unique_8_project = { magic_project_level_up = { type = $type$ project = unique_project_8_flag } }
+	}
+}
+
+magic_project_level_up = {
+	if = {
+		limit = { has_country_flag = $project$_4 }
+		clr_$type$_flag = $project$_4
+		set_$type$_flag = $project$_5
+		custom_tooltip = tooltip_$project$_5_level_up
+	}
+	if = {
+		limit = { has_country_flag = $project$_3 }
+		clr_$type$_flag = $project$_3
+		set_$type$_flag = $project$_4
+		custom_tooltip = tooltip_$project$_4_level_up
+	}
+	else_if = {
+		limit = { has_$type$_flag = $project$_2 }
+		clr_$type$_flag = $project$_2
+		set_$type$_flag = $project$_3
+		custom_tooltip = tooltip_$project$_3_level_up
+	}
+	else_if = {
+		limit = { has_$type$_flag = $project$_1 }
+		clr_$type$_flag = $project$_1
+		set_$type$_flag = $project$_2
+		custom_tooltip = tooltip_$project$_2_level_up
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = $project$_5 } }
+		set_$type$_flag = $project$_1
+		custom_tooltip = tooltip_$project$_1_level_up
+	}
+	$project$_project_effect = { type = $type$ project = $project$ }
+	calc_completed_projects = yes
+	magic_activity_abort_all_effect = yes
+}
+
+#Finish project effect
+magic_infrastructure_level_up = {
+	custom_tooltip = level_up_magical_infrastructure_tt
+	trigger_switch = {
+		on_trigger = has_country_modifier
+		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
+		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
+		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
+		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
+	}
+	cap_mana = yes
+	update_mana_regen_vars = yes
+	magic_activity_abort_all_effect = yes
+}
+
+calc_completed_projects = {
+	set_variable = { magic_projects_completed = 0 }
+	if = { limit = { has_country_flag = magical_fortress_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = elite_elementals_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = orb_of_omniscience_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = enchant_legendary_artifact_3 } 	change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = battlemage_academy_3 } 			change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = theatre_of_simulacra_3 } 		change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = lichdom_3 } 					change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = homunculus_3 } 					change_variable = { magic_projects_completed = 1 } }
+}
+
+#TODO Jothell add magic_artificery_mixed multiply by 0.8
+passive_study_progress = {
+	export_to_variable = {
+		variable_name = magic_study_xp
+		value = modifier:mages_experience_gain
+	}
+	export_to_variable = {
+		variable_name = ruler_experience_modifier
+		value = modifier:mages_ruler_experience_mod
+	}
+	export_to_variable = {
+		variable_name = country_experience_modifier
+		value = modifier:mages_estate_experience_mod
+	}
+	calc_school_experience_modifiers = yes
+	if = {
+		limit = { has_country_flag = magic_artificery_mixed }
+		multiply_variable = {
+			which = magic_study_xp
+			value = 0.8
+		}
+	}
+
+	if = {
+		limit = { has_ruler_flag = magic_study }
+		if = {
+			limit = { is_long_lived_ruler = yes }
+			multiply_variable = {
+				which = magic_study_xp
+				value = 0.5
+			}
+		}
+		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+		if = {
+			limit = {
+				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
+			}
+			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = magic_study_xp which = expFoo }
+		}
+		change_variable = {
+			which = ruler_study_experience
+			which = magic_study_xp
+		}
+		update_study_progress_bar = { type = ruler }
+	}
+
+	else_if = {
+		limit = { has_heir_flag = magic_study }
+		if = {
+			limit = {
+				is_long_lived_heir = yes
+			}
+			multiply_variable = {
+				which = magic_study_xp
+				value = 0.5
+			}
+		}
+		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+		if = {
+			limit = {
+				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
+			}
+			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = magic_study_xp which = expFoo }
+		}
+		change_variable = {
+			which = heir_study_experience
+			which = magic_study_xp
+		}
+		update_study_progress_bar = { type = heir }
+	}
+
+	else_if = {
+		limit = { has_country_flag = magic_study }
+		divide_variable = { which = magic_study_xp value = 3 }
+		change_variable = { which = country_experience_modifier which = school_experience_modifier }
+		if = {
+			limit = {
+				NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } # XP modifier not 0
+			}
+			set_variable = { which = expFoo which = country_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = magic_study_xp which = expFoo }
+		}
+		change_variable = {
+			which = country_study_experience
+			which = magic_study_xp
+		}
+		update_study_progress_bar = { type = country }
+	}
+	hidden_effect = {
+		country_event = { id = magic_study.100 }
+	}
+}
+
+calc_school_experience_modifiers = {
+	set_variable = { school_experience_modifier = 0 }
+	if = { limit = { has_country_flag = abjuration_activity }
+		calc_school_experience_modifers_effect = { school = abjuration } }
+	if = { limit = { has_country_flag = conjuration_activity }
+		calc_school_experience_modifers_effect = { school = conjuration } }
+	if = { limit = { has_country_flag = divination_activity }
+		calc_school_experience_modifers_effect = { school = divination } }
+	if = { limit = { has_country_flag = enchantment_activity }
+		calc_school_experience_modifers_effect = { school = enchantment } }
+	if = { limit = { has_country_flag = evocation_activity }
+		calc_school_experience_modifers_effect = { school = evocation } }
+	if = { limit = { has_country_flag = illusion_activity }
+		calc_school_experience_modifers_effect = { school = illusion } }
+	if = { limit = { has_country_flag = necromancy_activity }
+		calc_school_experience_modifers_effect = { school = necromancy } }
+	if = { limit = { has_country_flag = transmutation_activity }
+		calc_school_experience_modifers_effect = { school = transmutation } }
+}
+calc_school_experience_modifers_effect = {
+	export_to_variable = {
+		variable_name = expFoo
+		value = modifier:$school$_experience_mod
+	}
+	change_variable = { which = school_experience_modifier which = expFoo }
+}
+
+
+set_magic_experience_target = {
+	set_variable = { country_experience_target = 100 } #Base experience
+	set_variable = { expFoo = 250 } 				#Increase per level
+	## Maybe target level will be set elsewhere as a variable
+	#For now:
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+		magical_study_1 = { multiply_variable = { expFoo = 1 } } # Lvl 0 to 1
+		magical_study_2 = { multiply_variable = { expFoo = 2 } } # Lvl 1 to 2
+		magical_study_3 = { multiply_variable = { expFoo = 3 } } # Lvl 2 to 3
+		magical_study_4 = { multiply_variable = { expFoo = 4 } } # Lvl 3 to 4
+		magical_study_5 = { multiply_variable = { expFoo = 5 } } # Lvl 4 to 5
+	}
+	change_variable = { which = magic_experience_target which = expFoo }
+	[[infrastructure]
+		set_variable = { magic_experience_target = 400 } #Base experience
+		set_variable = { which = expFoo which = magicalInfrastructure }#Increase per level
+		change_variable = { expFoo = 1 }
+		multiply_variable = { which = magic_experience_target which = expFoo }
+	]
+	update_study_progress_bar = { type = $type$ }
+}
+
+update_study_progress_bar = {
+	if = { limit = { ai = no }
+		set_variable = { which = expFoo which = $type$_study_experience }
+		divide_variable = { which = expFoo which = magic_experience_target }
+		multiply_variable = { expFoo = 100 }
+		set_variable = { which = current_experience_percent which = expFoo }
+	}
+}
+
+
+#TODO Jothell put this into use
+# # Also check "maximum_estate_spell_schools"
+# level_up_magical_infrastructure = {
+# 	trigger_switch = {
+# 		on_trigger = has_country_modifier
+# 		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
+# 		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
+# 		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
+# 		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
+# 	}
+# 	custom_tooltip = level_up_magical_infrastructure_tt
+# 	# change_variable = { which = magicalInfrastructure value = 1 }
+# 	# change_variable = { which = maximum_estate_spell_schools value = 2 }
+# 	# cap_mana = yes
+# 	# update_mana_regen_vars = yes
+# }
+
+
+
+##############
+# UI Scripted effects
+#################
+
+clear_spellbook_flags = {
+	clr_country_flag = magic_menu_spellbook_abjuration_flag
+	clr_country_flag = magic_menu_spellbook_conjuration_flag
+	clr_country_flag = magic_menu_spellbook_divination_flag
+	clr_country_flag = magic_menu_spellbook_enchantment_flag
+	clr_country_flag = magic_menu_spellbook_evocation_flag
+	clr_country_flag = magic_menu_spellbook_illusion_flag
+	clr_country_flag = magic_menu_spellbook_necromancy_flag
+	clr_country_flag = magic_menu_spellbook_transmutation_flag
+}
+
+new_update_magic_study_experience_modifier = { }
+#Jothell is kludging
+# Kludging a mad tooltip
+# TBD
+# new_update_magic_study_experience_modifier = {
+# 	hidden_effect = {
+# 		set_variable = { general_experience_modifier = 0 }
+# 	}
+# 	custom_tooltip = magic_xp_general_tt
+# 	#Generic buffs
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_10_mod_1 } hidden_effect = { change_variable = { general_experience_modifier = 10 } } custom_tooltip = general_magic_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_10_mod_2 } hidden_effect = { change_variable = { general_experience_modifier = 10 } } custom_tooltip = general_magic_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_10_mod_3 } hidden_effect = { change_variable = { general_experience_modifier = 10 } } custom_tooltip = general_magic_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_10_mod_4 } hidden_effect = { change_variable = { general_experience_modifier = 10 } } custom_tooltip = general_magic_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_10_mod_5 } hidden_effect = { change_variable = { general_experience_modifier = 10 } } custom_tooltip = general_magic_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_20_mod_1 } hidden_effect = { change_variable = { general_experience_modifier = 20 } } custom_tooltip = general_magic_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_20_mod_2 } hidden_effect = { change_variable = { general_experience_modifier = 20 } } custom_tooltip = general_magic_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_20_mod_3 } hidden_effect = { change_variable = { general_experience_modifier = 20 } } custom_tooltip = general_magic_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_20_mod_4 } hidden_effect = { change_variable = { general_experience_modifier = 20 } } custom_tooltip = general_magic_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_pos_20_mod_5 } hidden_effect = { change_variable = { general_experience_modifier = 20 } } custom_tooltip = general_magic_xp_pos_20_mod }
+# 	#Generic malus
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_10_mod_1 } hidden_effect = { change_variable = { general_experience_modifier = -10 } } custom_tooltip = general_magic_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_10_mod_2 } hidden_effect = { change_variable = { general_experience_modifier = -10 } } custom_tooltip = general_magic_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_10_mod_3 } hidden_effect = { change_variable = { general_experience_modifier = -10 } } custom_tooltip = general_magic_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_10_mod_4 } hidden_effect = { change_variable = { general_experience_modifier = -10 } } custom_tooltip = general_magic_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_10_mod_5 } hidden_effect = { change_variable = { general_experience_modifier = -10 } } custom_tooltip = general_magic_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_20_mod_1 } hidden_effect = { change_variable = { general_experience_modifier = -20 } } custom_tooltip = general_magic_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_20_mod_2 } hidden_effect = { change_variable = { general_experience_modifier = -20 } } custom_tooltip = general_magic_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_20_mod_3 } hidden_effect = { change_variable = { general_experience_modifier = -20 } } custom_tooltip = general_magic_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_20_mod_4 } hidden_effect = { change_variable = { general_experience_modifier = -20 } } custom_tooltip = general_magic_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_xp_neg_20_mod_5 } hidden_effect = { change_variable = { general_experience_modifier = -20 } } custom_tooltip = general_magic_xp_neg_20_mod }
+
+
+
+# 	# [[ruler]
+# 	hidden_effect = {
+# 		set_variable = { ruler_experience_modifier = 0 } #Initialise
+# 		change_variable = { which = ruler_experience_modifier which = general_experience_modifier }
+# 	}
+# 	custom_tooltip = magic_xp_ruler_tt
+
+# 	# Patron
+# 	if = { limit = { has_a_patron_trigger = yes }
+# 		if = { limit = { has_ruler_flag = magic_study }
+# 			trigger_switch = {
+# 				on_trigger = has_ruler_flag
+# 				studying_abjuration 	= { update_patron_study_experience_modifier = { school = abjuration } }
+# 				studying_conjuration 	= { update_patron_study_experience_modifier = { school = conjuration } }
+# 				studying_divination 	= { update_patron_study_experience_modifier = { school = divination } }
+# 				studying_enchantment 	= { update_patron_study_experience_modifier = { school = enchantment } }
+# 				studying_evocation 		= { update_patron_study_experience_modifier = { school = evocation } }
+# 				studying_illusion 		= { update_patron_study_experience_modifier = { school = illusion } }
+# 				studying_necromancy 	= { update_patron_study_experience_modifier = { school = necromancy } }
+# 				studying_transmutation 	= { update_patron_study_experience_modifier = { school = transmutation } }
+# 			}
+# 		}
+
+# 		else_if = { limit = { has_country_flag = magic_activity_setup_study_activity_flag }
+# 			trigger_switch = {
+# 				on_trigger = has_country_flag
+# 				magic_activity_setup_abjuration_flag 	= { update_patron_study_experience_modifier = { school = abjuration } }
+# 				magic_activity_setup_conjuration_flag 	= { update_patron_study_experience_modifier = { school = conjuration } }
+# 				magic_activity_setup_divination_flag 	= { update_patron_study_experience_modifier = { school = divination } }
+# 				magic_activity_setup_enchantment_flag 	= { update_patron_study_experience_modifier = { school = enchantment } }
+# 				magic_activity_setup_evocation_flag 	= { update_patron_study_experience_modifier = { school = evocation } }
+# 				magic_activity_setup_illusion_flag 		= { update_patron_study_experience_modifier = { school = illusion } }
+# 				magic_activity_setup_necromancy_flag 	= { update_patron_study_experience_modifier = { school = necromancy } }
+# 				magic_activity_setup_transmutation_flag = { update_patron_study_experience_modifier = { school = transmutation } }
+# 			}
+# 		}
+# 	}
+
+# 	# Estate privileges
+# 	if = { limit = { has_estate_privilege = estate_mages_empowerment_of_witch_kings } hidden_effect = { change_variable = { ruler_experience_modifier = 30 } } custom_tooltip = estate_mages_empowerment_of_witch_kings_ruler_xp_mod }
+
+# 	#Generic ruler buffs
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_10_mod_1 } hidden_effect = { change_variable = { ruler_experience_modifier = 10 } } custom_tooltip = general_magic_ruler_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_10_mod_2 } hidden_effect = { change_variable = { ruler_experience_modifier = 10 } } custom_tooltip = general_magic_ruler_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_10_mod_3 } hidden_effect = { change_variable = { ruler_experience_modifier = 10 } } custom_tooltip = general_magic_ruler_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_10_mod_4 } hidden_effect = { change_variable = { ruler_experience_modifier = 10 } } custom_tooltip = general_magic_ruler_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_10_mod_5 } hidden_effect = { change_variable = { ruler_experience_modifier = 10 } } custom_tooltip = general_magic_ruler_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_20_mod_1 } hidden_effect = { change_variable = { ruler_experience_modifier = 20 } } custom_tooltip = general_magic_ruler_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_20_mod_2 } hidden_effect = { change_variable = { ruler_experience_modifier = 20 } } custom_tooltip = general_magic_ruler_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_20_mod_3 } hidden_effect = { change_variable = { ruler_experience_modifier = 20 } } custom_tooltip = general_magic_ruler_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_20_mod_4 } hidden_effect = { change_variable = { ruler_experience_modifier = 20 } } custom_tooltip = general_magic_ruler_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_pos_20_mod_5 } hidden_effect = { change_variable = { ruler_experience_modifier = 20 } } custom_tooltip = general_magic_ruler_xp_pos_20_mod }
+# 	#Generic ruler malus
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_10_mod_1 } hidden_effect = { change_variable = { ruler_experience_modifier = -10 } } custom_tooltip = general_magic_ruler_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_10_mod_2 } hidden_effect = { change_variable = { ruler_experience_modifier = -10 } } custom_tooltip = general_magic_ruler_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_10_mod_3 } hidden_effect = { change_variable = { ruler_experience_modifier = -10 } } custom_tooltip = general_magic_ruler_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_10_mod_4 } hidden_effect = { change_variable = { ruler_experience_modifier = -10 } } custom_tooltip = general_magic_ruler_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_10_mod_5 } hidden_effect = { change_variable = { ruler_experience_modifier = -10 } } custom_tooltip = general_magic_ruler_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_20_mod_1 } hidden_effect = { change_variable = { ruler_experience_modifier = -20 } } custom_tooltip = general_magic_ruler_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_20_mod_2 } hidden_effect = { change_variable = { ruler_experience_modifier = -20 } } custom_tooltip = general_magic_ruler_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_20_mod_3 } hidden_effect = { change_variable = { ruler_experience_modifier = -20 } } custom_tooltip = general_magic_ruler_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_20_mod_4 } hidden_effect = { change_variable = { ruler_experience_modifier = -20 } } custom_tooltip = general_magic_ruler_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_ruler_xp_neg_20_mod_5 } hidden_effect = { change_variable = { ruler_experience_modifier = -20 } } custom_tooltip = general_magic_ruler_xp_neg_20_mod }
+# 	# ]
+
+# 	# [[country]
+# 	hidden_effect = {
+# 		set_variable = { country_experience_modifier = 0 } #Initialise
+# 		change_variable = { which = country_experience_modifier which = general_experience_modifier }
+# 	}
+# 	custom_tooltip = magic_xp_country_tt
+# 	# Estate privileges
+# 	if = { limit = { has_estate_privilege = estate_mages_learn_from_elven_leaders } 		hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = estate_mages_learn_from_elven_leaders_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_aelantiri_magical_rediscovery } 	hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = estate_mages_aelantiri_magical_rediscovery_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_laws_against_witch_kings } 		hidden_effect = { change_variable = { country_experience_modifier = 30 } } custom_tooltip = estate_mages_laws_against_witch_kings_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_the_scientific_method } 			hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = estate_mages_the_scientific_method_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_widespread_investments } 			hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = estate_mages_widespread_investments_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_mages_ascendant } 					hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = estate_mages_mages_ascendant_country_xp_mod }
+# 	if = { limit = { has_estate_privilege = estate_mages_nexus_network } 					hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = estate_mages_nexus_network_country_xp_mod }
+
+# 	#Generic country buffs
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_10_mod_1 } hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = general_magic_country_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_10_mod_2 } hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = general_magic_country_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_10_mod_3 } hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = general_magic_country_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_10_mod_4 } hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = general_magic_country_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_10_mod_5 } hidden_effect = { change_variable = { country_experience_modifier = 10 } } custom_tooltip = general_magic_country_xp_pos_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_20_mod_1 } hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = general_magic_country_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_20_mod_2 } hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = general_magic_country_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_20_mod_3 } hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = general_magic_country_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_20_mod_4 } hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = general_magic_country_xp_pos_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_pos_20_mod_5 } hidden_effect = { change_variable = { country_experience_modifier = 20 } } custom_tooltip = general_magic_country_xp_pos_20_mod }
+# 	#Generic country malus
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_10_mod_1 } hidden_effect = { change_variable = { country_experience_modifier = -10 } } custom_tooltip = general_magic_country_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_10_mod_2 } hidden_effect = { change_variable = { country_experience_modifier = -10 } } custom_tooltip = general_magic_country_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_10_mod_3 } hidden_effect = { change_variable = { country_experience_modifier = -10 } } custom_tooltip = general_magic_country_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_10_mod_4 } hidden_effect = { change_variable = { country_experience_modifier = -10 } } custom_tooltip = general_magic_country_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_10_mod_5 } hidden_effect = { change_variable = { country_experience_modifier = -10 } } custom_tooltip = general_magic_country_xp_neg_10_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_20_mod_1 } hidden_effect = { change_variable = { country_experience_modifier = -20 } } custom_tooltip = general_magic_country_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_20_mod_2 } hidden_effect = { change_variable = { country_experience_modifier = -20 } } custom_tooltip = general_magic_country_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_20_mod_3 } hidden_effect = { change_variable = { country_experience_modifier = -20 } } custom_tooltip = general_magic_country_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_20_mod_4 } hidden_effect = { change_variable = { country_experience_modifier = -20 } } custom_tooltip = general_magic_country_xp_neg_20_mod }
+# 	if = { limit = { has_country_flag = general_magic_country_xp_neg_20_mod_5 } hidden_effect = { change_variable = { country_experience_modifier = -20 } } custom_tooltip = general_magic_country_xp_neg_20_mod }
+# 	# ]
+# }
+
+# update_patron_study_experience_modifier = { #Check what the actual buff/malus is
+# 	if = { limit = { has_ruler_flag = patron_favored_$school$ } hidden_effect = { change_variable = { ruler_experience_modifier = 25 } } custom_tooltip = patron_magic_xp_mod_pos }
+# 	else_if = { limit = { has_ruler_flag = patron_disfavored_$school$ } hidden_effect = { change_variable = { ruler_experience_modifier = -25 } } custom_tooltip = patron_magic_xp_mod_neg }
+# }
+
+
+
+#Recreating this here rn to not break too many things
+create_war_wizard_interaction = {
+	custom_tooltip = war_wizard_tooltip
+	hidden_effect = {
+		set_saved_name = {
+			key = root_name_male
+			type = advisor
+			scope = ROOT
+		}
+		set_saved_name = {
+			key = root_name_female
+			type = advisor
+			female = yes
+			scope = ROOT
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_country_flag = battlemage_academy_1
+					has_country_flag = battlemage_academy_2
+					has_country_flag = battlemage_academy_3
+				}
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 7
+						manuever = 4
+						siege = 1
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 7
+						manuever = 4
+						siege = 1
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_1
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 8
+						manuever = 5
+						siege = 1
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 1
+						shock = 8
+						manuever = 5
+						siege = 1
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_2
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 8
+						manuever = 6
+						siege = 2
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 8
+						manuever = 6
+						siege = 2
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		if = {
+			limit = {
+				has_country_flag = battlemage_academy_3
+			}
+			random_list = {
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 9
+						manuever = 7
+						siege = 3
+						trait = war_wizard_personality
+						name = root_name_male
+					}
+				}
+				50 = {
+					define_general = {
+						fire = 2
+						shock = 9
+						manuever = 7
+						siege = 3
+						trait = war_wizard_personality
+						female = yes
+						name = root_name_female
+					}
+				}
+			}
+		}
+		
+		clear_saved_name = root_name_male
+		clear_saved_name = root_name_female
+	}
+}
+
+
+
+#To try get a merely functional modifier tt
+magical_infrastructure_tt = {
+	tooltip = {
+		if = { limit = { has_country_modifier = magical_infrastructure_1 }
+			add_country_modifier = {
+				name = magical_infrastructure_1
+				duration = -1
+			}
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+			add_country_modifier = {
+				name = magical_infrastructure_2
+				duration = -1
+			}
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_3 }
+			add_country_modifier = {
+				name = magical_infrastructure_3
+				duration = -1
+			}
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_4 }
+			add_country_modifier = {
+				name = magical_infrastructure_4
+				duration = -1
+			}
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_5 }
+			add_country_modifier = {
+				name = magical_infrastructure_5
+				duration = -1
+			}
+		}
+	}
+}
