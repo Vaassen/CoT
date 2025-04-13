@@ -22,6 +22,12 @@ initialize_magic_system = {
 	set_variable = { manaRegenerationMultiplier	= 0 }
 	set_variable = { ruler_experience_modifier = 0 }
 	set_variable = { country_experience_modifier = 0 }
+	set_variable = { magic_ruler_xp_mod_legacy = 0 }
+	set_variable = { magic_heir_xp_mod_legacy = 0 }
+	set_variable = { magic_estate_xp_mod_legacy = 0 }
+	
+	
+	
 	
 	# set_variable = { which = magicalInfrastructure value = 1 } #Base level
 	# set_variable = { which = maximum_estate_spell_schools value = 4 } #Base value
@@ -119,7 +125,8 @@ cap_mana = {
 				check_variable = { currentMana = 0 }
 			}
 		}
-		log = "[This.GetName] has Mana out of bounds (currenaMana = [This.currentMana.GetValue]). Please contact Devs."
+		set_variable = { currentMana = 0 }
+		# log = "[This.GetName] has Mana out of bounds (currenaMana = [This.currentMana.GetValue]). Please contact Devs."
 	}
 	export_to_variable = {
 		variable_name = manaCapacity
@@ -161,7 +168,7 @@ update_mana_bar = {
 	}
 }
 
-calc_estate_spell_levels = {
+calc_estate_spell_levels = { #Calc the number of spell levels estates have to cap it
 	set_variable = { estate_spell_schools = 0 }
 	calc_estate_spell_levels_sub = { school = abjuration }
 	calc_estate_spell_levels_sub = { school = conjuration }
@@ -171,12 +178,18 @@ calc_estate_spell_levels = {
 	calc_estate_spell_levels_sub = { school = illusion }
 	calc_estate_spell_levels_sub = { school = necromancy }
 	calc_estate_spell_levels_sub = { school = transmutation }
+
+	export_to_variable = {
+		which = maximum_estate_spell_schools
+		value = modifier:maximum_estate_spell_schools
+	}
 }
 calc_estate_spell_levels_sub = {
 	if = { limit = { has_country_flag = $school$_1 } change_variable = { estate_spell_schools = 1 } }
 	if = { limit = { has_country_flag = $school$_2 } change_variable = { estate_spell_schools = 2 } }
 	if = { limit = { has_country_flag = $school$_3 } change_variable = { estate_spell_schools = 3 } }
 }
+#Calc the levels ruler or heir has, for a tt
 generic_calc_spell_levels = {
 	set_variable = { $type$_spell_schools = 0 }
 	generic_calc_spell_levels_sub = { school = abjuration type = $type$ }
@@ -194,6 +207,7 @@ generic_calc_spell_levels_sub = {
 	if = { limit = { has_$type$_flag = $school$_3 } change_variable = { $type$_spell_schools = 3 } }
 }
 
+###Clear setup flags for school study UI
 magic_activity_selection_clear_school_flags = {
 	clr_country_flag = magic_activity_setup_abjuration_flag
 	clr_country_flag = magic_activity_setup_conjuration_flag
@@ -219,6 +233,12 @@ magic_activity_selection_set_project_flags_effect = {
 	set_country_flag = magic_activity_setup_$project$_flag
 }
 
+#Clear all flags related to current study
+magic_activity_abort_all_effect = {
+	magic_activity_finish_clr_type_flags = { type = ruler }
+	magic_activity_finish_clr_type_flags = { type = heir }
+	magic_activity_finish_clr_type_flags = { type = country }
+}
 magic_activity_finish_clr_type_flags = {
 	#Activity type
 	clr_$type$_flag = magic_study
@@ -256,11 +276,7 @@ magic_activity_finish_clr_type_flags = {
 	set_variable = { magic_experience_target = 0 }
 	set_variable = { current_experience_percent = 0 }
 }
-magic_activity_abort_all_effect = {
-	magic_activity_finish_clr_type_flags = { type = ruler }
-	magic_activity_finish_clr_type_flags = { type = heir }
-	magic_activity_finish_clr_type_flags = { type = country }
-}
+
 
 
 magic_study_selection_set_school_effect = {
@@ -401,6 +417,66 @@ start_infrastructure_activity = { #Country only
 	set_variable = { which = country_study_experience value = 0 }
 }
 
+set_magic_experience_target = {
+	[[infrastructure] set_country_flag = infra_temp_flag ]
+	[[xptarget] set_country_flag = xptarget_temp_flag ]
+	
+	# [[!infrastructure]] [[!xptarget]]
+	if = {
+		limit = {
+			NOT = {
+				has_country_flag = infra_temp_flag
+				has_country_flag = xptarget_temp_flag
+			}
+		}
+		set_variable = { country_experience_target = 100 } #Base experience
+		set_variable = { expFoo = 250 } 				#Increase per level
+		## Maybe target level will be set elsewhere as a variable
+		#For now:
+		trigger_switch = {
+			on_trigger = has_$type$_flag
+			magical_study_1 = { multiply_variable = { expFoo = 1 } } # Lvl 0 to 1
+			magical_study_2 = { multiply_variable = { expFoo = 2 } } # Lvl 1 to 2
+			magical_study_3 = { multiply_variable = { expFoo = 3 } } # Lvl 2 to 3
+			magical_study_4 = { multiply_variable = { expFoo = 4 } } # Lvl 3 to 4
+			magical_study_5 = { multiply_variable = { expFoo = 5 } } # Lvl 4 to 5
+		}
+		change_variable = { which = magic_experience_target which = expFoo }
+	}
+	# [[infrastructure]]
+	else_if = {
+		limit = {
+			has_country_flag = infra_temp_flag
+		}
+		set_variable = { magic_experience_target = 400 } #Base experience
+		trigger_switch = {
+			on_trigger = has_country_modifier
+			magical_infrastructure_1 = { multiply_variable = { magic_experience_target = 1 } } # Lvl 1 to 2
+			magical_infrastructure_2 = { multiply_variable = { magic_experience_target = 2 } } # Lvl 2 to 3
+			magical_infrastructure_3 = { multiply_variable = { magic_experience_target = 3 } } # Lvl 3 to 4
+			magical_infrastructure_4 = { multiply_variable = { magic_experience_target = 4 } } # Lvl 4 to 5
+		}
+	}
+	#[[xptarget]]
+	else_if = {
+		limit = {
+			has_country_flag = xptarget_temp_flag
+		}
+		set_variable = { which = magic_experience_target value = $xptarget$ }
+	}
+	clr_country_flag = infra_temp_flag
+	clr_country_flag = xptarget_temp_flag
+	update_study_progress_bar = { type = $type$ }
+}
+
+update_study_progress_bar = {
+	if = { limit = { ai = no }
+		set_variable = { which = expFoo which = $type$_study_experience }
+		divide_variable = { which = expFoo which = magic_experience_target }
+		multiply_variable = { expFoo = 100 }
+		set_variable = { which = current_experience_percent which = expFoo }
+	}
+}
 
 # example use case: start_magic_study = { type = country school = abjuration }
 # the three acceptable types are country, ruler, and heir.
@@ -435,21 +511,36 @@ start_magic_study = {
 # e.g. if you have a mission that gives +20% country and another one that gives -10% country, the tooltip will read +10%
 # you can make more sources but it's complicated
 
+# update_magic_study_experience_modifier = {
+# 	[[value]
+# 		change_variable = { $type$_experience_modifier = $value$ }				# This handle negative. Value must be whole, so +10% = 10
+# #		change_variable = { $source$_$type$_experience_modifier = $value$ }
+# 		if = {
+# 			limit = { 6168 = { base_tax = $value$ } }	#Returns true if $value$ is 0 or less, returns false otherwise
+# #			custom_tooltip = add_$source$_$type$_magic_study_modifier_$value$_tt
+# 		}
+# #		else = { custom_tooltip = remove_$source$_$type$_magic_study_modifier_$value$_tt }
+# 	]
+# 	if = {
+# 		limit = { NOT = { check_variable = { $type$_experience_modifier = -100 } } }		# We never go under -100%
+# 		set_variable = { $type$_experience_modifier = -100 }
+# 	}
+# }
+
 update_magic_study_experience_modifier = {
 	[[value]
-		change_variable = { $type$_experience_modifier = $value$ }				# This handle negative. Value must be whole, so +10% = 10
-#		change_variable = { $source$_$type$_experience_modifier = $value$ }
-		if = {
-			limit = { 6168 = { base_tax = $value$ } }	#Returns true if $value$ is 0 or less, returns false otherwise
-#			custom_tooltip = add_$source$_$type$_magic_study_modifier_$value$_tt
-		}
-#		else = { custom_tooltip = remove_$source$_$type$_magic_study_modifier_$value$_tt }
+		set_variable = { which = expFoo value = $value$ }
+		divide_variable = { expFoo = 100 }
+		change_variable = { which = magic_$type$_exp_mod_compatibility which = expFoo }
 	]
+	# We never go under -100%
 	if = {
-		limit = { NOT = { check_variable = { $type$_experience_modifier = -100 } } }		# We never go under -100%
-		set_variable = { $type$_experience_modifier = -100 }
+		limit = { NOT = { check_variable = { magic_$type$_xp_mod_legacy = -1 } } }
+		set_variable = { magic_$type$_xp_mod_legacy = -1 }
 	}
+	new_update_magic_study_experience_modifier = yes
 }
+
 
 
 # executed by magic_study.100 when magic_study_done = yes
@@ -511,8 +602,6 @@ magic_study_level_up = {
 		clr_$type$_flag = $school$_1
 		custom_tooltip = tooltip_$school$_2_level_up
 	}
-	#TODO Jothell - `limit = { is_abjuration_0 = yes }` was added to fix tooltip, check it in-game
-	# f5e7d6d3d9803d0373d83e4e0530a3c6b64b4351
 	else_if = {
 		limit = { NOT = { has_$type$_flag = $school$_3 } }
 		set_$type$_flag = $school$_1
@@ -525,13 +614,14 @@ magic_study_level_up = {
 		ruler_save_spell_schools = yes
 	}
 
-	if = {
-		limit = {
-			has_$type$_flag = magic_study
-			has_$type$_flag = studying_$school$
-		}
-		magic_study_clear_study_effects = yes
-	}
+	# This is old system remnants?
+	# if = {
+	# 	limit = {
+	# 		has_$type$_flag = magic_study
+	# 		has_$type$_flag = studying_$school$
+	# 	}
+	# 	# magic_study_clear_study_effects = yes 
+	# }
 }
 
 finish_magic_project_sub = {
@@ -564,7 +654,7 @@ magic_project_level_up = {
 		set_$type$_flag = $project$_5
 		custom_tooltip = tooltip_$project$_5_level_up
 	}
-	if = {
+	else_if = {
 		limit = { has_country_flag = $project$_3 }
 		clr_$type$_flag = $project$_3
 		set_$type$_flag = $project$_4
@@ -607,6 +697,7 @@ magic_infrastructure_level_up = {
 	magic_activity_abort_all_effect = yes
 }
 
+#Non-unique
 calc_completed_projects = {
 	set_variable = { magic_projects_completed = 0 }
 	if = { limit = { has_country_flag = magical_fortress_3 } 			change_variable = { magic_projects_completed = 1 } }
@@ -619,7 +710,7 @@ calc_completed_projects = {
 	if = { limit = { has_country_flag = homunculus_3 } 					change_variable = { magic_projects_completed = 1 } }
 }
 
-#TODO Jothell add magic_artificery_mixed multiply by 0.8
+
 passive_study_progress = {
 	export_to_variable = {
 		variable_name = magic_study_xp
@@ -657,6 +748,7 @@ passive_study_progress = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { which = ruler_experience_modifier which = magic_ruler_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
@@ -666,7 +758,7 @@ passive_study_progress = {
 		}
 		update_study_progress_bar = { type = ruler }
 	}
-
+	
 	else_if = {
 		limit = { has_heir_flag = magic_study }
 		if = {
@@ -684,6 +776,7 @@ passive_study_progress = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { which = ruler_experience_modifier which = magic_ruler_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
@@ -703,6 +796,7 @@ passive_study_progress = {
 				NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = country_experience_modifier }
+			change_variable = { which = ruler_experience_modifier which = magic_estate_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
@@ -714,6 +808,43 @@ passive_study_progress = {
 	}
 	hidden_effect = {
 		country_event = { id = magic_study.100 }
+	}
+}
+
+new_update_magic_study_experience_modifier = {
+	hidden_effect = {
+		set_variable = { which = mages_ruler_experience_mod_ui value = 0 }
+		set_variable = { which = mages_estate_experience_mod_ui value = 0 }
+		set_variable = { which = abjuration_experience_mod_ui value = 0 }
+		set_variable = { which = conjuration_experience_mod_ui value = 0 }
+		set_variable = { which = divination_experience_mod_ui value = 0 }
+		set_variable = { which = enchantment_experience_mod_ui value = 0 }
+		set_variable = { which = evocation_experience_mod_ui value = 0 }
+		set_variable = { which = illusion_experience_mod_ui value = 0 }
+		set_variable = { which = necromancy_experience_mod_ui value = 0 }
+		set_variable = { which = transmutation_experience_mod_ui value = 0 }
+		
+		export_to_variable = { which = mages_ruler_experience_mod_ui value = modifier:mages_ruler_experience_mod }
+		export_to_variable = { which = mages_estate_experience_mod_ui value = modifier:mages_estate_experience_mod }
+		export_to_variable = { which = abjuration_experience_mod_ui value = modifier:abjuration_experience_mod }
+		export_to_variable = { which = conjuration_experience_mod_ui value = modifier:conjuration_experience_mod }
+		export_to_variable = { which = divination_experience_mod_ui value = modifier:divination_experience_mod }
+		export_to_variable = { which = enchantment_experience_mod_ui value = modifier:enchantment_experience_mod }
+		export_to_variable = { which = evocation_experience_mod_ui value = modifier:evocation_experience_mod }
+		export_to_variable = { which = illusion_experience_mod_ui value = modifier:illusion_experience_mod }
+		export_to_variable = { which = necromancy_experience_mod_ui value = modifier:necromancy_experience_mod }
+		export_to_variable = { which = transmutation_experience_mod_ui value = modifier:transmutation_experience_mod }
+		
+		multiply_variable = { which = mages_ruler_experience_mod_ui value = 100 }
+		multiply_variable = { which = mages_estate_experience_mod_ui value = 100 }
+		multiply_variable = { which = abjuration_experience_mod_ui value = 100 }
+		multiply_variable = { which = conjuration_experience_mod_ui value = 100 }
+		multiply_variable = { which = divination_experience_mod_ui value = 100 }
+		multiply_variable = { which = enchantment_experience_mod_ui value = 100 }
+		multiply_variable = { which = evocation_experience_mod_ui value = 100 }
+		multiply_variable = { which = illusion_experience_mod_ui value = 100 }
+		multiply_variable = { which = necromancy_experience_mod_ui value = 100 }
+		multiply_variable = { which = transmutation_experience_mod_ui value = 100 }
 	}
 }
 
@@ -744,56 +875,25 @@ calc_school_experience_modifers_effect = {
 	change_variable = { which = school_experience_modifier which = expFoo }
 }
 
-
-set_magic_experience_target = {
-	set_variable = { country_experience_target = 100 } #Base experience
-	set_variable = { expFoo = 250 } 				#Increase per level
-	## Maybe target level will be set elsewhere as a variable
-	#For now:
-	trigger_switch = {
-		on_trigger = has_$type$_flag
-		magical_study_1 = { multiply_variable = { expFoo = 1 } } # Lvl 0 to 1
-		magical_study_2 = { multiply_variable = { expFoo = 2 } } # Lvl 1 to 2
-		magical_study_3 = { multiply_variable = { expFoo = 3 } } # Lvl 2 to 3
-		magical_study_4 = { multiply_variable = { expFoo = 4 } } # Lvl 3 to 4
-		magical_study_5 = { multiply_variable = { expFoo = 5 } } # Lvl 4 to 5
-	}
-	change_variable = { which = magic_experience_target which = expFoo }
-	[[infrastructure]
-		set_variable = { magic_experience_target = 400 } #Base experience
-		set_variable = { which = expFoo which = magicalInfrastructure }#Increase per level
-		change_variable = { expFoo = 1 }
-		multiply_variable = { which = magic_experience_target which = expFoo }
-	]
-	update_study_progress_bar = { type = $type$ }
-}
-
-update_study_progress_bar = {
-	if = { limit = { ai = no }
-		set_variable = { which = expFoo which = $type$_study_experience }
-		divide_variable = { which = expFoo which = magic_experience_target }
-		multiply_variable = { expFoo = 100 }
-		set_variable = { which = current_experience_percent which = expFoo }
-	}
+study_experience_preview_effect = {
+	set_variable = { study_xp_preview = 0 }
+	if = { limit = { has_country_flag = magic_activity_setup_ruler_flag } change_variable = { which = study_xp_preview which = mages_ruler_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_heir_flag } change_variable = { which = study_xp_preview which = mages_ruler_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_estate_flag } change_variable = { which = study_xp_preview which = mages_estate_experience_mod_ui } }
+	
+	if = { limit = { has_country_flag = magic_activity_setup_abjuration_flag } change_variable = { which = study_xp_preview which = abjuration_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_conjuration_flag } change_variable = { which = study_xp_preview which = conjuration_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_divination_flag } change_variable = { which = study_xp_preview which = divination_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_enchantment_flag } change_variable = { which = study_xp_preview which = enchantment_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_evocation_flag } change_variable = { which = study_xp_preview which = evocation_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_illusion_flag } change_variable = { which = study_xp_preview which = illusion_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_necromancy_flag } change_variable = { which = study_xp_preview which = necromancy_experience_mod_ui } }
+	else_if = { limit = { has_country_flag = magic_activity_setup_transmutation_flag } change_variable = { which = study_xp_preview which = transmutation_experience_mod_ui } }
+	
 }
 
 
-#TODO Jothell put this into use
-# # Also check "maximum_estate_spell_schools"
-# level_up_magical_infrastructure = {
-# 	trigger_switch = {
-# 		on_trigger = has_country_modifier
-# 		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
-# 		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
-# 		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
-# 		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
-# 	}
-# 	custom_tooltip = level_up_magical_infrastructure_tt
-# 	# change_variable = { which = magicalInfrastructure value = 1 }
-# 	# change_variable = { which = maximum_estate_spell_schools value = 2 }
-# 	# cap_mana = yes
-# 	# update_mana_regen_vars = yes
-# }
+
 
 
 
@@ -812,7 +912,7 @@ clear_spellbook_flags = {
 	clr_country_flag = magic_menu_spellbook_transmutation_flag
 }
 
-new_update_magic_study_experience_modifier = { }
+# new_update_magic_study_experience_modifier = { }
 #Jothell is kludging
 # Kludging a mad tooltip
 # TBD
@@ -1101,37 +1201,37 @@ create_war_wizard_interaction = {
 
 
 #To try get a merely functional modifier tt
-magical_infrastructure_tt = {
-	tooltip = {
-		if = { limit = { has_country_modifier = magical_infrastructure_1 }
-			add_country_modifier = {
-				name = magical_infrastructure_1
-				duration = -1
-			}
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
-			add_country_modifier = {
-				name = magical_infrastructure_2
-				duration = -1
-			}
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_3 }
-			add_country_modifier = {
-				name = magical_infrastructure_3
-				duration = -1
-			}
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_4 }
-			add_country_modifier = {
-				name = magical_infrastructure_4
-				duration = -1
-			}
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_5 }
-			add_country_modifier = {
-				name = magical_infrastructure_5
-				duration = -1
-			}
-		}
-	}
-}
+# magical_infrastructure_tt_effect = {
+# 	tooltip = {
+# 		if = { limit = { has_country_modifier = magical_infrastructure_1 }
+# 			add_country_modifier = {
+# 				name = magical_infrastructure_1
+# 				duration = -1
+# 			}
+# 		}
+# 		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+# 			add_country_modifier = {
+# 				name = magical_infrastructure_2
+# 				duration = -1
+# 			}
+# 		}
+# 		else_if = { limit = { has_country_modifier = magical_infrastructure_3 }
+# 			add_country_modifier = {
+# 				name = magical_infrastructure_3
+# 				duration = -1
+# 			}
+# 		}
+# 		else_if = { limit = { has_country_modifier = magical_infrastructure_4 }
+# 			add_country_modifier = {
+# 				name = magical_infrastructure_4
+# 				duration = -1
+# 			}
+# 		}
+# 		else_if = { limit = { has_country_modifier = magical_infrastructure_5 }
+# 			add_country_modifier = {
+# 				name = magical_infrastructure_5
+# 				duration = -1
+# 			}
+# 		}
+# 	}
+# }
