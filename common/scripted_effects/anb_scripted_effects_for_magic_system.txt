@@ -25,7 +25,7 @@ initialize_magic_system = {
 	set_variable = { magic_ruler_xp_mod_legacy = 0 }
 	set_variable = { magic_heir_xp_mod_legacy = 0 }
 	set_variable = { magic_estate_xp_mod_legacy = 0 }
-	
+	set_variable = { passive_experience_bank = 0 }
 	
 	
 	
@@ -724,27 +724,36 @@ passive_study_progress = {
 		variable_name = country_experience_modifier
 		value = modifier:mages_estate_experience_mod
 	}
+	set_variable = { temp_exp = 0 }
 	calc_school_experience_modifiers = yes
+
+	if = { limit = { has_country_flag = magic_artificery_mixed }
+		multiply_variable = { which = magic_study_xp value = 0.8 }
+	}
 	if = {
-		limit = { has_country_flag = magic_artificery_mixed }
-		multiply_variable = {
-			which = magic_study_xp
-			value = 0.8
+		limit = {
+			check_variable = { passive_experience_bank = 1 }
+			is_studying_magic = yes
+		}
+		set_variable = { which = expFoo which = magic_study_xp }
+		multiply_variable = { expFoo = 0.5 }
+		if = { limit = { check_variable = { which = passive_experience_bank which = expFoo } }
+			change_variable = { which = temp_exp which = expFoo }
+			subtract_variable = { which = passive_experience_bank which = expFoo }
+		}
+		else = {
+			change_variable = { which = temp_exp which = passive_experience_bank }
+			subtract_variable = { which = passive_experience_bank which = temp_exp }
 		}
 	}
 
-	if = {
-		limit = { has_ruler_flag = magic_study }
-		if = {
-			limit = { is_long_lived_ruler = yes }
-			multiply_variable = {
-				which = magic_study_xp
-				value = 0.5
-			}
+	if = { limit = { has_ruler_flag = magic_study }
+		if = { limit = { is_long_lived_ruler = yes }
+			multiply_variable = { which = magic_study_xp value = 0.5 }
+			multiply_variable = { which = temp_exp value = 0.5 }
 		}
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-		if = {
-			limit = {
+		if = { limit = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
@@ -752,27 +761,23 @@ passive_study_progress = {
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
+		change_variable = { which = magic_study_xp which = temp_exp }
 		change_variable = {
 			which = ruler_study_experience
 			which = magic_study_xp
 		}
+		
 		update_study_progress_bar = { type = ruler }
 	}
 	
 	else_if = {
 		limit = { has_heir_flag = magic_study }
-		if = {
-			limit = {
-				is_long_lived_heir = yes
-			}
-			multiply_variable = {
-				which = magic_study_xp
-				value = 0.5
-			}
+		if = { limit = { is_long_lived_heir = yes }
+			multiply_variable = { which = magic_study_xp value = 0.5 }
+			multiply_variable = { which = temp_exp value = 0.5 }
 		}
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-		if = {
-			limit = {
+		if = { limit = {
 				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
 			}
 			set_variable = { which = expFoo which = ruler_experience_modifier }
@@ -780,6 +785,7 @@ passive_study_progress = {
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
+		change_variable = { which = magic_study_xp which = temp_exp }
 		change_variable = {
 			which = heir_study_experience
 			which = magic_study_xp
@@ -787,9 +793,9 @@ passive_study_progress = {
 		update_study_progress_bar = { type = heir }
 	}
 
-	else_if = {
-		limit = { has_country_flag = magic_study }
+	else_if = { limit = { has_country_flag = magic_study }
 		divide_variable = { which = magic_study_xp value = 3 }
+		divide_variable = { which = temp_exp value = 3 }
 		change_variable = { which = country_experience_modifier which = school_experience_modifier }
 		if = {
 			limit = {
@@ -800,16 +806,24 @@ passive_study_progress = {
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = magic_study_xp which = expFoo }
 		}
+		change_variable = { which = magic_study_xp which = temp_exp }
 		change_variable = {
 			which = country_study_experience
 			which = magic_study_xp
 		}
 		update_study_progress_bar = { type = country }
 	}
-	hidden_effect = {
-		country_event = { id = magic_study.100 }
+	else = {
+		change_variable = { which = passive_experience_bank which = magic_study_xp }
+	}
+	# hidden_effect = {
+	# 	country_event = { id = magic_study.100 }
+	# }
+	if = { limit = { magic_study_done = yes	}
+		finish_magic_study = yes
 	}
 }
+
 
 new_update_magic_study_experience_modifier = {
 	hidden_effect = {
