@@ -27,10 +27,20 @@ country_event = {
 	
 	option = { #generic events
 		name = monstrous.0.a
-		trigger = {
-			#add exclusion clauses when the other events are implemented
+		if = { #Lizardfolk handler
+			limit  {
+				culture_group = lizardfolk
+				NOT = { primary_culture = ashhana_lizardfolk }
+				NOT = { tag = S34 } #Cunning River Eel
+			}
+			random_list = { #change this if/when the global handler is put in another pulse. It is intended here to be 1 event every 3 years
+				1 = { country_event = { id = monstrous.200 } }
+				2 = { }
+			}
 		}
-		country_event = { id = monstrous.100 }
+		else = { #Generic handler, always at the end of the if/else_if chain
+			country_event = { id = monstrous.100 }
+		}
 	}
 }
 
@@ -200,25 +210,10 @@ country_event = {
 		NOT = { check_variable = { monstrousPoints = 50 } }
 	}
 	
-	immediate = {
-		hidden_effect = {
-			set_country_flag = semi_monstrous
-		}
-	}
-	
 	option = {
 		name = monstrous.3.a
 		ai_chance = { factor = 100 }
-		custom_tooltip = semi_monstrous_tooltip
-		hidden_effect = {
-			every_country = {
-				limit = { has_opinion_modifier = { who = ROOT modifier = root_monstrous } }
-				remove_opinion = { who = ROOT modifier = root_monstrous }
-				reverse_remove_opinion = { who = ROOT modifier = root_monstrous }
-				add_opinion = { who = ROOT modifier = semi_monstrous }
-				reverse_add_opinion = { who = ROOT modifier = semi_monstrous }
-			}
-		}
+		monstrous_to_semi_monstrous_effect = yes
 	}
 }
 
@@ -230,42 +225,14 @@ country_event = {
 	picture = WESTERNISATION_eventPicture
 	
 	is_triggered_only = yes
-	#triggered ONLY by the decrease_monstrous scripted effects
-	
-	trigger = {
-		has_country_flag = semi_monstrous
-		NOT = { has_country_flag = no_longer_monstrous }
-		NOT = { check_variable = { monstrousPoints = 1 } }
-	}
+	#triggered ONLY by monstrous.7 event
 	
 	major = yes
-	
-	immediate = {
-		hidden_effect = {
-			set_country_flag = no_longer_monstrous
-		}
-	}
 	
 	option = {
 		name = monstrous.4.a
 		ai_chance = { factor = 100 }
-		custom_tooltip = no_longer_monstrous_tooltip
-		remove_country_modifier = monstrous_nation
-		hidden_effect = {
-			clr_country_flag = removing_monstrous
-			clr_country_flag = semi_monstrous
-			clear_monstrous_opinion_effect = yes
-			country_event = { id = monstrous.1 } #opinion setup
-			every_subject_country = {
-				limit = { is_colonial_nation = yes NOT = { has_country_flag = no_longer_monstrous } }
-				set_country_flag = no_longer_monstrous
-				clr_country_flag = removing_monstrous
-				clr_country_flag = semi_monstrous
-				remove_country_modifier = monstrous_nation
-				clear_monstrous_opinion_effect = yes
-				country_event = { id = monstrous.1 } #opinion setup
-			}
-		}
+		finish_demonsterization_effect = yes
 	}
 }
 
@@ -307,7 +274,61 @@ country_event = {
 	}
 }
 
+country_event = { #update opinion when becoming semi-monstrous
+	id = monstrous.6
+	title = monstrous.6.t
+	desc = monstrous.6.d
+	picture = WESTERNISATION_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	#triggered ONLY by the monstrous_to_semi_monstrous_effect scripted effect because setting event effect doesn't work within the scripted effect
+	
+	option = {
+		name = monstrous.6.A
+		hidden_effect = {
+			every_country = {
+				limit = { has_opinion_modifier = { who = ROOT modifier = root_monstrous } }
+				remove_opinion = { who = ROOT modifier = root_monstrous }
+				reverse_remove_opinion = { who = ROOT modifier = root_monstrous }
+				add_opinion = { who = ROOT modifier = semi_monstrous }
+				reverse_add_opinion = { who = ROOT modifier = semi_monstrous }
+			}
+		}
+	}
+}
 
+country_event = { #Selects the event to end demonsterization
+	id = monstrous.7
+	title = monstrous.7.t
+	desc = monstrous.7.d
+	picture = WESTERNISATION_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	#triggered ONLY by the decrease_monstrous scripted effect
+	
+	trigger = {
+		has_country_flag = semi_monstrous
+		NOT = { has_country_flag = no_longer_monstrous }
+		NOT = { check_variable = { monstrousPoints = 1 } }
+	}
+	
+	option = {
+		if = {
+			limit = { #Lizardfolk
+				culture_group = lizardfolk
+				NOT = { primary_culture = ashhana_lizardfolk }
+				NOT = { tag = S34 }
+			}
+			country_event = { id = monstrous.216 }
+		}
+		else = { #Generic
+			country_event = { id = monstrous.4 }
+		}
+	}
+}
+		
 
 ##################################
 ##### Generic Events
@@ -440,11 +461,9 @@ country_event = {
 		ai_chance = { factor = 100 }
 		trigger = {
 			NOT = {
-				tag = S70	#Yezel Mora
-				tag = I46	#Tugund-Darakh
 				tag = F66	#Konolkatep
 				religion = xhazobkult #Has it's own event for changing religion
-				has_ruler_flag = xhazob_patron	#Great Xhaz
+				has_country_flag = supernaturally_bound_faith
 			}
 			any_neighbor_country = {
 				NOT = { has_country_modifier = monstrous_nation }
@@ -649,13 +668,8 @@ country_event = {
 			is_subject = no
 			NOT = { has_ruler_flag = monstrous_proposed_conversion }
 			NOT = { has_country_flag = monstrous_converted_religion }
-			NOT = {
-				tag = S70	#Yezel Mora
-				tag = I46	#Tugund-Darakh
-				tag = F66	#Konolkatep
-				religion = xhazobkult
-				has_ruler_flag = xhazob_patron	#Great Xhaz
-			}
+			NOT = { has_country_flag = supernaturally_bound_faith }
+			NOT = { tag = F66 }	#Konolkatep
 			NOT = {
 				religion = ravelian
 				religion = the_jadd
@@ -665,6 +679,7 @@ country_event = {
 				religion = kvangahga
 				religion = rinta_seekers
 				religion = bulgu_orazan	#Currently the only exempted faith that isn't also one of the faiths you can convert to
+				religion = xhazobkult #Has separate event
 			}
 			OR = {
 				any_neighbor_country = {
@@ -2126,4 +2141,866 @@ country_event = {
 		}
 	}
 
+}
+
+
+##################################
+##### Lizardfolk Events
+##################################
+
+#Note : the Lizardfolk handler for now is only for non-Ashhana, non-S34 Lizardfolk. When those events are made, they should go in the Lizardfolk handler too
+
+#Lizardfolk Handler
+country_event = {
+	id = monstrous.200
+	title = monstrous.200.t
+	desc = monstrous.200.d
+	picture = WESTERNISATION_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	option = {
+		name = monstrous.200.a
+		if = {
+			limit = {
+				NOT = { primary_culture = ashhana_lizardfolk tag = S34 }
+			}
+			random_list = {
+				100 = { #The Light of Taneyas
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_201 } }
+					country_event = { id = monstrous.201 }
+					set_country_flag = lizardfolk_monstrous_event_happened_201
+				}
+				100 = { #Comparative Politics
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_202 } }
+					country_event = { id = monstrous.202 }
+					set_country_flag = lizardfolk_monstrous_event_happened_202
+				}
+				100 = { #Recognise Outsider Envoys
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_203_yes has_country_flag = lizardfolk_monstrous_event_happened_203_no } }
+					country_event = { id = monstrous.203 }
+				}
+				100 = { #Mutual Deference Amnesty
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_204 } }
+					country_event = { id = monstrous.204 }
+					set_country_flag = lizardfolk_monstrous_event_happened_204
+				}
+				100 = { #Reexamine the Histories
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_205 } }
+					country_event = { id = monstrous.205 }
+					set_country_flag = lizardfolk_monstrous_event_happened_205
+				}
+				100 = { #Rule One
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_206 } }
+					country_event = { id = monstrous.206 }
+					set_country_flag = lizardfolk_monstrous_event_happened_206
+				}
+				100 = { #Linguistic Mutation
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_207 } }
+					country_event = { id = monstrous.207 }
+					set_country_flag = lizardfolk_monstrous_event_happened_207
+				}
+				100 = { #Equivalent Majesty
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_208 } has_country_flag = lizardfolk_monstrous_event_happened_203_yes }
+					country_event = { id = monstrous.208 }
+					set_country_flag = lizardfolk_monstrous_event_happened_208
+				}
+				100 = { #The Halfling Exception
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_209 has_country_modifier = racial_pop_halfling_purge has_country_modifier = racial_pop_halfling_expulsion } }
+					country_event = { id = monstrous.209 }
+					set_country_flag = lizardfolk_monstrous_event_happened_209
+				}
+				100 = { #Unique Among Sentients
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_210 } }
+					country_event = { id = monstrous.210 }
+					set_country_flag = lizardfolk_monstrous_event_happened_210
+				}
+				100 = { #Legacy of Karassk
+					trigger = { NOT = { has_country_flag = lizardfolk_monstrous_event_happened_211 } }
+					country_event = { id = monstrous.211 }
+					set_country_flag = lizardfolk_monstrous_event_happened_211
+				}
+				1 = { #Technology Fair (repeatable)
+					country_event = { id = monstrous.212 }
+				}
+				1 = { #Our Favourite Foreigner (repeatable)
+					trigger = { any_known_country = { NOT = { culture_group = lizardfolk } } }
+					country_event = { id = monstrous.213 }
+				}
+				1 = { #Formal Diplomatic Recognition (repeatable)
+					trigger = { any_known_country = { NOT = { culture_group = lizardfolk } total_development = 100 } }
+					country_event = { id = monstrous.214 }
+				}
+			}
+		}
+	}
+}
+
+country_event = { #The Light of Taneyas
+	id = monstrous.201
+	title = monstrous.201.t
+	desc = monstrous.201.d
+	picture = BIG_BOOK_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Nothing is worth adulterating the classics
+		name = monstrous.201.a
+		increase_monstrous_5 = yes
+		add_prestige = 15
+		add_country_modifier = {
+			name = monstrous_vibrant_inks
+			duration = 3650
+		}
+	}
+	
+	option = { #Even humans can use annotations, right?
+		name = monstrous.201.b
+		decrease_monstrous_5 = yes
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -15
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -15
+			}
+		}
+	}
+	
+	option = { #Use alternate colours visible to non-lizardfolk
+		name = monstrous.201.c
+		decrease_monstrous_5 = yes
+		add_adm_power = 75
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -5
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -5
+			}
+		}
+		add_years_of_income = -1
+	}
+}
+
+
+country_event = { #Comparative Politics
+	id = monstrous.202
+	title = monstrous.202.t
+	desc = monstrous.202.d
+	picture = PARLIAMENT_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Publish and distribute the comparisons
+		name = monstrous.202.a
+		decrease_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_comparative_politics
+			duration = 1825
+		}
+		add_years_of_income = -0.5
+	}
+	
+	option = { #Sponsor a new generation of scholars
+		name = monstrous.202.b
+		decrease_monstrous_5 = yes
+		define_advisor = {
+			type = philosopher
+			skill = 1
+			cost_multiplier = 0.25
+		}
+		add_years_of_income = -1
+	}
+	
+	option = { #Do we really have to spell it out for them?
+		name = monstrous.202.c
+		increase_monstrous_5 = yes
+	}
+}
+
+
+country_event = { #Recognise Outsider Envoys
+	id = monstrous.203
+	title = monstrous.203.t
+	desc = monstrous.203.d
+	picture = muslimgfx_OVEREXTENSION_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Fine, they can bring their little letters
+		name = monstrous.203.a
+		decrease_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_outsider_envoys
+			duration = 3650
+		}
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+		hidden_effect = { set_country_flag = lizardfolk_monstrous_event_happened_203_yes }
+	}
+	
+	option = { #Envoys represent proper states only
+		name = monstrous.203.b
+		increase_monstrous_5 = yes
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = 10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = 10
+			}
+		}
+		hidden_effect = { set_country_flag = lizardfolk_monstrous_event_happened_203_no }
+	}
+}
+
+
+country_event = { #Mutual Deference Amnesty
+	id = monstrous.204
+	title = monstrous.204.t
+	desc = monstrous.204.d
+	picture = northamericagfx_BAD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #They need not bang their heads on the ground
+		name = monstrous.204.a
+		decrease_monstrous_5 = yes
+		add_dip_power = -50
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+	}
+	
+	option = { #We will preserve our self-respect
+		name = monstrous.204.b
+		increase_monstrous_5 = yes
+		add_dip_power = 50
+	}
+	
+	option = { #A new inter-species handshake, maybe?
+		name = monstrous.204.c
+		trigger = {
+			OR = {
+				ruler_has_personality = free_thinker_personality
+				ruler_has_personality = charismatic_negotiator_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_5 = yes
+		add_dip_power = -10
+	}
+}
+
+
+country_event = { #Reexamine the Histories
+	id = monstrous.205
+	title = monstrous.205.t
+	desc = monstrous.205.d
+	picture = muslimgfx_BIG_BOOK_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Commission the study
+		name = monstrous.205.a
+		decrease_monstrous_5 = yes
+		add_adm_power = -50
+		define_advisor = {
+			type = statesman
+			skill = 1
+			cost_multiplier = 0.75
+		}
+	}
+	
+	option = { #What is right requires not the approval of the dead
+		name = monstrous.205.b
+		trigger = {
+			OR = {
+				NOT = { religion = anzalkatsa }
+				ruler_has_personality = reformist_personality
+				ruler_has_personality = lawgiver_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_5 = yes
+		change_government_reform_progress = 25
+	}
+	
+	option = { #A waste of time
+		name = monstrous.205.c
+		#Nothing happens
+	}
+}
+
+
+country_event = { #Rule One
+	id = monstrous.206
+	title = monstrous.206.t
+	desc = monstrous.206.d
+	picture = indiangfx_ACCUSATION_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #We can still say the words at home, at least
+		name = monstrous.206.a
+		decrease_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_uphold_rule_one
+			duration = 3650
+		}
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+	}
+	
+	option = { #We could institute some kind of swear jar
+		name = monstrous.206.b
+		trigger = {
+			OR = {
+				ruler_has_personality = benevolent_personality
+				ruler_has_personality = greedy_personality
+				ruler_has_personality = strict_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_uphold_rule_one
+			duration = 3650
+		}
+		add_years_of_income = 0.5
+	}
+	
+	option = { #An outright ban is the only option
+		name = monstrous.206.c
+		trigger = {
+			OR = {
+				ruler_has_personality = lawgiver_personality
+				ruler_has_personality = reformist_personality
+				ruler_has_personality = strict_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_8 = yes
+		add_country_modifier = {
+			name = monstrous_uphold_rule_one
+			duration = 3650
+		}
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -20
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -20
+			}
+		}
+	}
+	
+	option = { #But their flesh does wobble
+		name = monstrous.206.e
+		increase_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_ignore_rule_one
+			duration = 3650
+		}
+	}
+}
+
+
+country_event = { #Linguistic Mutation
+	id = monstrous.207
+	title = monstrous.207.t
+	desc = monstrous.207.d
+	picture = NOTHING_FOUND_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #These throat-lipped lizards are useful, if a little repulsive
+		name = monstrous.207.a
+		decrease_monstrous_8 = yes
+		add_years_of_income = -1
+		add_adm_power = -50
+	}
+	
+	option = { #Build them their own quarter in the capital
+		name = monstrous.207.b
+		decrease_monstrous_8 = yes
+		capital_scope = {
+			add_province_modifier = {
+				name = monstrous_throat_lipped_compound
+				duration = 18250
+			}
+		}
+		add_years_of_income = -1.5
+		add_adm_power = -50
+	}
+	
+	option = { #Foreigners can learn our language
+		name = monstrous.207.c
+		increase_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_linguistic_isolation
+			duration = 7300
+		}
+	}
+}
+
+
+country_event = { #Equivalent Majesty
+	id = monstrous.208
+	title = monstrous.208.t
+	desc = monstrous.208.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Each can be said to rule their own sphere
+		name = monstrous.208.a
+		decrease_monstrous_8 = yes
+		reduce_stability_or_adm_power = yes
+	}
+	
+	option = { #Lizardfolk rule is world-historically exceptional
+		name = monstrous.208.b
+		increase_monstrous_8 = yes
+		add_stability_or_adm_power = yes
+	}
+}
+
+
+country_event = { #The Halfling Exception
+	id = monstrous.209
+	title = monstrous.209.t
+	desc = monstrous.209.d
+	picture = northamericagfx_SHIP_SAILING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Formalise their favoured status
+		name = monstrous.209.a
+		decrease_monstrous_8 = yes
+		large_increase_of_halfling_tolerance_effect = yes
+		custom_tooltip = monstrous_vyzemby_diplomacy_tooltip
+		hidden_effect = {
+			every_known_country = {
+				limit = { is_vyzemby_primary_culture = yes }
+				add_opinion = {
+					who = ROOT
+					modifier = monstrous_favoured_halflings
+				}
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = monstrous_favoured_halflings
+				}
+			}
+		}
+		add_years_of_income = -1
+		add_adm_power = -75
+	}
+	
+	option = { #I suppose they don’t smell as much as humans
+		name = monstrous.209.b
+		#Nothing happens
+	}
+}
+
+
+country_event = { #Unique Among Sentients
+	id = monstrous.210
+	title = monstrous.210.t
+	desc = monstrous.210.d
+	picture = NUSANTARA_THRONE_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #A salient compromise
+		name = monstrous.210.a
+		decrease_monstrous_5 = yes
+		add_adm_power = -50
+		add_country_modifier = {
+			name = monstrous_sentient_potential
+			duration = 3650
+		}
+	}
+	
+	option = { #Will we pat them on the head next?
+		name = monstrous.210.b
+		increase_monstrous_5 = yes
+	}
+}
+
+
+country_event = { #Legacy of Karassk
+	id = monstrous.211
+	title = monstrous.211.t
+	desc = monstrous.211.d
+	picture = VILLAGE_BURNING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Oh, throw them a bone
+		name = monstrous.211.a
+		trigger = { hidden_trigger = { NOT = { tag = L68 } } }
+		decrease_monstrous_5 = yes
+		medium_increase_of_human_tolerance_effect = yes
+		custom_tooltip = monstrous_human_diplomacy_1_tooltip
+		hidden_effect = {
+			every_known_country = {
+				limit = {
+					OR = {
+						culture_group = baashidi
+						capital_scope = { region = horashesh_region }
+					}
+					NOT = { culture_group = lizardfolk }
+				}
+				add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_1
+				}
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_1
+				}
+			}
+		}
+		add_dip_power = -50
+		add_prestige = -15
+	}
+	
+	option = { #Don’t be so cynical; let’s heal the wound
+		name = monstrous.211.b
+		trigger = {
+			hidden_trigger = { NOT = { tag = L68 } }
+			OR = {
+				ruler_has_personality = naive_personality
+				ruler_has_personality = reformist_personality
+				ruler_has_personality = kind_hearted_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_5 = yes
+		large_increase_of_human_tolerance_effect = yes
+		custom_tooltip = monstrous_human_diplomacy_2_tooltip
+		hidden_effect = {
+			every_known_country = {
+				limit = {
+					OR = {
+						culture_group = baashidi
+						capital_scope = { region = horashesh_region }
+					}
+					NOT = { culture_group = lizardfolk }
+				}
+				add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_2
+				}
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_2
+				}
+			}
+		}
+		add_prestige = -20
+	}
+	
+	option = { #We do not apologise
+		name = monstrous.211.c
+		trigger = { hidden_trigger = { NOT = { tag = L68 } } }
+		increase_monstrous_8 = yes
+	}
+	
+	option = { #Our ancestors were 70% correct, 30% mistaken
+		name = monstrous.211.e
+		trigger = { hidden_trigger = { tag = L68 } }
+		decrease_monstrous_8 = yes
+		medium_increase_of_human_tolerance_effect = yes
+		custom_tooltip = monstrous_human_diplomacy_1_tooltip
+		hidden_effect = {
+			every_known_country = {
+				limit = {
+					OR = {
+						culture_group = baashidi
+						capital_scope = { region = horashesh_region }
+					}
+					NOT = { culture_group = lizardfolk }
+				}
+				add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_1
+				}
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_1
+				}
+			}
+		}
+		add_dip_power = -75
+		add_prestige = -20
+	}
+	
+	option = { #Repudiate our ancestors
+		name = monstrous.211.f
+		trigger = {
+			hidden_trigger = { tag = L68 }
+			OR = {
+				ruler_has_personality = naive_personality
+				ruler_has_personality = reformist_personality
+				ruler_has_personality = kind_hearted_personality
+			}
+		}
+		highlight = yes
+		decrease_monstrous_8 = yes
+		large_increase_of_human_tolerance_effect = yes
+		custom_tooltip = monstrous_human_diplomacy_2_tooltip
+		hidden_effect = {
+			every_known_country = {
+				limit = {
+					OR = {
+						culture_group = baashidi
+						capital_scope = { region = horashesh_region }
+					}
+					NOT = { culture_group = lizardfolk }
+				}
+				add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_2
+				}
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = monstrous_historic_reconciliation_2
+				}
+			}
+		}
+		add_prestige = -30
+	}
+	
+	option = { #We do not apologise
+		name = monstrous.211.g
+		trigger = { hidden_trigger = { tag = L68 } }
+		increase_monstrous_8 = yes
+		add_country_modifier = {
+			name = monstrous_karassk_militarism
+			duration = 18250
+		}
+	}
+}
+
+
+country_event = { #Technology Fair (repeatable)
+	id = monstrous.212
+	title = monstrous.212.t
+	desc = monstrous.212.d
+	picture = INVENTION_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Make it so
+		name = monstrous.212.a
+		decrease_monstrous_5 = yes
+		add_country_modifier = {
+			name = monstrous_technology_fair
+			duration = 1825
+		}
+		add_years_of_income = -0.5
+	}
+	
+	option = { #Why is it spinning..?
+		name = monstrous.212.b
+		#Nothing happens
+	}
+}
+
+
+country_event = { #Our Favourite Foreigner (repeatable)
+	id = monstrous.213
+	title = monstrous.213.t
+	desc = monstrous.213.d
+	picture = ADVISOR_eventPicture
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect  {
+			random_known_country = {
+				limit = { NOT = { culture_group = lizardfolk } }
+				save_event_target_as = target_country
+			}
+		}
+	}
+	
+	option = { #Bring them into our sphere
+		name = monstrous.213.a
+		decrease_monstrous_5 = yes
+		add_dip_power = -50
+		define_advisor = {
+			type = artist
+			skill = 1
+			culture = event_target:target_country
+			religion = event_target:target_country
+			cost_multiplier = 0.75
+		}
+	}
+	
+	option = { #I prefer a good Yayat, myself
+		name = monstrous.213.b
+		#Nothing happens
+	}
+}
+
+
+country_event = { #Formal Diplomatic Recognition (repeatable)
+	id = monstrous.214
+	title = monstrous.214.t
+	desc = monstrous.214.d
+	picture = FORTIFIED_CITY_WITH_CARAVAN_OUTSIDE_eventPicture
+	
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect  {
+			random_known_country = {
+				limit = { NOT = { culture_group = lizardfolk } total_development = 100 }
+				save_event_target_as = target_country
+			}
+		}
+	}
+	
+	option = { #As long as the embassy isn’t near the bathhouse
+		name = monstrous.214.a
+		decrease_monstrous_5 = yes
+		if = {
+			limit = { has_estate = estate_nobles }
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+	}
+	
+	option = { #They do not merit our consideration
+		name = monstrous.214.b
+		#Nothing happens
+	}
+}
+
+country_event = { #Monstrous Stupidity (Starting Event)
+	id = monstrous.215
+	title = monstrous.215.t
+	desc = monstrous.215.d
+	picture = 1_Brahmin_Estate__eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #Our civilising mission begins
+		name = monstrous.215.a
+		#Nothing happens
+	}
+}
+
+country_event = { #Alike in Dignity (demonsterization complete)
+	id = monstrous.216
+	title = monstrous.216.t
+	desc = monstrous.216.d
+	picture = muslimgfx_GREAT_BUILDING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = { #The rest of the world has been civilised
+		name = monstrous.216.a
+		finish_demonsterization_effect = yes
+		if = {
+			limit = { NOT = { has_global_flag = lizardfolk_demonsterization_finished } }
+			capital_scope = {
+				add_permanent_province_modifier = {
+					name = monstrous_window_to_taneyas
+					duration = -1
+				}
+			}
+			set_global_flag = lizardfolk_demonsterization_finished
+		}
+		else = {
+			change_government_reform_progress = 100
+		}
+		hidden_effect = {
+			clr_country_flag = lizardfolk_monstrous_event_happened_201
+			clr_country_flag = lizardfolk_monstrous_event_happened_202
+			clr_country_flag = lizardfolk_monstrous_event_happened_203_yes
+			clr_country_flag = lizardfolk_monstrous_event_happened_203_no
+			clr_country_flag = lizardfolk_monstrous_event_happened_204
+			clr_country_flag = lizardfolk_monstrous_event_happened_205
+			clr_country_flag = lizardfolk_monstrous_event_happened_206
+			clr_country_flag = lizardfolk_monstrous_event_happened_207
+			clr_country_flag = lizardfolk_monstrous_event_happened_208
+			clr_country_flag = lizardfolk_monstrous_event_happened_209
+			clr_country_flag = lizardfolk_monstrous_event_happened_210
+			clr_country_flag = lizardfolk_monstrous_event_happened_211
+		}
+	}
 }
