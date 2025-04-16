@@ -198,17 +198,33 @@ country_event = { #neutral to allied
 		merfolk_change_modifiers_positive_effect = yes
 	}
 }
-country_event = { #angered to neutral
+province_event = { #angered to something else (province-level)
 	id = merfolk_events.2
 	title = merfolk_events.2.t
 	desc = merfolk_events.2.d
 	picture = GOOD_WITH_MONARCH_eventPicture
 
 	is_triggered_only = yes
+	trigger = {
+		has_province_modifier = offcoast_merfolk_angered
+		OR = {
+			is_empty = yes
+			owner = { is_or_was_tag = { tag = FROM } }
+			NOT = { has_province_modifier = merfolk_was_conquered }
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			remove_province_modifier = offcoast_merfolk_angered
+			remove_province_modifier = merfolk_was_conquered
+			merfolk_spawn_modifier = yes
+		}
+	}
 
 	option = {
 		name = merfolk_events.2.a
-		merfolk_change_modifiers_positive_effect = yes
+		ai_chance = { factor = 1 }
 	}
 }
 country_event = { #isolated to neutral
@@ -237,20 +253,28 @@ country_event = { #allied to neutral
 		merfolk_change_modifiers_negative_effect = yes
 	}
 }
-country_event = { #neutral to angered
+country_event = { #event telling you that merfolk will be angered if you conquer them
 	id = merfolk_events.5
 	title = merfolk_events.5.t
 	desc = merfolk_events.5.d
 	picture = BAD_WITH_MONARCH_eventPicture
+	goto = FROM
 
 	is_triggered_only = yes
+	trigger = { NOT = { has_country_flag = received_merfolk_information } }
 
 	option = {
 		name = merfolk_events.5.a
-		merfolk_change_modifiers_negative_effect = yes
+		ai_chance = { factor = 1 }
+
+		set_country_flag = received_merfolk_information
+		tooltip = {
+			merfolk_subtract_opinion_effect_medium = yes
+			FROM = { province_event = { id = merfolk_events.2 days = 2190 } }
+		}
 	}
 }
-country_event = { #angered to isolated
+country_event = { #neutral to isolated
 	id = merfolk_events.6
 	title = merfolk_events.6.t
 	desc = merfolk_events.6.d
@@ -273,21 +297,37 @@ province_event = { #development of an offcoast settlement
 
 	option = {
 		name = merfolk_events.7.a
+		ai_chance = { factor = 1 }
+
 		if = {
-			limit = {
-				owner = { has_country_flag = merfolk_opinion_allied }
-			}
-			add_permanent_province_modifier = {
-				name = offcoast_merfolk_allied
-				duration = -1
-			}
+			limit = { region = fahvanosy_region }
+			6678 = { change_variable = { which = fahvanosyMerfolkCap value = 1 } }
 		}
-		else = {
-			add_permanent_province_modifier = {
-				name = offcoast_merfolk_neutral
-				duration = -1
-			}
+		else_if = {
+			limit = { region = odu_kherass_region }
+			6678 = { change_variable = { which = oduKherassMerfolkCap value = 1 } }
 		}
+		else_if = {
+			limit = { region = ishyamtumu_region }
+			6678 = { change_variable = { which = ishyamtumuMerfolkCap value = 1 } }
+		}
+		else_if = {
+			limit = { region = bamaliwuni_region }
+			6678 = { change_variable = { which = bamaliwuniMerfolkCap value = 1 } }
+		}
+		else_if = {
+			limit = { region = throden_gokad_region }
+			6678 = { change_variable = { which = throdenGokadMerfolkCap value = 1 } }
+		}
+		else_if = {
+			limit = { region = ardimya_region }
+			6678 = { change_variable = { which = ardimyaMerfolkCap value = 1 } }
+		}
+		else_if = {
+			limit = { region = jasiir_jadid_region }
+			6678 = { change_variable = { which = jasiirJadidMerfolkCap value = 1 } }
+		}
+		merfolk_spawn_modifier = yes
 		custom_tooltip = merfolk_amount_update_region_tt
 	}
 }
@@ -426,17 +466,11 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_allied
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
 					any_owned_province = {
 						OR = {
 							has_province_modifier = offcoast_merfolk_allied
 							has_province_modifier = offcoast_merfolk_neutral
-							has_province_modifier = offcoast_merfolk_allied
-						} 
+						}
 						NOT = { has_province_modifier = merfolk_youth_stranding } 
 					}
 				}
@@ -445,37 +479,17 @@ country_event = { #Handler event
 				}
 			}
 			5 = {
-				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_angered
-						has_country_flag = merfolk_opinion_isolated
-					}
-				}
 				country_event = {
 					id = merfolk_events.17
 				}
 			}
 			15 = {
-				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_angered
-						has_country_flag = merfolk_opinion_isolated
-					}
-				}
+				trigger = { NOT = { has_country_flag = merfolk_opinion_allied } }
 				country_event = {
 					id = merfolk_events.18
 				}
 			}
 			15 = {
-				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_allied
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
-				}
 				country_event = {
 					id = merfolk_events.19
 				}
@@ -499,11 +513,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_angered
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 					NOT = { has_country_modifier = merfolk_detente }
 				}
 				country_event = {
@@ -512,7 +522,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					has_country_flag = merfolk_opinion_allied
+					any_owned_province = { has_province_modifier = offcoast_merfolk_allied }
 				}
 				country_event = {
 					id = merfolk_events.29
@@ -520,11 +530,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_angered
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 					NOT = { has_country_flag = merfolk_ocean_curve }
 				}
 				country_event = {
@@ -532,13 +538,6 @@ country_event = { #Handler event
 				}
 			}
 			15 = {
-				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_allied
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
-				}
 				country_event = {
 					id = merfolk_events.35
 				}
@@ -556,10 +555,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 					any_owned_province = {
 						has_port = yes
 						OR = {
@@ -595,11 +591,6 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-						has_country_flag = merfolk_opinion_allied
-					}
 					any_owned_province = {
 						has_port = yes
 						OR = {
@@ -667,9 +658,11 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
+					any_owned_province = {
+						OR = {
+							has_province_modifier = offcoast_merfolk_neutral
+							has_province_modifier = offcoast_merfolk_isolated
+						}
 					}
 				}
 				random_owned_province = {
@@ -686,10 +679,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 					any_owned_province = {
 						has_port = yes
 						OR = {
@@ -717,10 +707,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 				}
 				country_event = {
 					id = merfolk_events.46
@@ -728,10 +715,7 @@ country_event = { #Handler event
 			}
 			15 = {
 				trigger = {
-					OR = {
-						has_country_flag = merfolk_opinion_neutral
-						has_country_flag = merfolk_opinion_isolated
-					}
+					NOT = { has_country_flag = merfolk_opinion_allied }
 				}
 				country_event = {
 					id = merfolk_events.47
