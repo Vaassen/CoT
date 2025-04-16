@@ -787,41 +787,8 @@ racial_pop_current_race_administration_check = {
 }
 # Checks the policies towards the currently selected race
 racial_pop_current_race_policy_check = {
-	# Clear all flags
-	clr_country_flag = rp_current_race_focus_policy
-	clr_country_flag = rp_current_race_expel_policy
-	clr_country_flag = rp_current_race_purge_policy
-	clr_country_flag = rp_current_race_focus_expel_policy
-	clr_country_flag = rp_current_race_focus_purge_policy
-	if = {
-		limit = { has_country_modifier = racial_focus_$race$ }
-		if = {
-			limit = { has_country_modifier = racial_pop_$race$_expulsion }
-			set_country_flag = rp_current_race_focus_expel_policy
-		}
-		else_if = {
-			limit = { has_country_modifier = racial_pop_$race$_purge }
-			set_country_flag = rp_current_race_focus_purge_policy
-		}
-		else = {
-			set_country_flag = rp_current_race_focus_policy
-		}
-	}
-	else = {
-		if = {
-			limit = { has_country_modifier = racial_pop_$race$_expulsion }
-			set_country_flag = rp_current_race_expel_policy
-		}
-		else_if = {
-			limit = { has_country_modifier = racial_pop_$race$_purge }
-			set_country_flag = rp_current_race_purge_policy
-		}
-		else = {
-			#No effect
-		}
-	}
-
-	# Add additional policies here
+	racial_list_policy_adder_effect = { race = $race$ }
+	set_variable = { which = rp_current_race_policy_framevar which = $race$PolicyCount }
 }
 
 ###################
@@ -1012,7 +979,7 @@ racial_list_sort_by_tolerance_dec = {
 		set_country_flag = racial_pop_list_is_sorted
 		set_country_flag = rp_sort_tolerance_dec
 		racial_list_store_tolerance_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpToleranceVar }
+		racial_list_sorting_algorithm = { sortvar = rpToleranceVar descending = yes }
 	}
 }
 #TODO Jothell make sure of this
@@ -1022,27 +989,7 @@ racial_list_sort_by_tolerance_asc = {
 		set_country_flag = racial_pop_list_is_sorted
 		set_country_flag = rp_sort_tolerance_asc
 		racial_list_store_tolerance_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpToleranceVar }
-		racial_list_sort_invert_rank_value = { raceRanking = centaurRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = dwarvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = elvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = gnollishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = gnomishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = goblinRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = half_elvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = half_orcishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = halflingRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = harimariRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = harpyRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = hobgoblinRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = humanRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = koboldRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = lizardfolkRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = mechanimRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = ogreRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = orcishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = ruinbornRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = trollRanking }
+		racial_list_sorting_algorithm = { sortvar = rpToleranceVar ascending = yes }
 	}
 }
 # Generic sorting algorithm
@@ -1071,8 +1018,9 @@ racial_list_sorting_algorithm = {
 	20 = { set_province_flag = not_sorted }
 
 	set_variable = { which = raceRanking value = 0 }
+	
+	[[ascending]
 	2 = { save_event_target_as = most_represented_race }
-
 	while = { limit = { NOT = { check_variable = { which = raceRanking value = 20 } } }	#20 = nb of races
 		change_variable = { which = raceRanking value = 1 }
 		pop_menu_variables = {	#province group that has all the provinces with stored variables
@@ -1088,6 +1036,25 @@ racial_list_sorting_algorithm = {
 			set_variable = { which = $sortvar$ value = 0 }
 		}
 	}
+	]
+	[[descending]
+	2 = { save_event_target_as = least_represented_race }
+	while = { limit = { NOT = { check_variable = { which = raceRanking value = 20 } } }	#20 = nb of races
+		change_variable = { which = raceRanking value = 1 }
+		pop_menu_variables = {	#province group that has all the provinces with stored variables
+			limit = {
+				has_province_flag = not_sorted
+				NOT = { check_variable = { which = $sortvar$ which = event_target:least_represented_race } }
+			}
+			save_event_target_as = least_represented_race
+		}
+		event_target:least_represented_race = {
+			clr_province_flag = not_sorted
+			racial_list_conversion_to_rank = yes
+			set_variable = { which = $sortvar$ value = 2100000 }
+		}
+	}
+	]
 }
 # This generates the sorted rank from the province ID
 racial_list_conversion_to_rank = {
@@ -1178,7 +1145,7 @@ racial_list_sort_by_policy_dec = {
 		set_country_flag = rp_sort_policy_dec
 		racial_list_policy_adder_races = yes
 		racial_list_store_policy_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpPolicyVar }
+		racial_list_sorting_algorithm = { sortvar = rpToleranceVar descending = yes }
 	}
 }
 # Sort by policy count ascending
@@ -1188,27 +1155,7 @@ racial_list_sort_by_policy_asc = {
 		set_country_flag = rp_sort_policy_asc
 		racial_list_policy_adder_races = yes
 		racial_list_store_policy_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpPolicyVar }
-		racial_list_sort_invert_rank_value = { raceRanking = centaurRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = dwarvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = elvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = gnollishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = gnomishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = goblinRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = half_elvenRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = half_orcishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = halflingRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = harimariRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = harpyRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = hobgoblinRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = humanRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = koboldRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = lizardfolkRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = mechanimRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = ogreRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = orcishRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = ruinbornRanking }
-		racial_list_sort_invert_rank_value = { raceRanking = trollRanking }
+		racial_list_sorting_algorithm = { sortvar = rpToleranceVar ascending = yes }
 	}
 }
 
@@ -1902,7 +1849,7 @@ racial_mil_military_change_tech = {
 			change_unit_type = tech_cannorian
 		}
 	}
-	else_if = { # Harimari effects
+	else_if = { # Effects for harimari
 		limit = { has_country_flag = racial_mil_has_harimari_menu_open }
 		if = {
 			limit = {
@@ -1930,6 +1877,18 @@ racial_mil_military_change_tech = {
 	}
 	else_if = { # Effects for harpies
 		limit = { has_country_flag = racial_mil_has_harpy_menu_open }
+		if = {
+			limit = {
+				OR ={
+					primary_culture = siadunan_harpy
+					AND = {
+						accepted_culture = siadunan_harpy
+						NOT = { culture_group = harpy }
+					}
+				}
+			}
+			change_unit_type = tech_siadunan_harpy
+		}
 		if = {
 			limit = {
 				OR = {
@@ -1965,6 +1924,19 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_nzeri_harpy
 		}
+		else_if = {
+			limit = {
+				OR = {
+					capital_scope = { superregion = gozengun_superregion }
+					primary_culture = nuzenapu_harpy
+					AND = {
+						accepted_culture = nuzenapu_harpy
+						NOT = { culture_group = harpy }
+					}
+				}
+			}
+			change_unit_type = tech_nuzenapu_harpy
+		}
 		else = {
 			change_unit_type = tech_firanyan_harpy
 		}
@@ -1980,6 +1952,7 @@ racial_mil_military_change_tech = {
 		else_if = { limit = { capital_scope = { superregion = south_salahad_superregion } }
 			change_unit_type = tech_salahadesi
 		}
+		### Not sure if this or the other, there's two versions
 		else_if = {
 			limit = { capital_scope = { superregion = tanib_dajek_superregion } }
 			if = {
@@ -1997,6 +1970,33 @@ racial_mil_military_change_tech = {
 			}
 			else = { change_unit_type = tech_west_sarhaly }
 		}
+
+		### The other
+		# else_if = {
+		# 	limit = { capital_scope = { superregion = tanib_dajek_superregion } }
+		# 	change_unit_type = tech_west_sarhaly
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		capital_scope = { superregion = east_sarhal_superregion }
+		# 	}
+		# 	if = {
+		# 		limit = { 
+		# 			OR = {
+		# 				accepted_culture = tanizu
+		# 				accepted_culture = antmvura
+		# 				accepted_culture = kombedak
+		# 				accepted_culture = umsozidak
+		# 				accepted_culture = wakoodak
+		# 			}
+		# 			NOT = { culture_group = inyaswarosa }
+		# 		}
+		# 		change_unit_type = tech_inyaswarosa
+		# 	}
+		# 	else = { change_unit_type = tech_east_sarhaly }
+		# }
+
+
 		else_if = {
 			limit = {
 				capital_scope = {
@@ -2036,7 +2036,12 @@ racial_mil_military_change_tech = {
 			change_unit_type = tech_halessi
 		}
 		else_if = { limit = { capital_scope = { superregion = gozengun_superregion } }
-			change_unit_type = tech_shuvuush
+			if = { limit = { primary_culture = shuvuush }
+				change_unit_type = tech_shuvuush
+			}
+			else = {
+				change_unit_type = tech_wastelander
+			}
 		}
 		else_if = { limit = { capital_scope = { superregion = forbidden_lands_superregion } }
 			change_unit_type = tech_triunic
@@ -2081,6 +2086,12 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_east_kobold
 		}
+		else_if = {
+			limit = {
+				capital_scope = { continent = serpentspine }
+			}
+			change_unit_type = tech_darkscale_kobold
+		}
 		else = {
 			change_unit_type = tech_kobold
 		}
@@ -2104,18 +2115,30 @@ racial_mil_military_change_tech = {
 		}
 		else_if = {
 			limit = {
-				OR = {
-					capital_scope = { superregion = gozengun_superregion }
-					AND = {
-						accepted_culture = soulseeker_ogre
-						NOT = { culture_group = ogre }
-					}
-				}
+				capital_scope = { region = nomsyulhan_region }
 			}
+			change_unit_type = tech_soulseeker_ogre
+		}
+		else_if = {
+			limit = { capital_scope = { superregion = fangaula_superregion } }
+			change_unit_type = tech_dunesole_ogre
 		}
 		else = {
 			change_unit_type = tech_ogre	#may need custom one
 		}
+		#No idea if this is meant to be an additional case for "tech_soulseeker_ogre"
+		#There was no effect in "anb_scripted_effects_for_racial_tolerances.txt"
+		# else_if = {
+		# 	limit = {
+		# 		OR = {
+		# 			capital_scope = { superregion = gozengun_superregion }
+		# 			AND = {
+		# 				accepted_culture = soulseeker_ogre
+		# 				NOT = { culture_group = ogre }
+		# 			}
+		# 		}
+		# 	}
+		# }
 	}
 	else_if = { # Effects for orcs
 		limit = { has_country_flag = racial_mil_has_orcish_menu_open }
@@ -2231,6 +2254,8 @@ racial_mil_military_change_tech = {
 		if = {
 			limit = {
 				OR = {
+					# Pick a capital scope
+					# capital_scope = { region = yezel_mora_region }
 					capital_scope = { superregion = east_sarhal_superregion }
 					primary_culture = swamp_troll
 					AND = {
@@ -2241,6 +2266,22 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_swamp_troll
 		}
+		else_if = {
+			limit = {
+				OR = {
+					capital_scope = {
+						continent = asia
+						NOT = { superregion = forbidden_lands_superregion } 
+					}
+					primary_culture = hill_troll
+					AND = {
+						accepted_culture = hill_troll
+						NOT = { culture_group = giantkind }
+					}
+				}
+			}
+			change_unit_type = tech_hill_troll
+        }
 		else = {
 			change_unit_type = tech_northern_troll	#may need custom one
 		}
@@ -2314,6 +2355,17 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_cave_goblin
 		}
+		else_if = {
+			limit = {
+				capital_scope = {
+					OR = {
+						superregion = east_serpentspine_superregion
+						continent = asia
+					}
+				}
+			}
+			change_unit_type = tech_east_cave_goblin
+		}
 		else = { #Common Goblin (Fallback if all other conditions fail)
 			change_unit_type = tech_goblin
 		}
@@ -2332,7 +2384,11 @@ racial_mil_military_change_tech = {
 	}
 	else_if = { #Effects for hobgoblins
 		limit = { has_country_flag = racial_mil_has_hobgoblin_menu_open }
-		change_unit_type = tech_hobgoblin
+		if = {
+			limit = { capital_scope = { superregion = gozengun_superregion } }
+			change_unit_type = tech_eagle_hobgoblin
+		}
+		else = { change_unit_type = tech_hobgoblin }
 	}
 	else_if = { #Effects for lizardfolk
 		limit = { has_country_flag = racial_mil_has_lizardfolk_menu_open }
@@ -2371,6 +2427,7 @@ racial_mil_military_change_tech = {
 		else_if = { limit = { capital_scope = { superregion = south_salahad_superregion } }
 			change_unit_type = tech_salahadesi
 		}
+		### Not sure if this or the other, there's two versions
 		else_if = {
 			limit = { capital_scope = { superregion = tanib_dajek_superregion } }
 			if = {
@@ -2388,6 +2445,33 @@ racial_mil_military_change_tech = {
 			}
 			else = { change_unit_type = tech_west_sarhaly }
 		}
+
+		### The other
+		# else_if = {
+		# 	limit = { capital_scope = { superregion = tanib_dajek_superregion } }
+		# 	change_unit_type = tech_west_sarhaly
+		# }
+		# else_if = {
+		# 	limit = {
+		# 		capital_scope = { superregion = east_sarhal_superregion }
+		# 	}
+		# 	if = {
+		# 		limit = { 
+		# 			OR = {
+		# 				accepted_culture = tanizu
+		# 				accepted_culture = antmvura
+		# 				accepted_culture = kombedak
+		# 				accepted_culture = umsozidak
+		# 				accepted_culture = wakoodak
+		# 			}
+		# 			NOT = { culture_group = inyaswarosa }
+		# 		}
+		# 		change_unit_type = tech_inyaswarosa
+		# 	}
+		# 	else = { change_unit_type = tech_east_sarhaly }
+		# }
+
+
 		else_if = {
 			limit = {
 				capital_scope = {
@@ -2427,7 +2511,12 @@ racial_mil_military_change_tech = {
 			change_unit_type = tech_halessi
 		}
 		else_if = { limit = { capital_scope = { superregion = gozengun_superregion } }
-			change_unit_type = tech_shuvuush
+			if = { limit = { primary_culture = shuvuush }
+				change_unit_type = tech_shuvuush
+			}
+			else = {
+				change_unit_type = tech_wastelander
+			}
 		}
 		else_if = { limit = { capital_scope = { superregion = forbidden_lands_superregion } }
 			change_unit_type = tech_triunic
