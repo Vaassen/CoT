@@ -1665,23 +1665,6 @@ magic_study_clear_study_effects = {
 			value = 0
 		}
 		
-
-		if = { limit = { has_country_flag = patron_xp_bonus }
-			update_magic_study_experience_modifier = { type = ruler value = -25 }
-			clr_country_flag = patron_xp_bonus
-		}
-		if = { limit = { has_country_flag = patron_xp_malus }
-			update_magic_study_experience_modifier = { type = ruler value = 25 }
-			clr_country_flag = patron_xp_malus
-		}
-		if = { limit = { has_country_flag = onyxguard_xp_malus }
-			update_magic_study_experience_modifier = { type = ruler value = 50 }
-			clr_country_flag = onyxguard_xp_malus
-		}
-		if = { limit = { has_country_flag = bardic_college_xp_bonus }
-			update_magic_study_experience_modifier = { type = ruler value = -25 }
-			clr_country_flag = bardic_college_xp_bonus
-		}
 	}
 }
 
@@ -1838,38 +1821,6 @@ count_provinces_narrow_ward_effect = {	#it isnt an actual count its used for the
 	    }
 	}
 }
-# Can handle experience = 50, 100, 200, 250, 300 or 500. If you want to add more then you need to create new tooltips for them.
-increase_study_experience = {
-	[[experience]
-		custom_tooltip = magic_study_experience_$experience$_tt # Loc only exists for 50, 100, 200, 250, 300 and 500 currently
-		
-		update_magic_study_experience_modifier = { type = ruler }
-		hidden_effect = { set_variable = { experienceGain = $experience$ } }
-		# If the modifier is positive or negative
-		if = {
-			limit = { 
-				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
-			}
-			custom_tooltip = magic_study_experience_modifier_tt			
-			hidden_effect = {
-				set_variable = { which = expFoo which = ruler_experience_modifier }
-				divide_variable = { expFoo = 100 }
-				change_variable = { expFoo = 1 }
-				multiply_variable = { which = experienceGain which = expFoo }
-			}
-		}
-
-		hidden_effect = {
-			change_variable = {
-				which = ruler_magic_experience 
-				which = experienceGain
-			}
-		}
-	]
-	hidden_effect = {
-		country_event = { id = magic_study.100 days = 1 }
-	}
-}
 
 magic_study_start_effect = {
 	add_ruler_modifier = {
@@ -2021,7 +1972,7 @@ magic_field_adm_cost = {
 
 magic_legend_lore_effect = {
 	set_ruler_flag = ruler_studying_legend_lore
-	increase_study_experience = {
+	increase_magic_experience = {
 		experience = 250
 	}
 	add_dip_power = -150
@@ -2132,11 +2083,21 @@ set_magic_patron = {
 	set_ruler_flag = $name_key$_patron
 	custom_tooltip = $name_key$_desc_tt
 	hidden_effect = {
-		[[favoured_school_1] set_ruler_flag = patron_favored_$favoured_school_1$ add_ruler_modifier = { name = patron_favoured_$favoured_school_1$ duration = -1 } ]
-		[[favoured_school_2] set_ruler_flag = patron_favored_$favoured_school_2$ add_ruler_modifier = { name = patron_favoured_$favoured_school_2$ duration = -1 } ]
-		[[disfavoured_school_1] set_ruler_flag = patron_disfavored_$disfavoured_school_1$ add_ruler_modifier = { name = patron_disfavoured_$disfavoured_school_1$ duration = -1 } ]
-		[[disfavoured_school_2] set_ruler_flag = patron_disfavored_$disfavoured_school_2$ add_ruler_modifier = { name = patron_disfavoured_$disfavoured_school_2$ duration = -1 } ]
+		[[favoured_school_1] add_ruler_modifier = { name = patron_favoured_$favoured_school_1$ duration = -1 } ]
+		[[favoured_school_2] add_ruler_modifier = { name = patron_favoured_$favoured_school_2$ duration = -1 } ]
+		[[disfavoured_school_1] add_ruler_modifier = { name = patron_disfavoured_$disfavoured_school_1$ duration = -1 } ]
+		[[disfavoured_school_2] add_ruler_modifier = { name = patron_disfavoured_$disfavoured_school_2$ duration = -1 } ]
 		[[initial_approval] set_variable = { PatronApproval = $initial_approval$ } ]
+	}
+}
+
+clr_magic_patron = {
+	clr_ruler_flag = $name_key$_patron
+	hidden_effect = {
+		[[favoured_school_1] remove_country_modifier = patron_favoured_$favoured_school_1$ ]
+		[[favoured_school_2] remove_country_modifier = patron_favoured_$favoured_school_2$ ]
+		[[disfavoured_school_1] remove_country_modifier = patron_disfavoured_$disfavoured_school_1$ ]
+		[[disfavoured_school_2] remove_country_modifier = patron_disfavoured_$disfavoured_school_2$ ]
 	}
 }
 
@@ -3102,6 +3063,10 @@ estate_action_RECRUIT_WAR_WIZARD = {
 
 create_war_wizard = {
 	if = {
+		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
+		create_war_wizard_wyvernheart_effect = yes
+	}
+	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
 		tooltip = { define_general = { fire = 2 shock = 9 manuever = 7 siege = 3 } }
 		hidden_effect = {
@@ -3137,6 +3102,48 @@ create_war_wizard = {
 			random_list = {
 				50 = { define_general = { fire = 1 shock = 7 manuever = 4 siege = 1 } }
 				50 = { define_general = { fire = 1 shock = 7 manuever = 4 siege = 1 female = yes } }
+			}
+		}
+	}
+}
+
+create_war_wizard_wyvernheart_effect = {
+	if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
+		tooltip = { define_general = { fire = 2 shock = 9 manuever = 8 siege = 3 } }
+		hidden_effect = {
+			random_list = {
+				50 = { define_general = { fire = 2 shock = 9 manuever = 8 siege = 3 } }
+				50 = { define_general = { fire = 2 shock = 9 manuever = 8 siege = 3 female = yes } }
+			}
+		}
+	}
+	else_if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
+		tooltip = { define_general = { fire = 2 shock = 8 manuever = 7 siege = 2 } }
+		hidden_effect = {
+			random_list = {
+				50 = { define_general = { fire = 2 shock = 8 manuever = 7 siege = 2 } }
+				50 = { define_general = { fire = 2 shock = 8 manuever = 7 siege = 2 female = yes } }
+			}
+		}
+	}
+	else_if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
+		tooltip = { define_general = { fire = 1 shock = 8 manuever = 6 siege = 1 } }
+		hidden_effect = {
+			random_list = {
+				0 = { define_general = { fire = 1 shock = 8 manuever = 6 siege = 1 } }
+				0 = { define_general = { fire = 1 shock = 8 manuever = 6 siege = 1 female = yes } }
+			}
+		}
+	}
+	else = {
+		tooltip = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 1 } }
+		hidden_effect = {
+			random_list = {
+				50 = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 1 } }
+				50 = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 1 female = yes } }
 			}
 		}
 	}

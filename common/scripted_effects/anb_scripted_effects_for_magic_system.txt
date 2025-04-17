@@ -401,40 +401,95 @@ update_advancement_progress_bar = {
 	}
 }
 
-# Tooltips handle values: 1,2,5,7,10,12,15,17,20,25,33,50,100
-# Tooltips handle sources: government, mission, ruler, provinces, temporary
-# Everything will be consolidated into one tooltip per source per type
-# e.g. if you have a mission that gives +20% country and another one that gives -10% country, the tooltip will read +10%
-# you can make more sources but it's complicated
+increase_magic_experience = {
 
-# update_magic_study_experience_modifier = {
-# 	[[value]
-# 		change_variable = { $type$_experience_modifier = $value$ }				# This handle negative. Value must be whole, so +10% = 10
-# #		change_variable = { $source$_$type$_experience_modifier = $value$ }
-# 		if = {
-# 			limit = { 6168 = { base_tax = $value$ } }	#Returns true if $value$ is 0 or less, returns false otherwise
-# #			custom_tooltip = add_$source$_$type$_magic_study_modifier_$value$_tt
-# 		}
-# #		else = { custom_tooltip = remove_$source$_$type$_magic_study_modifier_$value$_tt }
-# 	]
-# 	if = {
-# 		limit = { NOT = { check_variable = { $type$_experience_modifier = -100 } } }		# We never go under -100%
-# 		set_variable = { $type$_experience_modifier = -100 }
-# 	}
-# }
+	hidden_effect = { set_variable = { experienceGain = $experience$ } }
 
-update_magic_study_experience_modifier = {
-	[[value]
-		set_variable = { which = expFoo value = $value$ }
-		divide_variable = { expFoo = 100 }
-		change_variable = { which = magic_$type$_exp_mod_compatibility which = expFoo }
-	]
-	# We never go under -100%
-	if = {
-		limit = { NOT = { check_variable = { magic_$type$_xp_mod_legacy = -1 } } }
-		set_variable = { magic_$type$_xp_mod_legacy = -1 }
+	if = { limit = { has_ruler_flag = magic_advancement }
+
+		tooltip = { change_variable = { ruler_magic_experience = $experience$ } }
+		custom_tooltip = magic_experience_gain_modifier_tt
+
+		export_to_variable = {
+			variable_name = ruler_experience_modifier
+			value = modifier:mages_ruler_experience_mod
+		}
+		calc_school_experience_modifiers = { type = ruler }
+		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+
+		if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
+			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = experienceGain which = expFoo }
+		}
+
+		change_variable = { which = experienceGain which = temp_exp }
+		change_variable = {
+			which = ruler_magic_experience
+			which = experienceGain
+		}
+		
+		update_advancement_progress_bar = { type = ruler }
 	}
-	new_update_magic_experience_modifier = yes
+	
+	else_if = {
+		limit = { has_heir_flag = magic_advancement }
+
+		tooltip = { change_variable = { heir_magic_experience = $experience$ } }
+		custom_tooltip = magic_experience_gain_modifier_tt
+
+		export_to_variable = {
+			variable_name = ruler_experience_modifier
+			value = modifier:mages_ruler_experience_mod
+		}
+		calc_school_experience_modifiers = { type = heir }
+		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+
+		if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
+			set_variable = { which = expFoo which = ruler_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = experienceGain which = expFoo }
+		}
+		change_variable = { which = experienceGain which = temp_exp }
+		change_variable = {
+			which = heir_magic_experience
+			which = experienceGain
+		}
+		update_advancement_progress_bar = { type = heir }
+	}
+
+	else_if = { limit = { has_country_flag = magic_advancement }
+
+		tooltip = { change_variable = { country_magic_experience = $experience$ } }
+		custom_tooltip = magic_experience_gain_modifier_tt
+
+		export_to_variable = {
+			variable_name = country_experience_modifier
+			value = modifier:mages_estate_experience_mod
+		}
+		calc_school_experience_modifiers = { type = country }
+		change_variable = { which = country_experience_modifier which = school_experience_modifier }
+
+		if = {
+			limit = { NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } } # XP modifier not 0
+			set_variable = { which = expFoo which = country_experience_modifier }
+			change_variable = { expFoo = 1 }
+			multiply_variable = { which = experienceGain which = expFoo }
+		}
+		change_variable = { which = experienceGain which = temp_exp }
+		change_variable = {
+			which = country_magic_experience
+			which = experienceGain
+		}
+		update_advancement_progress_bar = { type = country }
+	}
+	else = {
+		change_variable = { which = passive_experience_bank which = experienceGain }
+	}
+
+	if = { limit = { magic_advancement_done = yes }
+		country_event = { id = magic_study.100 }
+	}
 }
 
 finish_magic_study = {
@@ -530,7 +585,7 @@ calc_completed_magic_projects = {
 passive_magic_advancement_progress = {
 	export_to_variable = {
 		variable_name = monthly_magic_xp_gain
-		value = modifier:mages_experience_gain
+		value = modifier:monthly_magic_experience_gain
 	}
 	export_to_variable = {
 		variable_name = ruler_experience_modifier
@@ -570,11 +625,8 @@ passive_magic_advancement_progress = {
 		}
 		calc_school_experience_modifiers = { type = ruler }
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-		if = { limit = {
-				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
-			}
+		if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
 			set_variable = { which = expFoo which = ruler_experience_modifier }
-			change_variable = { which = ruler_experience_modifier which = magic_ruler_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = monthly_magic_xp_gain which = expFoo }
 		}
@@ -595,11 +647,8 @@ passive_magic_advancement_progress = {
 		}
 		calc_school_experience_modifiers = { type = heir }
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-		if = { limit = {
-				NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } # XP modifier not 0
-			}
+		if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
 			set_variable = { which = expFoo which = ruler_experience_modifier }
-			change_variable = { which = ruler_experience_modifier which = magic_ruler_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = monthly_magic_xp_gain which = expFoo }
 		}
@@ -617,11 +666,8 @@ passive_magic_advancement_progress = {
 		calc_school_experience_modifiers = { type = country }
 		change_variable = { which = country_experience_modifier which = school_experience_modifier }
 		if = {
-			limit = {
-				NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } # XP modifier not 0
-			}
+			limit = { NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } } # XP modifier not 0
 			set_variable = { which = expFoo which = country_experience_modifier }
-			change_variable = { which = country_experience_modifier which = magic_estate_xp_mod_legacy } ##Legacy
 			change_variable = { expFoo = 1 }
 			multiply_variable = { which = monthly_magic_xp_gain which = expFoo }
 		}
@@ -641,8 +687,7 @@ passive_magic_advancement_progress = {
 	}
 }
 
-
-new_update_magic_experience_modifier = {
+update_magic_ui_experience_modifiers = {
 	hidden_effect = {
 		set_variable = { which = mages_ruler_experience_mod_ui value = 0 }
 		set_variable = { which = mages_estate_experience_mod_ui value = 0 }
