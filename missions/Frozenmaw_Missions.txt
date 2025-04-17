@@ -44,7 +44,7 @@ Esmaryal = {
 		 } 
 
 		effect = { 
-			#TODO increase tolerance of half-orcs
+			large_increase_of_half_orcish_tolerance_effect = yes
 			#TODO give a modifier if Brasur and Frida are alive, otherwise do something else
 		 } 
 	}
@@ -71,6 +71,23 @@ Esmaryal = {
 		 } 
 
 		effect = { 
+			every_owned_province = {
+				if = {
+					limit = {
+						has_tax_building_trigger = yes
+						culture = gray_orc
+					}
+					#TODO church of the gentle dawn modifier
+					change_religion = regent_court
+					if = {
+						limit = { has_large_half_orcish_minority_trigger = yes }
+						add_base_production = 1
+					}
+					else = {
+						add_half_orcish_minority_size_effect = yes
+					}
+				}
+			}
 			#TODO every qualifying province gets church of the gentle dawn modifier, converts to RC, gain half-orc minority or +1 prod if already large
 		 } 
 	}
@@ -124,10 +141,10 @@ Settlement = {
 					building = temple
 					cost = 0
 				}
-			ROOT = { add_treasury = -50	}
-			#TODO add half-orc minority
+			add_half_orcish_minority_size_effect = yes
 			#TODO add 25 years of gentle dawn modifier
 			}
+			ROOT = { add_treasury = -50	}
 		 } 
 	}
 
@@ -155,7 +172,13 @@ Settlement = {
 					which = renaissance
 					value = 30
 				}
-				#TODO make gray orc, give +1 manpower if it was already
+				if = { 
+					limit = { culture = gray_orc }
+					add_base_manpower = 1
+				}
+				else = {
+					change_culture = gray_orc
+				}
 			}
 		 } 
 	}
@@ -227,7 +250,26 @@ Settlement = {
 		 } 
 
 		effect = { 
-			#TODO every owned province with manpower of 5 in alenic reach gains random +1 tax or prod. If gray orc, gain both
+			alenic_reach_region = {
+				if = {
+					limit = { base_manpower = 5 }
+					if = {
+						limit = { culture = gray_orc }
+						add_base_production = 1
+						add_base_tax = 1
+					}
+					else = {
+						random_list = {
+							50 = {
+								add_base_production = 1
+							}
+							50 = {
+								add_base_tax = 1
+							}
+						}
+					}
+				}
+			}
 		 } 
 	}
 
@@ -301,13 +343,18 @@ Warriors = {
 			create_general = {
 				tradition = 60
 				culture = half_orc
-				#TODO every province with 5 manpower gains half_orc minority
 			}
-		 } 
+		 every_owned_province ={
+			if = {
+				limit = { base_manpower = 5 }
+				add_half_orcish_minority_size_effect = yes
+			}		
+		 }
 	}
+}
 
 	z18_gray_orc_mercenaries = {
-		icon = mission_orc_chillin
+		icon = mission_orc_chillin #TODO make this orc gray
 		position = 3
 		required_missions = { z18_new_breed_of_warriors } 
 		provinces_to_highlight = {  } 
@@ -321,7 +368,13 @@ Warriors = {
 		 } 
 
 		effect = { 
-			#TODO delete 10 infantry
+			740 = {
+				kill_units = {
+					who = owner
+					type = infantry
+					amount = 10
+				}
+			}
 			#TODO enable ironwall company
 		 } 
 	}
@@ -362,7 +415,24 @@ Warriors = {
 					NOT = { local_autonomy = 10 }
 				}
 			}
-			#TODO starting subjects don't exist and we own their lands
+			NOT = {
+				exists = Z23
+				exists = Z49
+				exists = Z27
+				exists = Z48
+			}
+			cedesck_area = {
+				type = all
+				owned_by = ROOT
+			}
+			sondaar_area = {
+				type = all
+				owned_by = ROOT
+			}
+			east_chillsbay_area = {
+				type = all
+				owned_by = ROOT
+			}
 		 } 
 
 		effect = { 
@@ -464,9 +534,23 @@ Conquest = {
 		required_missions = { z18_raid_along_alen } 
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = { 
+			NOT = { exists = Z15 }
+			esfjall_area = {
+				type = all
+				owned_by = ROOT
+				is_core = ROOT
+				OR = {
+					NOT = { development = 4 }
+					# TODO development has been exploited (set a flag in the on_actions for all three types of dev)
+				}
+			}
+		 } 
 
-		effect = {  } 
+		effect = { 
+			#TODO 25 year looted ebonsteel modifier giving -10% shock damage received
+			add_treasury = 100
+		 } 
 	}
 }
 Raiding = {
@@ -481,9 +565,26 @@ Raiding = {
 		position = 2
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = { 
+			sailors = 1000
+			navy_size_percentage = 0.9
+			num_of_light_ship = 5
+			740 = { galleys_in_province = 5 }
+		 } 
 
-		effect = {  } 
+		effect = { 
+			740 = {
+				kill_units = {
+					who = owner
+					type = galley
+					amount = 5
+				}
+				#TODO Fire Droga Event chain
+				#TODO Hungry Maws modifier (granting raiding mechanics)
+				ROOT = { add_permanent_claim = 985 }
+			}
+
+		 } 
 	}
 
 	z18_raiding_base = {
@@ -492,9 +593,17 @@ Raiding = {
 		required_missions = { z18_first_gray_reaver } 
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = { 
+			985 = {
+				is_core = ROOT
+				owned_by = ROOT
+				culture = gray_orc
+			}
+		 } 
 
-		effect = {  } 
+		effect = { 
+			#TODO give raiding base modifier +5 naval forcelimit permanently
+		 } 
 	}
 
 	z18_raid_along_alen = {
@@ -506,8 +615,44 @@ Raiding = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = { 
+			if = {
+				limit = { exists = A13 }
+				NOT = { exists = B45 }
+				middle_alen_area = {
+					owned_by = ROOT
+				}
+				OR = {
+					army_tradition = 50
+					army_professionalism = 0.15
+				}
+				army_size = 25
+			}
+			else = {
+				NOT = { exists = B45 }
+				middle_alen_area = {
+					type = all
+					owned_by = ROOT
+				}
+				balvord_area = {
+					type = all
+					owned_by = ROOT
+				}
+				alenvord_area = {
+					type = all
+					owned_by = ROOT
+				}
+			}
+		 } 
 
-		effect = {  } 
+		effect = { 
+			if = {
+					limit = { exists = A13 }
+					add_manpower = -5
+					add_treasury = 500
+					#TODO fire raid along alen event
+				}	
+			}	
+		 }
+		  
 	}
-}
