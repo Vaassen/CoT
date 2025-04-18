@@ -58,7 +58,8 @@ pop_menu_main_setup = {
 	set_variable = { which = orcishRanking value = 18 }
 	set_variable = { which = ruinbornRanking value = 19 }
 	set_variable = { which = trollRanking value = 20 }
-	pop_menu_main_sorting_effect = yes
+	racial_list_store_race_development_vars = yes
+	racial_list_sorting_algorithm = { sortvar = nbRaceDev descending = yes }
 }
 
 pop_menu_calculations = {
@@ -233,63 +234,124 @@ pop_menu_calculations = {
 	pop_menu_round_and_percent = { which = nbtrollDev total = nbTotalDev }
 }
 
+racial_list_store_race_development_vars = {
+	##Store variables in provinces
+	set_variable = { which = nbRaceDev which = nbcentaurDev }		1 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbdwarvenDev }		2 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbelvenDev }			3 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbgnollishDev }		4 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbgnomishDev }		5 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbgoblinDev }		6 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbhalflingDev }		7 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbhalf_elvenDev }	8 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbhalf_orcishDev }	9 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbharimariDev }		10 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbharpyDev }			11 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbhobgoblinDev }		12 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbhumanDev }			13 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbkoboldDev }		14 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nblizardfolkDev }	15 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbmechanimDev }		16 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nborcishDev }		17 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbogreDev }			18 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbruinbornDev }		19 = { set_variable = { which = nbRaceDev which = ROOT } }
+	set_variable = { which = nbRaceDev which = nbtrollDev }			20 = { set_variable = { which = nbRaceDev which = ROOT } }
+}
+
 calculate_province_race_values = {
-	if = { limit = { has_$RACE$_majority_trigger = yes }
-		export_to_variable = { which = nb$RACE$Dev value = development }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$Majority value = 1 }
+	if = {
+		limit = {
+			fast_has_pop_of_race = { race = $RACE$ }
 		}
-	}
-	else_if = { limit = { has_small_$RACE$_minority_trigger = yes }
-		export_to_variable = { which = nb$RACE$Dev value = development }
-		multiply_variable = { which = nb$RACE$Dev value = 0.05 }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$Minority value = 1 }
+		if = { limit = { has_$RACE$_majority_trigger = yes }
+			ROOT = {
+				export_to_variable = { which = temp value = development who = PREV }
+				change_variable = { which = nb$RACE$Dev which = temp }
+				change_variable = { which = nb$RACE$Majority value = 1 }
+			}
+			if = {
+				limit = {
+					is_state = yes
+					is_state_core = ROOT
+				}
+				ROOT = {
+					change_variable = { which = nb$RACE$CoredDev which = temp }
+				}
+			}
 		}
-	}
-	else_if = { limit = { has_large_$RACE$_minority_trigger = yes }
-		export_to_variable = { which = nb$RACE$Dev value = development }
-		multiply_variable = { which = nb$RACE$Dev value = 0.1 }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$Minority value = 1 }
+		else_if = { limit = { has_small_$RACE$_minority_trigger = yes }
+			ROOT = {
+				export_to_variable = { which = temp value = development who = PREV }
+				multiply_variable = { which = temp value = 0.05 }
+				change_variable = { which = nb$RACE$Dev which = temp }
+				change_variable = { which = nb$RACE$Minority value = 1 }
+			}
+			if = {
+				limit = {
+					is_state = yes
+					is_state_core = ROOT
+				}
+				ROOT = {
+					change_variable = { which = nb$RACE$CoredDev which = temp }
+				}
+			}
+		}
+		else_if = { limit = { has_large_$RACE$_minority_trigger = yes }
+			ROOT = {
+				export_to_variable = { which = temp value = development who = PREV }
+				multiply_variable = { which = temp value = 0.1 }
+				change_variable = { which = nb$RACE$Dev which = temp }
+				change_variable = { which = nb$RACE$Minority value = 1 }
+			}
+			if = {
+				limit = {
+					is_state = yes
+					is_state_core = ROOT
+				}
+				ROOT = {
+					change_variable = { which = nb$RACE$CoredDev which = temp }
+				}
+			}
 		}
 	}
 }
 
-calculate_core_province_race_values = {
-	export_to_variable = { which = nb$RACE$Dev value = development }
-	export_to_variable = { which = nb$RACE$CoredDev value = development }
-	export_to_variable = { which = nbTotalCoredDev value = development }
-
-	if = { limit = { has_$RACE$_majority_trigger = yes }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$CoredDev which = PREV }
-			change_variable = { which = nb$RACE$Majority value = 1 }
-		}
-	}
-	else_if = { limit = { has_small_$RACE$_minority_trigger = yes }
-		multiply_variable = { which = nb$RACE$Dev value = 0.05 }
-		multiply_variable = { which = nb$RACE$CoredDev value = 0.05 }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$CoredDev which = PREV }
-			change_variable = { which = nb$RACE$Minority value = 1 }
-		}
-	}
-	else_if = { limit = { has_large_$RACE$_minority_trigger = yes }
-		multiply_variable = { which = nb$RACE$Dev value = 0.1 }
-		multiply_variable = { which = nb$RACE$CoredDev value = 0.1 }
-		ROOT = {
-			change_variable = { which = nb$RACE$Dev which = PREV }
-			change_variable = { which = nb$RACE$CoredDev which = PREV }
-			change_variable = { which = nb$RACE$Minority value = 1 }
-		}
-	}
-}
+# calculate_core_province_race_values = {
+# 	if = {
+# 		limit = {
+# 			fast_has_pop_of_race = { race = $RACE$ }
+# 			export_to_variable = { which = nb$RACE$Dev value = development }
+# 			export_to_variable = { which = nb$RACE$CoredDev value = development }
+# 			export_to_variable = { which = nbTotalCoredDev value = development }
+		
+# 			if = { limit = { has_$RACE$_majority_trigger = yes }
+# 				ROOT = {
+# 					change_variable = { which = nb$RACE$Dev which = PREV }
+# 					change_variable = { which = nb$RACE$CoredDev which = PREV }
+# 					change_variable = { which = nb$RACE$Majority value = 1 }
+# 				}
+# 			}
+# 			else_if = { limit = { has_small_$RACE$_minority_trigger = yes }
+# 				multiply_variable = { which = nb$RACE$Dev value = 0.05 }
+# 				multiply_variable = { which = nb$RACE$CoredDev value = 0.05 }
+# 				ROOT = {
+# 					change_variable = { which = nb$RACE$Dev which = PREV }
+# 					change_variable = { which = nb$RACE$CoredDev which = PREV }
+# 					change_variable = { which = nb$RACE$Minority value = 1 }
+# 				}
+# 			}
+# 			else_if = { limit = { has_large_$RACE$_minority_trigger = yes }
+# 				multiply_variable = { which = nb$RACE$Dev value = 0.1 }
+# 				multiply_variable = { which = nb$RACE$CoredDev value = 0.1 }
+# 				ROOT = {
+# 					change_variable = { which = nb$RACE$Dev which = PREV }
+# 					change_variable = { which = nb$RACE$CoredDev which = PREV }
+# 					change_variable = { which = nb$RACE$Minority value = 1 }
+# 				}
+# 			}
+# 		}
+# 	}
+# }
 
 
 pop_menu_round_and_percent = {
@@ -300,71 +362,6 @@ pop_menu_round_and_percent = {
 		limit = { check_variable = { which = $which$ value = 1 } }
 		round_variable = { which = $which$ value = 0 }
 	}
-}
-
-pop_menu_main_sorting_effect = {
-	20 = { set_variable = { which = nbcentaurDev which = PREV } set_variable = { which = nbRaceDev which = nbcentaurDev } set_province_flag = not_sorted }
-	19 = { set_variable = { which = nbdwarvenDev which = PREV } set_variable = { which = nbRaceDev which = nbdwarvenDev } set_province_flag = not_sorted }
-	18 = { set_variable = { which = nbelvenDev which = PREV } set_variable = { which = nbRaceDev which = nbelvenDev } set_province_flag = not_sorted }
-	17 = { set_variable = { which = nbgnollishDev which = PREV } set_variable = { which = nbRaceDev which = nbgnollishDev } set_province_flag = not_sorted }
-	16 = { set_variable = { which = nbgnomishDev which = PREV } set_variable = { which = nbRaceDev which = nbgnomishDev } set_province_flag = not_sorted }
-	15 = { set_variable = { which = nbgoblinDev which = PREV } set_variable = { which = nbRaceDev which = nbgoblinDev } set_province_flag = not_sorted }
-	14 = { set_variable = { which = nbhalf_elvenDev which = PREV } set_variable = { which = nbRaceDev which = nbhalf_elvenDev } set_province_flag = not_sorted }
-	13 = { set_variable = { which = nbhalf_orcishDev which = PREV } set_variable = { which = nbRaceDev which = nbhalf_orcishDev } set_province_flag = not_sorted }
-	12 = { set_variable = { which = nbhalflingDev which = PREV } set_variable = { which = nbRaceDev which = nbhalflingDev } set_province_flag = not_sorted }
-	11 = { set_variable = { which = nbharimariDev which = PREV } set_variable = { which = nbRaceDev which = nbharimariDev } set_province_flag = not_sorted }
-	10 = { set_variable = { which = nbharpyDev which = PREV } set_variable = { which = nbRaceDev which = nbharpyDev } set_province_flag = not_sorted }
-	9 = { set_variable = { which = nbhobgoblinDev which = PREV } set_variable = { which = nbRaceDev which = nbhobgoblinDev } set_province_flag = not_sorted }
-	8 = { set_variable = { which = nbhumanDev which = PREV } set_variable = { which = nbRaceDev which = nbhumanDev } set_province_flag = not_sorted }
-	7 = { set_variable = { which = nbkoboldDev which = PREV } set_variable = { which = nbRaceDev which = nbkoboldDev } set_province_flag = not_sorted }
-	6 = { set_variable = { which = nblizardfolkDev which = PREV } set_variable = { which = nbRaceDev which = nblizardfolkDev } set_province_flag = not_sorted }
-	5 = { set_variable = { which = nbmechanimDev which = PREV } set_variable = { which = nbRaceDev which = nbmechanimDev } set_province_flag = not_sorted }
-	4 = { set_variable = { which = nbogreDev which = PREV } set_variable = { which = nbRaceDev which = nbogreDev } set_province_flag = not_sorted }
-	3 = { set_variable = { which = nborcishDev which = PREV } set_variable = { which = nbRaceDev which = nborcishDev } set_province_flag = not_sorted }
-	2 = { set_variable = { which = nbruinbornDev which = PREV } set_variable = { which = nbRaceDev which = nbruinbornDev } set_province_flag = not_sorted }
-	1 = { set_variable = { which = nbtrollDev which = PREV } set_variable = { which = nbRaceDev which = nbtrollDev } set_province_flag = not_sorted }
-
-	set_variable = { which = raceRanking value = 0 }
-	2 = { save_event_target_as = most_represented_race }
-
-	while = { limit = { NOT = { check_variable = { which = raceRanking value = 20 } } }	#20 = nb of races
-		change_variable = { which = raceRanking value = 1 }
-		pop_menu_variables = {	#province group that has all the provinces with stored variables
-			limit = {
-				has_province_flag = not_sorted
-				check_variable = { which = nbRaceDev which = event_target:most_represented_race }
-			}
-			save_event_target_as = most_represented_race
-		}
-		event_target:most_represented_race = {
-			clr_province_flag = not_sorted
-			pop_ranking_conversion = yes
-			set_variable = { which = nbRaceDev value = 0 }
-		}
-	}
-}
-
-pop_ranking_conversion = {
-	if = { limit = { province_id = 20 } ROOT = { set_variable = { which = centaurRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 19 } ROOT = { set_variable = { which = dwarvenRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 18 } ROOT = { set_variable = { which = elvenRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 17 } ROOT = { set_variable = { which = gnollishRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 16 } ROOT = { set_variable = { which = gnomishRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 15 } ROOT = { set_variable = { which = goblinRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 14 } ROOT = { set_variable = { which = half_elvenRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 13 } ROOT = { set_variable = { which = half_orcishRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 12 } ROOT = { set_variable = { which = halflingRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 11 } ROOT = { set_variable = { which = harimariRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 10 } ROOT = { set_variable = { which = harpyRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 9 } ROOT = { set_variable = { which = hobgoblinRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 8 } ROOT = { set_variable = { which = humanRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 7 } ROOT = { set_variable = { which = koboldRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 6 } ROOT = { set_variable = { which = lizardfolkRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 5 } ROOT = { set_variable = { which = mechanimRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 4 } ROOT = { set_variable = { which = ogreRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 3 } ROOT = { set_variable = { which = orcishRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 2 } ROOT = { set_variable = { which = ruinbornRanking which = raceRanking } } }
-	else_if = { limit = { province_id = 1 } ROOT = { set_variable = { which = trollRanking which = raceRanking } } }
 }
 
 pop_menu_cored_dev_calculations = {
@@ -1116,7 +1113,7 @@ racial_list_sorting_algorithm = {
 
 	set_variable = { which = raceRanking value = 0 }
 	
-	[[ascending]
+	[[descending]
 	2 = { save_event_target_as = most_represented_race }
 	while = { limit = { NOT = { check_variable = { which = raceRanking value = 20 } } }	#20 = nb of races
 		change_variable = { which = raceRanking value = 1 }
@@ -1134,7 +1131,7 @@ racial_list_sorting_algorithm = {
 		}
 	}
 	]
-	[[descending]
+	[[ascending]
 	2 = { save_event_target_as = least_represented_race }
 	while = { limit = { NOT = { check_variable = { which = raceRanking value = 20 } } }	#20 = nb of races
 		change_variable = { which = raceRanking value = 1 }
@@ -1242,7 +1239,7 @@ racial_list_sort_by_policy_dec = {
 		set_country_flag = rp_sort_policy_dec
 		racial_list_policy_adder_races = yes
 		racial_list_store_policy_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpToleranceVar descending = yes }
+		racial_list_sorting_algorithm = { sortvar = rpPolicyVar descending = yes }
 	}
 }
 # Sort by policy count ascending
@@ -1252,7 +1249,7 @@ racial_list_sort_by_policy_asc = {
 		set_country_flag = rp_sort_policy_asc
 		racial_list_policy_adder_races = yes
 		racial_list_store_policy_vars = yes
-		racial_list_sorting_algorithm = { sortvar = rpToleranceVar ascending = yes }
+		racial_list_sorting_algorithm = { sortvar = rpPolicyVar ascending = yes }
 	}
 }
 
@@ -1332,25 +1329,20 @@ racial_mil_cannot_change_to_selected_race_military = {
 	if = { limit = { NOT = { rp_high_tolerance_generic_race_trigger = yes } }
 		custom_tooltip = pop_military_tolerance_too_low_tt
 	}
+
 	if = {
 		limit = {
-			NOT = { check_variable = { which = nb$RACE$Dev value = 30 } }
-			AND = {
-                has_country_modifier = $RACE$_administration
-                NOT = { has_country_flag = cannot_change_to_$RACE$_military_unless_enough_dev }
-            }
+			NOT = {
+				check_variable = { which = nb$RACE$Dev value = 30 }
+				AND = {
+					has_country_modifier = $RACE$_administration
+					NOT = { has_country_flag = cannot_change_to_$race$_military_unless_enough_dev }
+				}
+			}
 		}
 		custom_tooltip = pop_military_dev_too_low_tt
-
 		if = {
-			limit = { primary_culture = sunrise_elf }
-			custom_tooltip = pop_military_primary_is_sunrise_elf_tt
-		}
-		else_if = {
-			limit = {
-				has_country_flag  = cannot_change_to_$RACE$_military_unless_enough_dev
-				has_country_modifier = $RACE$_administration
-			}
+			limit = { has_country_modifier = $RACE$_administration }
 			custom_tooltip = cannot_change_to_racial_military_unless_enough_dev
 		}
 	}
@@ -1358,7 +1350,6 @@ racial_mil_cannot_change_to_selected_race_military = {
 	custom_tooltip = pop_military_separator_tt
 	tooltip = { add_country_modifier = { name = $RACE$_military duration = -1 desc = pop_military_modifier_duration_hidden } }
 
-	#TODO Jothell ACCOUNT FOR THESE, DIFFERENT SELECTOR FOR THIS ONE ONLY?
 	[[NO_DLC_HOBGOBLIN]
 		tooltip = { add_country_modifier = { name = hobgoblin_military_no_dlc duration = -1 desc = pop_military_modifier_duration_hidden} }
 	]
