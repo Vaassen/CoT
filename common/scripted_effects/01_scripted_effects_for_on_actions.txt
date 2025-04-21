@@ -1687,6 +1687,21 @@ on_new_monarch_effect = { #1.35
 		}
 		G74 = { country_event = { id = gophira.9 } }
 	}
+
+	#Sri Baginda
+	if = {
+		limit = { 
+			is_sri_baginda = yes
+		}
+		if = {
+			limit = { ruler_total_stats = { stats = 9 } }
+			add_sri_baginda_power = { value = 10 }
+		}
+		else_if = {
+			limit = { NOT = { ruler_total_stats = { stats = 6 } } }
+			add_sri_baginda_power = { value = -10 }
+		}
+	}
 }
 
 anb_scripted_effects_for_ruler_death  = {
@@ -2083,6 +2098,15 @@ anb_scripted_effects_for_ruler_death  = {
 			who = ROOT
 		}
 		country_event = { id = spirits.1003 }
+	}
+
+	#Sri Baginda - If they die with less than 50 prestige, title goes to someone else
+	if = {
+		limit = {
+			is_sri_baginda = yes
+			NOT = { prestige = 50 }
+		}
+		country_event = { id = lupulan_events.1003 }
 	}
 }
 
@@ -8615,8 +8639,25 @@ startup_1444_effects = {
 			}
 			capital_scope = {
 				area = {
+					limit = { owned_by = ROOT }
 					add_province_modifier = {
 						name = lower_dev_cost_in_capital_state_modifier
+						duration = -1
+						hidden = yes
+					}
+				}
+			}
+		}
+		if = { #Sri Baginda extra dev cost reduction in capital
+			limit = {
+				is_sri_baginda = yes
+				NOT = { capital_scope = { has_province_modifier = sri_baginda_lower_dev_cost_capital_mod } }
+			}
+			capital_scope = {
+				area = {
+					limit = { owned_by = ROOT }
+					add_province_modifier = {
+						name = sri_baginda_lower_dev_cost_capital_mod
 						duration = -1
 						hidden = yes
 					}
@@ -8630,6 +8671,7 @@ startup_1444_effects = {
 			}
 			capital_scope = {
 				region = {
+					limit = { owned_by = ROOT }
 					add_province_modifier = {
 						name = lower_gov_cost_in_home_region_modifier
 						duration = -1
@@ -9013,13 +9055,37 @@ startup_1444_effects = {
 				}
 			}
 		}
-	}
-	if = {
-		limit = { ai = no }
-		export_to_variable = {
-			which = monarch_reign_start_dev
-			value = total_development
-			who = ROOT
+		
+		#Sri Baginda
+		if = {
+			limit = {
+				has_reform = yanglam_tengalam_reform
+			}
+			set_country_flag = tier_1_baginda
+		}
+
+		if = {
+			limit = {
+				OR = {
+					capital_scope = { region = lupulan_rainforest_region }
+					OR = {
+						tag = Y72 #Chien
+						tag = Y73 #Sirtan
+						tag = Y97 #Baihon
+					}
+				}
+			}
+			country_event = { id = lupulan_events.1000 }
+		}
+
+		#Haless Tribute Event
+		if = {
+			limit = { ai = no }
+			export_to_variable = {
+				which = monarch_reign_start_dev
+				value = total_development
+				who = ROOT
+			}
 		}
 	}
 }
@@ -10085,15 +10151,11 @@ on_province_owner_change_effect = {
 	#reduced dev cost in capital state, adds modifier when gaining provinces in capital state
 	if = {
 		limit = {
-			owner = {
-				has_government_attribute = lower_dev_cost_in_capital_state
-				ROOT = {
-					area_for_scope_province = {
-						is_capital_of = PREV
-					}
-					NOT = { has_province_modifier = lower_dev_cost_in_capital_state_modifier }
-				}
+			owner = { has_government_attribute = lower_dev_cost_in_capital_state }
+			area_for_scope_province = {
+				has_province_modifier = lower_dev_cost_in_capital_state_modifier
 			}
+			NOT = { has_province_modifier = lower_dev_cost_in_capital_state_modifier }
 		}
 		add_province_modifier = {
 			name = lower_dev_cost_in_capital_state_modifier
@@ -10102,18 +10164,30 @@ on_province_owner_change_effect = {
 		}
 	}
 
+	#Reduced dev cost in the capital area of Sri Baginda
+	if = {
+		limit = {
+			owner = { is_sri_baginda = yes }
+			area_for_scope_province = {
+				has_province_modifier = sri_baginda_lower_dev_cost_capital_mod
+			}
+			NOT = { has_province_modifier = sri_baginda_lower_dev_cost_capital_mod }
+		}
+		add_province_modifier = {
+			name = sri_baginda_lower_dev_cost_capital_mod
+			duration = -1
+			hidden = yes
+		}
+	}
+
 	#reduced gov cost in capital region, adds modifier when gaining provinces in capital region
 	if = {
 		limit = {
-			owner = {
-				has_government_attribute = lower_gov_cost_in_home_region
-				ROOT = {
-					region_for_scope_province = {
-						is_capital_of = PREV
-					}
-					NOT = { has_province_modifier = lower_gov_cost_in_home_region_modifier }
-				}
+			owner = { has_government_attribute = lower_gov_cost_in_home_region }
+			region_for_scope_province = {
+				has_province_modifier = lower_gov_cost_in_home_region_modifier
 			}
+			NOT = { has_province_modifier = lower_gov_cost_in_home_region_modifier }
 		}
 		add_province_modifier = {
 			name = lower_gov_cost_in_home_region_modifier
