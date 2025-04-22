@@ -3403,16 +3403,14 @@ rahen_raj_calc_cohesion = {
 		set_variable = { which = raj_var_subject_weighed_ld 		value = 0 }
 		set_variable = { which = raj_var_subject_development_total 	value = 0 }
 		every_subject_country = {
-			export_to_variable = 	{ 	variable_name = raj_var_subject_ld_individual 	value = trigger_value:liberty_desire }
-			export_to_variable = 	{ 	variable_name = raj_var_subject_dev_individual 	value = trigger_value:total_development	 }
-			ROOT = {
-				set_variable = 		{ which = raj_var_subject_ld_individual 	which = PREV }
-				set_variable = 		{ which = raj_var_subject_dev_individual 	which = PREV }
-				change_variable = 	{ which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
-				multiply_variable = { which = raj_var_subject_ld_individual 	which = raj_var_subject_dev_individual }
-				change_variable = 	{ which = raj_var_subject_weighed_ld 		which = raj_var_subject_ld_individual }
-			}
-		}
+            ROOT = {
+                export_to_variable = { which = raj_var_subject_ld_individual value = trigger_value:liberty_desire who = PREV }
+                export_to_variable = { which = raj_var_subject_dev_individual value = trigger_value:total_development who = PREV }
+                change_variable =     { which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
+                multiply_variable = { which = raj_var_subject_ld_individual     which = raj_var_subject_dev_individual }
+                change_variable =     { which = raj_var_subject_weighed_ld         which = raj_var_subject_ld_individual }
+            }
+        }
 		divide_variable = { which = raj_var_subject_weighed_ld 	which = raj_var_subject_development_total }
 		if = { limit = { check_variable = { which = raj_var_subject_weighed_ld value = 100 } } # Need to investigate whether the LD can go beyond 0-100, just leave this in for now.
 			set_variable = { which = raj_var_subject_weighed_ld value = 100 }
@@ -3603,6 +3601,9 @@ rahen_raj_calc_cohesion = {
 		}
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_bonus }
 
+		divide_variable = { which = raj_var_cohesion value = 100 }
+		multiply_variable = { which = raj_var_cohesion value = 100 }
+
 		if = {
 			limit = {
 				check_variable = { which = raj_var_cohesion value = 100 }
@@ -3612,10 +3613,7 @@ rahen_raj_calc_cohesion = {
 
 		# Easier access for non-Raja tags.
 		4411 = {
-			set_variable = { which = raj_var_cohesion value = 0 }
-			change_variable = { which = raj_var_cohesion which = PREV }
-			divide_variable = { which = raj_var_cohesion value = 100 }
-			multiply_variable = { which = raj_var_cohesion value = 100 }
+			set_variable = { which = raj_var_cohesion which = PREV }
 		}
 
 		# Ai Raj elevate an ai Prabhi if there are fewer than max Senaptia.
@@ -3632,53 +3630,38 @@ raj_cohesion_change_bonus = {	#might be useful later
 }
 
 rahen_raj_variables_startup = {
-	R51 = {
-		every_subject_country = {
-			if = { limit = { is_subject_of_type = great_daimyo_vassal }
-				set_country_flag = senapti_flag
-				set_variable = { which = senapti_battles_won value = 0 }
-				set_variable = { which = senapti_external_expansion value = 0 }
-				4411 = { change_variable = { rajNbSenapti = 1 } }
-			}
-			else_if = { limit = { is_subject_of_type = vizier_vassal }
-				set_variable = { which = vizier_scholars_invited value = 0 }
-			}
+	every_subject_country = {
+		if = { limit = { is_subject_of_type = great_daimyo_vassal }
+			set_country_flag = senapti_flag
+			set_variable = { which = senapti_battles_won value = 0 }
+			set_variable = { which = senapti_external_expansion value = 0 }
+			4411 = { change_variable = { rajNbSenapti = 1 } }
 		}
-		save_global_event_target_as = raj_raja_global_target
-		R52 = { save_global_event_target_as = raj_vizier_global_target }
-		raj_cohesion_change_bonus = { amount = 0 }
-		country_event = {
-			id = rahenraj.0
+		else_if = { limit = { is_subject_of_type = vizier_vassal }
+			set_variable = { which = vizier_scholars_invited value = 0 }
 		}
+	}
+	save_global_event_target_as = raj_raja_global_target
+	R52 = { save_global_event_target_as = raj_vizier_global_target }
+	set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
+	rahen_raj_calc_cohesion = yes
+	country_event = {
+		id = rahenraj.0
 	}
 }
 
 # Mandates
 rahen_raj_mandate_apply_modifier_raja = {
 	custom_tooltip = $raj_mandate_tooltip$
-	tooltip = {
-		event_target:raj_raja_global_target = {
-			add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
-		}	
-	}
-	hidden_effect = {
-		event_target:raj_raja_global_target = {
-			add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
-		}			
-	}
+	event_target:raj_raja_global_target = {
+		add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
+	}			
 }
 rahen_raj_mandate_apply_modifier_vizier = {
 	custom_tooltip = $raj_mandate_tooltip$
-	tooltip = {
-		event_target:raj_vizier_global_target = {
-			add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
-		}	
-	}
-	hidden_effect = {
-		event_target:raj_vizier_global_target = {
-			add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
-		}	
-	}
+	event_target:raj_vizier_global_target = {
+		add_country_modifier = { name = $modifier$ duration = $mod_duration$ }
+	}	
 }
 rahen_raj_mandate_apply_modifier_senapti = {
 	custom_tooltip = $raj_mandate_tooltip$
@@ -3722,14 +3705,32 @@ rahen_raj_mandate_vizier_logistical_focus = {
 	rahen_raj_mandate_apply_modifier_vizier 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_tt 	modifier = rahen_raj_mandate_vizier_3_vizier_mod 	mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = rahen_raj_mandate_senapti_tt 	modifier = rahen_raj_mandate_vizier_3_senaptia_mod 	mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_prabhi 	= { raj_mandate_tooltip = rahen_raj_mandate_prabhi_tt 	modifier = rahen_raj_mandate_vizier_3_prabhia_mod 	mod_duration = 3650 }
-	hidden_effect = { overlord = { every_subject_country = { limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } } country_event = { id = rahenraj.5005 } } country_event = { id = rahenraj.5005 } } }
+	hidden_effect = {
+		overlord = {
+			every_subject_country = {
+				limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } }
+				country_event = { id = rahenraj.5005 }
+			}
+			country_event = { id = rahenraj.5005 }
+		}
+	}
 }
 rahen_raj_mandate_vizier_prabhi_recruitment = {
 	rahen_raj_mandate_apply_modifier_raja 		= { raj_mandate_tooltip = rahen_raj_mandate_raja_tt 	modifier = rahen_raj_mandate_vizier_1_raja_mod 				mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_vizier 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_senapti_tt 	modifier = rahen_raj_mandate_vizier_1_vizier_senaptia_mod 	mod_duration = 3650 }
-	hidden_effect = { rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_senapti_tt 	modifier = rahen_raj_mandate_vizier_1_vizier_senaptia_mod 	mod_duration = 3650 } }
+	hidden_effect = {	#because the vizier modifier is the same. unhid if they diverge
+		rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_senapti_tt 	modifier = rahen_raj_mandate_vizier_1_vizier_senaptia_mod 	mod_duration = 3650 }
+	}	
 	rahen_raj_mandate_apply_modifier_prabhi 	= { raj_mandate_tooltip = rahen_raj_mandate_prabhi_tt 	modifier = rahen_raj_mandate_vizier_1_prabhia_mod 			mod_duration = 3650 }
-	hidden_effect = { overlord = { every_subject_country = { limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } } country_event = { id = rahenraj.5006 } } country_event = { id = rahenraj.5006 } } }
+	hidden_effect = {
+		overlord = {
+			every_subject_country = {
+				limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } }
+				country_event = { id = rahenraj.5006 }
+			}
+			country_event = { id = rahenraj.5006 }
+		}
+	}
 	custom_tooltip = rahen_raj_mandate_extra_tt
 	event_target:raj_vizier_global_target = { create_general = { tradition = 60 } }
 }
@@ -3741,8 +3742,16 @@ rahen_raj_mandate_vizier_imperial_drills = {
 
 	# All "peace_mod" modifiers will be removed if a country declares war or has war declared on them.
 	rahen_raj_mandate_apply_modifier_vizier 	= { raj_mandate_tooltip = raj_mandate_peacetime_mod_vizier_senapti 	modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod 	mod_duration = 3650 }
-	hidden_effect = { rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = raj_mandate_peacetime_mod_vizier_senapti modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod 	mod_duration = 3650 }
-	overlord = { every_subject_country = { limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } } country_event = { id = rahenraj.5007 } } country_event = { id = rahenraj.5007 } } }
+	hidden_effect = {
+		rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = raj_mandate_peacetime_mod_vizier_senapti modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod 	mod_duration = 3650 }
+		overlord = {
+			every_subject_country = {
+				limit = { NOT = { has_reform = oracular_order_reform is_subject_of_type = vizier_vassal } }
+				country_event = { id = rahenraj.5007 }
+			}
+			country_event = { id = rahenraj.5007 }
+		}
+	}
 }
 # Raja mandates, scope is assumed to be the Raja.
 rahen_raj_mandate_raja_imperial_tribute = {
@@ -3750,7 +3759,12 @@ rahen_raj_mandate_raja_imperial_tribute = {
 	rahen_raj_mandate_apply_modifier_vizier 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_tt 	modifier = rahen_raj_mandate_raja_2_vizier_mod 		mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = rahen_raj_mandate_senapti_tt 	modifier = rahen_raj_mandate_raja_2_senaptia_mod 	mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_prabhi 	= { raj_mandate_tooltip = rahen_raj_mandate_prabhi_tt 	modifier = rahen_raj_mandate_raja_2_prabhia_mod 	mod_duration = 3650 }
-	hidden_effect = { every_subject_country = { limit = { NOT = { has_reform = oracular_order_reform } } country_event = { id = rahenraj.5008 } } }
+	hidden_effect = {
+		every_subject_country = {
+			limit = { NOT = { has_reform = oracular_order_reform } }
+			country_event = { id = rahenraj.5008 }
+		}
+	}
 }
 rahen_raj_mandate_raja_declaration_of_harmony = {
 	custom_tooltip = rahen_raj_mandate_raja_declaration_of_harmony_tt
@@ -3758,7 +3772,12 @@ rahen_raj_mandate_raja_declaration_of_harmony = {
 	rahen_raj_mandate_apply_modifier_vizier 	= { raj_mandate_tooltip = rahen_raj_mandate_vizier_tt 	modifier = rahen_raj_mandate_raja_3_vizier_peace_mod 	mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_senapti 	= { raj_mandate_tooltip = rahen_raj_mandate_senapti_tt 	modifier = rahen_raj_mandate_raja_3_senaptia_peace_mod 	mod_duration = 3650 }
 	rahen_raj_mandate_apply_modifier_prabhi 	= { raj_mandate_tooltip = rahen_raj_mandate_prabhi_tt 	modifier = rahen_raj_mandate_raja_3_prabhia_peace_mod 	mod_duration = 3650 }
-	hidden_effect = { every_subject_country = { limit = { NOT = { has_reform = oracular_order_reform } } country_event = { id = rahenraj.5009 } } }
+	hidden_effect = {
+		every_subject_country = {
+			limit = { NOT = { has_reform = oracular_order_reform } }
+			country_event = { id = rahenraj.5009 }
+		}
+	}
 }
 
 rahen_raj_mandate_raja_land_redistribution = {
@@ -3814,22 +3833,22 @@ check_if_at_senaptia_cap_pick_best_if_not = {
 				which = raj_max_allowed_senaptia
 				value = 0.8
 			}
-			if = {
-				limit = {
-					NOT = {
-						check_variable = {
-							which = raj_max_allowed_senaptia
-							value = 7
-						}
+		}
+		if = {
+			limit = {
+				NOT = {
+					check_variable = {
+						which = raj_max_allowed_senaptia
+						value = 7
 					}
 				}
-				set_variable = {
-					which = raj_max_allowed_senaptia
-					value = 7
-				}
+			}
+			set_variable = {
+				which = raj_max_allowed_senaptia
+				value = 7
 			}
 		}
-		
+			
 		if = {
 			limit = { owner = { has_estate_privilege = estate_raj_ministries_expanded_senaptia_ranks } }
 			multiply_variable = {
