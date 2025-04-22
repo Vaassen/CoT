@@ -702,7 +702,7 @@ country_event = {
 	}
 }
 
-#HIDDEN Deforestation in Progress -> Minor Deforestation
+#HIDDEN Deforestation in Progress -> Minor Deforestation/Artificial Farmland
 province_event = {
 	id = flavour_arawkelin.101
 	title = flavour_arawkelin.101.t
@@ -710,33 +710,50 @@ province_event = {
 
 	picture = SCIENTISTS_eventPicture
 	hidden = yes
-
-	trigger = {
-		had_province_flag = {
-			flag = arawkelin_deforestation_start
-			days = 3650
-		}
-		owner = {
-			NOT = {
-				has_country_flag = arawkelin_artificial_farming_unlocked
-			}
-		}
-	}
+	is_triggered_only = yes
 
 	immediate = {
 		hidden_effect = {
+			save_event_target_as = deforestation_event
 			remove_province_modifier = arawkelin_deforestation_in_progress
-			add_province_modifier = {
-				name = arawkelin_half_deforestation
-				duration = -1
-			}
 			add_devastation = 10
 			add_base_production = -1
+			if = {
+				limit = {
+					owner = {
+						has_country_flag = arawkelin_artificial_farming_unlocked
+					}
+				}
+				if = {
+					limit = { trade_goods = tropical_wood }
+					random_list = {
+						25 = { change_trade_goods = tea }
+						25 = { change_trade_goods = wine }
+						25 = { change_trade_goods = cocoa }
+						25 = { change_trade_goods = sugar }
+					}
+				}
+				add_province_modifier = {
+					name = arawkelin_artificial_farmland
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = arawkelin_half_deforestation
+					duration = -1
+				}
+				province_event = {
+					id = flavour_arawkelin.102
+					days = 3650
+				}
+			}
 		}
 	}
 
 	option = {
 		name = flavour_arawkelin.101.a
+		goto = deforestation_event
 	}
 }
 
@@ -747,18 +764,7 @@ province_event = {
 	desc = flavour_arawkelin.102.d
 
 	picture = SCIENTISTS_eventPicture
-
-	trigger = {
-		had_province_flag = {
-			flag = arawkelin_deforestation_start
-			days = 7300
-		}
-		owner = {
-			NOT = {
-				has_country_flag = arawkelin_artificial_farming_unlocked
-			}
-		}
-	}
+	is_triggered_only = yes
 
 	immediate = {
 		hidden_effect = {
@@ -789,50 +795,39 @@ province_event = {
 	}
 }
 
-province_event = {
+#HIDDEN Double check after taking Artificial Farmland decision
+country_event = {
 	id = flavour_arawkelin.103
 	title = flavour_arawkelin.103.t
 	desc = flavour_arawkelin.103.d
 
 	picture = SCIENTISTS_eventPicture
 	hidden = yes
-
-	trigger = {
-		had_province_flag = {
-			flag = arawkelin_deforestation_start
-			days = 3650
-		}
-		owner = {
-			has_country_flag = arawkelin_artificial_farming_unlocked
-		}
-	}
+	is_triggered_only = yes
 
 	immediate = {
 		hidden_effect = {
-			remove_province_modifier = arawkelin_deforestation_in_progress
-			if = {
-				limit = { trade_goods = tropical_wood }
-				random_list = {
-					25 = { change_trade_goods = tea }
-					25 = { change_trade_goods = wine }
-					25 = { change_trade_goods = cocoa }
-					25 = { change_trade_goods = sugar }
+			every_owned_province = {
+				limit = {
+					OR = {
+						has_province_modifier = arawkelin_full_deforestation
+						has_province_modifier = arawkelin_half_deforestation
+						has_province_modifier = arawkelin_deforestation_in_progress
+					}
 				}
-			}
-			add_devastation = 10
-			add_base_production = -1
-			add_province_modifier = {
-				name = arawkelin_artificial_farmland
-				duration = -1
-			}
-		}
-	}
-
-	option = {
-		name = flavour_arawkelin.103.a
-		goto = deforestation_event
-		tooltip = {
-			event_target:deforestation_event = {
+				remove_province_modifier = arawkelin_full_deforestation
+				remove_province_modifier = arawkelin_half_deforestation
+				remove_province_modifier = arawkelin_deforestation_in_progress
+				remove_province_modifier = arawkelin_soil_erosion
+				if = {
+					limit = { trade_goods = tropical_wood }
+					random_list = {
+						25 = { change_trade_goods = tea }
+						25 = { change_trade_goods = wine }
+						25 = { change_trade_goods = cocoa }
+						25 = { change_trade_goods = sugar }
+					}
+				}
 				add_devastation = 10
 				add_base_production = -1
 				add_province_modifier = {
@@ -840,7 +835,21 @@ province_event = {
 					duration = -1
 				}
 			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = arawkelin_artificial_farmland_check }
+				}
+				country_event = {
+					id = flavour_arawkelin.103
+					days = 7300
+				}
+			}
+			set_country_flag = arawkelin_artificial_farmland_check
 		}
+	}
+
+	option = {
+		name = flavour_arawkelin.103.a
 	}
 }
 
@@ -851,6 +860,7 @@ province_event = {
 	desc = flavour_arawkelin.104.d
 
 	picture = SCIENTISTS_eventPicture
+	is_triggered_only = yes
 
 	trigger = {
 		had_province_flag = {
@@ -863,10 +873,6 @@ province_event = {
 		owner = {
 			NOT = { has_country_modififier = arawkelin_soil_erosion_cooldown }
 		}
-	}
-
-	mean_time_to_happen = {
-		days = 730
 	}
 
 	immediate = {
