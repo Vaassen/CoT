@@ -93,19 +93,6 @@ update_mana_regen_vars = {
 		}
 		# 'mages_mana_capacity' is updated in 'cap_mana' so it can be called independently
 
-		#TODO Jothell - the undead military modifier is already INCREDIBLY stacked
-		# Possibly add a magic system modifier for the upkeep?
-		# Flavour it by reducing study experience gain as many mages are busy in the military
-		#
-			# 	if = {
-			# 		limit = { has_country_modifier = undead_military }
-			# 		change_variable = {
-			# 			which = manaRegenerationRate
-			# 			value = -0.5
-			# 		}
-			# 	}
-			#
-
 		#TODO Jothell if this is a country modifier then it doesn't need to be specifically accounted for
 		if = { #This single thing is the reason why we need to update mana regen each time (instead of changing the variable as appropriate)
 			limit = { has_country_flag = magic_artificery_mixed }
@@ -488,7 +475,7 @@ increase_magic_experience = {
 	}
 
 	if = { limit = { magic_advancement_done = yes }
-		country_event = { id = magic_study.100 }
+		country_event = { id = magic_system.100 }
 	}
 }
 
@@ -496,19 +483,18 @@ finish_magic_study = {
 	trigger_switch = {
 		on_trigger = has_$type$_flag
 	
-		studying_abjuration = { magic_study_level_up = { type = $type$ school = abjuration } }
-		studying_conjuration = { magic_study_level_up = { type = $type$ school = conjuration } }
-		studying_divination = { magic_study_level_up = { type = $type$ school = divination } }
-		studying_enchantment = { magic_study_level_up = { type = $type$ school = enchantment } }
-		studying_evocation = { magic_study_level_up = { type = $type$ school = evocation } }
-		studying_illusion = { magic_study_level_up = { type = $type$ school = illusion } }
-		studying_necromancy = { magic_study_level_up = { type = $type$ school = necromancy } }
-		studying_transmutation = { magic_study_level_up = { type = $type$ school = transmutation } }
+		studying_abjuration		= { magic_study_level_up = { type = $type$ school = abjuration } }
+		studying_conjuration	= { magic_study_level_up = { type = $type$ school = conjuration } }
+		studying_divination		= { magic_study_level_up = { type = $type$ school = divination } }
+		studying_enchantment	= { magic_study_level_up = { type = $type$ school = enchantment } }
+		studying_evocation		= { magic_study_level_up = { type = $type$ school = evocation } }
+		studying_illusion		= { magic_study_level_up = { type = $type$ school = illusion } }
+		studying_necromancy		= { magic_study_level_up = { type = $type$ school = necromancy } }
+		studying_transmutation	= { magic_study_level_up = { type = $type$ school = transmutation } }
 	}
 }
 
 magic_study_level_up = {
-	set_variable = { $type$_study_experience = 0 }
 	if = {
 		limit = { has_$type$_flag = $school$_2 }
 		set_$type$_flag = $school$_3
@@ -532,22 +518,12 @@ magic_study_level_up = {
 		ruler_clear_saved_spell_schools = yes
 		ruler_save_spell_schools = yes
 	}
-
-	# This is old system remnants?
-	# if = {
-	# 	limit = {
-	# 		has_$type$_flag = magic_study
-	# 		has_$type$_flag = studying_$school$
-	# 	}
-	# 	# magic_study_clear_study_effects = yes 
-	# }
 }
 
 magic_project_level_up = {
 	change_variable = { which = $project$_level value = 1 }
 	$project$_project_effect = yes
 	calc_completed_magic_projects = yes
-	magic_advancement_abort_all_effect = yes
 }
 
 #Finish infrastructure effect
@@ -562,7 +538,6 @@ magic_infrastructure_level_up = {
 	}
 	cap_mana = yes
 	update_mana_regen_vars = yes
-	magic_advancement_abort_all_effect = yes
 }
 
 #Non-unique
@@ -616,12 +591,18 @@ passive_magic_advancement_progress = {
 			change_variable = { which = temp_exp which = passive_experience_bank }
 			subtract_variable = { which = passive_experience_bank which = temp_exp }
 		}
+		### TODO: is it intentional that you lose the full amount of banked exp, even if you're long-lived or country-studying?
 	}
 
 	if = { limit = { has_ruler_flag = magic_advancement }
 		if = { limit = { is_long_lived_ruler = yes }
 			multiply_variable = { which = monthly_magic_xp_gain value = 0.5 }
 			multiply_variable = { which = temp_exp value = 0.5 }
+		}
+		if = {
+			limit = { has_country_flag = lichdom_project }
+			divide_variable = { monthly_magic_xp_gain = 3 }
+			divide_variable = { temp_exp = 3 }
 		}
 		calc_school_experience_modifiers = { type = ruler }
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
@@ -683,7 +664,7 @@ passive_magic_advancement_progress = {
 	}
 	
 	if = { limit = { magic_advancement_done = yes }
-		country_event = { id = magic_study.100 }
+		country_event = { id = magic_system.100 }
 	}
 }
 
@@ -765,15 +746,6 @@ study_experience_preview_effect = {
 	else_if = { limit = { has_country_flag = magic_study_setup_transmutation_flag } change_variable = { which = study_xp_preview which = transmutation_experience_mod_ui } }
 	
 }
-
-##############
-### Magical Ruler Death Nonsense
-###############
-
-magic_on_ruler_death = {
-}
-
-
 
 
 ##############

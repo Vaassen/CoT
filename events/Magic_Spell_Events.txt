@@ -1,0 +1,257 @@
+namespace = magic_spell
+
+###### This is the place for events that are either fired by spells or are related to spells
+###### If it isn't a spell thing (i.e. it's a project, a study event, etc.) it goes elsewhere
+###### Example: Undead Army events are here, because Undead Army is a spell
+###### Example: The events to remove hired Conjuration mercs go here
+
+
+############################
+### ABJURATION (100-199) ###
+############################
+
+#############################
+### CONJURATION (200-299) ###
+#############################
+
+############################
+### DIVINATION (300-399) ###
+############################
+
+#############################
+### ENCHANTMENT (400-499) ###
+#############################
+
+###########################
+### EVOCATION (500-599) ###
+###########################
+
+###########################
+### ILLUSION (600-699) ###
+###########################
+
+############################
+### NECROMANCY (700-799) ###
+############################
+
+country_event = { #Undead Army gains manpower on winning battles
+	id =  magic_spell.700
+	title =  magic_spell.700.t
+	desc =  magic_spell.700.d
+	picture = FAMINE_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	trigger = { check_variable = { raise_undead = 1001 } } #Don't raise if it was a nothing battle
+	
+	option = {	#Rise!
+		name = magic_spell.700.a
+		ai_chance = { factor = 1 }
+
+		if = {
+			limit = { is_overall_necromancy_level_3 = yes }
+			multiply_variable = { raiseUndead = 0.3 }
+		}
+		else_if = {
+			limit = { is_overall_necromancy_level_2 = yes }
+			multiply_variable = { raiseUndead = 0.25 }
+		}
+		else_if = {
+			limit = { is_overall_necromancy_level_1 = yes }
+			multiply_variable = { raiseUndead = 0.2 }
+		}
+		else = { multiply_variable = { raiseUndead = 0.15 } }
+
+		round_variable = { #truncate decimal portion
+			which = raise_undead
+			value = -1
+		}
+		
+		if = {
+			limit = { has_country_flag = hide_necromancy_on_battle_won }
+			divide_variable = { raise_undead = 1000 }
+			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
+		}
+		else = {
+			country_event = { id = magic_spell.701 }
+		}
+	}
+}
+
+country_event = { #Undead Army Manpower notif event
+	id =  magic_spell.701
+	title =  magic_spell.701.t
+	desc =  magic_spell.701.d
+	picture = FAMINE_eventPicture
+	
+	is_triggered_only = yes
+
+	after = {
+		hidden_effect = {
+			divide_variable = { raise_undead = 1000 }
+			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
+		}
+	}
+
+	option = {	#Rise!
+		name = magic_spell.1.a
+		
+		custom_tooltip = magic_spell_raise_undead_tt
+	}
+	
+	option = {	#Rise! (But hide these pop-ups from now on)
+		name = magic_spell.1.b
+		
+		custom_tooltip = magic_spell_raise_undead_tt
+		hidden_effect = { set_country_flag = hide_necromancy_on_battle_won }
+	}
+}
+
+country_event = { #Ruler dies and they gave you access to undead army
+	id =  magic_spell.702
+	title = magic_spell.702.t
+	desc =  magic_spell.702.d
+	picture = FAMINE_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		has_country_modifier = undead_military
+		NOT = { has_country_flag = rakkaz_undead_army_not_collapses }
+		NOT = { is_overall_necromancy_level_3 = yes }
+	}
+
+	immediate = {
+		hidden_effect = {
+			every_owned_province = {
+				limit = {
+					infantry_in_province = ROOT
+					NOT = { has_province_modifier = aw_zombies_1 }
+					NOT = { has_province_modifier = aw_zombies_2 }
+					NOT = { has_province_modifier = aw_zombies_3 }
+				}
+				set_province_flag = has_zombies_flag #prevents disband cheese
+
+				if = {
+					limit = { infantry_in_province = 80 }
+					set_province_flag = zombies_doomstack_flag
+				}
+				else_if = {
+					limit = { infantry_in_province = 40 }
+					set_province_flag = zombies_size3_flag
+				}
+				else_if = {
+					limit = { infantry_in_province = 20 }
+					set_province_flag = zombies_size2_flag
+				}
+				else_if = {
+					limit = { infantry_in_province = 10 }
+					set_province_flag = zombies_size1_flag
+				}
+			}
+		}
+	}
+
+	after = {
+		hidden_effect = {
+			every_owned_province = {
+				clr_province_flag = has_zombies_flag
+				clr_province_flag = zombies_doomstack_flag
+				clr_province_flag = zombies_size3_flag
+				clr_province_flag = zombies_size2_flag
+				clr_province_flag = zombies_size1_flag
+			}
+		}
+	}
+	
+	option = {	#We've lost control! Aaaagh!
+		name = magic_spell.702.a
+		ai_chance = { factor = 1 }
+
+		random_owned_province = {
+			limit = {
+				is_in_capital_area = yes
+				NOT = { has_province_modifier = aw_zombies_1 }
+				NOT = { has_province_modifier = aw_zombies_2 }
+				NOT = { has_province_modifier = aw_zombies_3 }
+			}
+			add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
+		}
+
+		custom_tooltip = undead_army_becomes_threat_tt
+
+		clear_racial_military = yes
+		reset_racial_military_via_administration = yes
+
+		hidden_effect = {
+			every_owned_province = {
+				limit = {
+					has_province_flag = has_zombies_flag
+					NOT = { has_province_modifier = aw_zombies_1 }
+					NOT = { has_province_modifier = aw_zombies_2 }
+					NOT = { has_province_modifier = aw_zombies_3 }
+				}
+
+				if = {
+					limit = { has_province_flag = zombies_doomstack_flag } #you doomstacked
+					add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
+					every_neighbor_province = {
+						limit = {
+							owned_by = ROOT
+							NOT = { has_province_flag = zombies_doomstack_flag }
+							NOT = { has_province_modifier = aw_zombies_1 }
+							NOT = { has_province_modifier = aw_zombies_2 }
+							NOT = { has_province_modifier = aw_zombies_3 }
+						}
+						add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
+					}
+				}
+				else_if = { limit = { has_province_flag = zombies_size3_flag } add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 } }
+				else_if = { limit = { has_province_flag = zombies_size2_flag } add_permanent_province_modifier = { name = aw_zombies_2 duration = -1 } }
+				else_if = { limit = { has_province_flag = zombies_size1_flag } add_permanent_province_modifier = { name = aw_zombies_1 duration = -1 } }
+				else = {
+					random = {
+						chance = 25
+						add_permanent_province_modifier = { name = aw_zombies_1 duration = -1 }
+					}
+				}
+			}
+		}
+	}
+	
+	option = {	#Bring them under my control!
+		name = magic_spell.702.b
+		ai_chance = { factor = 100 }
+		trigger = { is_ruler_necromancy_level_2 = yes }
+		highlight = yes
+
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		
+		add_mil_power = -200
+	}
+
+	option = {
+		name = magic_spell.702.c
+		trigger = { has_country_flag = esthil_lodge_of_necromancers }
+		ai_chance = { factor = 100 }
+		
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		increase_witch_king_points_large = yes
+		
+		add_mil_power = -100
+		
+		custom_tooltip = esthil_tt_has_necromancers_estate
+	}
+}
+
+###############################
+### TRANSMUTATION (800-899) ###
+###############################
