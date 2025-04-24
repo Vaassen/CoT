@@ -213,18 +213,37 @@ magic_advancement_selection_set_project_flags_effect = {
 	set_country_flag = magic_advancement_setup_$project$_flag
 }
 
-#Clear all flags related to current study
+#Clear all things related to current study
 magic_advancement_abort_all_effect = {
-	magic_advancement_finish_clr_type_flags = { type = ruler }
-	magic_advancement_finish_clr_type_flags = { type = heir }
-	magic_advancement_finish_clr_type_flags = { type = country }
+	custom_tooltip = magic_advancement_abort_all_effect_tt
+	hidden_effect = {
+		magic_advancement_finish_clr_type_flags = { type = ruler }
+		magic_advancement_finish_clr_type_flags = { type = heir }
+		magic_advancement_finish_clr_type_flags = { type = country }
+
+		### Advancement type
+		clr_country_flag = magic_project
+		clr_country_flag = magic_infrastructure
+		### Project
+		clr_country_flag = magical_fortress_project
+		clr_country_flag = summon_extraplanars_project
+		clr_country_flag = orb_of_omniscience_project
+		clr_country_flag = enchant_legendary_artifact_project
+		clr_country_flag = battlemage_academy_project
+		clr_country_flag = theatre_of_simulacra_project
+		clr_country_flag = lichdom_project
+		clr_country_flag = homunculus_project
+		### Magic XP
+		set_variable = { magic_experience_target = 0 }
+		set_variable = { current_experience_percent = 0 }
+		#Things picked up along the way
+		remove_country_modifier = ruler_studying_lichdom
+	}
 }
 magic_advancement_finish_clr_type_flags = {
 	#advancement type
 	clr_$type$_flag = magic_study
 	clr_$type$_flag = magic_advancement
-	clr_country_flag = magic_project
-	clr_country_flag = magic_infrastructure
 	#School
 	clr_$type$_flag = abjuration_advancement
 	clr_$type$_flag = conjuration_advancement
@@ -234,19 +253,8 @@ magic_advancement_finish_clr_type_flags = {
 	clr_$type$_flag = illusion_advancement
 	clr_$type$_flag = necromancy_advancement
 	clr_$type$_flag = transmutation_advancement
-	#Project
-	clr_country_flag = magical_fortress_project
-	clr_country_flag = summon_extraplanars_project
-	clr_country_flag = orb_of_omniscience_project
-	clr_country_flag = enchant_legendary_artifact_project
-	clr_country_flag = battlemage_academy_project
-	clr_country_flag = theatre_of_simulacra_project
-	clr_country_flag = lichdom_project
-	clr_country_flag = homunculus_project
 	#Experience
 	set_variable = { $type$_magic_experience = 0 }
-	set_variable = { magic_experience_target = 0 }
-	set_variable = { current_experience_percent = 0 }
 }
 
 start_magic_study_school_sort = {
@@ -273,13 +281,31 @@ start_magic_study_type_sort = {
 }
 
 start_magic_study = { #type = [ruler,heir,country]
+	add_adm_power = -30
+	add_dip_power = -30
+	add_mil_power = -30
+	add_treasury = -50
+
+	custom_tooltip = start_$type$_magic_advancement_tt
+	custom_tooltip = $school$_advancement
+
 	set_$type$_flag = magic_advancement
 	set_$type$_flag = $school$_advancement
 	set_$type$_flag = magic_study
-	set_magic_experience_target = { type = $type$ study = $school$ }
-	set_variable = { which = $type$_magic_experience value = 0 }
+
+	hidden_effect = {
+		set_magic_experience_target = { type = $type$ study = $school$ }
+		set_variable = { which = $type$_magic_experience value = 0 }
+	}
 }
 start_magic_project = { #Country only
+	add_adm_power = -30
+	add_dip_power = -30
+	add_mil_power = -30
+	add_treasury = -50
+
+	custom_tooltip = start_country_magic_advancement_tt
+
 	set_country_flag = magic_advancement
 	set_country_flag = magic_project
 	set_country_flag = $project$_project
@@ -289,9 +315,19 @@ start_magic_project = { #Country only
 		set_variable = { which = country_magic_experience value = 0 }
 	}
 
-	[[school] set_country_flag = $school$_advancement ]
+	[[school]
+		set_country_flag = $school$_advancement
+		custom_tooltip = $school$_advancement
+	]
 }
 start_magic_infrastructure = { #Country only
+	add_adm_power = -30
+	add_dip_power = -30
+	add_mil_power = -30
+	add_treasury = -50
+	
+	custom_tooltip = start_country_magic_advancement_tt
+
 	set_country_flag = magic_advancement
 	set_country_flag = magic_infrastructure #same effects probably?
 	hidden_effect = {
@@ -534,7 +570,7 @@ calc_completed_magic_projects = {
 	if = { limit = { at_least_magic_project_level = { project = enchant_legendary_artifact level = 3 } } 	change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = battlemage_academy level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = theatre_of_simulacra level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
-	if = { limit = { has_ruler_modifier = lich_ruler } 														change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { has_country_flag = ruled_by_lich } 														change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = homunculus level = 3 } } 					change_variable = { magic_projects_completed = 1 } }
 }
 
@@ -580,11 +616,6 @@ passive_magic_advancement_progress = {
 		if = { limit = { is_long_lived_ruler = yes }
 			multiply_variable = { which = monthly_magic_xp_gain value = 0.5 }
 			multiply_variable = { which = temp_exp value = 0.5 }
-		}
-		if = { ###TODO: make this a special lichdom ruler modifier
-			limit = { has_country_flag = lichdom_project }
-			divide_variable = { monthly_magic_xp_gain = 3 }
-			divide_variable = { temp_exp = 3 }
 		}
 		calc_school_experience_modifiers = { type = ruler }
 		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
