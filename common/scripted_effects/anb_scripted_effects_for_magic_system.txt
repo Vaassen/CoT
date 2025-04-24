@@ -148,28 +148,7 @@ update_mana_bar = {
 	}
 }
 
-calc_estate_spell_levels = { #Calc the number of spell levels estates have to cap it
-	set_variable = { estate_spell_schools = 0 }
-	calc_estate_spell_levels_sub = { school = abjuration }
-	calc_estate_spell_levels_sub = { school = conjuration }
-	calc_estate_spell_levels_sub = { school = divination }
-	calc_estate_spell_levels_sub = { school = enchantment }
-	calc_estate_spell_levels_sub = { school = evocation }
-	calc_estate_spell_levels_sub = { school = illusion }
-	calc_estate_spell_levels_sub = { school = necromancy }
-	calc_estate_spell_levels_sub = { school = transmutation }
-
-	export_to_variable = {
-		which = maximum_estate_spell_schools
-		value = modifier:maximum_estate_spell_schools
-	}
-}
-calc_estate_spell_levels_sub = {
-	if = { limit = { has_country_flag = $school$_1 } change_variable = { estate_spell_schools = 1 } }
-	if = { limit = { has_country_flag = $school$_2 } change_variable = { estate_spell_schools = 2 } }
-	if = { limit = { has_country_flag = $school$_3 } change_variable = { estate_spell_schools = 3 } }
-}
-#Calc the levels ruler or heir has, for a tt
+#Calc the levels ruler/heir/country has, for a tt
 generic_calc_spell_levels = {
 	set_variable = { $type$_spell_schools = 0 }
 	generic_calc_spell_levels_sub = { school = abjuration type = $type$ }
@@ -180,11 +159,19 @@ generic_calc_spell_levels = {
 	generic_calc_spell_levels_sub = { school = illusion type = $type$ }
 	generic_calc_spell_levels_sub = { school = necromancy type = $type$ }
 	generic_calc_spell_levels_sub = { school = transmutation type = $type$ }
+
+	export_to_variable = {
+		which = maximum_estate_spell_schools
+		value = modifier:maximum_estate_spell_schools
+	}
 }
 generic_calc_spell_levels_sub = {
-	if = { limit = { has_$type$_flag = $school$_1 } change_variable = { $type$_spell_schools = 1 } }
-	if = { limit = { has_$type$_flag = $school$_2 } change_variable = { $type$_spell_schools = 2 } }
-	if = { limit = { has_$type$_flag = $school$_3 } change_variable = { $type$_spell_schools = 3 } }
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+		$school$_1 = { change_variable = { $type$_spell_schools = 1 } }
+		$school$_2 = { change_variable = { $type$_spell_schools = 2 } }
+		$school$_3 = { change_variable = { $type$_spell_schools = 3 } }
+	}
 }
 
 ###Clear setup flags for school study UI
@@ -224,6 +211,7 @@ magic_advancement_abort_all_effect = {
 		### Advancement type
 		clr_country_flag = magic_project
 		clr_country_flag = magic_infrastructure
+
 		### Project
 		clr_country_flag = magical_fortress_project
 		clr_country_flag = summon_extraplanars_project
@@ -233,9 +221,11 @@ magic_advancement_abort_all_effect = {
 		clr_country_flag = theatre_of_simulacra_project
 		clr_country_flag = lichdom_project
 		clr_country_flag = homunculus_project
+
 		### Magic XP
 		set_variable = { magic_experience_target = 0 }
 		set_variable = { current_experience_percent = 0 }
+
 		#Things picked up along the way
 		remove_country_modifier = ruler_studying_lichdom
 	}
@@ -492,9 +482,7 @@ increase_magic_experience = {
 		change_variable = { passive_experience_bank = $experience$ }
 	}
 
-	if = { limit = { magic_advancement_done = yes }
-		country_event = { id = magic_system.100 }
-	}
+	hidden_effect = { country_event = { id = magic_system.100 } }
 }
 
 finish_magic_study = {
@@ -514,27 +502,30 @@ finish_magic_study = {
 
 magic_school_level_up = {
 	if = {
-		limit = { has_$type$_flag = $school$_2 }
-		set_$type$_flag = $school$_3
-		clr_$type$_flag = $school$_2
-		custom_tooltip = tooltip_$school$_3_level_up
+		limit = { has_$type$_flag = $school$_3 }
+		custom_tooltip = magic_study_$type$_is_not_level_3
 	}
-	else_if = {
-		limit = { has_$type$_flag = $school$_1 }
-		set_$type$_flag = $school$_2
-		clr_$type$_flag = $school$_1
-		custom_tooltip = tooltip_$school$_2_level_up
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = $school$_3 } }
-		set_$type$_flag = $school$_1
-		custom_tooltip = tooltip_$school$_1_level_up
-	}
+	else = {
+		custom_tooltip = magic_school_$type$_level_up_tt
 
-	if = {
-		limit = { has_ruler_flag = magic_study }
-		ruler_clear_saved_spell_schools = yes
-		ruler_save_spell_schools = yes
+		if = {
+			limit = { has_$type$_flag = $school$_2 }
+			set_$type$_flag = $school$_3
+			clr_$type$_flag = $school$_2
+			custom_tooltip = $school$_3
+		}
+		else_if = {
+			limit = { has_$type$_flag = $school$_1 }
+			set_$type$_flag = $school$_2
+			clr_$type$_flag = $school$_1
+			custom_tooltip = $school$_2
+		}
+		else = {
+			set_$type$_flag = $school$_1
+			custom_tooltip = $school$_1
+		}
+
+		$type$_save_all_spell_levels = yes
 	}
 }
 
@@ -676,13 +667,12 @@ passive_magic_advancement_progress = {
 		change_variable = { which = passive_experience_bank which = monthly_magic_xp_gain }
 	}
 	
-	if = { limit = { magic_advancement_done = yes }
-		country_event = { id = magic_system.100 }
-	}
+	hidden_effect = { country_event = { id = magic_system.100 } }
 }
 
 update_magic_ui_experience_modifiers = {
 	hidden_effect = {
+		set_variable = { which = total_experience_mod_ui value = 0 }
 		set_variable = { which = mages_ruler_experience_mod_ui value = 0 }
 		set_variable = { which = mages_estate_experience_mod_ui value = 0 }
 		set_variable = { which = abjuration_experience_mod_ui value = 0 }
@@ -715,6 +705,30 @@ update_magic_ui_experience_modifiers = {
 		multiply_variable = { which = illusion_experience_mod_ui value = 100 }
 		multiply_variable = { which = necromancy_experience_mod_ui value = 100 }
 		multiply_variable = { which = transmutation_experience_mod_ui value = 100 }
+
+		if = { limit = { has_country_flag = magic_advancement }
+			set_variable = { which = total_experience_mod_ui which = mages_estate_experience_mod_ui }
+		}
+		else_if = { limit = { OR = { has_ruler_flag = magic_advancement has_heir_flag = magic_advancement } }
+			set_variable = { which = total_experience_mod_ui which = mages_ruler_experience_mod_ui }
+		}
+		
+		if = { limit = { is_overall_advancing_school = { school = abjuration } }
+			change_variable = { which = total_experience_mod_ui which = abjuration_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = conjuration } }
+			change_variable = { which = total_experience_mod_ui which = conjuration_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = divination } }
+			change_variable = { which = total_experience_mod_ui which = divination_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = enchantment } }
+			change_variable = { which = total_experience_mod_ui which = enchantment_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = evocation } }
+			change_variable = { which = total_experience_mod_ui which = evocation_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = illusion } }
+			change_variable = { which = total_experience_mod_ui which = illusion_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = necromancy } }
+			change_variable = { which = total_experience_mod_ui which = necromancy_experience_mod_ui } }
+		else_if = { limit = { is_overall_advancing_school = { school = transmutation } }
+			change_variable = { which = total_experience_mod_ui which = transmutation_experience_mod_ui } }
 	}
 }
 
@@ -906,3 +920,158 @@ show_all_spell_levels_for_type_effect = {
 	}
 	else = { custom_tooltip = transmutation_0 }
 }
+
+#####################
+### POWERFUL MAGE ###
+#####################
+
+clear_spell_levels_for_type_and_school = {
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+		$school$_1 = { clr_$type$_flag = $school$_1 }
+		$school$_2 = { clr_$type$_flag = $school$_2 }
+		$school$_3 = { clr_$type$_flag = $school$_3 }
+	}
+}
+
+save_spell_levels_for_type_and_school = {
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+		$school$_1 = { set_country_flag = saved_$type$_$school$_1 change_variable = { $type$_spell_schools = 1 } }
+		$school$_2 = { set_country_flag = saved_$type$_$school$_2 change_variable = { $type$_spell_schools = 2 } }
+		$school$_3 = { set_country_flag = saved_$type$_$school$_3 change_variable = { $type$_spell_schools = 3 } }
+	}
+}
+
+clear_saved_spell_levels_for_type_and_school = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		saved_$type$_$school$_1 = { clr_country_flag = saved_$type$_$school$_1 }
+		saved_$type$_$school$_2 = { clr_country_flag = saved_$type$_$school$_2 }
+		saved_$type$_$school$_3 = { clr_country_flag = saved_$type$_$school$_3 }
+	}
+}
+
+give_saved_spell_levels_for_type_and_school = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		saved_$type$_$school$_1 = {
+			if = { limit = { NOT = { has_$type$_flag = $school$_3 has_$type$_flag = $school$_2 } }
+			set_$type$_flag = $school$_1 }
+		}
+		saved_$type$_$school$_2 = {
+			if = { limit = { NOT = { has_$type$_flag = $school$_3 } }
+			set_$type$_flag = $school$_2 clr_$type$_flag = $school$_1 }
+		}
+		saved_$type$_$school$_3 = { set_$type$_flag = $school$_3 clr_$type$_flag = $school$_2 clr_$type$_flag = $school$_1 }
+	}
+}
+
+ruler_save_all_spell_levels = { #this also recalcs the number of spell schools you have
+	ruler_clear_saved_spell_levels = yes
+	set_variable = { ruler_spell_schools = 0 }
+
+	save_spell_levels_for_type_and_school = { type = ruler school = abjuration }
+	save_spell_levels_for_type_and_school = { type = ruler school = conjuration }
+	save_spell_levels_for_type_and_school = { type = ruler school = divination }
+	save_spell_levels_for_type_and_school = { type = ruler school = enchantment }
+	save_spell_levels_for_type_and_school = { type = ruler school = evocation }
+	save_spell_levels_for_type_and_school = { type = ruler school = illusion }
+	save_spell_levels_for_type_and_school = { type = ruler school = necromancy }
+	save_spell_levels_for_type_and_school = { type = ruler school = transmutation }
+
+	recalculate_ruler_mana_regen = yes
+}
+
+ruler_clear_saved_spell_levels = {
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = abjuration }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = conjuration }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = divination }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = enchantment }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = evocation }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = illusion }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = necromancy }
+	clear_saved_spell_levels_for_type_and_school = { type = ruler school = transmutation }
+}
+
+ruler_give_saved_spell_levels = {
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = abjuration }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = conjuration }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = divination }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = enchantment }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = evocation }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = illusion }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = necromancy }
+	give_saved_spell_levels_for_type_and_school = { type = ruler school = transmutation }
+	
+	ruler_save_all_spell_levels = yes
+}
+
+recalculate_ruler_mana_regen = {
+	trigger_switch = {
+		on_trigger = has_ruler_modifier
+		ruler_mana_regen_mod_1 = { remove_country_modifier = ruler_mana_regen_mod_1 }
+		ruler_mana_regen_mod_2 = { remove_country_modifier = ruler_mana_regen_mod_2 }
+		ruler_mana_regen_mod_3 = { remove_country_modifier = ruler_mana_regen_mod_3 }
+		ruler_mana_regen_mod_4 = { remove_country_modifier = ruler_mana_regen_mod_4 }
+		ruler_mana_regen_mod_5 = { remove_country_modifier = ruler_mana_regen_mod_5 }
+		ruler_mana_regen_mod_6 = { remove_country_modifier = ruler_mana_regen_mod_6 }
+		ruler_mana_regen_mod_7 = { remove_country_modifier = ruler_mana_regen_mod_7 }
+		ruler_mana_regen_mod_8 = { remove_country_modifier = ruler_mana_regen_mod_8 }
+		ruler_mana_regen_mod_9 = { remove_country_modifier = ruler_mana_regen_mod_9 }
+		ruler_mana_regen_mod_10 = { remove_country_modifier = ruler_mana_regen_mod_10 }
+		ruler_mana_regen_mod_11 = { remove_country_modifier = ruler_mana_regen_mod_11 }
+		ruler_mana_regen_mod_12 = { remove_country_modifier = ruler_mana_regen_mod_12 }
+		ruler_mana_regen_mod_13 = { remove_country_modifier = ruler_mana_regen_mod_13 }
+		ruler_mana_regen_mod_14 = { remove_country_modifier = ruler_mana_regen_mod_14 }
+		ruler_mana_regen_mod_15 = { remove_country_modifier = ruler_mana_regen_mod_15 }
+		ruler_mana_regen_mod_16 = { remove_country_modifier = ruler_mana_regen_mod_16 }
+		ruler_mana_regen_mod_17 = { remove_country_modifier = ruler_mana_regen_mod_17 }
+		ruler_mana_regen_mod_18 = { remove_country_modifier = ruler_mana_regen_mod_18 }
+		ruler_mana_regen_mod_19 = { remove_country_modifier = ruler_mana_regen_mod_19 }
+		ruler_mana_regen_mod_20 = { remove_country_modifier = ruler_mana_regen_mod_20 }
+		ruler_mana_regen_mod_21 = { remove_country_modifier = ruler_mana_regen_mod_21 }
+		ruler_mana_regen_mod_22 = { remove_country_modifier = ruler_mana_regen_mod_22 }
+		ruler_mana_regen_mod_23 = { remove_country_modifier = ruler_mana_regen_mod_23 }
+		ruler_mana_regen_mod_24 = { remove_country_modifier = ruler_mana_regen_mod_24 }
+	}
+
+	if = { limit = { check_variable = { ruler_spell_schools = 24 } } add_ruler_modifier = { name = ruler_mana_regen_mod_24 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 23 } } add_ruler_modifier = { name = ruler_mana_regen_mod_23 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 22 } } add_ruler_modifier = { name = ruler_mana_regen_mod_22 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 21 } } add_ruler_modifier = { name = ruler_mana_regen_mod_21 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 20 } } add_ruler_modifier = { name = ruler_mana_regen_mod_20 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 19 } } add_ruler_modifier = { name = ruler_mana_regen_mod_19 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 18 } } add_ruler_modifier = { name = ruler_mana_regen_mod_18 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 17 } } add_ruler_modifier = { name = ruler_mana_regen_mod_17 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 16 } } add_ruler_modifier = { name = ruler_mana_regen_mod_16 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 15 } } add_ruler_modifier = { name = ruler_mana_regen_mod_15 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 14 } } add_ruler_modifier = { name = ruler_mana_regen_mod_14 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 13 } } add_ruler_modifier = { name = ruler_mana_regen_mod_13 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 12 } } add_ruler_modifier = { name = ruler_mana_regen_mod_12 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 11 } } add_ruler_modifier = { name = ruler_mana_regen_mod_11 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 10 } } add_ruler_modifier = { name = ruler_mana_regen_mod_10 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 9 } } add_ruler_modifier = { name = ruler_mana_regen_mod_9 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 8 } } add_ruler_modifier = { name = ruler_mana_regen_mod_8 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 7 } } add_ruler_modifier = { name = ruler_mana_regen_mod_7 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 6 } } add_ruler_modifier = { name = ruler_mana_regen_mod_6 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 5 } } add_ruler_modifier = { name = ruler_mana_regen_mod_5 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 4 } } add_ruler_modifier = { name = ruler_mana_regen_mod_4 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 3 } } add_ruler_modifier = { name = ruler_mana_regen_mod_3 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 2 } } add_ruler_modifier = { name = ruler_mana_regen_mod_2 duration = -1 } }
+	else_if = { limit = { check_variable = { ruler_spell_schools = 1 } } add_ruler_modifier = { name = ruler_mana_regen_mod_1 duration = -1 } }
+}
+
+ruler_clear_all_spell_levels = {
+	clear_spell_levels_for_type_and_school = { type = ruler school = abjuration }
+	clear_spell_levels_for_type_and_school = { type = ruler school = conjuration }
+	clear_spell_levels_for_type_and_school = { type = ruler school = divination }
+	clear_spell_levels_for_type_and_school = { type = ruler school = enchantment }
+	clear_spell_levels_for_type_and_school = { type = ruler school = evocation }
+	clear_spell_levels_for_type_and_school = { type = ruler school = illusion }
+	clear_spell_levels_for_type_and_school = { type = ruler school = necromancy }
+	clear_spell_levels_for_type_and_school = { type = ruler school = transmutation }
+}
+
+heir_save_all_spell_levels = {} #There is no need for this effect yet
+country_save_all_spell_levels = {} #There is no need for this effect yet
