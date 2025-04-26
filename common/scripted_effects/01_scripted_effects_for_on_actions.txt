@@ -3596,13 +3596,6 @@ on_battle_won_country_effect = {
 			}
 		}
 	}
-	if = {	#for pdx num_of_battles scripted trigger. need to set the country_flag to begin counting
-		limit = { has_country_flag = count_battles_won }
-		change_variable = {
-			which = num_of_battles_won_var
-			value = 1
-		}
-	}
 	if = {
 		limit = { religion = goblinic_shamanism  NOT = { FROM = { OR = { tag = REB tag = NAT } } } }
 		FROM = { goblinic_shamanism_event = yes } # Fires events for a cult spreading upon winning a battle
@@ -3611,6 +3604,13 @@ on_battle_won_country_effect = {
 	ROOT = { jaddari_deioderan_battle_counter_update = { value = 1 } }
 	if = {
 		limit = { FROM = { NOT = { tag = REB tag = NAT } } }
+		if = {	#for pdx num_of_battles scripted trigger. need to set the country_flag to begin counting
+			limit = { has_country_flag = count_battles_won }
+			change_variable = {
+				which = num_of_battles_won_var
+				value = 1
+			}
+		}
 		centaur_battle_count_win = yes
 		ogre_battle_count_win = yes
 		vf_battle_count_win = yes
@@ -3627,19 +3627,9 @@ on_battle_won_country_effect = {
 		#Anbennar
 		centaur_battle_won = yes
 	}
-	if = { limit = { has_country_flag = has_nsc_disaster }
-		change_variable = { which = nscDisasterBattleWonScoreVar value = 1 }
-	}
-	if = { limit = { tag = F34 }
-		change_variable = { which = deggarionBattlesWon value = 1 }
-	}
-	if = { limit = { tag = B37 }
-		change_variable = { which = RogieriaEmulantAdenn value = 1 }
-	}
-	if = {
-		limit = { tag = Y26 }
-		change_variable = { which = yinquanBattlesWon value = 1 }
-	}
+	# if = { limit = { has_country_flag = has_nsc_disaster }
+	# 	change_variable = { which = nscDisasterBattleWonScoreVar value = 1 }
+	# }
 	if = { limit = { tag = I03 }
 		country_event = { id = flavor_vazhatun.25 }
 	}
@@ -3807,13 +3797,6 @@ on_battle_won_country_effect = {
 				id = flavor_stalbor.12
 				days = 7 #Need to wait a few days for 'NOT = { num_of_rebel_armies = 1 }' to trigger correctly
 			}
-		}
-	}
-	if = {
-		limit = { tag = Y17 } #Gushuokguan
-		change_variable = {
-			which = gushuokguan_battle_counter
-			value = 1
 		}
 	}
 	if = { 
@@ -4754,6 +4737,29 @@ on_religion_change_effect = {
 				duration = -1
 			}
 		}
+	}
+
+	#Taychend Religious Reforms
+	if = {
+		limit = { 
+			NOT = {
+				religion = gods_of_the_taychend
+				religion = oren_nayiru
+			}
+			OR = {
+				has_country_modifier = taychend_reform_1_mod
+				has_country_modifier = taychend_reform_2_mod
+				has_country_modifier = taychend_reform_3_mod
+				has_country_modifier = taychend_reform_4_mod
+				has_country_modifier = taychend_reform_5_mod
+			}
+		}
+		remove_country_modifier = taychend_reform_1_mod
+		remove_country_modifier = taychend_reform_2_mod
+		remove_country_modifier = taychend_reform_3_mod
+		remove_country_modifier = taychend_reform_4_mod
+		remove_country_modifier = taychend_reform_5_mod
+		clr_country_flag = taychendi_window_open
 	}
 }
 
@@ -8057,23 +8063,6 @@ on_startup_dlc_cleanup_effect = {
 	#}
 }
 
-xia_won_war_count = {
-	if = {
-		limit = {
-			has_country_flag = xia_nation
-		}
-		change_variable = { xiaWarsWon = 1 }
-	}
-}
-G35_won_war_count = {
-	if = {
-		limit = {
-			tag = G35
-		}
-	}
-	change_variable = { G35WarsWon = 1 }
-}
-
 feast_of_the_gods_won_war_count = {
 	if = {
 		limit = {
@@ -8133,19 +8122,6 @@ fotg_reform_variable = {
 	}
 }
 
-vf_won_war_count = {
-    if = {
-   		limit = {
-			OR = {
-				tag = G38
-				was_tag = G38
-			}
-   			has_country_flag = vf_count_flg
-   		}
-    }
-    change_variable = { VFWarsWon = 1 }
-}
-
 anb_on_province_owner_change_government_reform_effect = {
 	if = {
 		limit = { 
@@ -8186,8 +8162,15 @@ anb_on_province_owner_change_government_reform_effect = {
 }
 
 startup_1444_effects = {
+	# runs on startup, for effects that should only happen at game startup in 1444 (so NOT for releasables)
 	if = {
-		limit = { NOT = { has_country_flag = startup_1444_completed } }
+		limit = {
+			NOT = {
+				has_country_flag = startup_1444_completed
+				is_year = 1445	# is 1444
+				is_month = 11	# is november (this trigger is 0-based, 11 is december)
+			}
+		}
 		set_country_flag = startup_1444_completed
 
 		###########################
@@ -8217,6 +8200,10 @@ startup_1444_effects = {
 		update_ruler_racial_flag = yes
 		update_heir_racial_flag = yes
 		update_consort_racial_flag = yes
+
+		update_magic_study_experience_modifier = yes
+		update_artifice_points = yes
+		update_research_speed = yes
 		
 		#TODO Jothell figure out initalisation - should all nations at game start do this?
 		#magic system initialization
@@ -8318,11 +8305,6 @@ startup_1444_effects = {
 				tag = G26
 			}
 			country_event = { id = flavour_amacimst.0 days = 15 }
-		}
-
-		country_event = {
-			id = anbennar_setup.20
-			days = 32
 		}
 
 		##aakhetist starting tags minus aramoole
@@ -8592,8 +8574,9 @@ startup_1444_effects = {
 			limit = { tag = R51 NOT = { check_variable = { diplomaticAnnexations = 1 } } }
 			set_variable = { diplomaticAnnexations = 0 }
 		}
-	
+
 		ynnic_setup_effect = yes
+
 		#Ynn Worship event cycle start
 		if = {
 			limit = {
@@ -8692,12 +8675,6 @@ startup_1444_effects = {
 					}
 				}
 			}
-		}
-	
-		# Yinquan
-		if = {
-			limit = { tag = Y26 NOT = { check_variable = { yinquanBattlesWon = 1 } } }
-			set_variable = { yinquanBattlesWon = 0 }
 		}
 	
 		# Nekheis cheap colonies modifier and event to make them start colonizing
@@ -8823,7 +8800,7 @@ startup_1444_effects = {
 
 		# fotg setup
 		if = {
-			limit = { 
+			limit = {
 				religion = feast_of_the_gods
 			}
 			set_variable = {
@@ -8854,7 +8831,6 @@ startup_1444_effects = {
 				value = 0
 			}
 		}
-
 		if = {
 			limit = { NOT = { has_global_flag = suhan_setup } }
 			set_global_flag = suhan_setup
@@ -8986,10 +8962,12 @@ startup_1444_effects = {
 		}
 		
 		#Making Dursikari non-migratory if AI to stop them from blocking player
-		M02 = {
-			if = { limit = { ai = yes }
-				add_government_reform = dwarovar_squatter
+		if = {
+			limit = {
+				tag = M02
+				ai = yes
 			}
+			add_government_reform = dwarovar_squatter
 		}
 
 		#Gushuokguan
@@ -8999,10 +8977,7 @@ startup_1444_effects = {
 				which = gushuokguan_rented_condottieri_counter
 				value = 0
 			}
-			set_variable = {
-				which = gushuokguan_battle_counter
-				value = 0
-			}
+			set_country_flag = count_battles_won
 			set_variable = {
 				which = gushuokguan_siege_counter
 				value = 0
@@ -9033,7 +9008,10 @@ startup_1444_effects = {
 		}
 
 		# Applying Flooded Depths to Ovdal Tûngr.
-		526 = { add_province_modifier = { name = F23_flooded_depths duration = -1 } }
+		if = {
+			limit = { tag = F23	}
+			526 = { add_permanent_province_modifier = { name = F23_flooded_depths duration = -1 } }
+		}
 
 		if = {
 			limit = { tag = R11 }
@@ -12129,55 +12107,55 @@ on_native_government_change_effect = {
 
 on_convert_by_trade_policy_effect = {
 	FROM = { change_variable = { which = propogation_counter value = 1 } }
-	if = {
-		limit = {
-			trade_company_region = trade_company_moluccas
-			FROM = { is_defender_of_faith = yes }
-		}
-		FROM = {
-			if = {
-				limit = {
-					ai = no
-					NOT = { check_variable = { which = religion_propagated_in_moluccas value = 1 } }
-				}
-				set_variable = {
-					which = religion_propagated_in_moluccas value = 1
-				}
-			}
-			else_if = {
-				limit = {
-					ai = no
-					check_variable = { which = religion_propagated_in_moluccas value = 1 }
-					NOT = { check_variable = { which = religion_propagated_in_moluccas value = 6 } }
-				}
-				change_variable = {
-					which = religion_propagated_in_moluccas value = 1
-				}
-			}
-		}
-	}
-	if = {
-		limit = { FROM = { has_country_flag = YEM_propagation_gives_navy_tradition } }
-		FROM = { add_navy_tradition = 1 }
-	}
-	if = {
-		limit = {
-			FROM = { has_country_flag = orm_better_sea_religious_propagation }
-			OR = {
-				region = indonesia_region
-				region = moluccas_region
-				region = malaya_region
-			}
-		}
-		FROM = { add_piety = 0.005 }
-	}
-	if = {
-		limit = { FROM = { has_country_flag = hormuz_religious_propagations_buffs_flag } }
-		add_province_modifier = {
-			name = orm_hormuz_merchants_influence
-			duration = 7300
-		}
-	}
+	# if = {
+	# 	limit = {
+	# 		trade_company_region = trade_company_moluccas
+	# 		FROM = { is_defender_of_faith = yes }
+	# 	}
+	# 	FROM = {
+	# 		if = {
+	# 			limit = {
+	# 				ai = no
+	# 				NOT = { check_variable = { which = religion_propagated_in_moluccas value = 1 } }
+	# 			}
+	# 			set_variable = {
+	# 				which = religion_propagated_in_moluccas value = 1
+	# 			}
+	# 		}
+	# 		else_if = {
+	# 			limit = {
+	# 				ai = no
+	# 				check_variable = { which = religion_propagated_in_moluccas value = 1 }
+	# 				NOT = { check_variable = { which = religion_propagated_in_moluccas value = 6 } }
+	# 			}
+	# 			change_variable = {
+	# 				which = religion_propagated_in_moluccas value = 1
+	# 			}
+	# 		}
+	# 	}
+	# }
+	# if = {
+	# 	limit = { FROM = { has_country_flag = YEM_propagation_gives_navy_tradition } }
+	# 	FROM = { add_navy_tradition = 1 }
+	# }
+	# if = {
+	# 	limit = {
+	# 		FROM = { has_country_flag = orm_better_sea_religious_propagation }
+	# 		OR = {
+	# 			region = indonesia_region
+	# 			region = moluccas_region
+	# 			region = malaya_region
+	# 		}
+	# 	}
+	# 	FROM = { add_piety = 0.005 }
+	# }
+	# if = {
+	# 	limit = { FROM = { has_country_flag = hormuz_religious_propagations_buffs_flag } }
+	# 	add_province_modifier = {
+	# 		name = orm_hormuz_merchants_influence
+	# 		duration = 7300
+	# 	}
+	# }
 }
 
 on_age_ability_taken_age_of_discovery = { } #for future use (and modders!) :)
@@ -12257,28 +12235,6 @@ on_scorch_earth_effect = {
 	}
 }
 
-L08_won_battle_count = {
-	if = {
-		limit = { 
-			has_country_flag = kulugiash_battles
-		}
-		change_variable = {
-			kulugiashBattlesWon = 1
-		}
-	}
-}
-
-L08_won_war_count = {
-	if = {
-		limit = { 
-			has_country_flag = kulugiash_wars
-		}
-		change_variable = {
-			kulugiashWarsWon = 1
-		}
-	}
-}
- 
 S53_won_battle_against_trolls = {
 	change_variable = {
 		trollBattlesWon = 1
