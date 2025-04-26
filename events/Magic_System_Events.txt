@@ -4,6 +4,76 @@ namespace = magic_system
 ###### Most of what's here will be handler events, hidden events, maintenance events, etc.
 ###### Events that trigger while you're studying and gain you XP go in Magic_Advancement_Events.txt
 
+country_event = { #Monthly magic upkeep
+	id = magic_system.0
+	title =  magic_system.0.t
+	desc =  magic_system.0.d
+	picture = MAGES_ESTATE_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		ai = no
+		has_country_flag = magic_system_initialized
+	}
+
+	option = {
+		name = magic_system.0.a
+		ai_chance = { factor = 1 }
+
+		update_mana_regen_vars = yes
+		change_mana = { var_amount = manaRegenerationRate }
+
+		export_to_variable = {
+			which = monthly_magic_xp_gain
+			value = modifier:monthly_magic_experience_gain
+		}
+
+		set_variable = { banked_magic_xp_portion = 0 }
+
+		if = { limit = { has_country_flag = magic_artificery_mixed }
+			multiply_variable = { which = monthly_magic_xp_gain value = 0.8 }
+		}
+		
+		if = {
+			limit = {
+				check_variable = { passive_experience_bank = 1 }
+				is_overall_advancing_magic = yes
+			}
+			set_variable = { which = expFoo which = monthly_magic_xp_gain }
+			multiply_variable = { expFoo = 0.5 }
+
+			if = { limit = { check_variable = { which = passive_experience_bank which = expFoo } }
+				change_variable = { which = banked_magic_xp_portion which = expFoo }
+				subtract_variable = { which = passive_experience_bank which = expFoo }
+			}
+			else = {
+				change_variable = { which = banked_magic_xp_portion which = passive_experience_bank }
+				subtract_variable = { which = passive_experience_bank which = banked_magic_xp_portion }
+			}
+		}
+
+		if = { limit = { has_ruler_flag = magic_advancement }
+			if = { limit = { is_long_lived_ruler = yes }
+				divide_variable = { monthly_magic_xp_gain = 2 }
+				divide_variable = { banked_magic_xp_portion = 2 }
+			}
+		}
+		else_if = { limit = { has_heir_flag = magic_advancement }
+			if = { limit = { is_long_lived_heir = yes }
+				divide_variable = { monthly_magic_xp_gain = 2 }
+				divide_variable = { banked_magic_xp_portion = 2 }
+			}
+		}
+		else_if = { limit = { has_country_flag = magic_advancement }
+			divide_variable = { which = monthly_magic_xp_gain value = 3 }
+			divide_variable = { which = banked_magic_xp_portion value = 3 }
+		}
+
+		increase_magic_experience = { var_amount = monthly_magic_xp_gain unmodified_var_amount = banked_magic_xp_portion }
+	}
+}
 
 country_event = { #Cancel magical study Confirm
 	id =  magic_system.86
@@ -78,22 +148,18 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 
 		country_event = { id = magic_system.99 }
 	}
-	option = {
+	option = { #For events that happen while you're doing a project
 		name = magic_advancement_update_event
-		trigger = { magic_advancement_done = no }
 		ai_chance = { factor = 1 }
-
-		if = {
-			limit = { check_variable = { current_experience_percent = 67 } }
-			country_event = { id = magic_project.702 }
-			country_event = { id = magic_project.705 }
-			country_event = { id = magic_project.708 }
+		trigger = {
+			is_advancing_project = yes
+			magic_advancement_done = no
 		}
-		else_if = {
-			limit = { check_variable = { current_experience_percent = 33 } }
-			country_event = { id = magic_project.701 }
-			country_event = { id = magic_project.704 }
-			country_event = { id = magic_project.707 }
+
+		trigger_switch = {
+			on_trigger = has_country_flag
+
+			lichdom_project = { country_event = { id = magic_project_lichdom.0 } }
 		}
 	}
 }
