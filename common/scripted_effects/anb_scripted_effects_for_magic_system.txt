@@ -16,38 +16,34 @@
 
 #TODO Jothell how is the magic system initialised if magic becomes available to a country?
 initialize_magic_system = {
-	set_country_flag = magic_system_initialized
-	#Initialise vars for Linux
-	set_variable = { currentMana = 0 }
-	set_variable = { manaRegenerationMultiplier	= 0 }
-	set_variable = { ruler_experience_modifier = 0 }
-	set_variable = { country_experience_modifier = 0 }
-	set_variable = { passive_experience_bank = 0 }
-	
-	
-	
-	# set_variable = { which = magicalInfrastructure value = 1 } #Base level
-	# set_variable = { which = maximum_estate_spell_schools value = 4 } #Base value
+	if = {
+		limit = {
+			exists = yes #Pirates, Rebels, and Natives were doing this and causing problems
+			NOT = { has_country_flag = magic_system_initialized }
+		}
+		set_country_flag = magic_system_initialized
 
-	initialize_infrastructure = yes
-	change_mana = yes
-	update_mana_regen_vars = yes
+		initialize_infrastructure = yes
+		update_mana_regen_vars = yes
+		set_variable = { which = manaFoo which = manaRegenerationRate }
+		multiply_variable = { which = manaFoo value = 14 } #14 months of mana at game start, hehe
+		change_mana = { var_amount = manaFoo }
+	}
 }
 
 initialize_infrastructure = {
-	add_country_modifier = {
-		name = magical_infrastructure_1
-		duration = -1
-	}
+
 	#Tag specific infrastructure setup
 	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
 	if = {
-		limit = { tag = A85 } #Magisterium
-		# One level each call - includes total estate school levels
-		# level_up_magical_infrastructure = yes
-		# level_up_magical_infrastructure = yes
-		magic_infrastructure_level_up = yes
-		magic_infrastructure_level_up = yes
+		limit = { tag = A85 }
+		add_country_modifier = { name = magical_infrastructure_3 duration = -1 }
+	}
+	else = {
+		add_country_modifier = {
+			name = magical_infrastructure_1
+			duration = -1
+		}
 	}
 }
 
@@ -300,6 +296,15 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		#Things picked up along the way
 		remove_country_modifier = ruler_studying_lichdom
+		remove_country_modifier = studying_homunculus_core_animal
+		remove_country_modifier = studying_homunculus_core_clockwork
+		remove_country_modifier = studying_homunculus_core_damestear
+		remove_country_modifier = studying_homunculus_body_mud
+		remove_country_modifier = studying_homunculus_body_stone
+		remove_country_modifier = studying_homunculus_body_blood
+		remove_country_modifier = studying_homunculus_loyalty_law
+		remove_country_modifier = studying_homunculus_loyalty_child
+		remove_country_modifier = studying_homunculus_loyalty_magic
 	}
 }
 magic_advancement_clr_type_flags = {
@@ -360,6 +365,7 @@ start_magic_study = { #type = [ruler,heir,country]
 	hidden_effect = {
 		set_magic_experience_target = { type = $type$ study = $school$ }
 		set_variable = { which = $type$_magic_experience value = 0 }
+		update_magic_ui_experience_modifiers = yes
 	}
 }
 start_magic_project = { #Country only
@@ -378,10 +384,13 @@ start_magic_project = { #Country only
 		set_country_flag = $school$_advancement
 		custom_tooltip = $school$_advancement
 	]
+	
+	custom_tooltip = tooltip_magic_project_start
 
 	hidden_effect = {
 		set_magic_experience_target = { type = country project = $project$ }
 		set_variable = { which = country_magic_experience value = 0 }
+		update_magic_ui_experience_modifiers = yes
 	}
 }
 start_magic_infrastructure = { #Country only
@@ -397,6 +406,7 @@ start_magic_infrastructure = { #Country only
 	hidden_effect = {
 		set_magic_experience_target = { type = country infrastructure = yes }
 		set_variable = { which = country_magic_experience value = 0 }
+		update_magic_ui_experience_modifiers = yes
 	}
 }
 
@@ -445,8 +455,12 @@ magic_school_level_up = {
 }
 magic_project_level_up = {
 	change_variable = { $project$_level = 1 }
-	$project$_project_effect = yes #TODO Bonbon: get all the projects into handler events with unique namespaces
-	calc_completed_magic_projects = yes
+	hidden_effect = {
+		set_country_flag = magic_project_completed_flag
+		country_event = { id = magic_project_$project$.0 } #The handler event.
+		country_event = { id = magic_project.1 } #clears the completion flag
+		calc_completed_magic_projects = yes
+	}
 }
 magic_infrastructure_level_up = {
 	custom_tooltip = level_up_magical_infrastructure_tt
@@ -712,33 +726,6 @@ calc_school_experience_modifers_effect = {
 	}
 	change_variable = { which = school_experience_modifier which = expFoo }
 }
-
-##############################
-### NEW SYSTEM STUFF BELOW ###
-##############################
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-passive_magic_advancement_progress = {
-}
-
-
-
-
-
-
-
 
 ##########################
 ### GENERATES TOOLTIPS ###

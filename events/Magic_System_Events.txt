@@ -14,7 +14,7 @@ country_event = { #Monthly magic upkeep
 	hidden = yes
 
 	trigger = {
-		ai = no
+		ai = no #AI has their own thing
 		has_country_flag = magic_system_initialized
 	}
 
@@ -72,6 +72,9 @@ country_event = { #Monthly magic upkeep
 		}
 
 		increase_magic_experience = { var_amount = monthly_magic_xp_gain unmodified_var_amount = banked_magic_xp_portion }
+
+		set_variable = { which = monthly_magic_xp_gain which = experienceGain } #For tooltip
+		update_magic_ui_experience_modifiers = yes
 	}
 }
 
@@ -96,7 +99,7 @@ country_event = { #Cancel magical study Confirm
 	}
 }
 
-country_event = { #Abort goes AFTER everything else, to make sure nothing weird occurs
+country_event = { #Basically, events are negative priority brackets. If you play yugioh, they happen on a new chain.
 	id = magic_system.99
 	title = magic_system.99.t		
 	desc = magic_system.99.d
@@ -113,7 +116,7 @@ country_event = { #Abort goes AFTER everything else, to make sure nothing weird 
 	}
 }
 
-# executed by passive_magic_advancement_progress and increase_magic_experience
+# executed by increase_magic_experience — basically, gives you both finishing and radiant events
 country_event = { #Magic Advancement Events Handler (Scripted effects are borked so we use events)
 	id = magic_system.100
 	title = magic_system.100.t		
@@ -140,13 +143,13 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 			generic_calc_spell_levels = { type = country }
 		}
 		else_if = { limit = { has_country_flag = magic_project }
-			country_event = { id = magic_system.101 }
+			country_event = { id = magic_project.0 }
 		}
 		else_if = { limit = { has_country_flag = magic_infrastructure }
 			magic_infrastructure_level_up = yes
 		}
 
-		country_event = { id = magic_system.99 }
+		country_event = { id = magic_system.99 } #Abort happens after everything else
 	}
 	option = { #For events that happen while you're doing a project
 		name = magic_advancement_update_event
@@ -160,42 +163,33 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 			on_trigger = has_country_flag
 
 			lichdom_project = { country_event = { id = magic_project_lichdom.0 } }
+			homunculus_project = { country_event = { id = magic_project_homunculus.0 } }
 		}
 	}
-}
-
-country_event = { #Magic Project Done sorter
-	id = magic_system.101
-	title = magic_system.101.t		
-	desc = magic_system.101.d
-	picture = BIG_BOOK_eventPicture
-	
-	hidden = yes
-	is_triggered_only = yes
-
-	option = {
-		name = finish_magic_advancement
+	option = { #For events that happen while you're doing a study
+		name = magic_study_radiant_event
 		ai_chance = { factor = 1 }
-
-		trigger_switch = {
-			on_trigger = has_country_flag
-
-			magical_fortress_project			= { magic_project_level_up = { project = magical_fortress } }
-			summon_extraplanars_project			= { magic_project_level_up = { project = summon_extraplanars } }
-			orb_of_omniscience_project			= { magic_project_level_up = { project = orb_of_omniscience } }
-			enchant_legendary_artifact_project	= { magic_project_level_up = { project = enchant_legendary_artifact } }
-			battlemage_academy_project			= { magic_project_level_up = { project = battlemage_academy } }
-			theatre_of_simulacra_project		= { magic_project_level_up = { project = theatre_of_simulacra } }
-			lichdom_project						= { magic_project_level_up = { project = lichdom } }
-			homunculus_project					= { magic_project_level_up = { project = homunculus } }
-			unique_project_1_project			= { magic_project_level_up = { project = unique_project_1 } }
-			unique_project_2_project			= { magic_project_level_up = { project = unique_project_2 } }
-			unique_project_3_project			= { magic_project_level_up = { project = unique_project_3 } }
-			unique_project_4_project			= { magic_project_level_up = { project = unique_project_4 } }
-			unique_project_5_project			= { magic_project_level_up = { project = unique_project_5 } }
-			unique_project_6_project			= { magic_project_level_up = { project = unique_project_6 } }
-			unique_project_7_project			= { magic_project_level_up = { project = unique_project_7 } }
-			unique_project_8_project			= { magic_project_level_up = { project = unique_project_8 } }
+		trigger = {
+			is_overall_studying_magic = yes
+			magic_advancement_done = no
+		}
+	}
+	option = { #For events that happen while you're improving infrastructure..?
+		name = magic_study_radiant_event
+		ai_chance = { factor = 1 }
+		trigger = {
+			is_advancing_infrastructure = yes
+			magic_advancement_done = no
+		}
+	}
+	option = { #Catch-all, in case.
+		name = magic_study_radiant_event
+		ai_chance = { factor = 1 }
+		trigger = {
+			is_advancing_infrastructure = no
+			is_advancing_project = no
+			is_overall_studying_magic = no
+			magic_advancement_done = no
 		}
 	}
 }
