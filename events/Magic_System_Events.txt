@@ -26,22 +26,25 @@ country_event = { #Monthly magic upkeep
 		change_mana = { var_amount = manaRegenerationRate }
 
 		export_to_variable = {
-			which = monthly_magic_xp_gain
+			which = last_months_xp_gain
 			value = modifier:monthly_magic_experience_gain
 		}
 
-		set_variable = { banked_magic_xp_portion = 0 }
+		set_variable = { which = max_experience_bank which = last_months_xp_gain }
+		multiply_variable = { max_experience_bank = 24 } #Max XP bank is 2 years of passive gain
 
-		if = { limit = { has_country_flag = magic_artificery_mixed }
-			multiply_variable = { which = monthly_magic_xp_gain value = 0.8 }
-		}
+		set_variable = { banked_magic_xp_portion = 0 }
 		
 		if = {
+			limit = { is_overall_advancing_magic = no }
+			set_variable = { which = passive_experience_bank_change which = last_months_xp_gain }
+		}
+		else_if = {
 			limit = {
 				check_variable = { passive_experience_bank = 1 }
 				is_overall_advancing_magic = yes
 			}
-			set_variable = { which = expFoo which = monthly_magic_xp_gain }
+			set_variable = { which = expFoo which = last_months_xp_gain }
 			multiply_variable = { expFoo = 0.5 }
 
 			if = { limit = { check_variable = { which = passive_experience_bank which = expFoo } }
@@ -52,28 +55,36 @@ country_event = { #Monthly magic upkeep
 				change_variable = { which = banked_magic_xp_portion which = passive_experience_bank }
 				subtract_variable = { which = passive_experience_bank which = banked_magic_xp_portion }
 			}
+			set_variable = { which = passive_experience_bank_change which = banked_magic_xp_portion }
+			multiply_variable = { passive_experience_bank_change = -1 }
 		}
+		else = { set_variable = { passive_experience_bank_change = 0 } }
 
 		if = { limit = { has_ruler_flag = magic_advancement }
 			if = { limit = { is_long_lived_ruler = yes }
-				divide_variable = { monthly_magic_xp_gain = 2 }
+				divide_variable = { last_months_xp_gain = 2 }
 				divide_variable = { banked_magic_xp_portion = 2 }
 			}
 		}
 		else_if = { limit = { has_heir_flag = magic_advancement }
 			if = { limit = { is_long_lived_heir = yes }
-				divide_variable = { monthly_magic_xp_gain = 2 }
+				divide_variable = { last_months_xp_gain = 2 }
 				divide_variable = { banked_magic_xp_portion = 2 }
 			}
 		}
 		else_if = { limit = { has_country_flag = magic_advancement }
-			divide_variable = { which = monthly_magic_xp_gain value = 3 }
+			divide_variable = { which = last_months_xp_gain value = 3 }
 			divide_variable = { which = banked_magic_xp_portion value = 3 }
 		}
 
-		increase_magic_experience = { var_amount = monthly_magic_xp_gain unmodified_var_amount = banked_magic_xp_portion }
+		increase_magic_experience = { var_amount = last_months_xp_gain unmodified_var_amount = banked_magic_xp_portion }
 
-		set_variable = { which = monthly_magic_xp_gain which = experienceGain } #For tooltip
+		if = { #For tooltip
+			limit = { is_overall_advancing_magic = yes }
+			set_variable = { which = last_months_xp_gain which = experienceGain }
+		}
+		else = { set_variable = { last_months_xp_gain = 0 } }
+
 		update_magic_ui_experience_modifiers = yes
 	}
 }
@@ -137,9 +148,11 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 		}
 		else_if = { limit = { has_heir_flag = magic_study }
 			finish_magic_study = { type = heir }
+			country_event = { id = magic_study.2 } #TODO: give unique event
 		}
 		else_if = { limit = { has_country_flag = magic_study }
 			finish_magic_study = { type = country }
+			country_event = { id = magic_study.2 } #TODO: give unique event
 			generic_calc_spell_levels = { type = country }
 		}
 		else_if = { limit = { has_country_flag = magic_project }
@@ -147,6 +160,7 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 		}
 		else_if = { limit = { has_country_flag = magic_infrastructure }
 			magic_infrastructure_level_up = yes
+			country_event = { id = magic_study.2 } #TODO: give unique event
 		}
 
 		country_event = { id = magic_system.99 } #Abort happens after everything else
