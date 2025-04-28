@@ -24,6 +24,8 @@ initialize_magic_system = {
 		set_country_flag = magic_system_initialized
 
 		initialize_infrastructure = yes
+		generic_calc_spell_levels = { type = ruler } #TODO: put this all in history files?
+		recalculate_ruler_mana_regen = yes
 
 		country_event = { id = magic_system.0 }
 	}
@@ -36,12 +38,14 @@ initialize_infrastructure = {
 	if = {
 		limit = { tag = A85 }
 		add_country_modifier = { name = magical_infrastructure_3 duration = -1 }
+		set_variable = { mana_regen_infra = 0.6 }
 	}
 	else = {
 		add_country_modifier = {
 			name = magical_infrastructure_1
 			duration = -1
 		}
+		set_variable = { mana_regen_infra = 0.2 }
 	}
 }
 
@@ -232,6 +236,8 @@ change_mana = { #for spells, MT effects, etc. use this. e.g. change_mana = { amo
 	[[var_amount] change_variable = { which = currentMana which = $var_amount$ } ]
 
 	hidden_effect = {
+		divide_variable = { currenaMana = 10 } #Truncate to hundredth's place
+		multiply_variable = { currenaMana = 10 }
 		cap_mana = yes
 		update_mana_bar = yes
 	}
@@ -244,14 +250,33 @@ update_mana_regen_vars = { #use whenever you change the mana-per-month amount
 			value = modifier:mages_mana_regen
 		}
 		export_to_variable = {
-			variable_name = manaRegenerationMultiplier
+			variable_name = mages_mana_regen_mult_val
 			value = modifier:mages_mana_regen_mult
 		}
-		change_variable = { manaRegenerationMultiplier = 1 }
+		change_variable = { mages_mana_regen_mult_val = 1 }
 		multiply_variable = {
 			which = manaRegenerationRate
-			which = manaRegenerationMultiplier
+			which = mages_mana_regen_mult_val
 		}
+
+		set_variable = { which = manaFoo which = mages_mana_regen_mult_val }
+		modulo_variable = { manaFoo = 1 }
+		if = {
+			limit = { is_variable_equal = { which = manaFoo value = 0 } }
+			set_country_flag = mana_regen_mult_whole_number
+		}
+		else = {
+			modulo_variable = { manaFoo = 0.1 }
+			if = {
+				limit = { is_variable_equal = { which = manaFoo value = 0 } }
+				set_country_flag = mana_regen_mult_one_decimal
+			}
+		}
+
+		set_variable = { which = mana_regen_other which = manaRegenerationRate }
+		subtract_variable = { mana_regen_other = 0.8 } #Base
+		subtract_variable = { which = mana_regen_other which = mana_regen_ruler } #Ruler
+		subtract_variable = { which = mana_regen_other which = mana_regen_infra } #Infra
 	}
 }
 
@@ -461,8 +486,11 @@ magic_infrastructure_level_up = {
 		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
 		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
 	}
-	change_mana = yes # (max) mana was changed
-	update_mana_regen_vars = yes
+	hidden_effect = {
+		change_variable = { mana_regen_infra = 0.2 }
+		change_mana = yes # (max) mana was changed
+		update_mana_regen_vars = yes
+	}
 }
 
 calc_completed_magic_projects = { #Non-unique
@@ -844,7 +872,7 @@ ruler_give_saved_spell_levels = {
 	ruler_save_all_spell_levels = yes
 }
 
-recalculate_ruler_mana_regen = {
+recalculate_ruler_mana_regen = { # Could make this into a binary search tree. Max at 5 searches instead of 23
 	hidden_effect = {
 		trigger_switch = {
 			on_trigger = has_ruler_modifier
@@ -898,6 +926,9 @@ recalculate_ruler_mana_regen = {
 		else_if = { limit = { check_variable = { ruler_spell_schools = 3 } } add_ruler_modifier = { name = ruler_mana_regen_mod_3 duration = -1 } }
 		else_if = { limit = { check_variable = { ruler_spell_schools = 2 } } add_ruler_modifier = { name = ruler_mana_regen_mod_2 duration = -1 } }
 		else_if = { limit = { check_variable = { ruler_spell_schools = 1 } } add_ruler_modifier = { name = ruler_mana_regen_mod_1 duration = -1 } }
+
+		set_variable = { which = mana_regen_ruler which = ruler_spell_schools }
+		divide_variable = { mana_regen_ruler = 20 }
 	}
 }
 
@@ -913,6 +944,9 @@ ruler_clear_all_spell_levels = {
 }
 
 magic_on_ruler_death = {
+	set_variable = { mana_regen_ruler = 0 }
+
+
 	if = { #For those who see the road suddenly end
 		limit = { has_country_flag = lichdom_project }
 		magic_advancement_abort_all_effect = yes
