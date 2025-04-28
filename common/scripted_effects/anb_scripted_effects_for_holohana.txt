@@ -1,9 +1,12 @@
 holohana_province_save_effect = {
+	clear_global_event_target = holohana_target_$holohana$
+	clear_global_event_target = holohana_province_owner_$holohana$
 	random_province = {
 		limit = {
 			has_province_modifier = holohana_modifier_$holohana$
 		}
 		save_global_event_target_as = holohana_target_$holohana$
+		set_province_flag = holohana_$holohana$_flag
 		if = {
 			limit = {
 				NOT = { is_empty = yes }
@@ -12,104 +15,87 @@ holohana_province_save_effect = {
 				save_global_event_target_as = holohana_province_owner_$holohana$
 			}
 		}
+		clr_province_flag = $holohana$_recently_migrated
 	}
 }
 holohana_spawn_effect = {
-		P99 = {
-			event_target:holohana_target_$holohana$ = {
-				if = {
-					limit = {
-						is_empty = yes
-					}
-					create_colony = 1000
-					add_core = P99
+	P99 = {
+		event_target:holohana_target_$holohana$ = {
+			if = {
+				limit = {
+					is_empty = yes
 				}
-				else = {
-					cede_province = P99
-				}
-				every_neighbor_province = {
-					limit = {
-						NOT = { has_province_modifier = holohana_rumbling }
-					}
-					add_permanent_province_modifier = {
-						name = holohana_rumbling
+				create_colony = 1000
+				add_core = P99
+			}
+			else = {
+				event_target:holohana_province_owner_$holohana$ = {
+					add_country_modifier = {
+						name = holohana_forcelimit_modifier
 						duration = -1
 					}
-					set_province_flag = holohana_$holohana$_rumbling_flag
 				}
-				every_empty_neighbor_province = {
-					limit = {
-						NOT = { has_province_modifier = holohana_rumbling }
-					}
-					add_permanent_province_modifier = {
-						name = holohana_rumbling
-						duration = -1
-					}
-					set_province_flag = holohana_$holohana$_rumbling_flag
+				
+			}
+			every_neighbor_province = {
+				limit = {
+					NOT = { has_province_modifier = holohana_rumbling }
+					NOT = { has_province_modifier = holohana_modifier_$holohana$ }
+				}
+				add_permanent_province_modifier = {
+					name = holohana_rumbling
+					duration = -1
 				}
 			}
+			every_empty_neighbor_province = {
+				limit = {
+					NOT = { has_province_modifier = holohana_rumbling }
+					NOT = { has_province_modifier = holohana_modifier_$holohana$ }
+				}
+				add_permanent_province_modifier = {
+					name = holohana_rumbling
+					duration = -1
+				}
+			}
+			every_neighbor_province = {
+				limit = {
+					has_province_modifier = holohana_rumbling 
+				}
+				set_province_flag = holohana_$holohana$_rumbling_flag
+			}
+			every_empty_neighbor_province = {
+				limit = {
+					has_province_modifier = holohana_rumbling 
+				}
+				set_province_flag = holohana_$holohana$_rumbling_flag
+			}
 		}
-	#P99 = {
-	#	event_target:holohana_target_$holohana$ = {
-	#		every_neighbor_province = {
-	#			limit = {
-	#				NOT = { has_province_modifier = holohana_rumbling }
-	#			}
-	#			add_permanent_province_modifier = {
-	#				name = holohana_rumbling
-	#				duration = -1
-	#			}
-	#		}
-	#		every_empty_neighbor_province = {
-	#			limit = {
-	#				NOT = { has_province_modifier = holohana_rumbling }
-	#			}
-	#			add_permanent_province_modifier = {
-	#				name = holohana_rumbling
-	#				duration = -1
-	#			}
-	#		}
-	#		if = {
-	#			limit = {
-	#				is_empty = yes
-	#			}
-	#			create_colony = 1000
-	#			add_core = P99
-	#			#spawn_rebels = {
-	#			#	size = 200
-	#			#	[[leader_the_watcher] leader = "The Watcher"]
-	#			#	[[leader_forest_wide_and_dim] leader = "Forest Wide and Dim"]
-	#			#	type = holohana_rebels
-	#			#}
-	#			#decolonize = THIS
-	#			#remove_core = P99
-	#		}
-	#		else = {
-	#			cede_province = P99
-	#			#spawn_rebels = {
-	#			#	size = 200
-	#			#	[[leader_the_watcher] leader = "The Watcher"]
-	#			#	[[leader_forest_wide_and_dim] leader = "Forest Wide and Dim"]
-	#			#	type = holohana_rebels
-	#			#}
-	#			#cede_province = event_target:holohana_province_owner_$holohana$
-	#		}
-	#	}
-	#}
+	}
 }
 
 holohana_rebel_spawn_effect = {
 	event_target:holohana_target_$holohana$ = {
 		spawn_rebels = {
 			size = 200
-			[[leader_the_watcher] leader = "The Watcher"]
-			[[leader_forest_wide_and_dim] leader = "Forest Wide and Dim"]
-			[[leader_maliu_fanua] leader = "Maliu Fanua"]
+			leader = $holohana$
 			type = holohana_$holohana$_rebels
 		}
-		decolonize = THIS
-		remove_core = P99
-		cede_province = event_target:holohana_province_owner_$holohana$
+		if = {
+			limit = {
+				owner = {
+					tag = P99
+				}
+			}
+			decolonize = THIS
+			change_culture = ---
+			change_religion = ---
+			remove_core = P99
+		}
+		else = {
+			event_target:holohana_province_owner_$holohana$ = {
+				remove_country_modifier = holohana_forcelimit_modifier
+			}
+		}	
 	}
 }
 
@@ -117,40 +103,86 @@ holohana_migrate_effect = {
 	event_target:holohana_target_$holohana$ = {
 		remove_province_modifier = holohana_modifier_$holohana$
 		clear_rebels = yes
-		random_empty_neighbor_province = {
-			limit = {
-				is_valid_holohana_move_target = yes
+		random_list = {
+			50 = {
+				random_empty_neighbor_province = {
+					limit = {
+						is_valid_holohana_move_target = yes
+					}
+					add_permanent_province_modifier = {
+						name = holohana_modifier_$holohana$
+						duration = -1
+					}
+				}
 			}
-			add_permanent_province_modifier = {
-				name = holohana_modifier_$holohana$
-				duration = -1
+			50 = {
+				trigger = {
+					any_neighbor_province = {
+						NOT = {
+							is_empty = yes
+						}
+					}
+				}
+				random_neighbor_province = {
+					limit = {
+						is_valid_holohana_move_target = yes
+					}
+					add_permanent_province_modifier = {
+						name = holohana_modifier_$holohana$
+						duration = -1
+					}
+				}
 			}
-			set_province_flag = holohana_$holohana$_flag
-		}
-		random_neighbor_province = {
-			limit = {
-				is_valid_holohana_move_target = yes
-			}
-			add_permanent_province_modifier = {
-				name = holohana_modifier_$holohana$
-				duration = -1
-			}
-			set_province_flag = holohana_$holohana$_flag
 		}
 		every_neighbor_province = {
 			limit = {
 				has_province_modifier = holohana_rumbling
-				has_holohana_rumbling = yes
+				NOT = {
+					has_holohana_rumbling = yes
+				}
 			}
 			remove_province_modifier = holohana_rumbling
+			clr_province_flag = holohana_$holohana$_rumbling_flag
 		}
 		every_empty_neighbor_province = {
 			limit = {
 				has_province_modifier = holohana_rumbling
-				has_holohana_rumbling = yes
+				NOT = {
+					has_holohana_rumbling = yes
+				}
 			}
 			remove_province_modifier = holohana_rumbling
+			clr_province_flag = holohana_$holohana$_rumbling_flag
 		}
 	}
-	clear_global_event_target = holohana_target_$holohana$
+}
+
+holohana_migrate_timer_effect = {
+	event_target:holohana_target_$holohana$ = {
+		if = {
+			limit = {
+				NOT = {
+					has_province_flag = $holohana$_recently_migrated
+				}
+			}
+			set_variable = {
+				which = $holohana$MigrateTimer
+				value = 0
+			}
+			set_province_flag = $holohana$_recently_migrated
+		}
+		change_variable = {
+			which = $holohana$MigrateTimer
+			value = 1
+		}
+	}
+}
+
+holohana_set_migrate_timer = {
+	event_target:holohana_target_$holohana$ = {
+		set_variable = {
+			which = $holohana$MigrateStart
+			value = $amount$
+		}
+	}	
 }
