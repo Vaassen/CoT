@@ -47,7 +47,6 @@ on_startup = {
 		ogre.2					#Sets up warring northern Fathide clan opinions
 		ogre.3					#Sets up Ogre Monarch v Tribal opinion
 		ogre.4					#Sets up Ogre Tribal v Monarch opinion
-		magic_ruler.102			#Sets up magic for rulers with undefined skills
 		escann_intro.1          #Sword Covenant start
 		escann_intro.2			#House of Riches start
 		# escann_intro.3			#Anbenncos Expedition start
@@ -3140,8 +3139,8 @@ on_new_monarch = {
 		anbennar_setup.23			#Setup for magic system
 		# racial_modifiers.5		#Racial admin change if unmatching
 		# racial_modifiers.6		#Racial mil change if unmatching
-		magic_ruler.102				#gives magic schools
-		mages_estate_events.100		#estate_mages_mages_ascendant gives +1 skill
+		magic_system.20 			# add mage personality to new rulers who need it
+		mages_estate_events.100		# estate_mages_mages_ascendant gives +1 skill
 		magic_project_homunculus.14	# Homunculus Ruler
 		anb_miscevents.10 			# Make you adventurer reform if youre not - this is for released countries
 		anb_miscevents.11			# Makes temples theocracies when released
@@ -3214,10 +3213,6 @@ on_new_monarch = {
 		
 		eunuchs_estate_anb_events.13 # eunuch heir education
 		
-		magic_ruler.110 # guarantee mage ruler for special govs
-		
-		magic_ruler.111 # magic inheritance of schools for special gov
-		
 		black_acolytes.100 # unholy black demesne code
 		
 		lotdekkhang.3 # Y58 lot dekkhang gets new ruler race modifier
@@ -3231,8 +3226,6 @@ on_new_monarch = {
 		planetouched.104 # Planetouched republic thing
 		
 		kheionism.3 #New kheionism deity
-
-		flavour_wyvernheart.501 #Wyvernheart school roll
 
 		the_hunt_events.0 #the hunt setup - picking a doctrine for if you don't have an heir doctrine
 
@@ -3445,6 +3438,11 @@ on_new_consort = {
 		limit = { has_country_modifier = sought_after_bachelor }
 		remove_country_modifier = sought_after_bachelor
 	}
+	if = {
+		limit = { consort_is_powerful_mage = yes }
+		add_ruler_modifier = { name = consort_mage_personality_mod duration = -1 }
+	}
+	else = { remove_country_modifier = consort_mage_personality_mod }
 
 	#Duwarkani gov reform
 
@@ -3730,9 +3728,7 @@ on_regent = {
 
 	#Heir is mage modifier
 	if = {
-		limit = {
-			has_heir_flag = heir_consort_mage_personality
-		}
+		limit = { has_heir_flag = is_powerful_mage }
 		add_ruler_modifier = {
 			name = heir_mage_personality_mod
 			duration = -1
@@ -3980,12 +3976,7 @@ on_heir_death = {
 		country_event = { id = flavor_magisterium.23 days = 3 } #Mage for Non-Vinerick heir
 		country_event = { id = flavor_magisterium.29 days = 3 } #Mage for Vinerick heir
 	}
-	if = {
-		limit = { 
-			has_ruler_modifier = heir_mage_personality_mod 
-		}
-		remove_country_modifier = heir_mage_personality_mod
-	}
+	magic_on_heir_death = yes
 	if = {
 		limit = { has_country_flag = heir_dip_education }
 		clr_country_flag = heir_dip_education
@@ -4085,10 +4076,7 @@ on_queen_death = {
 		flavour_covenblad.80 # Covenblad Palatine Arbiter stuff
 		flavor_averilibet.3 #averilibet husband harem 
 	}
-	if = {
-		limit = { has_ruler_modifier = consort_mage_personality_mod }
-		remove_country_modifier = consort_mage_personality_mod
-	}
+	magic_on_consort_death = yes
 	if = {
 		limit = { has_consort_flag = 10_years_anniversary }
 		set_ruler_flag = had_10_years_anniversary
@@ -4190,8 +4178,7 @@ on_queen_death = {
 	
 	clr_ruler_flag = marriage_length
 
-	#Magic
-	remove_country_modifier = homunculus_consort
+	magic_on_consort_death = yes
 }
 
 # country
@@ -4215,6 +4202,7 @@ on_new_heir = {
 	country_event = { id = racial_misc.10 days = 1 }	# Heirs are set to their parents race since event heirs are given primary culture instead
 	country_event = { id = rahenraj.6 days = 5 }		# Replace heir if incorrect race for Senapti
 	country_event = { id = anb_ruler.101 days = 3 }		# Immortal/long-lived trait
+	country_event = { id = magic_system.19 days = 3 }	# Always-mage nations get mage heirs
 	if = {
 		limit = {
 			has_country_flag = Y91_participating_in_festival
@@ -4262,12 +4250,10 @@ on_new_heir = {
 	}
 	#Heir is mage modifier
 	if = {
-		limit = { 
-			has_ruler_modifier = heir_mage_personality_mod 
-			NOT = { has_heir_flag = heir_consort_mage_personality }
-		}
-		remove_country_modifier = heir_mage_personality_mod
+		limit = { heir_is_powerful_mage = yes }
+		add_ruler_modifier = { name = heir_mage_personality_mod duration = -1 }
 	}
+	else = { remove_country_modifier = heir_mage_personality_mod }
 	if = { 
 		limit = {
 			OR = { tag = A95 was_tag = A95 } ai = no has_country_flag = a95_esmaryal_heir_education
@@ -4966,8 +4952,8 @@ on_siberian_pulse = {
 on_monthly_pulse = {
 
 	events = {
-		magic_system.0
-		magic_ruler.102
+		magic_system.0 # monthly magic regen
+		magic_system.21 #hand out magic schools if people need it
 		flavour_corinsfield.81 #getting the chicken asap
 		khadisrapur.100
 	}
@@ -5872,13 +5858,10 @@ on_monthly_pulse = {
 			OR = {
 				AND = {
 					is_emperor = yes
-					OR = {
-						heir_has_mage_personality = yes
-						has_heir_flag = heir_consort_mage_personality
-					}
+					heir_is_powerful_mage = yes
 				}
 				AND = {
-					ruler_has_mage_personality = yes
+					ruler_is_powerful_mage = yes
 					is_part_of_hre = yes
 					is_emperor = no
 				}
@@ -6910,7 +6893,7 @@ on_bi_yearly_pulse = {
 				religion_group = halessi
 				religion_group = raheni
 			}
-			ruler_has_mage_personality = yes
+			ruler_is_powerful_mage = yes
 			NOT = { has_country_flag = bim_lau_mage_entombment }
 		}
 		set_country_flag = bim_lau_mage_entombment
@@ -18817,12 +18800,7 @@ on_royal_marriage = { #ROOT - Marraige sender, FROM - marriage accepter
 }
 
 on_heir_disinherited = {
-	if = {
-		limit = { 
-			has_ruler_modifier = heir_mage_personality_mod 
-		}
-		remove_country_modifier = heir_mage_personality_mod
-	}
+	magic_on_heir_death = yes
 	if = {
 		limit = { 
 			OR = {

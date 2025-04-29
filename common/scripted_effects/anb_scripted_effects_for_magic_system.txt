@@ -465,7 +465,7 @@ magic_school_level_up = {
 			custom_tooltip = $school$_1
 		}
 
-		change_variable = { $type$_spell_schools = 1 }
+		hidden_effect = { change_variable = { $type$_spell_schools = 1 } }
 
 		increase_$type$_mana_regen = yes
 
@@ -887,7 +887,11 @@ give_type_saved_spell_levels = {
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
 
-	hidden_effect = { generic_calc_spell_levels = { type = $type$ } }
+	hidden_effect = {
+		generic_calc_spell_levels = { type = $type$ }
+		recalculate_$type$_mana_regen = yes
+		set_$type$_flag = initialized_magic_flags
+	}
 }
 
 recalculate_ruler_mana_regen = {
@@ -1080,17 +1084,34 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 		1 = { give_random_spell_school = { type = $type$ } give_random_spell_school = { type = $type$ } }
 	}
 
-	if = { limit = { $type$_age = 15 } #You get another one per 15 years of age
-		give_random_spell_school = { type = $type$ }
+	if = {
+		limit = { is_long_lived_$type$ = yes }
+		if = { limit = { $type$_age = 30 } #Long-lived gets another one per 30 years of age
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 60 }
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 90 }
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 120 }
+			give_random_spell_school = { type = $type$ }
+		}
 	}
-	if = { limit = { $type$_age = 30 }
-		give_random_spell_school = { type = $type$ }
-	}
-	if = { limit = { $type$_age = 45 }
-		give_random_spell_school = { type = $type$ }
-	}
-	if = { limit = { $type$_age = 60 }
-		give_random_spell_school = { type = $type$ }
+	else = {
+		if = { limit = { $type$_age = 15 } #Short-lived gets another one per 15 years of age
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 30 }
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 45 }
+			give_random_spell_school = { type = $type$ }
+		}
+		if = { limit = { $type$_age = 60 }
+			give_random_spell_school = { type = $type$ }
+		}
 	}
 
 	if = { #Magical species get +1 spell level
@@ -1170,13 +1191,10 @@ magic_on_ruler_death = {
 		limit = { has_country_flag = lichdom_project }
 		magic_advancement_abort_all_effect = yes
 	}
-	if = {
-		limit = { at_least_magic_project_level = { project = lichdom level = 1 } }
-		set_variable = { lichdom_level = 0 }
-	}
 
 	if = { #For liches who die badly
 		limit = { NOT = { has_country_flag = ruled_by_lich } }
+		set_variable = { lichdom_level = 0 }
 		if = {
 			limit = { has_country_flag = b38_entef_ruler }
 			country_event = { id = flavor_elikhand.10 }
@@ -1193,16 +1211,69 @@ magic_on_ruler_death = {
 	}
 }
 magic_on_heir_death = {
-	#stuff like clearing the powerful mage modifier
+	if = {
+		limit = { heir_is_not_powerful_mage = yes }
+		remove_country_modifier = heir_mage_personality_mod
+	}
+}
+magic_on_consort_death = {
+	remove_country_modifier = homunculus_consort
+	if = {
+		limit = { consort_is_not_powerful_mage = yes }
+		remove_country_modifier = consort_mage_personality_mod
+	}
+}
+
+set_heir_mage_effect = {
+	set_heir_flag = is_powerful_mage
+	add_ruler_modifier = {
+		name = heir_mage_personality_mod
+		duration = -1
+	}
+}
+
+set_consort_mage_effect = {
+	if = {
+		limit = { has_consort_regency = yes }
+		force_add_consort_personality = { personality = mage_personality }
+	}
+	else = {
+		set_consort_flag = is_powerful_mage
+		add_ruler_modifier = {
+			name = consort_mage_personality_mod
+			duration = -1
+		}
+	}
+}
+
+set_ruler_mage_effect = {
+	force_add_ruler_personality = { personality = mage_personality }
 }
 
 #Note that RNG is broken for history files. This isn't super relevant since in theory everyone will get scripted starting school levels
-type_become_powerful_mage = { #types are ruler, heir, and consort
+# To use this effect:
+# Define TYPE: Types are ruler, heir, and consort. Make that character a powerful mage
+	# This is the only required argument. everything else is optional.
+# Define spell schools:
+	# Any spell school can be defined i.e. abjuration = 3 enchantment = 2
+	# You can hand out any number of additional random spell schools with random = 3
+	# You can also hand out saved spell schools with saved_levels = yes
+		# The above will happen IN PLACE of normal spell school generation
+	# After normal spell generation, you can tack on X bonus spell levels with bonus = x
+# If you want to save this person's spell schools, you can do so with save_levels = yes
+	# Note that if you have two characters and are saving both their spell levels, they will override one another
+	# This is fine most of the time in practice
+# Define special properties:
+	# war_wizard = yes makes the ruler or heir into a war wizard
+	# witch_king = yes makes them a witch-king
+	# lich = yes makes ruler a lich (liches are automatically witch-kings)
+
+define_powerful_mage = { #types are ruler, heir, and consort
 	if = {
 		limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
 		if = {
-			limit = { $type$_has_mage_personality = no }
-			force_add_$type$_personality = { personality = mage_personality }
+			limit = { $type$_is_powerful_mage = no }
+			set_$type$_mage_effect = yes
 		}
 		clear_all_spell_levels_for_type = { type = $type$ } #Just in case
 
@@ -1214,7 +1285,6 @@ type_become_powerful_mage = { #types are ruler, heir, and consort
 		[[illusion]			custom_tooltip = illusion_$illusion$ set_$type$_flag = illusion_$illusion$ set_$type$_flag = initialized_magic_flags ]
 		[[necromancy]		custom_tooltip = necromancy_$necromancy$ set_$type$_flag = necromancy_$necromancy$ set_$type$_flag = initialized_magic_flags ]
 		[[transmutation]	custom_tooltip = transmutation_$transmutation$ set_$type$_flag = transmutation_$transmutation$ set_$type$_flag = initialized_magic_flags ]
-		[[saved_levels]		give_type_saved_spell_levels = { type = $type$ } set_$type$_flag = initialized_magic_flags ]
 		[[random]
 			tooltip = { change_variable = { random_starting_schools = $random$ } }
 			hidden_effect = {
@@ -1229,6 +1299,16 @@ type_become_powerful_mage = { #types are ruler, heir, and consort
 				set_$type$_flag = initialized_magic_flags
 			}
 		]
+
+		if = {
+			limit = {
+				OR = {
+					has_government_attribute = inherits_magic
+					[[saved_levels] always = yes ]
+				}
+			}
+			give_type_saved_spell_levels = { type = $type$ }
+		}
 		
 		hidden_effect = { give_magic_starting_schools = { type = $type$ } } #This won't trigger if you've set the schools yourself
 
@@ -1246,8 +1326,18 @@ type_become_powerful_mage = { #types are ruler, heir, and consort
 			}
 		]
 
+		if = {
+			limit = {
+				OR = {
+					has_government_attribute = inherits_magic
+					[[save_levels] always = yes ]
+				}
+			}
+			save_type_spell_levels = { type = $type$ }
+		}
+
 		[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
-		[[save_levels]		save_type_spell_levels = { type = $type$ } ]
+		[[lich]				become_a_lich_effect = yes ]
 
 		hidden_effect = {
 			generic_calc_spell_levels = { type = $type$ }
