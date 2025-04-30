@@ -14,23 +14,6 @@
 ### INITIALIZING THE SYSTEM ###
 ###############################
 
-#TODO Jothell how is the magic system initialised if magic becomes available to a country?
-initialize_magic_system = {
-	if = {
-		limit = {
-			exists = yes #Pirates, Rebels, and Natives were doing this and causing problems
-			NOT = { has_country_flag = magic_system_initialized }
-		}
-		set_country_flag = magic_system_initialized
-
-		initialize_infrastructure = yes
-		generic_calc_spell_levels = { type = ruler } #TODO: put this all in history files?
-		recalculate_ruler_mana_regen = yes
-
-		country_event = { id = magic_system.0 }
-	}
-}
-
 initialize_infrastructure = {
 
 	#Tag specific infrastructure setup
@@ -471,7 +454,7 @@ magic_school_level_up = {
 
 		if = {
 			limit = { has_$type$_flag = saving_spell_levels }
-			save_type_spell_levels = { type = $type$ }
+			save_spell_levels_for_type_and_school = { type = $type$ school = $school$ }
 		}
 	}
 }
@@ -815,11 +798,12 @@ clear_all_spell_levels_for_type = {
 }
 
 save_spell_levels_for_type_and_school = {
+	clear_saved_spell_levels_for_school = { school = $school$ }
 	trigger_switch = {
 		on_trigger = has_$type$_flag
-		$school$_1 = { set_country_flag = saved_$school$_1 change_variable = { $type$_spell_schools = 1 } }
-		$school$_2 = { set_country_flag = saved_$school$_2 change_variable = { $type$_spell_schools = 2 } }
-		$school$_3 = { set_country_flag = saved_$school$_3 change_variable = { $type$_spell_schools = 3 } }
+		$school$_1 = { set_country_flag = saved_$school$_1 }
+		$school$_2 = { set_country_flag = saved_$school$_2 }
+		$school$_3 = { set_country_flag = saved_$school$_3 }
 	}
 }
 
@@ -858,11 +842,9 @@ give_saved_spell_levels_for_type_and_school = {
 	}
 }
 
-save_type_spell_levels = { #this also recalcs the number of spell schools you have
+save_type_spell_levels = { #saves the spell levels of ruler/heir/consort/country. saving multiple people at once causes conflicts.
 	hidden_effect = {
 		set_$type$_flag = saving_spell_levels #So that we don't save for everyone
-		clear_saved_spell_levels = yes
-		set_variable = { $type$_spell_schools = 0 }
 
 		save_spell_levels_for_type_and_school = { type = $type$ school = abjuration }
 		save_spell_levels_for_type_and_school = { type = $type$ school = conjuration }
@@ -872,12 +854,10 @@ save_type_spell_levels = { #this also recalcs the number of spell schools you ha
 		save_spell_levels_for_type_and_school = { type = $type$ school = illusion }
 		save_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
 		save_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
-
-		recalculate_$type$_mana_regen = yes
 	}
 }
 
-give_type_saved_spell_levels = {
+give_type_saved_spell_levels = { #for use alongside the define_powerful_mage effect
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = abjuration }
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = conjuration }
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = divination }
@@ -887,16 +867,11 @@ give_type_saved_spell_levels = {
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
 	give_saved_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
 
-	hidden_effect = {
-		generic_calc_spell_levels = { type = $type$ }
-		recalculate_$type$_mana_regen = yes
-		set_$type$_flag = initialized_magic_flags
-	}
+	set_$type$_flag = initialized_magic_flags
 }
 
 recalculate_ruler_mana_regen = {
 	hidden_effect = {
-	if = { limit = { NOT = { has_country_flag = delay_regen_calc } } #for batches
 
 	if = { limit = { has_country_modifier = ruler_mana_regen_mod_12 }
 		if = { limit = { has_country_modifier = ruler_mana_regen_mod_18 }
@@ -983,15 +958,12 @@ recalculate_ruler_mana_regen = {
 	divide_variable = { mana_regen_ruler = 20 }
 
 	}
-	}
 }
 recalculate_consort_mana_regen = {} #useless effects
 recalculate_country_mana_regen = {}
 recalculate_heir_mana_regen = {}
 
 increase_ruler_mana_regen = {
-	if = { limit = { NOT = { has_country_flag = delay_regen_calc } } #For batches
-
 	if = { limit = { has_country_modifier = ruler_mana_regen_mod_12 }
 		if = { limit = { has_country_modifier = ruler_mana_regen_mod_18 }
 			if = { limit = { has_country_modifier = ruler_mana_regen_mod_21 }
@@ -1032,8 +1004,6 @@ increase_ruler_mana_regen = {
 	else = { add_ruler_modifier = { name = ruler_mana_regen_mod_1 duration = -1 } }
 	
 	hidden_effect = { change_variable = { mana_regen_ruler = 0.05 } }
-
-	}
 }
 increase_country_mana_regen = {} #Empty effects
 increase_heir_mana_regen = {}
@@ -1052,65 +1022,93 @@ give_random_spell_school = {
 	}
 }
 
+magic_setup_level_up = { #lacks most of the functionality of magic_school_level_up but more performant
+	if = {
+		limit = { has_$type$_flag = $school$_1 }
+		clr_$type$_flag = $school$_1
+		set_$type$_flag = $school$_2
+	}
+	else_if = {
+		limit = { has_$type$_flag = $school$_2 }
+		clr_$type$_flag = $school$_2
+		set_$type$_flag = $school$_3
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = $school$_3 } }
+		set_$type$_flag = $school$_1
+	}
+}
+magic_setup_give_random_level = { #lacks most of the functionality of give_random_spell_school but more performant
+	random_list = {
+		1 = { trigger = { NOT = { has_$type$_flag = abjuration_3 } } magic_setup_level_up = { type = $type$ school = abjuration } }
+		1 = { trigger = { NOT = { has_$type$_flag = conjuration_3 } } magic_setup_level_up = { type = $type$ school = conjuration } }
+		1 = { trigger = { NOT = { has_$type$_flag = divination_3 } } magic_setup_level_up = { type = $type$ school = divination } }
+		1 = { trigger = { NOT = { has_$type$_flag = enchantment_3 } } magic_setup_level_up = { type = $type$ school = enchantment } }
+		1 = { trigger = { NOT = { has_$type$_flag = evocation_3 } } magic_setup_level_up = { type = $type$ school = evocation } }
+		1 = { trigger = { NOT = { has_$type$_flag = illusion_3 } } magic_setup_level_up = { type = $type$ school = illusion } }
+		1 = { trigger = { NOT = { has_$type$_flag = necromancy_3 } } magic_setup_level_up = { type = $type$ school = necromancy } }
+		1 = { trigger = { NOT = { has_$type$_flag = transmutation_3 } } magic_setup_level_up = { type = $type$ school = transmutation } }
+	}
+}
+
 give_magic_starting_schools = { #Types are ruler, heir, and consort in this context. Country doesn't make sense
 	if = {
 		limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
 
-	clear_all_spell_levels_for_type = { type = $type$ }
+	clear_all_spell_levels_for_type = { type = $type$ } #just in case
 	#clear_witch_king_points = yes
 	set_variable = { $type$_magic_experience = 0 }
-	set_country_flag = delay_regen_calc #Delay mana calcs until the end
 
 	# Ovdal-az-An guaranteed legendary (non-necromancy) school
 	# Put here at the front as to not "waste" the upgrade on a spell that's already legendary.
 	if = {
 		limit = { mission_completed = az_an_veneration }
 		random_list =  {
-			1 = { magic_school_level_up = { type = $type$ school = abjuration }		magic_school_level_up = { type = $type$ school = abjuration }	magic_school_level_up = { type = $type$ school = abjuration } }
-			1 = { magic_school_level_up = { type = $type$ school = conjuration }	magic_school_level_up = { type = $type$ school = conjuration }	magic_school_level_up = { type = $type$ school = conjuration } }
-			1 = { magic_school_level_up = { type = $type$ school = divination }		magic_school_level_up = { type = $type$ school = divination }	magic_school_level_up = { type = $type$ school = divination } }
-			1 = { magic_school_level_up = { type = $type$ school = enchantment }	magic_school_level_up = { type = $type$ school = enchantment }	magic_school_level_up = { type = $type$ school = enchantment } }
-			1 = { magic_school_level_up = { type = $type$ school = evocation }		magic_school_level_up = { type = $type$ school = evocation }	magic_school_level_up = { type = $type$ school = evocation } }
-			1 = { magic_school_level_up = { type = $type$ school = illusion }		magic_school_level_up = { type = $type$ school = illusion }		magic_school_level_up = { type = $type$ school = illusion } }
-			1 = { magic_school_level_up = { type = $type$ school = transmutation }	magic_school_level_up = { type = $type$ school = transmutation }magic_school_level_up = { type = $type$ school = transmutation } }
+			1 = { set_$type$_flag = abjuration_3 }
+			1 = { set_$type$_flag = conjuration_3 }
+			1 = { set_$type$_flag = divination_3 }
+			1 = { set_$type$_flag = enchantment_3 }
+			1 = { set_$type$_flag = evocation_3 }
+			1 = { set_$type$_flag = illusion_3 }
+			1 = { set_$type$_flag = transmutation_3 }
 		}
 	}
 
-	give_random_spell_school = { type = $type$ } #Everyone gets one
-
+	magic_setup_give_random_level = { type = $type$ } #Everyone gets one
+	
 	random_list = { #The vagaries of talent
 		1 = {}
-		1 = { give_random_spell_school = { type = $type$ } }
-		1 = { give_random_spell_school = { type = $type$ } give_random_spell_school = { type = $type$ } }
+		1 = { magic_setup_give_random_level = { type = $type$ } }
+		1 = { magic_setup_give_random_level = { type = $type$ } magic_setup_give_random_level = { type = $type$ } }
 	}
 
 	if = {
 		limit = { is_long_lived_$type$ = yes }
 		if = { limit = { $type$_age = 30 } #Long-lived gets another one per 30 years of age
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 60 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 90 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 120 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 	}
 	else = {
 		if = { limit = { $type$_age = 15 } #Short-lived gets another one per 15 years of age
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 30 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 45 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 		if = { limit = { $type$_age = 60 }
-			give_random_spell_school = { type = $type$ }
+			magic_setup_give_random_level = { type = $type$ }
 		}
 	}
 
@@ -1124,12 +1122,12 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 				$type$_culture = emerald_orc
 			}
 		}
-		give_random_spell_school = { type = $type$ }
+		magic_setup_give_random_level = { type = $type$ }
 	}
 
 	if = { #Magocracies get +1 spell level
 		limit = { has_government_attribute = is_magocracy }
-		give_random_spell_school = { type = $type$ }
+		magic_setup_give_random_level = { type = $type$ }
 	}
 
 	export_to_variable = { #mission modifier rewards
@@ -1138,7 +1136,7 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 	}
 	while = {
 		limit = { check_variable = { monarch_spell_levels_val = 1 } }
-		give_random_spell_school = { type = $type$ }
+		magic_setup_give_random_level = { type = $type$ }
 		subtract_variable = { monarch_spell_levels_val = 1 }
 	}
 
@@ -1146,7 +1144,7 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 
 	if = {
 		limit = { has_reform = oracular_order_reform }
-		magic_school_level_up = { type = $type$ school = divination }
+		magic_setup_level_up = { type = $type$ school = divination }
 	}
 
 	#Parura Divination
@@ -1155,7 +1153,7 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 			has_reform = effelai_alianaiarat_reform
 			$type$_culture = parura
 		}
-		magic_school_level_up = { type = $type$ school = divination }
+		magic_setup_level_up = { type = $type$ school = divination }
 		if = {
 			limit = {
 				OR = {
@@ -1163,22 +1161,19 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 					has_country_modifier = effelai_attunement_tier_5
 				}
 			}
-			magic_school_level_up = { type = $type$ school = divination }
+			magic_setup_level_up = { type = $type$ school = divination }
 		}
 	}
 
-
 	set_$type$_flag = initialized_magic_flags
-	clr_country_flag = delay_regen_calc
 
 	generic_calc_spell_levels = { type = $type$ }
+	recalculate_$type$_mana_regen = yes
 
-	set_$type$_flag = regen_calc
 	if = {
-		limit = { has_ruler_flag = regen_calc }
-		recalculate_ruler_mana_regen = yes
+		limit = { has_$type$_flag = saving_spell_levels }
+		save_type_spell_levels = { type = $type$ }
 	}
-	clr_$type$_flag = regen_calc
 
 	}
 }
@@ -1235,7 +1230,12 @@ set_heir_mage_effect = {
 set_consort_mage_effect = {
 	if = {
 		limit = { has_consort_regency = yes }
-		force_add_consort_personality = { personality = mage_personality }
+		add_queen_personality = mage_personality
+		if = {
+			limit = { consort_is_not_powerful_mage = yes }
+			remove_random_vanilla_consort_personality = yes
+			add_queen_personality = mage_personality
+		}
 	}
 	else = {
 		set_consort_flag = is_powerful_mage
@@ -1247,7 +1247,14 @@ set_consort_mage_effect = {
 }
 
 set_ruler_mage_effect = {
-	force_add_ruler_personality = { personality = mage_personality }
+	add_ruler_personality = mage_personality
+	hidden_effect = {
+		if = {
+			limit = { ruler_is_not_powerful_mage = yes }
+			remove_random_vanilla_ruler_personality = yes
+			add_ruler_personality = mage_personality
+		}
+	}
 }
 
 #Note that RNG is broken for history files. This isn't super relevant since in theory everyone will get scripted starting school levels
@@ -1258,13 +1265,14 @@ set_ruler_mage_effect = {
 	# Any spell school can be defined i.e. abjuration = 3 enchantment = 2
 	# You can hand out any number of additional random spell schools with random = 3
 	# You can also hand out saved spell schools with saved_levels = yes
-		# The above will happen IN PLACE of normal spell school generation
-	# After normal spell generation, you can tack on X bonus spell levels with bonus = x
+	# The above will happen IN PLACE of normal spell school generation
 # If you want to save this person's spell schools, you can do so with save_levels = yes
 	# Note that if you have two characters and are saving both their spell levels, they will override one another
 	# This is fine most of the time in practice
 # Define special properties:
 	# war_wizard = yes makes the ruler or heir into a war wizard
+		# If you want to make the consort a war-wizard you can, but it won't work super right
+		# You can put in consort_name = xyz to give a set consort name
 	# witch_king = yes makes them a witch-king
 	# lich = yes makes ruler a lich (liches are automatically witch-kings)
 
@@ -1276,6 +1284,7 @@ define_powerful_mage = { #types are ruler, heir, and consort
 			set_$type$_mage_effect = yes
 		}
 		clear_all_spell_levels_for_type = { type = $type$ } #Just in case
+		hidden_effect = { set_variable = { random_starting_schools = 0 } }
 
 		[[abjuration]		custom_tooltip = abjuration_$abjuration$ set_$type$_flag = abjuration_$abjuration$ set_$type$_flag = initialized_magic_flags ]
 		[[conjuration]		custom_tooltip = conjuration_$conjuration$ set_$type$_flag = conjuration_$conjuration$ set_$type$_flag = initialized_magic_flags ]
@@ -1285,63 +1294,24 @@ define_powerful_mage = { #types are ruler, heir, and consort
 		[[illusion]			custom_tooltip = illusion_$illusion$ set_$type$_flag = illusion_$illusion$ set_$type$_flag = initialized_magic_flags ]
 		[[necromancy]		custom_tooltip = necromancy_$necromancy$ set_$type$_flag = necromancy_$necromancy$ set_$type$_flag = initialized_magic_flags ]
 		[[transmutation]	custom_tooltip = transmutation_$transmutation$ set_$type$_flag = transmutation_$transmutation$ set_$type$_flag = initialized_magic_flags ]
-		[[random]
-			tooltip = { change_variable = { random_starting_schools = $random$ } }
-			hidden_effect = {
-				set_variable = { expFoo = $random$ }
-				set_country_flag = delay_regen_calc
-				while = {
-					limit = { check_variable = { expFoo = 1 } }
-					give_random_spell_school = { type = $type$ }
-					subtract_variable = { expFoo = 1 }
-				}
-				clr_country_flag = delay_regen_calc
-				set_$type$_flag = initialized_magic_flags
-			}
-		]
+		[[random]			change_variable = { random_starting_schools = $random$ } set_$type$_flag = initialized_magic_flags ]
+		[[bonus]			custom_tooltip = additional_starting_schools_tt change_variable = { random_starting_schools = $bonus$ } ]
+		[[saved_levels]		give_type_saved_spell_levels = { type = $type$ } ]
+		[[save_levels]		save_type_spell_levels = { type = $type$ } ]
 
-		if = {
-			limit = {
-				OR = {
-					has_government_attribute = inherits_magic
-					[[saved_levels] always = yes ]
-				}
-			}
-			give_type_saved_spell_levels = { type = $type$ }
-		}
-		
-		hidden_effect = { give_magic_starting_schools = { type = $type$ } } #This won't trigger if you've set the schools yourself
-
-		[[bonus]
-			tooltip = { change_variable = { additional_starting_schools = $bonus$ } }
-			hidden_effect = {
-				set_variable = { expFoo = $bonus$ }
-				set_country_flag = delay_regen_calc
-				while = {
-					limit = { check_variable = { expFoo = 1 } }
-					give_random_spell_school = { type = $type$ }
-					subtract_variable = { expFoo = 1 }
-				}
-				clr_country_flag = delay_regen_calc
-			}
-		]
-
-		if = {
-			limit = {
-				OR = {
-					has_government_attribute = inherits_magic
-					[[save_levels] always = yes ]
-				}
-			}
-			save_type_spell_levels = { type = $type$ }
-		}
-
+		[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
 		[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
 		[[lich]				become_a_lich_effect = yes ]
 
 		hidden_effect = {
-			generic_calc_spell_levels = { type = $type$ }
-			recalculate_$type$_mana_regen = yes
+			if = {
+				limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
+				country_event = { id = magic_system.21 } #This won't trigger if you've set the schools yourself
+			}
+			else = {
+				generic_calc_spell_levels = { type = $type$ }
+				recalculate_$type$_mana_regen = yes #basically just for rulers
+			}
 		}
 	}
 }
@@ -1403,7 +1373,6 @@ define_type_to_war_wizard_wyvernheart_effect = {
 magic_level_up_all_ruler_schools = {
 	custom_tooltip = magic_level_up_all_ruler_schools_tt
 	hidden_effect = {
-		set_country_flag = delay_regen_calc
 		magic_school_level_up = { type = ruler school = abjuration }
 		magic_school_level_up = { type = ruler school = divination }
 		magic_school_level_up = { type = ruler school = conjuration }
@@ -1412,8 +1381,6 @@ magic_level_up_all_ruler_schools = {
 		magic_school_level_up = { type = ruler school = illusion }
 		magic_school_level_up = { type = ruler school = necromancy }
 		magic_school_level_up = { type = ruler school = transmutation }
-		clr_country_flag = delay_regen_calc
-		recalculate_ruler_mana_regen = yes
 	}
 }
 
