@@ -1,6 +1,10 @@
 custom_button = {
     name = convert_ruler_to_war_wizard
-    potential = { ruler_has_mage_personality = yes }
+    potential = {
+		ruler_is_powerful_mage = yes
+		is_lesser_in_union = no
+		has_regency = no
+	}
 	trigger = {
 		hidden_trigger = {
 			OR = {
@@ -11,9 +15,6 @@ custom_button = {
 					NOT = { has_ruler_modifier = allow_war_wizard_after_exile_delay } #define_ruler_to_general doesn't work after exile until 1 day has passed or the game has reloaded
 				}
 			}
-			is_lesser_in_union = no
-			has_consort_regency = no
-			has_regency = no
 			NOT = {
 				has_ruler_flag = mage_ruler_general
 				has_ruler_modifier = bulwar_tluukt_injured
@@ -44,7 +45,7 @@ custom_button = {
 		}
 		custom_tooltip = make_ruler_general_tt
 		clr_ruler_flag = allow_war_wizard_after_exile
-		hidden_effect = { define_type_to_war_wizard_effect = { type = ruler } }
+		hidden_effect = { define_type_to_war_wizard_effect = { type = ruler } } #TODO: add in confirms?
 	}
 	tooltip = make_ruler_general_desc_tt
 }
@@ -52,30 +53,22 @@ custom_button = {
 custom_button = {
     name = convert_ruler_to_planetouched_commander
     potential = {
-		NOT = { ruler_has_mage_personality = yes }
 		ruler_has_planetouched_personality = yes
+		ruler_is_powerful_mage = no
+		is_lesser_in_union = no
+		has_regency = no
 	}
 	trigger = {
 		hidden_trigger = {
 			OR = {
-				NOT = { 
-					has_leader_with = {
-						is_monarch_leader = yes
-					}
-				}
+				NOT = { has_leader_with = { is_monarch_leader = yes } }
 				is_monarch_leader = no
 			}
-			is_lesser_in_union = no
-			has_consort_regency = no
-			has_regency = no
-			NOT = { has_ruler_flag = planetouched_ruler_general }
 		}
 	}
 	effect = {
 		custom_tooltip = make_ruler_general_tt
 		hidden_effect = {
-			set_ruler_flag = planetouched_ruler_general
-			clr_ruler_flag = allow_planetouched_commander_after_exile
 			country_event = { id = planetouched.100 }
 		}
 	}
@@ -115,12 +108,21 @@ custom_button = { #disables button for 1 day for exiled rulers returning (if the
 
 custom_button = {
     name = convert_heir_to_war_wizard
-    potential = { heir_has_mage_personality = yes }
-	trigger = {
-		hidden_trigger = {
-			is_heir_leader = no
-			NOT = { has_heir_flag = mage_ruler_general }
+    potential = {
+		has_heir = yes
+		heir_is_powerful_mage = yes
+		is_heir_leader = no
+		OR = {
+			has_female_heir = no
+			has_global_modifier_value = {
+				which = may_recruit_female_generals
+				value = 1
+			}
 		}
+		is_lesser_in_union = no
+		heir_age = 15
+	}
+	trigger = {
 		if = { 
 			limit = { has_government_attribute = rulers_cant_be_war_wizards } 
 			custom_trigger_tooltip = {
@@ -129,9 +131,57 @@ custom_button = {
 			}
 		}
 	}
-	effect = {
+	effect = { #TODO something about this is broken and doesn't work sometimes
 		custom_tooltip = make_heir_general_tt
 		hidden_effect = { define_type_to_war_wizard_effect = { type = heir } }
 	}
-	tooltip = make_ruler_general_desc_tt
+	tooltip = make_heir_general_desc_tt
+}
+
+custom_button = {
+	name = button_makeconsortgeneral
+	potential = {
+		has_consort = yes
+		is_lesser_in_union = no
+		OR = {
+			has_female_consort = no
+			has_global_modifier_value = {
+				which = may_recruit_female_generals
+				value = 1
+			}
+		}
+		NOT = {
+			has_consort_flag = is_general
+			has_consort_flag = mage_ruler_general
+			AND = {
+				has_government_attribute = rulers_cant_be_war_wizards
+				consort_is_powerful_mage = yes
+			}
+		}
+	}
+	trigger = {
+	}
+	effect = {
+		set_consort_flag = is_general
+		if = { limit = { consort_is_powerful_mage = yes }
+			hidden_effect = {
+				export_to_variable = {
+					which = target_num_generals
+					value = trigger_value:num_of_generals
+				}
+				change_variable = { target_num_generals = 1 }
+				trigger_switch = {
+					on_trigger = consort_mil
+					6 = { add_country_modifier = { name = war_wizard_mod_6 duration = 1 hidden = yes } }
+					5 = { add_country_modifier = { name = war_wizard_mod_5 duration = 1 hidden = yes } }
+					4 = { add_country_modifier = { name = war_wizard_mod_4 duration = 1 hidden = yes } }
+					3 = { add_country_modifier = { name = war_wizard_mod_3 duration = 1 hidden = yes } }
+					2 = { add_country_modifier = { name = war_wizard_mod_2 duration = 1 hidden = yes } }
+					1 = { add_country_modifier = { name = war_wizard_mod_1 duration = 1 hidden = yes } }
+					0 = { add_country_modifier = { name = war_wizard_mod_0 duration = 1 hidden = yes } }
+				}
+				country_event = { id = magic_system.15 } #removes the modifiers
+			}
+		}
+	}
 }
