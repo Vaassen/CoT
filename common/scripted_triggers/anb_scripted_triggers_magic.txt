@@ -1253,13 +1253,11 @@ is_estate_transmutation_level_3 = {
 
 has_magic_estate = {
 	NOT = {
-		government = native
 		has_government_attribute = disables_estate_mages
 		AND = {
 			is_nomad = yes
 			culture_is_centaur = no
 		}
-		has_estate = estate_acolytes #TODO Jothell remove this if acolytes removed
 
 		has_country_flag = banned_magic
 		AND = { religion = bulwari_sun_cult has_country_flag = nsc_human_country_magic_prohibition }
@@ -1361,6 +1359,10 @@ has_war_wizard = {
 ####################
 ### SPELLCASTING ###
 ####################
+
+has_mana = { #faster to write
+	check_variable = { which = currentMana value = $amount$ }
+}
 
 has_mana_to_cast_spell = { ###This could possibly be bugged due to using if-else in a trigger. If it is, we'll have to restructure
 	if = {
@@ -1752,6 +1754,23 @@ transmutation_3_0_trigger = {
 ###################################
 ### "HAS SPELL ACTIVE" TRIGGERS ###
 ###################################
+
+has_active_war_magic = {
+	custom_trigger_tooltip = {
+		tooltip = has_active_war_magic
+		OR = {
+			has_country_modifier = abjuration_0_0_mod
+			has_country_modifier = abjuration_2_1_mod
+			has_country_modifier = abjuration_3_0_mod
+			has_country_modifier = divination_2_1_mod
+			has_country_modifier = enchantment_1_0_mod
+			has_country_modifier = enchantment_2_0_mod
+			has_country_modifier = evocation_1_0_mod
+			has_country_modifier = evocation_1_1_mod
+			has_country_modifier = evocation_3_0_mod
+		}
+	}
+}
 
 have_cast_enchanting_embassy = {
 	custom_trigger_tooltip = {
@@ -2332,134 +2351,46 @@ can_upgrade_magical_infrastructure_1 = {
 		limit = { NOT = { has_country_flag = infrastructure_2_bypass } }
 		calc_true_if = {
 			amount = 3
-			custom_trigger_tooltip = {
-				tooltip = MI_1_upgrade_cttt
-				always = no
+			capital_scope = { #Capital has mage tower
+				has_building = mage_tower
 			}
-			hidden_trigger = {
-				capital_scope = { #Capital has mage tower
-					has_building = mage_tower
+			court_mage = 2 #Has level 2 Court Mage
+			custom_trigger_tooltip = { #Has legendary school
+				tooltip = MagicInfrastructure_legendary_school_cttt
+				OR = {
+					is_overall_abjuration_level_3 = yes
+					is_overall_conjuration_level_3 = yes
+					is_overall_divination_level_3 = yes
+					is_overall_enchantment_level_3 = yes
+					is_overall_evocation_level_3 = yes
+					is_overall_illusion_level_3 = yes
+					is_overall_necromancy_level_3 = yes
+					is_overall_transmutation_level_3 = yes
 				}
-				court_mage = 2 #Has level 2 Court Mage
-				custom_trigger_tooltip = { #Has legendary school
-					tooltip = MagicInfrastructure_legendary_school_cttt
+			}
+			OR = {
+				num_of_provinces_owned_or_owned_by_subjects_with = {
+					value = 1
 					OR = {
-						is_overall_abjuration_level_3 = yes
-						is_overall_conjuration_level_3 = yes
-						is_overall_divination_level_3 = yes
-						is_overall_enchantment_level_3 = yes
-						is_overall_evocation_level_3 = yes
-						is_overall_illusion_level_3 = yes
-						is_overall_necromancy_level_3 = yes
-						is_overall_transmutation_level_3 = yes
+						trade_goods = damestear
+						trade_goods = precursor_relics
 					}
 				}
-				OR = {
-					num_of_provinces_owned_or_owned_by_subjects_with = {
-						value = 1
-						OR = {
-							trade_goods = damestear
-							trade_goods = precursor_relics
-						}
+			}
+			OR = {
+				AND = {
+					estate_influence = {
+						estate = estate_mages
+						influence = 25
 					}
+					has_estate_privilege = estate_mages_magocratic_administration
 				}
-				OR = {
-					AND = {
-						estate_influence = {
-							estate = estate_mages
-							influence = 25
-						}
-						has_estate_privilege = estate_mages_battlemage_academies #Rework?
-					}
-				}
-				OR = {
-					ruler_is_powerful_mage = yes
-					heir_is_powerful_mage = yes
-				}
+			}
+			OR = {
+				ruler_is_powerful_mage = yes
+				heir_is_powerful_mage = yes
 			}
 		}
-		# if = {
-		# 	limit = {
-		# 		capital_scope = { #Capital has mage tower
-		# 			has_building = mage_tower
-		# 		}
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_mage_tower_cttt_yes }
-		# }
-		# else = { custom_trigger_tooltip = { tooltip = MI_1_mage_tower_cttt_no } }
-
-		# if = {
-		# 	limit = {
-		# 		court_mage = 2 #Has level 2 Court Mage
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_court_mage_cttt_yes }
-		# }
-		# else = {
-		# 	custom_trigger_tooltip = {
-		# 		tooltip = MI_1_court_mage_cttt_no
-		# 		always = no
-		# 	}
-		# }
-
-		# if = {
-		# 	limit = {
-		# 		OR = {
-		# 			is_overall_abjuration_level_3 = yes
-		# 			is_overall_conjuration_level_3 = yes
-		# 			is_overall_divination_level_3 = yes
-		# 			is_overall_enchantment_level_3 = yes
-		# 			is_overall_evocation_level_3 = yes
-		# 			is_overall_illusion_level_3 = yes
-		# 			is_overall_necromancy_level_3 = yes
-		# 			is_overall_transmutation_level_3 = yes
-		# 		}
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_mage_skill_legendary_ctt_yes }
-		# }
-		# else = { custom_trigger_tooltip = { tooltip = MI_1_mage_skill_legendary_ctt_no } }
-
-		# if = {
-		# 	limit = {
-		# 		num_of_provinces_owned_or_owned_by_subjects_with = {
-		# 			value = 1
-		# 			OR = {
-		# 				trade_goods = damestear
-		# 				trade_goods = precursor_relics
-		# 			}
-		# 		}
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_trade_goods_cttt_yes }
-		# }
-		# else = { custom_trigger_tooltip = { tooltip = MI_1_trade_goods_cttt_no } }
-
-		# if = {
-		# 	limit = {
-		# 		estate_influence = {
-		# 			estate = estate_mages
-		# 			influence = 25
-		# 		}
-		# 		has_estate_privilege = estate_mages_battlemage_academies #Rework?
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_mages_cttt_yes }
-		# }
-		# else = { custom_trigger_tooltip = { tooltip = MI_1_mages_cttt_no } }
-
-		# if = {
-		# 	limit = {
-		# 		OR = {
-		# 			ruler_is_powerful_mage = yes
-		# 			heir_is_powerful_mage = yes
-		# 		}
-		# 	}
-		# 	custom_trigger_tooltip = { tooltip = MI_1_powerful_mages_cttt_yes }
-		# }
-		# else = { custom_trigger_tooltip = { tooltip = MI_1_powerful_mages_cttt_no } }
-
-
-
-
-
-
 	}
 	else_if = {
 		limit = { has_country_flag = infrastructure_2_bypass }
