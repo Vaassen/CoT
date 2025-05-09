@@ -250,7 +250,7 @@ cap_mana = { #when mana goes above your limit, or drops into negatives
 	}
 	if = {
 		limit = { NOT = { check_variable = { currentMana = 0 } } }
-		# log = "[This.GetName] got negative Mana somehow (currenaMana = [This.currentMana.GetValue]). Please contact Devs."
+		# log = "[This.GetName] got negative Mana somehow (currentMana = [This.currentMana.GetValue]). Please contact Devs."
 		set_variable = { currentMana = 0 }
 	}
 	else_if = {
@@ -502,6 +502,14 @@ magic_school_level_up = {
 		if = {
 			limit = { has_$type$_flag = saving_spell_levels }
 			save_spell_levels_for_type_and_school = { type = $type$ school = $school$ }
+		}
+
+		if = {
+			limit = {
+				has_$type$_flag = magic_study
+				has_$type$_flag = $school$_advancement
+			}
+			magic_advancement_abort_all_effect = yes
 		}
 	}
 }
@@ -886,14 +894,14 @@ ai_pay_for_xp = { #AI advancements -- formatted to miminize lines of code when c
 	[[study]
 		if = { #we operate on ai_magic_foo to calculate the xp cost for this advancement
 			limit = { has_$type$_flag = $study$_2 }
-			REB = { set_variable = { ai_magic_foo = 850 } } #level 2 to 3
+			set_variable = { ai_magic_foo = 850 } #level 2 to 3
 		}
 		else_if = {
 			limit = { has_$type$_flag = $study$_1 }
-			REB = { set_variable = { ai_magic_foo = 600 } } #level 1 to 2
+			set_variable = { ai_magic_foo = 600 } #level 1 to 2
 		}
 		else = {
-			REB = { set_variable = { ai_magic_foo = 350 } } #level 0 to 1
+			set_variable = { ai_magic_foo = 350 } #level 0 to 1
 		}
 		calc_ai_$type$_xp_modifier = yes
 		calc_ai_school_xp_modifier = { school = $study$ }
@@ -901,14 +909,14 @@ ai_pay_for_xp = { #AI advancements -- formatted to miminize lines of code when c
 	[[project]
 		if = {
 			limit = { exactly_magic_project_level = { project = $project$ level = 2 } }
-			REB = { set_variable = { ai_magic_foo = 850 } } #level 2 to 3
+			set_variable = { ai_magic_foo = 850 } #level 2 to 3
 		}
 		else_if = {
 			limit = { exactly_magic_project_level = { project = $project$ level = 1 } }
-			REB = { set_variable = { ai_magic_foo = 600 } } #level 1 to 2
+			set_variable = { ai_magic_foo = 600 } #level 1 to 2
 		}
 		else = {
-			REB = { set_variable = { ai_magic_foo = 350 } } #level 0 to 1
+			set_variable = { ai_magic_foo = 350 } #level 0 to 1
 		}
 		calc_ai_country_xp_modifier = yes
 	]
@@ -916,71 +924,56 @@ ai_pay_for_xp = { #AI advancements -- formatted to miminize lines of code when c
 	[[infrastructure]
 		trigger_switch = {
 			on_trigger = has_country_modifier
-			magical_infrastructure_1 = { REB = { set_variable = { ai_magic_foo = 400 } } } # Lvl 1 to 2
-			magical_infrastructure_2 = { REB = { set_variable = { ai_magic_foo = 800 } } } # Lvl 2 to 3
-			magical_infrastructure_3 = { REB = { set_variable = { ai_magic_foo = 1200 } } } # Lvl 3 to 4
-			magical_infrastructure_4 = { REB = { set_variable = { ai_magic_foo = 1600 } } } # Lvl 4 to 5
+			magical_infrastructure_1 = { set_variable = { ai_magic_foo = 400 } } # Lvl 1 to 2
+			magical_infrastructure_2 = { set_variable = { ai_magic_foo = 800 } } # Lvl 2 to 3
+			magical_infrastructure_3 = { set_variable = { ai_magic_foo = 1200 } } # Lvl 3 to 4
+			magical_infrastructure_4 = { set_variable = { ai_magic_foo = 1600 } } # Lvl 4 to 5
 		}
 		calc_ai_country_xp_modifier = yes
 	]
 
-	REB = { #ai_magic_foo_2 is the xp modifier
-		change_variable = { ai_magic_foo_2 = 1 }
-		if = { #sanity check
-			limit = { NOT = { check_variable = { ai_magic_foo_2 = 0 } } }
-			set_variable = { ai_magic_foo_2 = 0.1 }
-		}
-		divide_variable = { which = ai_magic_foo which = ai_magic_foo_2 } #modified xp cost
+	change_variable = { ai_magic_foo_2 = 1 } #ai_magic_foo_2 is the xp modifier
+	if = { #sanity check
+		limit = { NOT = { check_variable = { ai_magic_foo_2 = 0 } } }
+		set_variable = { ai_magic_foo_2 = 0.1 }
 	}
+	divide_variable = { which = ai_magic_foo which = ai_magic_foo_2 } #modified xp cost
 
-	set_variable = { which = ai_magic_foo which = REB }
 	subtract_variable = { which = ai_magic_experience which = ai_magic_foo }
 }
 calc_ai_ruler_xp_modifier = {
-	REB = {
-		export_to_variable = {
-			variable_name = ai_magic_foo_2
-			value = modifier:mages_ruler_experience_mod
-			who = PREV
-		}
+	export_to_variable = {
+		variable_name = ai_magic_foo_2
+		value = modifier:mages_ruler_experience_mod
 	}
 	if = {
 		limit = { is_long_lived_ruler = yes }
-		REB = { multiply_variable = { ai_magic_foo = 2 } }
+		multiply_variable = { ai_magic_foo = 2 }
 	}
 }
 calc_ai_heir_xp_modifier = {
-	REB = {
-		export_to_variable = {
-			variable_name = ai_magic_foo_2
-			value = modifier:mages_ruler_experience_mod
-			who = PREV
-		}
+	export_to_variable = {
+		variable_name = ai_magic_foo_2
+		value = modifier:mages_ruler_experience_mod
 	}
 	if = {
 		limit = { is_long_lived_heir = yes }
-		REB = { multiply_variable = { ai_magic_foo = 2 } }
+		multiply_variable = { ai_magic_foo = 2 }
 	}
 }
 calc_ai_country_xp_modifier = {
-	REB = {
-		multiply_variable = { ai_magic_foo = 3 }
-		export_to_variable = {
-			variable_name = ai_magic_foo_2
-			value = modifier:mages_estate_experience_mod
-			who = PREV
-		}
+	multiply_variable = { ai_magic_foo = 3 }
+	export_to_variable = {
+		variable_name = ai_magic_foo_2
+		value = modifier:mages_estate_experience_mod
 	}
 }
 calc_ai_school_xp_modifier = {
-	REB = {
-		export_to_variable = {
-			variable_name = school_experience_modifier
-			value = modifier:$school$_experience_mod
-			who = PREV
-		}
-		change_variable = { which = ai_magic_foo_2 which = school_experience_modifier }
+	export_to_variable = {
+		variable_name = school_experience_modifier
+		value = modifier:$school$_experience_mod
 	}
+	change_variable = { which = ai_magic_foo_2 which = school_experience_modifier }
 }
 
 #####################
