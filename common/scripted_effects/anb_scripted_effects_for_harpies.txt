@@ -24,8 +24,8 @@ harpy_roost_se_negative_extra_roost = {
 # Country scope
 harpy_roost_se_change_next_threshold = {
 	hidden_effect = {
-		change_variable = { which = harpy_roost_var_next_threshold which = $dev_progress$ }
-		change_variable = { which = harpy_roost_var_threshold_change which = $dev_progress$ }
+		change_variable = { which = harpy_roost_var_next_threshold value = $dev_progress$ }
+		change_variable = { which = harpy_roost_var_total_threshold_change value = $dev_progress$ }
 	}
 }
 
@@ -105,22 +105,18 @@ harpy_roost_se_on_primary_culture_changed_effect = {
 	if = { limit = { culture_group = harpy }
 		harpy_roost_se_setup = yes
 
-		every_owned_province = { 
-			if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_inactive }
-				harpy_roost_se_set_flourishing_roost_active = yes 
-			}
+		every_owned_province = {  limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_inactive }
+			harpy_roost_se_set_flourishing_roost_active = yes 
 		}
 	}
 	else = { 
-		every_owned_province = {
-			if = { limit = { has_province_flag = harpy_roost_present }
-				if = { limit = { has_province_modifier = harpy_roost_mod_roost_fledgling }
-					remove_province_modifier = harpy_roost_mod_roost_fledgling
-					clr_province_flag = harpy_roost_present
-				}
-				else_if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_active }
-					harpy_roost_se_set_flourishing_roost_inactive = yes
-				}
+		every_owned_province = { limit = { has_province_flag = harpy_roost_present }
+			if = { limit = { has_province_modifier = harpy_roost_mod_roost_fledgling }
+				remove_province_modifier = harpy_roost_mod_roost_fledgling
+				clr_province_flag = harpy_roost_present
+			}
+			else_if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_active }
+				harpy_roost_se_set_flourishing_roost_inactive = yes
 			}
 		}
 	}
@@ -153,7 +149,7 @@ harpy_roost_se_roost_terrain_offset_clear = {
 # Province scope
 harpy_roost_se_add_roost_tier_3 = {
 	remove_province_modifier = harpy_roost_mod_roost_flourishing_active
-	if = { limit = { FROM = { has_country_flag = can_build_foundations } }
+	if = { limit = { FROM = { has_country_flag = mulen_can_build_foundations } }
 		add_permanent_province_modifier = { name = mulen_hanging_city_foundation duration = -1 }
 		FROM = { add_treasury = -500 }
 	}
@@ -201,7 +197,7 @@ harpy_roost_se_recalculate = {
 		set_variable = { which = harpy_roost_var_next_threshold value = 0 }
 		subtract_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required }
 		multiply_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_free_roosts }
-		change_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_threshold_change }
+		change_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_total_threshold_change }
 		harpy_roost_se_count_current_roosts = yes
 	}
 }
@@ -213,20 +209,9 @@ harpy_roost_se_setup = {
 			set_variable = { which = harpy_roost_var_dev_required value = 150 } 
 			set_variable = { which = harpy_roost_var_next_threshold value = 0 }
 			set_variable = { which = harpy_roost_var_free_roosts value = 0 }
-			set_variable = { which = harpy_roost_var_threshold_change value = 0 }
+			set_variable = { which = harpy_roost_var_total_threshold_change value = 0 }
 			harpy_roost_se_count_current_roosts = yes
 			set_country_flag = harpy_roost_setup_completed
-
-			if = {
-				limit = {
-					660 = {
-						owned_by = ROOT
-						has_great_project = { type = queens_throne tier = 1 }
-					}
-				}
-				set_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost
-				harpy_roost_se_allow_construction_of_extra_roost = yes
-			}
 		}
 	}
 }
@@ -234,7 +219,7 @@ harpy_roost_se_setup = {
 # Country scope
 harpy_roost_se_count_current_roosts = {
 	every_owned_province = { limit = { harpy_roost_st_has_non_fledgling_roost = yes }
-		ROOT = { change_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required } }
+		owner = { change_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required } }
 	}
 }
 
@@ -315,7 +300,6 @@ harpy_roost_se_add_roost_tier_2_immediately = {
 	else = {
 		owner = { add_adm_power = 50 }
 	}
-
 }
 
 # Province scope
@@ -351,17 +335,14 @@ harpy_roost_se_on_province_owner_change = {
 				}
 			}
 		}
-		else = {
-			# If a roost is present, recalculate owner's roost dev threshold.
-			if = { limit = { NOT = { has_province_modifier = harpy_roost_mod_roost_fledgling } }
-				harpy_roost_se_recalculate = yes
+		else_if = { limit = { NOT = { has_province_modifier = harpy_roost_mod_roost_fledgling } }
+			owner = { harpy_roost_se_recalculate = yes }
 
-				# If there's an inactive flourishing roost, activate it.
-				if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_inactive }
-					harpy_roost_se_set_flourishing_roost_active = yes
-				}
-			} 
-		}
+			# If there's an inactive flourishing roost, activate it.
+			if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_inactive }
+				harpy_roost_se_set_flourishing_roost_active = yes
+			}
+		} 
 	}
 }
 
