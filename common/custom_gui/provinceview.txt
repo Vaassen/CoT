@@ -979,29 +979,52 @@ custom_button = {
 	name = harpy_roost_button
 	tooltip = harpy_roost_tt
 	potential = { 
-		harpy_roost_st_can_build_roost_potential_general = yes
+		owner = {
+			tag = FROM
+			culture_group = harpy
+			has_country_flag = harpy_roost_setup_completed # Won't work properly if setup hasn't been completed.
+		}
 		OR = {
-			harpy_roost_st_can_build_tier_1_roost_potential = yes
-			harpy_roost_st_can_build_tier_2_roost_potential = yes
+			NOT = { has_province_flag = harpy_roost_present }
+			AND = {
+				has_province_modifier = harpy_roost_mod_roost_fledgling
+				NOT = { has_province_modifier = harpy_roost_under_construction }
+			}
 			harpy_roost_st_can_build_tier_3_roost_potential = yes
 		}
 	}
 	trigger = { 
-		if = { limit = { harpy_roost_st_can_build_tier_1_roost_potential = yes }
-			harpy_roost_st_can_build_tier_1_roost_allow = yes
+		if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
+			harpy_roost_st_terrain_is_valid = yes
+			FROM = { adm_power = 20 }
 		}
-		else_if = { limit = { harpy_roost_st_can_build_tier_2_roost_potential = yes } 
-			harpy_roost_st_can_build_tier_2_roost_allow = yes 
+		else_if = { limit = { has_province_modifier = harpy_roost_mod_roost_fledgling NOT = { has_province_modifier = harpy_roost_under_construction } } 
+			custom_trigger_tooltip = {
+				tooltip = harpy_roost_st_cooldown
+				NOT = { FROM = { has_country_modifier = harpy_roost_country_mod_cooldown } }
+			}
+			harpy_roost_st_terrain_is_valid = yes
+			FROM = { 
+				hidden_trigger = { adm_power = 50 } # Tooltip becomes cleaner like this.
+				variable_arithmetic_trigger = {
+					custom_tooltip = harpy_roost_st_dev_threshold_tt
+					export_to_variable = {
+						which = harpy_roost_own_and_subject_development
+						value = trigger_value:total_own_and_non_tributary_subject_development
+					}
+					check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold }
+				}
+			}
 		}
 		else = {
 			harpy_roost_st_can_build_tier_3_roost_allow = yes
 		}
 	}
 	effect = { 
-		if = { limit = { harpy_roost_st_can_build_tier_1_roost_potential = yes }
+		if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
 			harpy_roost_se_add_roost_tier_1 = yes
 		}
-		else_if = { limit = { harpy_roost_st_can_build_tier_2_roost_potential = yes } 
+		else_if = { limit = { has_province_modifier = harpy_roost_mod_roost_fledgling NOT = { has_province_modifier = harpy_roost_under_construction } } 
 			harpy_roost_se_add_roost_tier_2 = yes 
 		}
 		else = {
