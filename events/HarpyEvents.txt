@@ -73,6 +73,71 @@ country_event = {
 	}
 }
 
+# Roost construction country-level manager, called on yearly pulse.
+country_event = {
+	id = harpy_events.1
+	title = harpy_events.1.t
+	desc = harpy_events.1.d
+	picture = HARPY_TOWN_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	trigger = {
+		culture_group = harpy
+		has_country_flag = harpy_roost_country_flag_roost_construction_ongoing
+	}
+	
+	immediate = {
+		every_owned_province = { limit = { has_province_modifier = harpy_roost_under_construction }
+			# If construction has been going on for ~4.5 years (4.5 rather than 5 because we're using pulse), try to fire the construction done event.
+			if = { limit = { had_province_flag = { flag = harpy_roost_province_flag_under_construction days = 1650 } }
+				# Check whether another roost complete event is already open. If so, fire a hidden recursive helper events that tries to fire it again.
+				if = { limit = { owner = { has_country_flag = harpy_roost_country_flag_finish_event_open } }
+					province_event = { id = harpy_events.12 days = 90 } # Hidden helper event, tries to fire the roost complete event every 90 days.
+				}
+				else = {
+					province_event = { id = harpy_events.11 } # Roost complete.
+				}
+			}
+
+			# Otherwise, fire a flavor event about the construction process.
+			else = {
+				# Always start by bringing in mates.
+				if = { limit = { NOT = { has_province_flag = had_harpy_event_3 } }
+					province_event = { id = harpy_events.3 days = 5 random = 180 }
+				}
+				# Then fire a random other construction event which has not already happened.
+				else = {
+					random_list = {
+						1 = {
+							province_event = { id = harpy_events.5 days = 5 random = 180 }
+							modifier = { factor = 0 has_province_flag = had_harpy_event_5 }
+							modifier = { factor = 0 NOT = { owner = { has_estate = estate_mages } } }
+						}
+						1 = {
+							province_event = { id = harpy_events.8 days = 5 random = 180 }
+							modifier = { factor = 0 has_province_flag = had_harpy_event_8 }
+						}
+						1 = {
+							province_event = { id = harpy_events.9 days = 5 random = 180 }
+							modifier = { factor = 0 has_province_flag = had_harpy_event_9 }
+						}
+						1 = {
+							province_event = { id = harpy_events.10 days = 5 random = 180 }
+							modifier = { factor = 0 has_province_flag = had_harpy_event_10 }
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = harpy_events.1.a
+	}
+}
+
 #male population brought to roost
 province_event = {
 	id = harpy_events.3
@@ -90,6 +155,8 @@ province_event = {
 	
 	immediate = {
 		hidden_effect = {
+			set_province_flag = had_harpy_event_3
+
 			owner = {
 				random_owned_province = { limit = { has_any_human_pop_trigger = yes } save_event_target_as = target_human }
 				random_owned_province = { limit = { has_any_elven_pop_trigger = yes } save_event_target_as = target_elven }
@@ -278,73 +345,6 @@ province_event = {
 	}
 }
 
-#Roost contruction event manager
-province_event = {
-	id = harpy_events.4
-	title = harpy_events.4.t
-	desc = harpy_events.4.d
-	picture = HARPY_TOWN_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-	
-	trigger = {
-		has_province_modifier = harpy_roost_under_construction
-		owner = { culture_is_harpy = yes }
-	}
-
-	immediate = {
-		# Check how long construction has been going on. If it's been almost 5 years, fire construction done event, otherwise fire the manager again.
-		if = { limit = { had_province_flag = { flag = harpy_roost_flag_under_construction days = 1750 } }
-			# Check whether construction done event is open. If so, wait to fire this event.
-			if = { limit = { owner = { has_country_flag = harpy_roost_flag_finish_event_open } }
-				province_event = { id = harpy_events.4 days = 90 }
-			}
-			else = {
-				province_event = { id = harpy_events.11 }
-			}
-		}
-		else = {
-			province_event = { id = harpy_events.4 days = 450 }
-
-			# Fire appropriate events based on timing.
-			if = { limit = { NOT = { had_province_flag = { flag = harpy_roost_flag_under_construction days = 500 } } }
-				province_event = { id = harpy_events.3 days = 0 random = 100 }
-			}
-			else = {
-				random_list = {
-					1 = {
-						province_event = { id = harpy_events.5 days = 0 random = 100 }
-						set_province_flag = had_harpy_event_5 
-						modifier = { factor = 0 has_province_flag = had_harpy_event_5 }
-						modifier = { factor = 0 NOT = { owner = { has_estate = estate_mages } } }
-					}
-					1 = {
-						province_event = { id = harpy_events.8 days = 0 random = 100 }
-						set_province_flag = had_harpy_event_8 
-						modifier = { factor = 0 has_province_flag = had_harpy_event_8 }
-					}
-					1 = {
-						province_event = { id = harpy_events.9 days = 0 random = 100 }
-						set_province_flag = had_harpy_event_9
-						modifier = { factor = 0 has_province_flag = had_harpy_event_9 }
-					}
-					1 = {
-						province_event = { id = harpy_events.10 days = 0 random = 100 }
-						set_province_flag = had_harpy_event_10
-						modifier = { factor = 0 has_province_flag = had_harpy_event_10 }
-					}
-				}
-			}
-		}
-
-	}
-	
-	option = {
-		name = harpy_events.4.a
-	}
-}
-
 #Mages offer demolition expertise
 province_event = {
 	id = harpy_events.5
@@ -358,6 +358,10 @@ province_event = {
 	trigger = {
 		has_province_modifier = harpy_roost_under_construction
 		owner = { has_estate = estate_mages }
+	}
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_5 }
 	}
 	
 	#accept
@@ -444,7 +448,11 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
-	
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_8 }
+	}
+
 	#unacceptable
 	option = {
 		name = harpy_events.8.a
@@ -467,6 +475,10 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_9 }
+	}
 	
 	#a fine boon
 	option = {
@@ -485,6 +497,10 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_10 }
+	}
 	
 	#Favor one side
 	option = {
@@ -516,17 +532,26 @@ province_event = {
 
 	immediate = {
 		hidden_effect = {
-			owner = { add_country_flag = harpy_roost_flag_finish_event_open }
+			owner = { set_country_flag = harpy_roost_country_flag_finish_event_open }
+			clr_province_flag = had_harpy_event_3
 			clr_province_flag = had_harpy_event_5
 			clr_province_flag = had_harpy_event_8
 			clr_province_flag = had_harpy_event_9
 			clr_province_flag = had_harpy_event_10
-			clr_province_flag = harpy_roost_flag_under_construction
+			clr_province_flag = harpy_roost_province_flag_under_construction
+			remove_province_modifier = harpy_roost_under_construction
+
+			owner = { 
+				clr_country_flag = harpy_roost_country_flag_roost_construction_ongoing
+				random_owned_province = { limit = { has_province_modifier = harpy_roost_under_construction }
+					PREV = { set_country_flag = harpy_roost_country_flag_roost_construction_ongoing }
+				}
+			}
 		}
 	}
 
 	after = { 
-		hidden_effect = { owner = { clr_country_flag = harpy_roost_flag_finish_event_open } } 
+		hidden_effect = { owner = { clr_country_flag = harpy_roost_country_flag_finish_event_open } } 
 	}
 
 	trigger = {
@@ -537,8 +562,36 @@ province_event = {
 	option = {
 		name = harpy_events.11.a
 		harpy_roost_se_add_roost_tier_2_complete = yes
+		tooltip = { remove_province_modifier = harpy_roost_under_construction }
 	}
 }
+
+ # Roost complete, but another instance of the roost complete event is open.
+province_event = {
+	id = harpy_events.12
+	title = harpy_events.12.t
+	desc = harpy_events.12.d
+	picture = HARPY_TOWN_eventPicture
+	goto = ROOT
+	
+	is_triggered_only = yes
+
+	immediate = {
+		if = { limit = { owner = { has_country_flag = harpy_roost_country_flag_finish_event_open } }
+			province_event = { id = harpy_events.12 days = 90 }
+		}
+		else = {
+			province_event = { id = harpy_events.11 }
+		}
+	}
+
+	option = {
+		name = harpy_events.12.a
+	}
+}
+
+# Roost complete, but another instance of the roost complete event is open.
+
 
 #--------# Harem Events #---------#
 country_event = {
