@@ -1301,7 +1301,6 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 		limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
 
 	clear_all_spell_levels_for_type = { type = $type$ } #just in case
-	#clear_witch_king_points = yes
 	set_variable = { $type$_magic_experience = 0 }
 
 	# Ovdal-az-An guaranteed legendary (non-necromancy) school
@@ -1502,7 +1501,6 @@ set_ruler_mage_effect = {
 	}
 }
 
-#Note that RNG is broken for history files. This isn't super relevant since in theory everyone will get scripted starting school levels
 # To use this effect:
 # Define TYPE: Types are ruler, heir, and consort. Make that character a powerful mage
 	# This is the only required argument. everything else is optional.
@@ -1523,11 +1521,11 @@ set_ruler_mage_effect = {
 
 define_powerful_mage = { #types are ruler, heir, and consort
 	if = {
+		limit = { $type$_is_powerful_mage = no }
+		set_$type$_mage_effect = yes
+	}
+	if = {
 		limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
-		if = {
-			limit = { $type$_is_powerful_mage = no }
-			set_$type$_mage_effect = yes
-		}
 		clear_all_spell_levels_for_type = { type = $type$ } #Just in case
 		hidden_effect = { set_variable = { random_starting_schools = 0 } }
 
@@ -1539,14 +1537,15 @@ define_powerful_mage = { #types are ruler, heir, and consort
 		[[illusion]			custom_tooltip = illusion_$illusion$ set_$type$_flag = illusion_$illusion$ set_$type$_flag = initialized_magic_flags ]
 		[[necromancy]		custom_tooltip = necromancy_$necromancy$ set_$type$_flag = necromancy_$necromancy$ set_$type$_flag = initialized_magic_flags ]
 		[[transmutation]	custom_tooltip = transmutation_$transmutation$ set_$type$_flag = transmutation_$transmutation$ set_$type$_flag = initialized_magic_flags ]
-		[[random]			change_variable = { random_starting_schools = $random$ } set_$type$_flag = initialized_magic_flags ]
-		[[bonus]			custom_tooltip = additional_starting_schools_tt change_variable = { random_starting_schools = $bonus$ } ]
+		[[random]			set_variable = { random_starting_schools = $random$ }
+							while = {
+								limit = { check_variable = { random_starting_schools = 1 } }
+								subtract_variable = { random_starting_schools = 1 }
+								magic_setup_give_random_level = { type = $type$ }
+							}
+							set_$type$_flag = initialized_magic_flags ]
 		[[saved_levels]		give_type_saved_spell_levels = { type = $type$ } ]
 		[[save_levels]		save_type_spell_levels = { type = $type$ } ]
-
-		[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
-		[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
-		[[lich]				become_a_lich_effect = yes ]
 
 		hidden_effect = {
 			if = {
@@ -1560,6 +1559,11 @@ define_powerful_mage = { #types are ruler, heir, and consort
 			}
 		}
 	}
+
+	[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
+	[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
+	[[witch_king]		become_a_witch_king_effect = yes ]
+	[[lich]				become_a_lich_effect = yes ]
 }
 
 define_type_to_war_wizard_effect = { #works on heir and ruler
@@ -1751,3 +1755,440 @@ create_war_wizard_wyvernheart_effect = {
 		}
 	}
 }
+
+######################
+### MAGICAL INFAMY ###
+######################
+
+### Quick explanation of how the witch-king system works:
+# Everyone can get witch-king points. Rulers. Heirs. Consorts. Estate.
+### We do this via flags. This has the benefit of carrying over between exiles, transfers of rulership, etc.
+### Downside is that it looks really icky and complicated if you don't know binary counting
+
+# There are five brackets of witch-kinginess:
+### 0-7 (Paragon), 8-15 (Respected), 16-23 (Suspicious), 24-31 (Denounced), 32-63 (Witch-King)
+### You always become a witch-king at 32 ruler witch-king points
+### Technically this can result in non-powerful mages becoming witch-kings
+### But in practice that only happens if someone is misusing the mechanics.
+### Similar to how you can have non-powerful mage liches, in theory.
+
+# The impacts of witch-kinginess are:
+### Ruler: scaling diplo reputation malus
+### Estate: scaling estate influence
+### Consort/Heir: nothing, but will become ruler witch-kinginess if they take the throne
+
+# The scale of increases are:
+### Small: +1 point
+### Medium: +2 points
+### Large: +4 points
+### Massive: +8 points (goes up a level, basically)
+
+# The default effect to use is increase_witch_king_points
+### This will give witch-king points to the ruler if you have a powerful mage, or to the estate otherwise.
+### It also accepts a level requirement, for spellcasting purposes.
+### Since this is so used, I aliased it into versions that have the size in the name, so that predictive text works right
+### You can use a more specific effect if you want a consistent tooltip/effect
+
+become_a_witch_king_effect = {
+	hidden_effect = {
+		remove_country_modifier = infamy_denounced_modifier
+		remove_country_modifier = infamy_suspicious_modifier
+		remove_country_modifier = infamy_respected_modifier
+	}
+	set_country_flag = ruled_by_witch_king
+	add_ruler_modifier = { name = witch_king_modifier duration = -1 }
+	set_ruler_flag = 32_witch_king_points #in case they weren't there already
+	
+	hidden_effect = { country_event = { id = magic_system.77 } } #if the conditions are right, flip BD
+}
+
+calculate_magical_infamy_modifier = {
+	hidden_effect = {
+		remove_country_modifier = infamy_denounced_modifier
+		remove_country_modifier = infamy_suspicious_modifier
+		remove_country_modifier = infamy_respected_modifier
+	}
+	if = {
+		limit = { NOT = { has_ruler_modifier = witch_king_modifier } }
+		if = {
+			limit = {
+				OR = {
+					type_has_infamy_witch_king = { type = ruler }
+					has_government_attribute = always_witch_king
+				}
+			}
+			country_event = { id = magic_system.66 }
+		}
+		else_if = {
+			limit = { type_has_infamy_denounced = { type = ruler } }
+			add_ruler_modifier = { name = infamy_denounced_modifier duration = -1 }
+		}
+		else_if = {
+			limit = { type_has_infamy_suspicious = { type = ruler } }
+			add_ruler_modifier = { name = infamy_suspicious_modifier duration = -1 }
+		}
+		else_if = {
+			limit = { type_has_infamy_respected = { type = ruler } }
+			add_ruler_modifier = { name = infamy_respected_modifier duration = -1 }
+		}
+	}
+	if = {
+		limit = { has_ruler_modifier = witch_king_modifier NOT = { type_has_infamy_witch_king = { type = ruler } } }
+		country_event = { id = magic_system.68 days = 1825 random = 365 }
+	}
+}
+increase_type_witch_king_points_small = { #1 point
+	custom_tooltip = increase_$type$_witch_king_points_small
+	if = {
+		limit = { NOT = { has_$type$_flag = 1_witch_king_point } }
+		set_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 2_witch_king_points } }
+		set_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
+		set_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
+		set_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
+		set_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 32_witch_king_points } }
+		set_$type$_flag = 32_witch_king_points
+		clr_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 1_witch_king_point
+	}
+}
+increase_type_witch_king_points_medium = { #2 points
+	custom_tooltip = increase_$type$_witch_king_points_medium
+	if = {
+		limit = { NOT = { has_$type$_flag = 2_witch_king_points } }
+		set_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
+		set_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
+		set_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
+		set_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 32_witch_king_points } }
+		set_$type$_flag = 32_witch_king_points
+		clr_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 2_witch_king_points
+	}
+	else = {
+		set_$type$_flag = 1_witch_king_point
+	}
+}
+increase_type_witch_king_points_large = { #4 points
+	custom_tooltip = increase_$type$_witch_king_points_large
+	if = {
+		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
+		set_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
+		set_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
+		set_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 32_witch_king_points } }
+		set_$type$_flag = 32_witch_king_points
+		clr_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+	}
+	else = {
+		set_$type$_flag = 1_witch_king_point
+		set_$type$_flag = 2_witch_king_points
+	}
+}
+increase_type_witch_king_points_massive = { #8 points
+	custom_tooltip = increase_$type$_witch_king_points_massive
+	if = {
+		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
+		set_$type$_flag = 8_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
+		set_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+	}
+	else_if = {
+		limit = { NOT = { has_$type$_flag = 32_witch_king_points } }
+		set_$type$_flag = 32_witch_king_points
+		clr_$type$_flag = 16_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+	}
+	else = {
+		set_$type$_flag = 1_witch_king_point
+		set_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+	}
+}
+decrease_type_witch_king_points_small = { #1 point
+	custom_tooltip = decrease_$type$_witch_king_points_small
+	if = {
+		limit = { has_$type$_flag = 1_witch_king_point }
+		clr_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { has_$type$_flag = 2_witch_king_point }
+		clr_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { has_$type$_flag = 4_witch_king_point }
+		clr_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { has_$type$_flag = 8_witch_king_point }
+		clr_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { has_$type$_flag = 16_witch_king_point }
+		clr_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 1_witch_king_point
+	}
+	else_if = {
+		limit = { has_$type$_flag = 32_witch_king_points }
+		clr_$type$_flag = 32_witch_king_points
+		set_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+		set_$type$_flag = 1_witch_king_point
+	}
+}
+decrease_type_witch_king_points_medium = { #2 points
+	custom_tooltip = decrease_$type$_witch_king_points_medium
+	if = {
+		limit = { has_$type$_flag = 2_witch_king_point }
+		clr_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 4_witch_king_point }
+		clr_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 8_witch_king_point }
+		clr_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 16_witch_king_point }
+		clr_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 32_witch_king_points }
+		clr_$type$_flag = 32_witch_king_points
+		set_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+		set_$type$_flag = 2_witch_king_points
+	}
+	else = {
+		clr_$type$_flag = 1_witch_king_point
+	}
+}
+decrease_type_witch_king_points_large = { #4 points
+	custom_tooltip = decrease_$type$_witch_king_points_large
+	if = {
+		limit = { has_$type$_flag = 4_witch_king_point }
+		clr_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 8_witch_king_point }
+		clr_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 16_witch_king_point }
+		clr_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 32_witch_king_points }
+		clr_$type$_flag = 32_witch_king_points
+		set_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+		set_$type$_flag = 4_witch_king_points
+	}
+	else = {
+		clr_$type$_flag = 1_witch_king_point
+		clr_$type$_flag = 2_witch_king_points
+	}
+}
+decrease_type_witch_king_points_massive = { #8 points
+	custom_tooltip = decrease_$type$_witch_king_points_massive
+	if = {
+		limit = { has_$type$_flag = 8_witch_king_point }
+		clr_$type$_flag = 8_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 16_witch_king_point }
+		clr_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+	}
+	else_if = {
+		limit = { has_$type$_flag = 32_witch_king_points }
+		clr_$type$_flag = 32_witch_king_points
+		set_$type$_flag = 16_witch_king_points
+		set_$type$_flag = 8_witch_king_points
+	}
+	else = {
+		clr_$type$_flag = 1_witch_king_point
+		clr_$type$_flag = 2_witch_king_points
+		clr_$type$_flag = 4_witch_king_points
+		clr_$type$_flag = 8_witch_king_points
+	}
+}
+clr_type_witch_king_points = {
+	clr_$type$_flag = 32_witch_king_points
+	clr_$type$_flag = 16_witch_king_points
+	clr_$type$_flag = 8_witch_king_points
+	clr_$type$_flag = 4_witch_king_points
+	clr_$type$_flag = 2_witch_king_points
+	clr_$type$_flag = 1_witch_king_points
+}
+
+increase_ruler_witch_king_points = {
+	increase_type_witch_king_points_$size$ = { type = ruler }
+	calculate_magical_infamy_modifier = yes
+}
+increase_consort_witch_king_points = {
+	increase_type_witch_king_points_$size$ = { type = consort }
+}
+increase_heir_witch_king_points = {
+	increase_type_witch_king_points_$size$ = { type = heir }
+}
+increase_estate_witch_king_points = {
+	increase_type_witch_king_points_$size$ = { type = country }
+}
+decrease_ruler_witch_king_points = {
+	decrease_type_witch_king_points_$size$ = { type = ruler }
+	calculate_magical_infamy_modifier = yes
+}
+decrease_consort_witch_king_points = {
+	decrease_type_witch_king_points_$size$ = { type = consort }
+}
+decrease_heir_witch_king_points = {
+	decrease_type_witch_king_points_$size$ = { type = heir }
+}
+decrease_estate_witch_king_points = {
+	decrease_type_witch_king_points_$size$ = { type = country }
+}
+
+increase_witch_king_points_based_on_advancement = {
+	if = {
+		limit = { has_ruler_flag = magic_advancement }
+		increase_ruler_witch_king_points = { size = $size$ }
+	}
+	else_if = {
+		limit = { has_heir_flag = magic_advancement }
+		increase_heir_witch_king_points = { size = $size$ }
+	}
+	else_if = {
+		limit = { has_country_flag = magic_advancement }
+		increase_estate_witch_king_points = { size = $size$ }
+	}
+}
+decrease_witch_king_points_based_on_advancement = {
+	if = {
+		limit = { has_ruler_flag = magic_advancement }
+		decrease_ruler_witch_king_points = { size = $size$ }
+	}
+	else_if = {
+		limit = { has_heir_flag = magic_advancement }
+		decrease_heir_witch_king_points = { size = $size$ }
+	}
+	else_if = {
+		limit = { has_country_flag = magic_advancement }
+		decrease_estate_witch_king_points = { size = $size$ }
+	}
+}
+
+increase_witch_king_points = { #default effect, sorts between ruler and estate
+	if = {
+		limit = {
+			ruler_is_powerful_mage = yes
+			[[level] is_ruler_$level$ = yes ]
+		}
+		increase_ruler_witch_king_points = { size = $size$ }
+	}
+	else = { increase_estate_witch_king_points = { size = $size$ } }
+}
+increase_witch_king_points_small = { increase_witch_king_points = { size = small [[level] level = $level$ ] } }
+increase_witch_king_points_medium = { increase_witch_king_points = { size = medium [[level] level = $level$ ] } }
+increase_witch_king_points_large = { increase_witch_king_points = { size = large [[level] level = $level$ ] } }
+increase_witch_king_points_massive = { increase_witch_king_points = { size = massive [[level] level = $level$ ] } }
+
+decrease_witch_king_points = {
+	if = {
+		limit = {
+			ruler_is_powerful_mage = yes
+			[[level] is_ruler_$level$ = yes ]
+		}
+		decrease_ruler_witch_king_points = { size = $size$ }
+	}
+	else = { decrease_estate_witch_king_points = { size = $size$ } }
+}
+decrease_witch_king_points_small = { decrease_witch_king_points = { size = small [[level] level = $level$ ] } }
+decrease_witch_king_points_medium = { decrease_witch_king_points = { size = medium [[level] level = $level$ ] } }
+decrease_witch_king_points_large = { decrease_witch_king_points = { size = large [[level] level = $level$ ] } }
+decrease_witch_king_points_massive = { decrease_witch_king_points = { size = massive [[level] level = $level$ ] } }

@@ -256,36 +256,48 @@ country_event = { #add mage personality to new heirs in always-mage governments
 	}
 }
 
-country_event = { # add mage personality to new rulers who need it
-	id =  magic_system.20
-	title =  magic_system.20.t
-	desc =  magic_system.20.d
-	picture = GOOD_WITH_MONARCH_eventPicture
-	
-	hidden = yes
-	is_triggered_only = yes
+country_event = { #The on_new_monarch catch-all event for powerful mages
+	id = magic_system.20
+	title = magic_system.20.t
+	desc = magic_system.20.desc
+	picture = MAGES_ESTATE_eventPicture
 
-	trigger = {
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = { #Your ruler is a mage or is supposed to/going to be a mage
 		OR = {
+			ruler_is_powerful_mage = yes
+			has_ruler_flag = is_powerful_mage
 			has_government_attribute = always_mage
 			has_country_flag = always_mage
-			has_ruler_flag = is_powerful_mage
 		}
-		ruler_is_powerful_mage = no
 	}
-	
+
 	option = {
-		name = magic_system.20.a
+		name = magic_system.20
 		ai_chance = { factor = 1 }
 
-		define_powerful_mage = { type = ruler }
-	}
+		#Heir powerful mages don't get the personality trait until now.
+		#Also dying w/o an heir but always_mage
+		if = {
+			limit = { ruler_is_powerful_mage = no }
+			define_powerful_mage = { type = ruler }
+		}
 
-	after = {
+		#If you already have your levels, we have to do this here.
+		generic_calc_spell_levels = { type = ruler }
+		recalculate_ruler_mana_regen = yes #basically just for rulers
+		calc_schools_total_level = yes
+
+		#If artificery-only, you may choose to enter mixed mode
 		if = {
 			limit = { has_country_flag = magic_artificery_artificery_only }
-			country_event = { id = magic_system.22 } # artificery-only tag has to choose
+			country_event = { id = magic_system.22 }
 		}
+
+		#If you have witch-king points (such as from choices made while an heir), get the appropriate modifier
+		calculate_magical_infamy_modifier = yes
 	}
 }
 
@@ -326,10 +338,6 @@ country_event = { # Initialize spell schools for any character who hasn't alread
 				NOT = { has_ruler_flag = initialized_magic_flags }
 			}
 			give_magic_starting_schools = { type = ruler }
-			if = {
-				limit = { has_country_flag = magic_artificery_artificery_only }
-				country_event = { id = magic_system.22 } # artificery-only tag has to choose
-			}
 		}
 		if = {
 			limit = {
@@ -385,7 +393,6 @@ country_event = { # Initialize spell schools for any character who hasn't alread
 		calc_schools_total_level = yes
 	}
 }
-
 country_event = { #Choose what to do about the powerful mage ruler
 	id = magic_system.22
 	title = magic_system.22.t
@@ -393,6 +400,10 @@ country_event = { #Choose what to do about the powerful mage ruler
 	picture = WAR_OF_THE_ROSES_eventPicture
 
 	is_triggered_only = yes
+	trigger = {
+		has_country_flag = magic_artificery_artificery_only
+		ruler_is_powerful_mage = yes
+	}
 
 	option = {
 		name = magic_system.22.a
@@ -409,10 +420,484 @@ country_event = { #Choose what to do about the powerful mage ruler
 	}
 }
 
+country_event = { #Rise of a Witch-King - might get moved more, but temporary holding spot.
+	id =  magic_system.66
+	title =  magic_system.66.t
+	desc =  magic_system.66.d
+	picture = COMET_SIGHTED_eventPicture
+	
+	is_triggered_only = yes
+
+	option = {
+		name = magic_system.66.a
+		ai_chance = { factor = 1 }
+		
+		become_a_witch_king_effect = yes
+		
+		hidden_effect = {
+			country_event = { id = anbennar_setup.7 days = 1 } #setup evil opinion
+			if = {
+				limit = {
+					NOT = { has_global_flag = imperial_witch_king_active }
+					is_part_of_hre = yes
+					is_emperor = no
+					NOT = { emperor = { overlord_of = ROOT } }
+				}
+				save_global_event_target_as = imperial_witch_king
+				set_global_flag = imperial_witch_king_active
+				if = {
+					limit = { has_dlc = "Emperor" }
+					set_imperial_incident = incident_witch_prince
+				}
+				else = { emperor = { country_event = { id = magic_system.71 } } }
+			}
+			G91 = {
+				country_event = {
+					id = flavor_isobelin.23 #refugees from witch king
+					days = 180
+				}
+			}
+			#invite mages back, forces you out of artificery only mode
+			if = {
+				limit = { has_country_flag = magic_artificery_artificery_only }
+				artifice_magic_switch_to_mixed_mode = yes
+			}
+		}
+	}
+}
+
+country_event = { #Death of a Witch-King
+	id = magic_system.67
+	title = magic_system.67.t
+	desc = magic_system.67.d
+	picture = DEATH_OF_HEIR_eventPicture
+
+	is_triggered_only = yes
+	
+	trigger = {
+		has_country_flag = ruled_by_witch_king
+		ruler_has_infamy_witch_king = no #they'll just ascend regular
+		NOT = { ruler_is_immortal = yes } #Accounts for fake deaths
+		NOT = { has_country_flag = Y26_sado_elected_once }
+		NOT = { has_country_flag = nsc_ruler_will_come_back }	#nsc event that temporally exile your ruler should not trigger this
+	}
+
+	option = {
+		name = magic_system.67.a
+		ai_chance = { factor = 100 }
+		trigger = { ruler_is_powerful_mage = yes }
+		highlight = yes
+		
+		become_a_witch_king_effect = yes
+		
+		add_country_modifier = {
+			name = witch_king_death
+			duration = 1825
+		}
+	}
+	
+	option = {
+		name = magic_system.67.b
+		ai_chance = { factor = 1 }
+		
+		add_country_modifier = {
+			name = witch_king_death
+			duration = 3650
+		}
+		
+		clr_country_flag = ruled_by_witch_king
+		
+		#Removes opinion malus
+		hidden_effect = {
+			country_event = { id = anbennar_setup.8 days = 1 }
+		}
+	}
+}
+
+country_event = { #Ruler Reforms
+	id = magic_system.68
+	title = magic_system.68.t
+	desc = magic_system.68.desc
+	picture = BANKRUPTCY_eventPicture
+
+	is_triggered_only = yes
+	trigger = {
+		has_ruler_modifier = witch_king_modifier
+		ruler_has_infamy_witch_king = no
+	}
+
+	option = { #give peace a chance
+		name = magic_system.68.a
+		ai_chance = { factor = 1 }
+
+		remove_country_modifier = witch_king_modifier
+		clr_country_flag = ruled_by_witch_king
+		add_country_modifier = { name = witch_king_a_new_hope duration = 3650 }
+
+		calculate_magical_infamy_modifier = yes
+
+		#Removes opinion malus
+		hidden_effect = {
+			country_event = { id = anbennar_setup.8 days = 1 }
+		}
+	}
+
+	option = { #nah
+		name = magic_system.68.b
+		ai_chance = { factor = 1 }
+
+		set_ruler_flag = 32_witch_king_points
+	}
+}
+country_event = { #Evil Ruler Removed Through Peace Deal (Witch-King, Lich, Vampire, Infernal Court)
+	id =  magic_system.69
+	title =  magic_system.69.t
+	desc =  magic_system.69.d
+	picture = DEATH_OF_HEIR_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = { is_evil = yes }
+	
+	immediate = {
+		hidden_effect = {
+			FROM = { country_event = { id = magic_system.70 } }
+		}
+	}
+	
+	option = {
+		name = magic_system.69.a
+		
+		#Witch King Stuff
+		if = {
+			limit = { has_country_flag = ruled_by_witch_king }
+			clr_country_flag = ruled_by_witch_king
+
+			#No more mages for Witch Kings
+			if = {
+				limit = { heir_is_powerful_mage = yes }
+				exile_heir_as = exiled_evil_heir_@ROOT
+			}
+			add_country_modifier = {
+				name = witch_king_death
+				duration = 3650
+			}
+			
+			#Removes opinion malus
+			hidden_effect = {
+				country_event = { id = anbennar_setup.8 days = 1 }
+			}
+		}
+
+		#Lich Stuff
+		kill_a_lich_effect = yes
+
+		#Vampire stuff
+		clear_ruler_vampire_flags = yes
+
+		#Infernalist stuff
+		if = {
+			limit = { religion = infernal_court }
+			change_religion = FROM
+		}
+
+		#varamhar stuff
+		if = {
+			limit = { has_reform = varamhar_eternal_empire }
+			if = {
+				limit = { has_country_modifier = varamhar_phoenix_empire_restored }
+				remove_government_reform = varamhar_eternal_empire
+				remove_country_modifier = varamhar_phoenix_empire_restored
+				add_government_reform = phoenix_empire
+			}
+			else = {
+				remove_government_reform = varamhar_eternal_empire
+				add_government_reform = phoenix_akalate
+			}
+		}
+		if = {
+			limit = { has_reform = varamhar_eternal_empire_mandate }
+			if = {
+				limit = { has_country_modifier = varamhar_phoenix_empire_restored }
+				remove_government_reform = varamhar_eternal_empire_mandate
+				remove_country_modifier = varamhar_phoenix_empire_restored
+				add_government_reform = phoenix_empire_mandate
+			}
+			else = {
+				remove_government_reform = varamhar_eternal_empire_mandate
+				add_government_reform = phoenix_akalate
+				add_government_reform = appease_khet
+			}
+		}
+		
+		exile_ruler_as = { name = exiled_evil_ruler_@ROOT }
+		
+		add_stability = -3
+		add_prestige = -50
+	}
+}
+country_event = { #Evil Ruler Removed Through Peacedeal
+	id =  magic_system.70
+	title =  magic_system.70.t
+	desc =  magic_system.70.d
+	picture = DEATH_OF_HEIR_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_system.70.a
+		
+		add_country_modifier = {
+			name = defeated_evil_ruler
+			duration = 3650
+		}
+
+		add_karma = 20
+		
+		#Little bonus for the emperor for removing witch-princes
+		if = {
+			limit = {
+				is_emperor = yes
+				FROM = {
+					is_part_of_hre = yes
+				}
+			}
+			add_imperial_influence = 5
+		}
+	}
+}
+
+country_event = { #Imperial incident for removing Witch Princes, Emperor side
+	id = magic_system.71
+	title = magic_system.71.t
+	desc = magic_system.71.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	major = yes
+	
+	after = { hidden_effect = { country_event = { id = magic_system.73 days = 1 } } } #clear flags
+	
+	option = { # They have forfeited their right to rule [target.GetName]
+		name = magic_system.71.a
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				OR = {
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_rivalry
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_hostile
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_threatened
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_outraged
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_rebellious
+					}
+				}
+			}
+		}
+
+		emperor = {
+			declare_war_with_cb = {
+				who = event_target:imperial_witch_king
+				casus_belli = cb_evil_ruler
+			}
+		}
+
+		if = {
+			limit = {
+				NOT = {
+					event_target:imperial_witch_king = { tag = A85 }
+					war_with = A85
+				}
+				exists = A85
+			}
+			custom_tooltip = magisterium_may_join_war_tt
+			hidden_effect = { A85 = { country_event = { id = magic_system.72 } } }
+		}
+
+		event_target:imperial_witch_king = { add_ruler_modifier = { name = denounced_witch_king duration = 3650 } }
+	}
+	
+	option = { # Denounce them
+		name = magic_system.71.b
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				OR = {
+					has_opinion = {
+						who = event_target:imperial_witch_king
+						value = 100
+					}				
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_friendly
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_loyal
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_allied
+					}
+				}
+			}
+		}
+		add_imperial_influence = -20
+		add_ruler_modifier = { name = cowardly_emperor duration = -1 }
+
+		event_target:imperial_witch_king = { add_ruler_modifier = { name = denounced_witch_king duration = 3650 } }
+	}
+}
+country_event = { #Imperial incident for removing Witch-Princes, Magisterium
+	id = magic_system.72
+	title = magic_system.72.t
+	desc = magic_system.72.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = { NOT = { war_with = emperor } }
+	
+	option = { # We will join the emperor
+		name = magic_system.72.a
+		ai_chance = {
+			factor = 10
+			modifier = {
+				factor = 2
+				OR = {
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_rivalry
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_hostile
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_threatened
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_outraged
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_rebellious
+					}
+				}
+			}
+			modifier = {
+				factor = 0.75
+				is_at_war = yes
+			}
+		}
+		join_all_offensive_wars_of = emperor
+	}
+	
+	option = { # Denounce them
+		name = magic_system.72.b
+		ai_chance = {
+			factor = 5
+			modifier = {
+				factor = 2
+				OR = {
+					has_opinion = {
+						who = event_target:imperial_witch_king
+						value = 100
+					}				
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_friendly
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_loyal
+					}
+					ai_attitude = {
+						who = event_target:imperial_witch_king
+						attitude = attitude_allied
+					}
+				}
+			}
+		}
+		add_ruler_modifier = {
+			name = shirked_imperial_responsibility
+			duration = -1
+		}
+	}
+}
+country_event = { #Clears the stuff later so the popups make sense
+	id = magic_system.73
+	title = magic_system.73.t
+	desc = magic_system.73.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_system.73.a
+		hidden_effect = {
+			clr_global_flag = imperial_witch_king_active
+			clear_global_event_target = imperial_witch_king
+		}
+	}
+}
+
+country_event = { #Witch-King becomes Black Doctrine
+	id = magic_system.77
+	title = magic_system.77.t
+	desc = magic_system.77.d
+	picture = BIG_BOOK_eventPicture
+
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		current_age = age_of_absolutism
+		has_ruler_modifier = witch_king_modifier
+		NOT = { religion = black_doctrine }
+		NOT = { tag = F53 }
+		NOT = { has_country_flag = supernaturally_bound_faith }
+	}
+
+	option = {
+		name = magic_system.77.a
+		ai_chance = { factor = 1 }
+		set_ruler_religion = black_doctrine
+		change_religion = black_doctrine
+		capital_scope = { change_religion = black_doctrine }
+		add_country_modifier = {
+			name = black_converting_zeal
+			duration = 7300
+		}
+	}
+	option = {
+		name = magic_system.77.b
+		ai_chance = { factor = 0 }
+	}
+}
+
 country_event = { #Abort magical advancement Confirm
-	id =  magic_system.86
-	title =  magic_system.86.t
-	desc =  magic_system.86.d
+	id = magic_system.86
+	title = magic_system.86.t
+	desc = magic_system.86.d
 	picture = BAD_WITH_MONARCH_eventPicture
 	
 	is_triggered_only = yes
