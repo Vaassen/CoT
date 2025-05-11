@@ -275,38 +275,41 @@ change_mana = { #for spells, MT effects, etc. use this. e.g. change_mana = { amo
 
 update_mana_regen_vars = { #use whenever you change the mana-per-month amount
 	hidden_effect = {
-		export_to_variable = {
-			variable_name = manaRegenerationRate
-			value = modifier:mages_mana_regen
-		}
-		export_to_variable = {
-			variable_name = mages_mana_regen_mult_val
-			value = modifier:mages_mana_regen_mult
-		}
-		change_variable = { mages_mana_regen_mult_val = 1 }
-		multiply_variable = {
-			which = manaRegenerationRate
-			which = mages_mana_regen_mult_val
-		}
-
-		set_variable = { which = manaFoo which = mages_mana_regen_mult_val }
-		modulo_variable = { manaFoo = 1 }
 		if = {
-			limit = { is_variable_equal = { which = manaFoo value = 0 } }
-			set_country_flag = mana_regen_mult_whole_number
-		}
-		else = {
-			modulo_variable = { manaFoo = 0.1 }
+			limit = { ai = no } #AI has its own thing and doesn't want to clog the save file
+			export_to_variable = {
+				variable_name = manaRegenerationRate
+				value = modifier:mages_mana_regen
+			}
+			export_to_variable = {
+				variable_name = mages_mana_regen_mult_val
+				value = modifier:mages_mana_regen_mult
+			}
+			change_variable = { mages_mana_regen_mult_val = 1 }
+			multiply_variable = {
+				which = manaRegenerationRate
+				which = mages_mana_regen_mult_val
+			}
+
+			set_variable = { which = manaFoo which = mages_mana_regen_mult_val }
+			modulo_variable = { manaFoo = 1 }
 			if = {
 				limit = { is_variable_equal = { which = manaFoo value = 0 } }
-				set_country_flag = mana_regen_mult_one_decimal
+				set_country_flag = mana_regen_mult_whole_number
 			}
-		}
+			else = {
+				modulo_variable = { manaFoo = 0.1 }
+				if = {
+					limit = { is_variable_equal = { which = manaFoo value = 0 } }
+					set_country_flag = mana_regen_mult_one_decimal
+				}
+			}
 
-		set_variable = { which = mana_regen_other which = manaRegenerationRate }
-		subtract_variable = { mana_regen_other = 0.8 } #Base
-		subtract_variable = { which = mana_regen_other which = mana_regen_ruler } #Ruler
-		subtract_variable = { which = mana_regen_other which = mana_regen_infra } #Infra
+			set_variable = { which = mana_regen_other which = manaRegenerationRate }
+			subtract_variable = { mana_regen_other = 0.8 } #Base
+			subtract_variable = { which = mana_regen_other which = mana_regen_ruler } #Ruler
+			subtract_variable = { which = mana_regen_other which = mana_regen_infra } #Infra
+		}
 	}
 }
 
@@ -831,89 +834,83 @@ increase_magic_experience = {
 		}
 	]
 
-	if = { limit = { ai = no } #AI has their own thing
-		if = { limit = { has_ruler_flag = magic_advancement }
-			export_to_variable = {
-				variable_name = ruler_experience_modifier
-				value = modifier:mages_ruler_experience_mod
-			}
+	hidden_effect = {
+		if = { limit = { ai = no } #AI has their own thing
+			if = { limit = { has_ruler_flag = magic_advancement }
+				export_to_variable = {
+					variable_name = ruler_experience_modifier
+					value = modifier:mages_ruler_experience_mod
+				}
 
-			calc_school_experience_modifiers = { type = ruler }
-			change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+				calc_school_experience_modifiers = { type = ruler }
+				change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
 
-			if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
-				set_variable = { which = expFoo which = ruler_experience_modifier }
-				change_variable = { expFoo = 1 }
-				multiply_variable = { which = experienceGain which = expFoo }
-			}
+				change_variable = { ruler_experience_modifier = 1 }
+				multiply_variable = { which = experienceGain which = ruler_experience_modifier }
 
-			change_variable = { which = experienceGain which = unmodifiedExperience }
-			change_variable = {
-				which = ruler_magic_experience
-				which = experienceGain
+				change_variable = { which = experienceGain which = unmodifiedExperience }
+				change_variable = {
+					which = ruler_magic_experience
+					which = experienceGain
+				}
+				
+				update_advancement_progress_bar = { type = ruler }
 			}
 			
-			update_advancement_progress_bar = { type = ruler }
-		}
-		
-		else_if = { limit = { has_heir_flag = magic_advancement }
-			export_to_variable = {
-				variable_name = ruler_experience_modifier
-				value = modifier:mages_ruler_experience_mod
+			else_if = { limit = { has_heir_flag = magic_advancement }
+				export_to_variable = {
+					variable_name = ruler_experience_modifier
+					value = modifier:mages_ruler_experience_mod
+				}
+
+				calc_school_experience_modifiers = { type = heir }
+				change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+
+				change_variable = { ruler_experience_modifier = 1 }
+				multiply_variable = { which = experienceGain which = ruler_experience_modifier }
+
+				change_variable = { which = experienceGain which = unmodifiedExperience }
+				change_variable = {
+					which = heir_magic_experience
+					which = experienceGain
+				}
+
+				update_advancement_progress_bar = { type = heir }
 			}
+			else_if = { limit = { has_country_flag = magic_advancement }
+				export_to_variable = {
+					variable_name = country_experience_modifier
+					value = modifier:mages_estate_experience_mod
+				}
 
-			calc_school_experience_modifiers = { type = heir }
-			change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+				calc_school_experience_modifiers = { type = country }
+				change_variable = { which = country_experience_modifier which = school_experience_modifier }
+				
+				change_variable = { country_experience_modifier = 1 }
+				multiply_variable = { which = experienceGain which = country_experience_modifier }
 
-			if = { limit = { NOT = { is_variable_equal = { which = ruler_experience_modifier value = 0 } } } # XP modifier not 0
-				set_variable = { which = expFoo which = ruler_experience_modifier }
-				change_variable = { expFoo = 1 }
-				multiply_variable = { which = experienceGain which = expFoo }
+				change_variable = { which = experienceGain which = unmodifiedExperience }
+				change_variable = {
+					which = country_magic_experience
+					which = experienceGain
+				}
+
+				update_advancement_progress_bar = { type = country }
 			}
-
-			change_variable = { which = experienceGain which = unmodifiedExperience }
-			change_variable = {
-				which = heir_magic_experience
-				which = experienceGain
-			}
-
-			update_advancement_progress_bar = { type = heir }
-		}
-		else_if = { limit = { has_country_flag = magic_advancement }
-			export_to_variable = {
-				variable_name = country_experience_modifier
-				value = modifier:mages_estate_experience_mod
-			}
-
-			calc_school_experience_modifiers = { type = country }
-			change_variable = { which = country_experience_modifier which = school_experience_modifier }
-
-			if = {
-				limit = { NOT = { is_variable_equal = { which = country_experience_modifier value = 0 } } } # XP modifier not 0
-				set_variable = { which = expFoo which = country_experience_modifier }
-				change_variable = { expFoo = 1 }
-				multiply_variable = { which = experienceGain which = expFoo }
-			}
-
-			change_variable = { which = experienceGain which = unmodifiedExperience }
-			change_variable = {
-				which = country_magic_experience
-				which = experienceGain
-			}
-
-			update_advancement_progress_bar = { type = country }
-		}
-		else = {
-			change_variable = { which = passive_experience_bank which = experienceGain }
-			hidden_effect = {
+			else = {
+				change_variable = { which = passive_experience_bank which = experienceGain }
 				if = {
+					limit = { NOT = { check_variable = { passive_experience_bank = 0 } } }
+					set_variable = { passive_experience_bank = 0 }
+				}
+				else_if = {
 					limit = { check_variable = { which = passive_experience_bank which =  max_experience_bank } }
 					set_variable = { which = passive_experience_bank which = max_experience_bank }
 				}
 			}
 		}
 
-		hidden_effect = { country_event = { id = magic_system.100 } }
+		country_event = { id = magic_system.100 } #XP Advancement pulse
 	}
 }
 
