@@ -17,7 +17,8 @@ zokka_missions_3c = {
 		position = 1
 
 		provinces_to_highlight = {
-			
+            superregion = bulwar_superregion
+            NOT = { owned_by = ROOT }
 		}
 
 		trigger = {
@@ -75,12 +76,13 @@ zokka_missions_3d = {
 	F29_zokka_heliophage1 = {
 		icon = mission_solaris
 		required_missions = {
-
+			
 		}
 		position = 1
 
 		provinces_to_highlight = {
-			
+			superregion = bulwar_superregion
+            NOT = { owned_by = ROOT }
 		}
 
 		trigger = {
@@ -175,7 +177,8 @@ zokka_missions_3e = {
 		position = 1
 
 		provinces_to_highlight = {
-			
+			superregion = bulwar_superregion
+            NOT = { owned_by = ROOT }
 		}
 
 		trigger = {
@@ -269,6 +272,7 @@ zokka_missions_1 = {
 
 		provinces_to_highlight = {
 			religion = the_jadd
+			superregion = bulwar_superregion
 		}
 
 		trigger = {
@@ -279,7 +283,10 @@ zokka_missions_1 = {
 		}
 
 		effect = {
-			set_country_flag = zokka_sun_cult_tracker
+			if = {
+				limit = { ai = no }
+				set_country_flag = zokka_sun_cult_tracker
+			}
 			add_country_modifier = {
 				name = zokka_smothered_light
 				duration = -1
@@ -299,9 +306,9 @@ zokka_missions_1 = {
 			OR = {
 				AND = {
 					OR = {
-						province_id = 687
-						province_id = 5462
-						province_id = 5434
+						is_capital_of = F28
+						is_capital_of = F54
+						is_capital_of = F55
 					}
 					NOT = {
 						num_of_units_in_province = {
@@ -398,19 +405,23 @@ zokka_missions_1 = {
 						has_tax_building_trigger = no
 						has_trade_building_trigger = no
 						NOT = { development = 15 }
+						NOT = { owned_by = ROOT }
 					}
 				}
 				AND = {
 					OR = {
-						province_id = 4124
-						province_id = 2914
-						province_id = 4272
+						is_capital_of = F28
+						is_capital_of = F54
+						is_capital_of = F55
 					}
 					owner = {
-						NOT = {
-							has_opinion = {
-								who = ROOT
-								value = 200
+						OR = {
+							NOT = { is_subject_of = ROOT }
+							NOT = {
+								has_opinion = {
+									who = ROOT
+									value = 200
+								}
 							}
 						}
 					}
@@ -495,13 +506,15 @@ zokka_missions_1 = {
 		position = 7
 
 		provinces_to_highlight = {
-			AND = {
-				OR = {
-					province_id = 493
-					area = elizna_area
+			OR = {
+				province_id = 493
+				area = elizna_area
+			}
+			NOT = {
+				AND = {
+					owned_by = ROOT
+					has_tax_building_trigger = yes
 				}
-				NOT = { owned_by = ROOT }
-				has_tax_building_trigger = no
 			}
 		}
 
@@ -696,7 +709,7 @@ zokka_missions_2 = {
 					NOT = { culture = surani }
 				}
 			}
-			F31 = { is_subject_of_type_with_overlord = { who = F29 type = tributary_state_anb } }
+			F31 = { is_subject_of_type_with_overlord = { who = ROOT type = tributary_state_anb } }
 			if = {
 				limit = { ai = no }
 				631 = {
@@ -711,6 +724,7 @@ zokka_missions_2 = {
 				owned_by = ROOT
 			}
 			4124 = { owned_by = ROOT }
+			hidden_trigger = { F31 = { ai = yes } }
 		}
 
 		effect = {
@@ -733,7 +747,8 @@ zokka_missions_2 = {
 		position = 4
 
 		provinces_to_highlight = {
-
+			NOT = { owned_by = ROOT }
+			superregion = bulwar_superregion
 		}
 
 		trigger = {
@@ -751,12 +766,15 @@ zokka_missions_2 = {
 			F28 = { country_event = { id = flavour_zokka.3 } }
 			2914 = { zokka_add_claims = yes }
 			2915 = { zokka_add_claims = yes }
-			every_neighbor_country = {
-				limit = { any_owned_province = { superregion = rahen_superregion } }
-				reverse_add_casus_belli = {
-					target = ROOT
-					type = cb_force_tributary_mission
-					months = 300
+			custom_tooltip = zokka_pack_pre_tt
+			hidden_effect = {
+				every_neighbor_country = {
+					limit = { any_owned_province = { superregion = rahen_superregion } }
+					reverse_add_casus_belli = {
+						target = ROOT
+						type = cb_force_tributary_mission
+						months = 300
+					}
 				}
 			}
 		}
@@ -778,8 +796,12 @@ zokka_missions_2 = {
 				province_id = 2910
 				province_id = 2913
 			}
-			NOT = { owned_by = ROOT }
-			has_fort_building_trigger = no
+			NOT = {
+				AND = {
+					owned_by = ROOT
+					has_fort_building_trigger = yes
+				}
+			}
 		}
 
 		trigger = {
@@ -791,14 +813,7 @@ zokka_missions_2 = {
 						who = ROOT
 						value = 0
 					}
-					custom_trigger_tooltip = {
-						tooltip = zokka_improved_relations_125_tt
-						has_opinion_modifier = {
-							who = ROOT
-							modifier = improved_relation
-							value = 125
-						}
-					}
+					has_125_opinion_improved_relation = { target = ROOT }
 				}
 			}
 			OR = {
@@ -957,36 +972,32 @@ zokka_missions_2 = {
 			custom_tooltip = zokka_raise_pyres_get_both_favour_tt
 			if = {
 				limit = { 
-					AND = {
-						estate_loyalty = {
-							estate = estate_mages
-							loyalty = 60
-						}
-						631 = {
-							development = 30
-							has_tax_building_trigger = yes
-							has_trade_building_trigger = yes
-							has_any_ongoing_construction = no
-						}
-					} 
+					estate_loyalty = {
+						estate = estate_mages
+						loyalty = 60
+					}
+					631 = {
+						development = 30
+						has_tax_building_trigger = yes
+						has_trade_building_trigger = yes
+						has_any_ongoing_construction = no
+					}
 				}
 				631 = { add_building_construction = { building = mage_tower speed = 0.5 cost = 0 } }
 				add_kelmaxherho_favour = yes
 			}
 			if = {
 				limit = {
-					AND = {
-						estate_loyalty = {
-							estate = estate_church
-							loyalty = 60
-						}
-						num_of_owned_provinces_with = {
-							value = 7
-							OR = {
-								has_province_modifier = surani_refugee_large
-								has_province_modifier = surani_refugee_medium
-								has_province_modifier = surani_refugee_small
-							}
+					estate_loyalty = {
+						estate = estate_church
+						loyalty = 60
+					}
+					num_of_owned_provinces_with = {
+						value = 7
+						OR = {
+							has_province_modifier = surani_refugee_large
+							has_province_modifier = surani_refugee_medium
+							has_province_modifier = surani_refugee_small
 						}
 					}
 				}
@@ -1080,11 +1091,7 @@ zokka_missions_2 = {
 			custom_trigger_tooltip = {
 				tooltip = zokka_border_ourdia_tt
 				OR = {
-					529 = { owned_by = ROOT }
-					520 = { owned_by = ROOT }
-					519 = { owned_by = ROOT }
-					517 = { owned_by = ROOT }
-					516 = { owned_by = ROOT }
+					any_neighbor_province = { region = ourdia_region }
 					any_owned_province = { region = ourdia_region }
 				}
 			}
@@ -1130,20 +1137,17 @@ zokka_missions_2 = {
 		trigger = {
 			custom_trigger_tooltip = {
 				tooltip = zokka_pack_hegemony_tt
-				if = {
-					limit = { NOT = { mission_completed = F29_zokka_xhaz_khets } }
-					always = no
-				}
-				else = {
-					OR = {
-						num_of_owned_provinces_with = {
-							value = 30
-							has_province_flag = zokka_claimed_gnollish_flag
-							NOT = { local_autonomy = 30 }
-						}
-						all_province = {
-							if = {
-								limit = { has_province_flag = zokka_claimed_gnollish_flag }
+				mission_completed = F29_zokka_xhaz_khets
+				OR = {
+					num_of_owned_provinces_with = {
+						value = 30
+						has_province_flag = zokka_claimed_gnollish_flag
+						NOT = { local_autonomy = 30 }
+					}
+					all_province = {
+						OR = {
+							NOT = { has_province_flag = zokka_claimed_gnollish_flag }
+							AND = {
 								owned_by = ROOT
 								NOT = { local_autonomy = 30 }
 							}
@@ -1198,19 +1202,19 @@ zokka_missions_3 = {
 
 		provinces_to_highlight = {
 			OR = {
-				AND = {
-					area = garpix_zokka_area
-					NOT = { development = 8 }
-					has_state_patriach = no
-				}
-				AND = {
-					province_id = 571
-					OR = {
-						has_tax_building_trigger = no
-						owner = { NOT = { treasury = 100 } }
-					}
-				}
-			}
+                AND = {
+                    area = garpix_zokka_area
+                    OR = {
+                        NOT = { development = 8 }
+                        has_state_patriach = no
+                    }
+                }
+                AND = {
+                    province_id = 571
+                    has_tax_building_trigger = no
+                    ROOT = { NOT = { treasury = 100 } }
+                }
+            }
 		}
 
 		trigger = {
@@ -1293,6 +1297,7 @@ zokka_missions_3 = {
 						NOT = { religion = xhazobkult }
 						NOT = { culture = sandfang_gnoll }
 						NOT = { development = 20 }
+						NOT = { owned_by = ROOT }
 					}
 				}
 				AND = {
@@ -1351,17 +1356,17 @@ zokka_missions_3 = {
 					NOT = { owned_by = ROOT }
 				}
 				AND = {
-					NOT = {
-						ROOT = {
-							num_of_owned_provinces_with = {
-								value = 20
-								region = bulwar_proper_region
-							}
-						}
-					}
-					region = bulwar_proper_region
-					NOT = { owned_by = ROOT }
-				}
+                    region = bulwar_proper_region
+                    NOT = { owned_by = ROOT }
+                    NOT = {
+                        ROOT = {
+                            num_of_owned_provinces_with = {
+                                value = 20
+                                region = bulwar_proper_region
+                            }
+                        }
+                    }
+                }
 			}
 		}
 
@@ -1431,13 +1436,10 @@ zokka_missions_3 = {
 		}
 
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = zokka_insulted_bulwar_tt
-				all_known_country = {
-					if = {
-						limit = { capital_scope = { superregion = bulwar_superregion } }
-						has_been_insulted_by_root = yes
-					}
+			all_known_country = {
+				OR = {
+					NOT = { capital_scope = { superregion = bulwar_superregion } }
+					has_been_insulted_by_root = yes
 				}
 			}
 			num_of_owned_provinces_with = {
@@ -1516,13 +1518,8 @@ zokka_missions_3 = {
 			custom_trigger_tooltip = {
 				tooltip = zokka_border_bahar_tt
 				OR = {
-					551 = { owned_by = ROOT }
-					553 = { owned_by = ROOT }
-					657 = { owned_by = ROOT }
-					651 = { owned_by = ROOT }
-					649 = { owned_by = ROOT }
-					650 = { owned_by = ROOT }
-					any_owned_province = { region = ourdia_region }
+					any_neighbor_province = { region = bahar_region }
+					any_owned_province = { region = bahar_region }
 				}
 			}
 		}
@@ -1803,7 +1800,12 @@ zokka_missions_4 = {
 		position = 5
 
 		provinces_to_highlight = {
-			
+			owned_by = ROOT
+			religion = xhazobkult
+			OR = {
+				NOT = { development = 8 }
+				has_tax_building_trigger = no
+			}
 		}
 
 		trigger = {
@@ -1911,6 +1913,7 @@ zokka_missions_4 = {
 					OR = {
 						NOT = { religion = xhazobkult }
 						has_state_patriach = no
+						NOT = { owned_by = ROOT }
 					}
 				}
 			}
@@ -1920,14 +1923,17 @@ zokka_missions_4 = {
 			631 = {
 				has_tax_building_trigger = yes
 				development = 25
+				owned_by = ROOT
 			}
 			601 = {
 				has_tax_building_trigger = yes
 				development = 25
+				owned_by = ROOT
 			}
 			641 = {
 				has_tax_building_trigger = yes
 				development = 25
+				owned_by = ROOT
 			}
 			bulwar_area = {
 				type = all
@@ -2039,8 +2045,20 @@ zokka_missions_5 = {
 		position = 3
 
 		provinces_to_highlight = {
-			province_id = 2922
-			has_fort_building_trigger = no
+			OR = {
+				AND = {
+					province_id = 2922
+					OR = {
+						has_fort_building_trigger = no
+						NOT = { owned_by = ROOT }
+					}
+				}
+				AND = {
+					is_capital = yes
+					owner = { has_country_modifier = centaur_administration }
+				}
+				owned_by = F48
+			}
 		}
 
 		trigger = {
@@ -2197,7 +2215,6 @@ zokka_missions_5 = {
 			OR = {
 				AND = {
 					superregion = bulwar_superregion
-					is_capital = yes
 					owner = { has_country_modifier = harpy_administration }			
 				}
 				AND = {
@@ -2205,15 +2222,13 @@ zokka_missions_5 = {
 						region = bulwar_proper_region
 						region = harpy_hills_region
 					}
-					owned_by = ROOT
 					OR = {
 						trade_goods = grain
 						trade_goods = livestock
 					}
-					AND = {
-						development = 12
-						NOT = { has_province_modifier = province_razed }
-					}
+					owned_by = ROOT
+					development = 12
+					NOT = { has_province_modifier = province_razed }
 				}
 				AND = {
 					owned_by = ROOT
@@ -2302,6 +2317,7 @@ zokka_missions_5 = {
 				owned_by = ROOT
 			}
 			2922 = {
+				owned_by = ROOT
 				has_fort_building_trigger = yes
 				has_building = ramparts
 			}
@@ -2522,23 +2538,18 @@ zokka_missions_1b = {
 		provinces_to_highlight = {
 			OR = {
 				AND = {
-					region = yezel_mora_region
-					OR = {
-						NOT = { owned_by = ROOT }
-						AND = {
-							owned_by = ROOT
-							NOT = { religion = xhazobkult }
-						}
-					}
-				}
+                    region = yezel_mora_region
+                    OR = {
+                        NOT = { owned_by = ROOT }
+                        NOT = { religion = xhazobkult }
+                    }
+                }
 				AND = {
 					province_id = 6690
-					owner = {
-						NOT = {
-							has_great_project = {
-								type = shadowroot_matriarch
-								tier = 2
-							}
+					NOT = {
+						has_great_project = {
+							type = shadowroot_matriarch
+							tier = 2
 						}
 					}
 				}
@@ -2606,9 +2617,12 @@ zokka_missions_2b = {
 				name = zokka_salt_wound
 				duration = -1
 			}
-			every_province = {
-				limit = { owner = { OR = { tag = U07 tag = U10 tag = A49 tag = U09 } } }
-				zokka_add_claims = yes
+			custom_tooltip = zokka_perigee_tt
+			hidden_effect = {
+				every_province = {
+					limit = { owner = { OR = { tag = U07 tag = U10 tag = A49 tag = U09 } } }
+					zokka_add_claims = yes
+				}
 			}
 		}
 	}
@@ -2635,14 +2649,20 @@ zokka_missions_2b = {
 						continent = asia
 					}
 					owner = { has_country_modifier = gnollish_administration }
-					NOT = { country_or_non_sovereign_subject_holds = F29 }
+					OR = {
+						NOT = { owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } }
+						NOT = { owned_by = ROOT }
+					}
 				}
 				AND = {
 					OR = {
 						area = jorkad_junction_area
 						area = orlghelovar_area
 					}
-					NOT = { owned_by = ROOT }
+					OR = {
+						NOT = { owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } }
+						NOT = { owned_by = ROOT }
+					}
 				}
 			}
 		}
@@ -2650,10 +2670,40 @@ zokka_missions_2b = {
 		trigger = {
 			custom_trigger_tooltip = {
 				tooltip = zokka_only_gnoll_tt
-				europe = { type = all OR = { owner = { tag = F29 } owner = { is_subject_of_type_with_overlord = { who = F29 type = slave_state } } NOT = { owner = { has_country_modifier = gnollish_administration } } } }
-				serpentspine = { type = all OR = { owner = { tag = F29 } owner = { is_subject_of_type_with_overlord = { who = F29 type = slave_state } } NOT = { owner = { has_country_modifier = gnollish_administration } } } }
-				africa = { type = all OR = { owner = { tag = F29 } owner = { is_subject_of_type_with_overlord = { who = F29 type = slave_state } } NOT = { owner = { has_country_modifier = gnollish_administration } } } }
-				asia = { type = all OR = { owner = { tag = F29 } owner = { is_subject_of_type_with_overlord = { who = F29 type = slave_state } } NOT = { owner = { has_country_modifier = gnollish_administration } } } }
+				europe = { 
+					type = all 
+					OR = { 
+						owned_by = ROOT
+						owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } 
+						NOT = { 
+							owner = { has_country_modifier = gnollish_administration } 
+						} 
+					} 
+				}
+				serpentspine = { 
+					type = all 
+					OR = { 
+						owned_by = ROOT
+						owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } 
+						NOT = { owner = { has_country_modifier = gnollish_administration } } 
+					} 
+				}
+				africa = { 
+					type = all 
+					OR = { 
+						owned_by = ROOT
+						owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } 
+						NOT = { owner = { has_country_modifier = gnollish_administration } } 
+					} 
+				}
+				asia = { 
+					type = all 
+					OR = { 
+						owned_by = ROOT
+						owner = { is_subject_of_type_with_overlord = { who = ROOT type = slave_state } } 
+						NOT = { owner = { has_country_modifier = gnollish_administration } } 
+					} 
+				}
 			}
 			jorkad_junction_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
 			orlghelovar_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
@@ -2680,41 +2730,26 @@ zokka_missions_2b = {
 		position = 13
 
 		provinces_to_highlight = {
+			has_temple_complex = yes
 			OR = {
-				has_province_modifier = temple_complex
-				has_province_modifier = damaged_temple_complex
-				has_province_modifier = derelict_temple_complex
-				has_province_modifier = ruined_temple_complex
-			}
-			OR = {
-				NOT = { owned_by = ROOT }
-				AND = {
-					owned_by = ROOT
-					OR = {
-						has_tax_building_trigger = no
-						NOT = { religion = xhazobkult }
-						NOT = {
-							num_of_units_in_province = {
-								who = ROOT
-								amount = 10
-							}
-						}
-						NOT = { has_building = mage_tower }
-					}
-				}
-			}
+                NOT = { owned_by = ROOT }
+                has_tax_building_trigger = no
+                NOT = { religion = xhazobkult }
+                NOT = {
+                    num_of_units_in_province = {
+                        who = ROOT
+                        amount = 10
+                    }
+                }
+                NOT = { has_building = mage_tower }
+            }
 		}
 
 		trigger = {
 			num_of_owned_provinces_with = {
 				value = 20
 				religion = xhazobkult
-				OR = {
-					has_province_modifier = temple_complex
-					has_province_modifier = damaged_temple_complex
-					has_province_modifier = derelict_temple_complex
-					has_province_modifier = ruined_temple_complex
-				}
+				has_temple_complex = yes
 				has_tax_building_trigger = yes
 				num_of_units_in_province = {
 					who = ROOT
@@ -2726,12 +2761,7 @@ zokka_missions_2b = {
 				num_of_owned_provinces_with = {
 					value = 10
 					religion = xhazobkult
-					OR = {
-						has_province_modifier = temple_complex
-						has_province_modifier = damaged_temple_complex
-						has_province_modifier = derelict_temple_complex
-						has_province_modifier = ruined_temple_complex
-					}
+					has_temple_complex = yes
 					has_tax_building_trigger = yes
 					num_of_units_in_province = {
 						who = ROOT
@@ -2750,14 +2780,7 @@ zokka_missions_2b = {
 			custom_tooltip = zokka_pierce_hells_tt
 			hidden_effect = {
 				every_owned_province = {
-					limit = {
-						OR = {
-							has_province_modifier = temple_complex
-							has_province_modifier = damaged_temple_complex
-							has_province_modifier = derelict_temple_complex
-							has_province_modifier = ruined_temple_complex
-						}
-					}
+					limit = { has_temple_complex = yes }
 					change_culture = sandfang_gnoll
 					change_religion = xhazobkult
 					add_province_modifier = {
@@ -2948,7 +2971,10 @@ zokka_missions_3b = {
 				AND = {
 					is_capital = yes
 					owner = { is_emperor = yes }
-					owner = { has_been_insulted_by_root = no }
+					OR = {
+						owner = { has_been_insulted_by_root = no }
+						owner = { NOT = { ROOT = { army_strength = { who = PREV value = 1.5 } } } }
+					}
 				}
 			}
 		}
@@ -3006,27 +3032,24 @@ zokka_missions_3b = {
 						region = rahen_coast_region
 					}
 					OR = {
-						NOT = { owned_by = ROOT }
-						AND = {
-							owned_by = ROOT
-							NOT = { religion = xhazobkult }
-						}
-					}
+                        NOT = { owned_by = ROOT }
+                        NOT = { religion = xhazobkult }
+                    }
 				}
 				AND = {
+					has_temple_complex = yes
 					OR = {
-						has_province_modifier = temple_complex
-						has_province_modifier = damaged_temple_complex
-						has_province_modifier = derelict_temple_complex
-						has_province_modifier = ruined_temple_complex
-					}
-					OR = {
-						NOT = { owned_by = ROOT }
-						AND = {
-							owned_by = ROOT
-							NOT = { has_building = mage_tower }
-						}
-					}
+                        NOT = { owned_by = ROOT }
+                        NOT = { has_building = mage_tower }
+                    }
+				}
+				AND = {
+					area = harimars_cradle_area
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					province_id = 4411
+					raj_is_destroyed = no
 				}
 			}
 		}
@@ -3050,12 +3073,7 @@ zokka_missions_3b = {
 			}
 			num_of_owned_provinces_with = {
 				value = 4
-				OR = {
-					has_province_modifier = temple_complex
-					has_province_modifier = damaged_temple_complex
-					has_province_modifier = derelict_temple_complex
-					has_province_modifier = ruined_temple_complex
-				}
+				has_temple_complex = yes
 				has_building = mage_tower
 			}
 			custom_trigger_tooltip = {
@@ -3176,14 +3194,11 @@ zokka_missions_3b = {
 
 		provinces_to_highlight = {
 			culture = primal_harimari
-			religion = xhazobkult
-			OR = {
-				NOT = { owned_by = ROOT }
-				AND = {
-					owned_by = ROOT
-					has_tax_building_trigger = no
-				}
-			}
+            religion = xhazobkult
+            OR = {
+                NOT = { owned_by = ROOT }
+                has_tax_building_trigger = no
+            }
 		}
 
 		trigger = {
@@ -3343,12 +3358,7 @@ zokka_missions_3b = {
 					}
 				}
 				AND = {
-					OR = {
-						has_province_modifier = temple_complex
-						has_province_modifier = damaged_temple_complex
-						has_province_modifier = derelict_temple_complex
-						has_province_modifier = ruined_temple_complex
-					}
+					has_temple_complex = yes
 					owned_by = ROOT
 					NOT = { has_building = mage_tower }
 				}
@@ -3375,12 +3385,7 @@ zokka_missions_3b = {
 			}
 			num_of_owned_provinces_with = {
 				value = 20
-				OR = {
-					has_province_modifier = temple_complex
-					has_province_modifier = damaged_temple_complex
-					has_province_modifier = derelict_temple_complex
-					has_province_modifier = ruined_temple_complex
-				}
+				has_temple_complex = yes
 				has_building = mage_tower
 			}
 		}
@@ -3467,7 +3472,9 @@ zokka_missions_3b = {
 		position = 18
 
 		provinces_to_highlight = {
-			
+			is_capital = yes
+			owner = { is_hegemon = yes }
+			owner = { NOT = { tag = F29 } }
 		}
 
 		trigger = {
@@ -3502,7 +3509,34 @@ zokka_missions_4b = {
 		position = 10
 
 		provinces_to_highlight = {
-			
+			OR = {
+				AND = {
+					province_id = 4438
+					NOT = { owned_by = ROOT }
+				}
+				if = {
+					limit = {
+						ROOT = {
+							NOT = {
+								num_of_owned_provinces_with = {
+									value = 10
+									OR = {
+										region = rakhadesh_region
+										region = rahen_coast_region
+									}
+								}
+							}
+						}
+					}
+					AND = {
+						OR = {
+							region = rakhadesh_region
+							region = rahen_coast_region
+						}
+						NOT = { owned_by = ROOT }
+					}
+				}
+			}
 		}
 
 		trigger = {
@@ -3548,15 +3582,10 @@ zokka_missions_4b = {
 						province_id = 5223
 					}
 					OR = {
-						NOT = { owned_by = ROOT }
-						AND = {
-							owned_by = ROOT
-							OR = {
-								has_fort_building_trigger = no
-								has_manufactory_trigger = no
-							}
-						}
-					}
+                        NOT = { owned_by = ROOT }
+                        has_fort_building_trigger = no
+                        has_manufactory_trigger = no
+                    }
 				}
 				AND = {
 					has_great_project = {
@@ -3634,12 +3663,9 @@ zokka_missions_4b = {
 				region = south_yarikhoi_region
 			}
 			OR = {
-				NOT = { owned_by = ROOT }
-				AND = {
-					owned_by = ROOT
-					NOT = { religion = xhazobkult }
-				}
-			}
+            	NOT = { owned_by = ROOT }
+                NOT = { religion = xhazobkult }
+            }
 		}
 
 		trigger = {
@@ -3683,6 +3709,7 @@ zokka_missions_4b = {
 			num_of_owned_provinces_with = {
 				value = 120
 				superregion = forbidden_lands_superregion
+				religion = xhazobkult
 			}
 			patriarch_authority = 0.3
 		}
