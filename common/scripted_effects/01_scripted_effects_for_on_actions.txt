@@ -2108,6 +2108,20 @@ anb_scripted_effects_for_ruler_death  = {
 		}
 		country_event = { id = lupulan_events.1003 }
 	}
+
+	#Zokka
+	if = {
+		limit = { tag = F29 }
+		if = {
+			limit = { has_country_flag = zokka_zokka_heir_of_zokka_flag }
+			country_event = { id = flavour_zokka.22 }
+		}
+		if = {
+			limit = { has_country_flag = zokka_ritual_checker }
+			clr_country_flag = zokka_ritual_checker
+			remove_country_modifier = zokka_great_xhaz_ritual
+		}
+	}
 }
 
 succession_culture_religion_effect = {
@@ -3382,24 +3396,6 @@ on_battle_won_unit_effect = {
 			}
 		}
 	}
-
-	# Raj rework
-	unit_owner = {
-		overlord = {
-			PREV = {	#the shit I have to do - overlord in attacker_leader_doesn't work, global event targets do but throw errors
-				if = {
-					limit = {
-						is_subject_of_type = great_daimyo_vassal
-						OR = {
-							is_in_war = { attacker_leader = PREV participants = THIS }
-							is_in_war = { defender_leader = PREV participants = THIS }
-						}
-					}
-					change_variable = { which = senapti_battles_won value = 1 }
-				}
-			}
-		}
-	}
 }
 
 on_battle_lost_unit_effect = { #this triggers on every unit present 
@@ -3642,9 +3638,6 @@ on_battle_won_country_effect = {
 		#Anbennar
 		centaur_battle_won = yes
 	}
-	# if = { limit = { has_country_flag = has_nsc_disaster }
-	# 	change_variable = { which = nscDisasterBattleWonScoreVar value = 1 }
-	# }
 	if = { limit = { tag = I03 }
 		country_event = { id = flavor_vazhatun.25 }
 	}
@@ -3853,6 +3846,21 @@ on_battle_won_country_effect = {
 			value = 1
 		}
 	}
+	# Raj rework
+	overlord = {
+		PREV = {	#the shit I have to do - overlord in attacker_leader_doesn't work, global event targets do but throw errors
+			if = {
+				limit = {
+					is_subject_of_type = great_daimyo_vassal
+					OR = {
+						is_in_war = { attacker_leader = PREV participants = THIS }
+						is_in_war = { defender_leader = PREV participants = THIS }
+					}
+				}
+				change_variable = { which = senapti_battles_won value = 1 }
+			}
+		}
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -3862,9 +3870,6 @@ on_battle_lost_country_effect = {
 		limit = { NOT = { FROM = { OR = { tag = REB tag = NAT } } } }
 		centaur_battle_count_lost = yes
 		aelnar_battle_count_lost = yes
-	}
-	if = { limit = { has_country_flag = has_nsc_disaster }
-		change_variable = { which = nscDisasterBattleLostScoreVar value = 1 }
 	}
 	if = {
 		limit = { is_subject_of_type = acolyte_dominion }
@@ -6157,6 +6162,20 @@ on_province_culture_change_effect = {
 		}
 		set_province_flag = reform_progress_from_culture_conversion
 	}
+	
+	#Eltikanized Taychendi
+	if = {
+		limit = {
+			owner = {
+				culture_group = eltibhari_ruinborn_elf
+			}
+			culture = eltikanized_taychendi
+		}
+		add_province_modifier = { name = eltikan_eltikanized_taychendi duration = -1 hidden = yes }
+	}
+	else = {
+		remove_province_modifier = eltikan_eltikanized_taychendi
+	}
 }
 
 on_province_culture_converted_effect = {
@@ -6328,6 +6347,13 @@ on_colony_finished_effect = {
 			}
 			1 = {}
 		}	 
+	}
+
+	#Zokka
+	if = {
+		limit = { has_province_flag = zokka_convert_flame_flag }
+		change_culture = flamemarked_gnoll
+		clr_province_flag = zokka_convert_flame_flag
 	}
 }
 
@@ -6585,6 +6611,9 @@ on_adm_development_effect = {
 		if = { limit = { culture = sandfang_gnoll } owner = { change_variable = { which = f27_sandfang_development value = 1 } } }
 	}
 
+	# Harpy AI fledgling roost retroactive construction.
+	harpy_roost_se_add_roost_tier_1_AI = { category = adm }
+
 	if = {
 		limit = {
 			owner = {
@@ -6724,6 +6753,9 @@ on_dip_development_effect = {
 	}
 	# Ovdal Tûngr Uthojdihr Trading Post system. Ideally works off of Expanding Infrastructure, but that's locked behind Leviathan so this is the fallback.
 	F23_apply_uthojdihr_trading_post = yes 
+
+	# Harpy AI fledgling roost retroactive construction.
+	harpy_roost_se_add_roost_tier_1_AI = { category = dip }
 	# Xanzerbexis
 	if = { 
 		limit = { 
@@ -6870,6 +6902,8 @@ on_mil_development_effect = {
 		yuanszi_attempt_mil_specialization = yes
 	}
 
+	# Harpy AI fledgling roost retroactive construction.
+	harpy_roost_se_add_roost_tier_1_AI = { category = mil }
 	#drozma tur
 	if = {
 		limit = {
@@ -6917,6 +6951,25 @@ on_development_effect = {
 
 	#Drozma Tur
 	dt_introspection_dev_effect = yes 
+
+	if = {
+		limit = { province_id = 5073 has_province_modifier = zokka_gaping_maw owner = { tag = F29 } }
+		owner = {
+			change_variable = {
+				which = zokkamak_count
+				value = 1
+			}
+		}
+		if = {
+			limit = { owner = { check_variable = { which = zokkamak_count value = 10 } } }
+			remove_province_modifier = zokka_gaping_maw
+			add_province_modifier = {
+				name = zokka_over_maw
+				duration = -1
+			}
+			owner = { add_kelmaxherho_favour = yes }
+		}
+	}
 }
 
 # THIS = Province, FROM = Country, ROOT = Merc Unit
@@ -7099,6 +7152,13 @@ on_parliament_seat_given_effect = {
 			duration = -1
 		}
 	}
+	if = {
+		limit = { has_province_modifier = chaqway_markets }
+		add_province_modifier = {
+			name = chaqway_parliament
+			duration = -1
+		}
+	}
 }
 on_parliament_seat_lost_effect = {
 	owner = {
@@ -7118,6 +7178,10 @@ on_parliament_seat_lost_effect = {
 			has_province_modifier = gov_buffed_parliament_seat
 		}
 		remove_province_modifier = gov_buffed_parliament_seat
+	}
+	if = {
+		limit = { has_province_modifier = chaqway_parliament }
+		remove_province_modifier = chaqway_parliament
 	}
 }
 on_parliament_debate_failed_effect = {
@@ -8244,6 +8308,7 @@ startup_1444_effects = {
 		if = {
 			limit = {
 				capital_scope = { superregion = western_cannor_superregion }
+				religion_group = cannorian
 				NOT = {
 					has_reform = adventurer_reform
 					tag = B55
@@ -9033,6 +9098,21 @@ startup_1444_effects = {
 			country_event = { id = khadisrapur.1 days = 30 random = 30 }
 		}
 
+		if = { limit = { culture_group = harpy }
+			harpy_roost_se_setup = yes
+
+			if = {
+				limit = {
+					660 = {
+						owned_by = PREV
+						has_great_project = { type = queens_throne tier = 1 }
+					}
+				}
+				set_country_flag = harpy_roost_queens_throne_has_tier_1_free_roost
+				harpy_roost_se_allow_construction_of_extra_roost = yes
+			}
+		}
+
 		if = {
 			limit = { tag = L81 }
 			country_event = { id = flavour_yassa.29 days = 365 }
@@ -9091,6 +9171,40 @@ startup_1444_effects = {
 				which = monarch_reign_start_dev
 				value = total_development
 				who = ROOT
+			}
+		}
+
+		#Escanni refugees
+		if = {
+			limit = { owns = 451 }
+			451 = { #Nathalaire
+				province_event = {
+					id = escanni_refugees_settlement.312
+					days = 2700
+				}
+			}
+		}
+		if = {
+			limit = { owns = 723 }
+			723 = { #Bayvic
+				province_event = {
+					id = escanni_refugees_settlement.311
+					days = 2800
+				}
+			}
+		}
+		if = { #Arbaran
+			limit = { tag = A46 }
+			country_event = {
+				id = escanni_refugees_settlement.314
+				days = 2250
+			}
+		}
+		if = { #Gawed
+			limit = { tag = A13 }
+			country_event = {
+				id = escanni_refugees_settlement.313
+				days = 2250
 			}
 		}
 	}
@@ -10288,21 +10402,6 @@ on_province_owner_change_effect = {
 		}
 	}
 
-	#Harpy roosts
-	if = {
-		limit = { has_province_modifier = harpy_roost }
-		owner = {
-			if = {
-				limit = { has_country_modifier = harpy_administration }
-				update_roost_count = yes
-			}
-			every_known_country = {
-				limit = { has_country_modifier = harpy_administration }
-				update_roost_count = yes
-			}
-		}
-	}
-	
 	#Bianfang Harpy vassal Stuff
 	if = {
 		limit = {
@@ -12027,6 +12126,66 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
+
+	#Eltikanized Taychendi
+	if = {
+		limit = {
+			owner = {
+				culture_group = eltibhari_ruinborn_elf
+			}
+			culture = eltikanized_taychendi
+		}
+		add_province_modifier = { name = eltikan_eltikanized_taychendi duration = -1 hidden = yes }
+	}
+
+	# Zokka
+	if = {
+		limit = { trade_goods = slaves owner = { has_government_attribute = enables_corrivalry } }
+		add_province_modifier = {
+			name = zokka_ekxiem_zokka_boost
+			duration = -1
+			hidden = yes
+		}
+	}
+	if = {
+		limit = { fast_has_pop_of_race = { race = human } }
+		if = {
+			limit = { owner = { has_reform = zokka_hand_feeds } }
+			if = {
+				limit = { has_small_human_minority_trigger = yes }
+				add_province_modifier = {
+					name = zokka_hand_feeds_boost
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = zokka_hand_feeds_better_boost
+					duration = -1
+					hidden = yes
+				}
+			}
+		}
+		else_if = {
+			limit = { owner = { has_reform = zokka_hand_feeds2 } }
+			if = {
+				limit = { has_small_human_minority_trigger = yes }
+				add_province_modifier = {
+					name = zokka_hand_feeds_boost2
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = zokka_hand_feeds_better_boost2
+					duration = -1
+					hidden = yes
+				}
+			}
+		}
+	}
 }
 
 on_primary_culture_changed_effect = {
@@ -12093,6 +12252,9 @@ on_primary_culture_changed_effect = {
 			add_permanent_province_modifier = { name = flooded_province duration = -1 }
 		}
 	}
+
+	# Roosts activating/deactivating when you change to/from Harpy culture.
+	harpy_roost_se_on_primary_culture_changed_effect = yes
 
 	if = {
 		limit = { primary_culture = sunrise_elf }
