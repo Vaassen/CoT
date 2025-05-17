@@ -192,12 +192,8 @@ province_event = {	#on raj capital conquered
 						id = rahenraj.1001
 						days = 5
 					}
-					if = {
-						limit = { is_variable_equal = { which = raj_var_cohesion_impact_bonus value = 0 } } #it's uninitialised?
-						set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
-					}
+					rahen_raj_calc_cohesion = yes
 				}
-				rahen_raj_calc_cohesion = yes
 			}
 			if = { #Case: new owner is NOT the new Raja, previous Raja lives -> all Prabhi+Senapti go free
 				limit = {
@@ -271,12 +267,8 @@ province_event = {	#on raj capital conquered
 						id = rahenraj.1001
 						days = 5
 					}
-					if = {
-						limit = { is_variable_equal = { which = raj_var_cohesion_impact_bonus value = 0 } } #it's uninitialised?
-						set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
-					}
+					rahen_raj_calc_cohesion = yes
 				}
-				rahen_raj_calc_cohesion = yes
 			}
 			if = { #Case: new owner is NOT the new Raja, previous Raja dead -> all Prabhi+Senapti go free, disband the Raja
 				limit = {
@@ -1732,68 +1724,104 @@ country_event = { #[From.GetName] has left the Raj!
 ### General Raj Management Extras ###
 #####################################
 
-# country_event = {			#insurance event, uncomment if we see it's needed, also uncomment in on_action
-# 	id = rahenraj.1000
-# 	title = rahenraj.1000.t
-# 	desc = rahenraj.1000.d
-# 	picture = COURT_eventPicture
+country_event = {				#address the issue of nations released inside the raj with the wrong government reform or/and wrong subject type
+	id = rahenraj.1000			#e.g. in internal raja wars, forcibly released tags gain their parent tags subject types (for some reason??)
+	title = rahenraj.1000.t		#need to wait 1 day in the on_action or fizzles, as they are considered an independent nation when on_new_monarch take effect
+	desc = rahenraj.1000.d
+	picture = COURT_eventPicture
 
-# 	hidden = yes
-# 	is_triggered_only = yes
+	hidden = yes
+	is_triggered_only = yes
 
-# 	trigger = {
-# 		OR = {
-# 			has_government_attribute = is_raja
-# 			overlord = { has_government_attribute = is_raja }
-# 		}
-# 		OR = {
-# 			AND = {
-# 				is_subject_of_type = daimyo_vassal
-# 				NOT = { has_reform = prabhi_reform }
-# 			}
-# 			AND = {
-# 				OR = {
-# 					is_subject_of_type = great_daimyo_vassal
-# 					is_subject_of_type = vizier_vassal
-# 				}
-# 				NOT = { has_reform = senapti_reform }
-# 			}
-# 			NOT = {
-# 				has_estate_privilege = estate_raj_ministries_raj_cohesion
-# 			}
-# 		}
-# 	}
+	trigger = {
+		OR = {
+			has_government_attribute = is_raja
+			overlord = { has_government_attribute = is_raja }
+		}
+		OR = {
+			AND = {
+				is_subject_of_type = daimyo_vassal
+				NOT = { has_reform = prabhi_reform }
+			}
+			AND = {
+				is_subject_of_type = great_daimyo_vassal
+				NOT = {
+					AND = {
+						has_reform = senapti_reform
+						has_country_flag = senapti_flag
+					}
+				}
+			}
+			AND = {
+				is_subject_of_type = vizier_vassal
+				NOT = {
+					AND = {
+						has_reform = senapti_reform
+						tag = event_target:raj_vizier_global_target
+					}
+				}
+			}
+			NOT = {
+				has_estate_privilege = estate_raj_ministries_raj_cohesion
+			}
+		}
+	}
 
-# 	immediate = {
-# 		if = {
-# 			limit = {
-# 				is_subject_of_type = daimyo_vassal
-# 				NOT = { has_reform = prabhi_reform }
-# 			}
-# 			add_government_reform = prabhi_reform
-# 		}
-# 		else_if = {
-# 			limit = {
-# 				OR = {
-# 					is_subject_of_type = great_daimyo_vassal
-# 					is_subject_of_type = vizier_vassal
-# 				}
-# 				NOT = { has_reform = senapti_reform }
-# 			}
-# 			add_government_reform = senapti_reform
-# 		}
+	immediate = {
+		if = {
+			limit = {
+				is_subject_of_type = vizier_vassal
+				NOT = { tag = event_target:raj_vizier_global_target }
+			}
+			event_target:raj_raja_global_target = {
+				create_subject = {
+					subject_type = daimyo_vassal
+					subject = PREV
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_subject_of_type = great_daimyo_vassal
+				NOT = { has_country_flag = senapti_flag }
+			}
+			event_target:raj_raja_global_target = {
+				create_subject = {
+					subject_type = daimyo_vassal
+					subject = PREV
+				}
+			}
+		}
+		if = {
+			limit = {
+				is_subject_of_type = daimyo_vassal
+				NOT = { has_reform = prabhi_reform }
+			}
+			add_government_reform = prabhi_reform
+		}
+		else_if = {
+			limit = {
+				OR = {
+					is_subject_of_type = great_daimyo_vassal
+					is_subject_of_type = vizier_vassal
+				}
+				NOT = { has_reform = senapti_reform }
+			}
+			add_government_reform = senapti_reform
+		}
+		
 
-# 		if = {
-# 			limit = { NOT = { has_estate_privilege = estate_raj_ministries_raj_cohesion } }
-# 			set_estate_privilege = estate_raj_ministries_raj_cohesion
-# 		}
-# 	}
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_raj_ministries_raj_cohesion } }
+			set_estate_privilege = estate_raj_ministries_raj_cohesion
+		}
+	}
 
-# 	option = {
-# 		ai_chance = { factor = 1 }
-# 		name = rahenraj.1000.a
-# 	}
-# }
+	option = {
+		ai_chance = { factor = 1 }
+		name = rahenraj.1000.a
+	}
+}
 
 #Open or Closed Senapti Ranks?
 country_event = {
