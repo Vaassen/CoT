@@ -514,11 +514,11 @@ magic_school_level_up = {
 
 		if = {
 			limit = { has_$type$_flag = saving_spell_levels }
-			save_spell_levels_for_type_and_school = { type = $type$ school = $school$ }
+			update_saved_spell_levels_for_type_and_school = { type = $type$ school = $school$ }
 		}
 		
 		hidden_effect = {
-			if = { #fun fact, these event-firings are not duplicative of magic_system.100. Why that is, is an exercise for the reader.
+			if = { #firing notification event
 				limit = { has_$type$_flag = $school$_advancement }
 				if = {
 					limit = { has_ruler_flag = magic_study }
@@ -1065,77 +1065,117 @@ clear_all_spell_levels_for_type = {
 	clear_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
 }
 
-save_spell_levels_for_type_and_school = {
-	clear_saved_spell_levels_for_school = { school = $school$ }
+save_spell_levels_for_type_and_school_to_name = {
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = $school$ }
 	trigger_switch = {
 		on_trigger = has_$type$_flag
-		$school$_1 = { set_country_flag = saved_$school$_1 }
-		$school$_2 = { set_country_flag = saved_$school$_2 }
-		$school$_3 = { set_country_flag = saved_$school$_3 }
+		$school$_1 = { set_country_flag = saved_$name$_$school$_1 }
+		$school$_2 = { set_country_flag = saved_$name$_$school$_2 }
+		$school$_3 = { set_country_flag = saved_$name$_$school$_3 }
 	}
 }
 
-clear_saved_spell_levels_for_school = {
+save_spell_levels_for_type_to_name = {
+	set_$type$_flag = saving_spell_levels #helps to fire the event
+	set_$type$_flag = is_$name$ #used primarily for sorting
+
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = abjuration }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = conjuration }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = divination }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = enchantment }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = evocation }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = illusion }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = necromancy }
+	save_spell_levels_for_type_and_school_to_name = { type = $type$ name = $name$ school = transmutation }
+}
+
+update_saved_spell_levels_for_type_and_school_to_name = { #doesn't override higher-level schools
 	trigger_switch = {
-		on_trigger = has_country_flag
-		saved_$school$_1 = { clr_country_flag = saved_$school$_1 }
-		saved_$school$_2 = { clr_country_flag = saved_$school$_2 }
-		saved_$school$_3 = { clr_country_flag = saved_$school$_3 }
+		on_trigger = has_$type$_flag
+		$school$_1 = {
+			if = { 
+				limit = { NOT = { has_country_flag = saved_$name$_$school$_2 has_country_flag = saved_$name$_$school$_3 } }
+				set_country_flag = saved_$name$_$school$_1
+			}
+		}
+		$school$_2 = {
+			if = { 
+				limit = { NOT = { has_country_flag = saved_$name$_$school$_3 } }
+				set_country_flag = saved_$name$_$school$_2
+				clr_country_flag = saved_$name$_$school$_1
+			}
+		}
+		$school$_3 = {
+			set_country_flag = saved_$name$_$school$_3
+			clr_country_flag = saved_$name$_$school$_2
+			clr_country_flag = saved_$name$_$school$_1
+		}
 	}
 }
 
-clear_saved_spell_levels = {
-	clear_saved_spell_levels_for_school = { school = abjuration }
-	clear_saved_spell_levels_for_school = { school = conjuration }
-	clear_saved_spell_levels_for_school = { school = divination }
-	clear_saved_spell_levels_for_school = { school = enchantment }
-	clear_saved_spell_levels_for_school = { school = evocation }
-	clear_saved_spell_levels_for_school = { school = illusion }
-	clear_saved_spell_levels_for_school = { school = necromancy }
-	clear_saved_spell_levels_for_school = { school = transmutation }
+update_saved_spell_levels_for_type_and_school = { #update this scripted effect if you come up with new saved spell level names
+	if = {
+		limit = { has_$type$_flag = is_immortal }
+		update_saved_spell_levels_for_type_and_school_to_name = { type = $type$ school = $school$ name = immortal }
+	}
+	if = {
+		limit = { has_$type$_flag = is_inherits }
+		update_saved_spell_levels_for_type_and_school_to_name = { type = $type$ school = $school$ name = inherits }
+	}
+	if = {
+		limit = { has_$type$_flag = is_mitrenya }
+		update_saved_spell_levels_for_type_and_school_to_name = { type = $type$ school = $school$ name = mitrenya }
+	}
 }
 
-give_saved_spell_levels_for_type_and_school = {
+clear_saved_spell_levels_for_school_and_name = {
 	trigger_switch = {
 		on_trigger = has_country_flag
-		saved_$school$_1 = {
+		saved_$name$_$school$_1 = { clr_country_flag = saved_$name$_$school$_1 }
+		saved_$name$_$school$_2 = { clr_country_flag = saved_$name$_$school$_2 }
+		saved_$name$_$school$_3 = { clr_country_flag = saved_$name$_$school$_3 }
+	}
+}
+
+clear_saved_spell_levels_for_name = {
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = abjuration }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = conjuration }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = divination }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = enchantment }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = evocation }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = illusion }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = necromancy }
+	clear_saved_spell_levels_for_school_and_name = { name = $name$ school = transmutation }
+}
+
+give_type_saved_spell_levels_for_school_from_name = {
+	trigger_switch = {
+		on_trigger = has_country_flag
+		saved_$name$_$school$_1 = {
 			if = { limit = { NOT = { has_$type$_flag = $school$_3 has_$type$_flag = $school$_2 } }
 			custom_tooltip = $school$_1 set_$type$_flag = $school$_1 }
 		}
-		saved_$school$_2 = {
+		saved_$name$_$school$_2 = {
 			if = { limit = { NOT = { has_$type$_flag = $school$_3 } }
 			custom_tooltip = $school$_2 set_$type$_flag = $school$_2 clr_$type$_flag = $school$_1 }
 		}
-		saved_$school$_3 = { custom_tooltip = $school$_3 set_$type$_flag = $school$_3 clr_$type$_flag = $school$_2 clr_$type$_flag = $school$_1 }
+		saved_$name$_$school$_3 = { custom_tooltip = $school$_3 set_$type$_flag = $school$_3 clr_$type$_flag = $school$_2 clr_$type$_flag = $school$_1 }
 	}
 }
 
-save_type_spell_levels = { #saves the spell levels of ruler/heir/consort/country. saving multiple people at once causes conflicts.
-	hidden_effect = {
-		set_$type$_flag = saving_spell_levels #So that we don't save for everyone
-
-		save_spell_levels_for_type_and_school = { type = $type$ school = abjuration }
-		save_spell_levels_for_type_and_school = { type = $type$ school = conjuration }
-		save_spell_levels_for_type_and_school = { type = $type$ school = divination }
-		save_spell_levels_for_type_and_school = { type = $type$ school = enchantment }
-		save_spell_levels_for_type_and_school = { type = $type$ school = evocation }
-		save_spell_levels_for_type_and_school = { type = $type$ school = illusion }
-		save_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
-		save_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
-	}
-}
-
-give_type_saved_spell_levels = { #for use alongside the define_powerful_mage effect
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = abjuration }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = conjuration }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = divination }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = enchantment }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = evocation }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = illusion }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
-	give_saved_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
+give_type_saved_spell_levels_from_name = { #for use alongside the define_powerful_mage effect
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = abjuration }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = conjuration }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = divination }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = enchantment }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = evocation }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = illusion }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = necromancy }
+	give_type_saved_spell_levels_for_school_from_name = { type = $type$ name = $name$ school = transmutation }
 
 	set_$type$_flag = initialized_magic_flags
+
+	[[save] set_$type$_flag = saving_spell_levels set_$type$_flag = is_$name$ ]
 }
 
 recalculate_ruler_mana_regen = {
@@ -1425,12 +1465,6 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 
 	generic_calc_spell_levels = { type = $type$ }
 	recalculate_$type$_mana_regen = yes
-
-	if = {
-		limit = { has_$type$_flag = saving_spell_levels }
-		save_type_spell_levels = { type = $type$ }
-	}
-
 	}
 }
 
@@ -1556,8 +1590,8 @@ define_powerful_mage = { #types are ruler, heir, and consort
 								magic_setup_give_random_level = { type = $type$ }
 							}
 							set_$type$_flag = initialized_magic_flags ]
-		[[saved_levels]		give_type_saved_spell_levels = { type = $type$ } ]
-		[[save_levels]		save_type_spell_levels = { type = $type$ } ]
+		[[saved_levels]		give_type_saved_spell_levels_from_name = { type = $type$ name = $saved_levels$ } ]
+		[[save_levels]		save_spell_levels_for_type_to_name = { type = $type$ name = $save_levels$ } ]
 
 		hidden_effect = {
 			if = {
