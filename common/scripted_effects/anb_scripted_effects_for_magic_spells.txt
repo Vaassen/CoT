@@ -767,12 +767,6 @@ magic_study_clear_study_effects = {
 	}
 }
 
-remove_siege_spells_from_province = {
-	remove_province_modifier = siege_magic_giant_besieger
-	remove_province_modifier = siege_magic_dragon_besieger
-	remove_province_modifier = siege_magic_instant_siege
-}
-
 magic_casted_spell = {
 }
 
@@ -1397,22 +1391,15 @@ abjuration_2_0_effect = { # Mass Ward
 			}
 		}
 
-		#Kheionai Deathwinds can't be in an else since it fires an event
-		if = {
-			limit = { at_least_magic_project_level = { project = magical_fortress level = 2 } }
-			every_owned_province = {
-				limit = { fort_level = 1 controlled_by = PREV region = alecand_region }
-				province_event = { id = kheionai.2 }
-				province_event = { id = kheionai.2 days = 1825 }
-				add_temporary_windward_level = { level = 2 length = 1825 }
-			}
-		}
-		if = {
-			limit = { NOT = { at_least_magic_project_level = { project = magical_fortress level = 2 } } }
-			every_owned_province = {
-				limit = { fort_level = 1 controlled_by = PREV region = alecand_region }
-				add_temporary_windward_level = { level = 2 length = 1825 }
-			}
+		#Kheionai Deathwinds has to be manually written out or it fires errors
+		every_owned_province = {
+			limit = { fort_level = 1 controlled_by = PREV region = alecand_region NOT = { has_province_flag = has_temporary_windward_level } }
+
+			set_province_flag = has_temporary_windward_level
+			change_variable = { temporaryWindWardLevel = 2 }
+			province_event = { id = kheionai.15 days = 1825 }
+			province_event = { id = kheionai.2 } #literally just using this to get calculate_windward_level to fire correctly
+			province_event = { id = kheionai.2 days = 1825 } #and in case you got fort levels
 		}
 	}
 }
@@ -1692,7 +1679,10 @@ enchantment_2_1_effect = { # Enchanting Embassy 2
 enchantment_3_0_effect = { # Dominate to Surrender
 	increase_witch_king_points_large = { level = enchantment_level_3 }
 	PREV = {
-		hidden_effect = { controller = { country_event = { id = magic_spell.405 } } }
+		hidden_effect = {
+			save_event_target_as = dominated_province
+			controller = { country_event = { id = magic_spell.405 } }
+		}
 		change_controller = PREV
 	}
 	hidden_effect = {
@@ -1712,6 +1702,7 @@ evocation_0_0_effect = { # Fireball
 		custom_tooltip = evocation_0_0_spell_effect_tt
 		hidden_effect = {
 			change_siege = 2
+			save_event_target_as = fireball_province
 			controller = { country_event = { id = magic_spell.501 } }
 		}
 	}
@@ -1727,8 +1718,44 @@ evocation_2_0_effect = { # Meteor Swarm
 	PREV = {
 		remove_fortifications = yes
 		add_devastation = 50
-		remove_random_development = yes #TODO Jothell May need prng
-		hidden_effect = { controller = { country_event = { id = magic_spell.502 } } }
+		tooltip = { remove_random_development = yes }
+		hidden_effect = {
+			randnum = {
+				max = 6
+				case6 = "
+					if = { limit = { base_tax = 2 } add_base_tax = -1 }
+					else_if = { limit = { base_production = 2 } add_base_production = -1 }
+					else_if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+				"
+				case5 = "
+					if = { limit = { base_tax = 2 } add_base_tax = -1 }
+					else_if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+					else_if = { limit = { base_production = 2 } add_base_production = -1 }
+				"
+				case4 = "
+					if = { limit = { base_production = 2 } add_base_production = -1 }
+					else_if = { limit = { base_tax = 2 } add_base_tax = -1 }
+					else_if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+				"
+				case3 = "
+					if = { limit = { base_production = 2 } add_base_production = -1 }
+					else_if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+					else_if = { limit = { base_tax = 2 } add_base_tax = -1 }
+				"
+				case2 = "
+					if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+					else_if = { limit = { base_tax = 2 } add_base_tax = -1 }
+					else_if = { limit = { base_production = 2 } add_base_production = -1 }
+				"
+				case1 = "
+					if = { limit = { base_manpower = 2 } add_base_manpower = -1 }
+					else_if = { limit = { base_production = 2 } add_base_production = -1 }
+					else_if = { limit = { base_tax = 2 } add_base_tax = -1 }
+				"
+			}
+			save_event_target_as = meteor_province
+			controller = { country_event = { id = magic_spell.502 } }
+		}
 	}
 }
 evocation_2_1_effect = { # Tearfall
@@ -1841,7 +1868,15 @@ necromancy_0_0_effect = { # False Life
 
 necromancy_1_0_effect = { # Steal Vitality
 	increase_witch_king_points_medium = { level = necromancy_level_1_minimum }
-	add_country_modifier = { name = necromancy_1_0_mod duration = 3650 }
+
+	simple_dynamic_effect = {
+		first_custom_tooltip = necromancy_1_0_effect_req_tt
+		first_limit = "has_country_flag = ruled_by_lich"
+		first_effect = "add_country_modifier = { name = necromancy_1_0_alternative_mod duration = 3650 }"
+		second_limit = "NOT = { has_country_flag = ruled_by_lich }"
+		second_effect = "add_country_modifier = { name = necromancy_1_0_mod duration = 3650 }"
+	}
+
 	update_mana_regen_vars = yes
 }
 necromancy_1_1_effect = { # Contagion
@@ -1852,7 +1887,6 @@ necromancy_1_1_effect = { # Contagion
 		save_event_target_as = contagion_province
 	}
 	hidden_effect = {
-		country_event = { id = magic_spell.710 }
 		every_war_enemy_country = {
 			limit = { event_target:contagion_province = { sieged_by = PREV } }
 			country_event = { id = magic_spell.710 } #Nofication
