@@ -12,6 +12,8 @@ country_event = {
 		tag = Z22 
 	}
 
+	is_triggered_only = yes
+
 	option = {
 		name = flavour_celmaldor.0.a
 		set_country_flag = z22_celmaldor_debug
@@ -160,6 +162,488 @@ country_event = {
 			siege = 5
 			name = "Urvion 'Deep Eyes' Wavedancer"
 			trait = great_explorer_personality
+		}
+	}
+}
+
+
+#Election 1
+country_event = {
+	id = flavour_celmaldor.700
+	title = flavour_celmaldor.700.t
+	desc = flavour_celmaldor.700.d
+	picture = ELECTION_REPUBLICAN_eventPicture
+
+	trigger = {
+		tag = Z22 
+	}
+
+	immediate = {
+		hidden_effect = {
+			pre_select_possible_ruler_focus = yes
+			if = {
+				limit = { has_government_attribute = has_limited_terms }
+				export_to_variable = {
+					which = max_election_term
+					value = modifier:max_terms
+				}
+			}
+		}
+	}
+
+	after = {
+		clr_country_flag = caretaker_revolutionary_government
+		post_ruler_focus_clearance = yes
+	}
+
+	option = {
+		name = flavour_celmaldor.700.a # Current ruler stays
+		trigger = {
+			has_regency = no
+			NOT = { 
+				has_ruler_flag = leader_has_been_pushed_out
+			}
+			OR = {
+				NOT = { has_government_attribute = has_limited_terms }
+				check_variable = {
+					which = max_election_term
+					which = election_term
+				}
+			}
+		}
+		ai_chance = { 
+			factor = 60
+			modifier = {
+				factor = 0
+				NOT = { republican_tradition = 25 }
+			}	
+			modifier = {
+				factor = 0.5
+				NOT = { republican_tradition = 50 }
+			}				
+			modifier = {
+				factor = 0.5
+				NOT = { republican_tradition = 75 }
+			}	
+			modifier = {
+				factor = 2.0
+				republican_tradition = 90
+			}		
+			
+			#Anbennar
+			modifier = {
+				factor = 2.0
+				ruler_has_mage_personality = yes
+			}	
+			modifier = {
+				factor = 100.0
+				OR = {
+					ruler_has_personality = great_conqueror_personality
+					ruler_has_personality = mythical_conqueror_personality
+				}
+			}
+		}
+		custom_tooltip = remains_ruler
+		if = {
+			limit = { has_government_attribute = has_limited_terms }
+			custom_tooltip = current_term_tt
+		}
+		change_adm = 1
+		change_dip = 1
+		change_mil = 1
+		if = {
+			limit = {
+				is_tribal = no 
+				government = republic
+				NOT = { republican_tradition = 20 }				
+				NOT = { is_revolutionary_republic_trigger = yes }
+				has_dlc = "Res Publica"
+				NOT = { has_government_attribute = cannot_become_dictatorship }
+				
+				#Anbennar
+				NOT = { has_reform = northern_league_magnates } # need a special case for this
+			}
+			add_government_reform = presidential_despot_reform	
+		}
+		else_if = {
+			limit = {
+				government = republic
+				NOT = { republican_tradition = 20 }	
+				is_revolutionary_republic_trigger = yes
+				
+				#Anbennar
+				NOT = { has_reform = northern_league_magnates } # need a special case for this
+			}
+			change_government = monarchy
+			add_government_reform = revolutionary_empire_reform
+		}
+		if = {
+			limit = {
+				is_tribal = no  
+				government = republic
+				NOT = { republican_tradition = 20 }
+				NOT = { has_dlc = "Res Publica" }
+				NOT = { has_government_attribute = cannot_become_dictatorship }
+				
+				#Anbennar
+				NOT = { has_reform = northern_league_magnates } # need a special case for this
+			}
+			change_government = monarchy
+			#set_legacy_government = despotic_monarchy
+		}
+		else_if = {	#long-lived races
+			limit = {
+				OR = {
+					has_country_modifier = gnomish_administration
+					has_country_modifier = elven_administration
+					has_country_modifier = dwarven_administration
+				}
+			}
+			add_scaled_republican_tradition = -3
+		}
+		else = {
+			if = {
+				limit = {
+					has_country_flag = increased_election_cost
+				}
+				add_scaled_republican_tradition = -15
+				clr_country_flag = increased_election_cost
+			}
+			else = {
+				add_scaled_republican_tradition = -10
+			}
+		}
+		random_list = {
+			10 = {
+				add_adm_power = 50
+			}
+			10 = {
+				add_dip_power = 50
+			}
+			10 = {
+				add_mil_power = 50
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = reelection_depowers_estates
+			}
+			add_estate_influence_modifier = {
+				estate = all
+				influence = -10
+				duration = 1460
+				desc = REELCTION_DEPOWER_ESTATES
+			}
+		}
+		if = {
+			limit = { has_government_attribute = elections_influence_estates }
+			add_estate_loyalty = {
+				estate = all
+				loyalty = 5
+			}
+		}
+		if = {
+			limit = { has_government_attribute = reelection_increases_absolutism }
+			tooltip = {
+				add_absolutism = 10
+			}
+			custom_tooltip = ADD_ABSOLUTISM_BASED_ON_ELECTION_TERM
+			hidden_effect = {
+				for_variable_amount = {
+					variable = election_term
+					effect = "
+						add_absolutism = 10
+					"
+				}
+			}
+			hidden_effect = {
+				change_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = { has_government_attribute = elections_increase_factions_influence }
+			add_influence_to_random_faction = {
+				influence = 20
+			}
+		}
+		add_karma = -5
+		if = {
+			limit = {
+				has_government_attribute = has_limited_terms
+			}
+			hidden_effect = {
+				change_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+	}
+	option = {
+		name = flavour_celmaldor.700.b #The candidate of Clan Frozentide
+		ai_chance = { factor = 20 }
+		trigger = {
+			NOT = {
+				AND = {
+					ai = yes
+					OR = {
+						ruler_has_personality = mythical_conqueror_personality
+						ruler_has_personality = great_conqueror_personality
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { republic_with_female_rulers_trigger = yes }
+			define_ruler = {
+				mil = 1
+				adm = 4
+				dip = 1
+				random_gender = yes # Allows random gender for republics
+			}
+		}
+		else = {
+			define_ruler = {
+				mil = 1
+				adm = 4
+				dip = 1
+			}
+		}
+		hidden_effect = {
+			set_ruler_flag = ruler_is_frozentide
+		}
+		if = {
+			limit = { has_government_attribute = elections_increase_factions_influence }
+			add_influence_to_adm_faction = {
+				influence = 20
+			}
+		}
+		add_karma = 10
+		if = {
+			limit = { has_government_attribute = elections_influence_estates }
+			add_estate_loyalty_by_class_adm = {
+				loyalty = 10
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = has_limited_terms
+			}
+			hidden_effect = {
+				set_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = { has_government_attribute = has_candidate_bonus }
+			assign_ruler_focus = {
+				type = adm
+			}
+		}
+	}
+	option = {
+		name = flavour_celmaldor.700.c #an Icewind candidate
+		trigger = {
+			NOT = {
+				AND = {
+					ai = yes
+					OR = {
+						ruler_has_personality = mythical_conqueror_personality
+						ruler_has_personality = great_conqueror_personality
+					}
+				}
+			}
+		}
+		ai_chance = { factor = 20 }
+		else_if = {
+			limit = { republic_with_female_rulers_trigger = yes }
+			define_ruler = {
+				dip = 4
+				adm = 1
+				mil = 1					
+				random_gender = yes # Allows random gender for republics
+			}
+		}
+		else = {
+			define_ruler = {
+				dip = 4
+				adm = 1
+				mil = 1					
+			}
+		}
+		hidden_effect = {
+			set_ruler_flag = ruler_is_icewind
+		}
+		if = {
+			limit = { has_government_attribute = elections_increase_factions_influence }
+			add_influence_to_dip_faction = {
+				influence = 20
+			}
+		}
+		add_karma = 10
+		if = {
+			limit = { has_government_attribute = elections_influence_estates }
+			add_estate_loyalty_by_class_dip = {
+				loyalty = 10
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = has_limited_terms
+			}
+			hidden_effect = {
+				set_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = { has_government_attribute = has_candidate_bonus }
+			assign_ruler_focus = {
+				type = dip
+			}
+		}
+	}
+	option = {
+		name = flavour_celmaldor.700.e	#a whitespear candidate
+		ai_chance = { factor = 20 }
+		trigger = {
+			NOT = {
+				AND = {
+					ai = yes
+					OR = {
+						ruler_has_personality = mythical_conqueror_personality
+						ruler_has_personality = great_conqueror_personality
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { republic_with_female_rulers_trigger = yes }
+			define_ruler = {
+				mil = 4
+				adm = 1
+				dip = 1					
+				random_gender = yes # Allows random gender for republics
+			}
+		}
+		else = {
+			define_ruler = {
+				mil = 4
+				adm = 1
+				dip = 1					
+			}
+		}
+		hidden_effect = {
+			set_ruler_flag = ruler_is_whitespear
+		}
+		if = {
+			limit = { has_government_attribute = elections_increase_factions_influence }
+			add_influence_to_mil_faction = {
+				influence = 20
+			}
+		}
+		add_karma = 10
+		if = {
+			limit = { has_government_attribute = elections_influence_estates }
+			add_estate_loyalty_by_class_mil = {
+				loyalty = 10
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = has_limited_terms
+			}
+			hidden_effect = {
+				set_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = { has_government_attribute = has_candidate_bonus }
+			assign_ruler_focus = {
+				type = mil
+			}
+		}
+	}
+	option = {
+		name = flavour_celmaldor.700.f #random non clan candidate
+		ai_chance = { factor = 20 }
+		trigger = {
+			NOT = {
+				AND = {
+					ai = yes
+					OR = {
+						ruler_has_personality = mythical_conqueror_personality
+						ruler_has_personality = great_conqueror_personality
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { republic_with_female_rulers_trigger = yes }
+			define_ruler = {
+				mil = 4
+				adm = 1
+				dip = 1					
+				random_gender = yes # Allows random gender for republics
+			}
+		}
+		else = {
+			define_ruler = {
+				mil = 4
+				adm = 1
+				dip = 1					
+			}
+		}
+		hidden_effect = {
+			set_ruler_flag = ruler_is_non_clan
+		}
+		add_karma = 10
+		if = {
+			limit = { has_government_attribute = elections_influence_estates }
+			add_random_estate_loyalty = {
+				loyalty = 10
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = has_limited_terms
+			}
+			hidden_effect = {
+				set_variable = {
+					which = election_term
+					value = 1
+				}
+			}
+		}
+		if = {
+			limit = { has_government_attribute = has_candidate_bonus }
+			random_list = {
+				1 = {
+					assign_ruler_focus = {
+						type = mil
+					}
+				}
+				1 = {
+					assign_ruler_focus = {
+						type = dip
+					}
+				}
+				1 = {
+					assign_ruler_focus = {
+						type = adm
+					}
+				}
+			}
 		}
 	}
 }
