@@ -99,7 +99,7 @@ on_startup = {
 		lake.500				#Lake Federation Mages Intro
 		taychendi.100 #sets starting taychendi rulers as generals
 		flavor_magisterium.25
-        flavor_zansap.4 # Zansap intro
+    flavor_zansap.4 # Zansap intro
 		medasi.20 				#medasi start event
 		amadia.1				#Amadian Damestear/Goods
 		flavor_gawed.200 		#Gawed truce with nimscodd
@@ -114,6 +114,7 @@ on_startup = {
 		flavor_orda_aldresia.7 #Orda Aldresia Intro
 		sapchopper.1 # Sapchopper intro
 		silentblade.1 # Silentblade intro
+		salla_cenag.1 # Salla Cenag intro
 		flavour_khugra.1 #Shalazar Starup event
 		flavour_shalazar.1 #Shalazar Starup event
 		verne.100 #Verne Startup event
@@ -129,6 +130,7 @@ on_startup = {
 		flavour_kherka.1 #Kherka Starting Event
 		flavour_vulstenvach.1 #Vuls Tenvach Starting Event
 		flavor_averilibet.6 #averilibet start event 
+		flavor_shelokmengi.1 #Shelokmengi startup event! <3
 		flavour_arawkelin.16 #Arawkelins Starting Event
 		flavor_clouded_eye.23 #Clouded Eye Starting Event
 		hisost.100 #hisost variable set
@@ -789,6 +791,34 @@ on_religion_change = {
 			overlord = { country_event = { id = thought_harmonize.203 } }
 		}
 	}
+	
+	#Xanzerbexis religious buff update
+	if = {
+		limit = { has_country_modifier = A49_faith_united }
+		country_event = {
+			id = flavour_xanzerbexis.1006
+		}
+	}
+
+
+	#Zokka
+	if = {
+		limit = { tag = F29 NOT = { has_country_flag = zokka_converted_flag } NOT = { religion = xhazobkult } }
+		country_event = { id = flavour_zokka.666 }
+	}
+	if = {
+		limit = { has_global_flag = zokka_killed_sun_cult_flag }
+		if = {
+			limit = { religion_group = bulwari }
+			add_country_modifier = {
+				name = zokka_sunset
+				duration = -1
+			}
+		}
+		else = {
+			remove_country_modifier = zokka_sunset
+		}
+	}
 }
 
 # country.
@@ -945,6 +975,10 @@ on_peace_actor = {
 			has_country_modifier = blorc_ruler_shows_prowess
 		}
 		remove_country_modifier = blorc_ruler_shows_prowess
+	}
+
+	if = { limit = { has_country_modifier = deepwoods_verdant_pact }
+		country_event = { id = deepwoods.1 days = 45 random = 45 } # End the Verdant Pact, if Wood Elves collectively have enough provinces.
 	}
 }
 
@@ -2814,13 +2848,53 @@ on_siege_won_country = {
 				casus_belli = cb_core
 				attacker_leader = ROOT
 				defenders = F54
-				war_score = 60
+			}
+			OR = {
+				war_score_against = {
+					who = F54
+					value = 60
+				}
+				war_score_against = {
+					who = F72
+					value = 60
+				}
 			}
 		}
 		clr_country_flag = dasmatus_easier_victory 
 		country_event = {
 			id = zokka_jaddari_war.112
 			days = 1 #Delayed as to not cause crashes
+		}
+	}
+	#Zokka
+	if = {
+		limit = { tag = F29 }
+		if = {
+			limit = {
+				FROM = { province_id = 2904 }
+				2904 = { controlled_by = F29 }
+				has_country_flag = zokka_siadan_war_flag
+			}
+			F50 = { country_event = { id = flavour_zokka.6 } }
+		}
+		if = {
+			limit = {
+				OR = {
+					FROM = { province_id = 2904 }
+					FROM = { province_id = 2921 }
+				}
+				2904 = { controlled_by = F29 }
+				2921 = { controlled_by = F29 }
+				has_country_flag = zokka_siadan_war_flag
+			}
+			F29 = { country_event = { id = flavour_zokka.290 } }
+		}
+		if = {
+			limit = {
+				FROM = { is_capital = yes owner = { is_emperor = yes } }
+				has_country_flag = zokka_emp_war
+			}
+			F29 = { country_event = { id = flavour_zokka.29 } }
 		}
 	}
 }
@@ -3025,6 +3099,7 @@ on_siege_lost_province =  {
 		vampires_estate_events.15
 		spirits.002 #Hidden event to determine if temple is damaged by siege
 		allclan.9999 #cede provinces in kinstrife - in province event option to avoid crashing the game
+		flavour_zokka.9999 #see above, but for zokka!
 	}
 
 	if = {
@@ -3235,7 +3310,6 @@ on_new_monarch = {
 		flavor_sugamber.999		# Lisolette's legitimacy called into question
 
 		rahenraj.5				#To ensure Harimari rulers in Rahen
-		#rahenraj.1000			#To make sure newly independent Prabhi and Senapti have the proper government
 		the_command.3			#Hobgoblin faction influence
 		flavor_blademarches.3 	#Blademarches succession evenz
 		aelnar.82				#Sicrheior Son
@@ -3315,8 +3389,13 @@ on_new_monarch = {
 
 		the_hunt_events.0 #the hunt setup - picking a doctrine for if you don't have an heir doctrine
 
+		harpy_events.0 # Harpy roost setup, needs to happen whenever a country is spawned in, and new monarch is used as a proxy for that.
 		
 		hisost.99 #hisost yamok modifier application
+		hisost.98 #hisost yamok new heirs
+
+		flavor_shelokmengi.3 #Shelokmengi - Cool starting heir comes to power
+		flavor_shelokmengi.14 #Shelokmengi - Cool starting heir fuckin dies (but not really)
 		
 		uesrennu.19	#no rat as a king
 		
@@ -3444,6 +3523,7 @@ on_new_monarch = {
 			duration = -1
 		}
 	}
+	country_event = { id = rahenraj.1000 days = 1 }	#to ensure newly independent raj subject are the correct type with the correct gov.
 }
 
 on_new_consort = {
@@ -3877,6 +3957,7 @@ on_new_term_election = {
 		gushuokguan_event.61 #Gushuokguan Failed to Declare War
 		flavor_ameion.98 #Ameion Election
 		flavor_rezankand.1003 #Rezankand Election
+		flavour_zokka.12 #Zokka Succession
 	}
 
 	if = {
@@ -3977,6 +4058,8 @@ on_death_election = {
 		flavor_rezankand.1003 #Rezankand Election
 		mteibhara.1 #mteibhar delath election
 		mteibhara.2 #mteibhar grand confederation election
+		flavour_zokka.12 #Zokka Succession
+		flavour_zokka.22 #Zokka Initial Death Stuff
 	}
 
 	#Nakavy Avo shrine reset
@@ -4309,7 +4392,7 @@ on_new_heir = {
 			has_country_flag = Y91_participating_in_festival
 		}
 		clr_country_flag = Y91_heir_participating
-
+	
 		clr_country_flag = Y91_picked_tournament_participants
 		country_event = { id = flavor_nuugdan_tsarai.68 }
 	}
@@ -6078,7 +6161,7 @@ on_monthly_pulse = {
 			}
 			if = {
 				limit = {
-					has_active_triggered_province_modifier = harpy_roost
+					harpy_roost_st_has_non_fledgling_roost = yes
 				}
 				ROOT = {
 					add_government_power = {
@@ -6545,6 +6628,8 @@ on_yearly_pulse = {
 		flavour_themarenn.55 #themarenn, end of the war
 		flavour_corinsfield.31 #corinsfield trial of the performer
 		flavour_corinsfield.80 #corinsfield
+		harpy_events.0 # AI roost construction + periodic events for roost construction.
+		flavor_shelokmengi.112 #shelokmengi S57 breadbasket handler
 		ikogshaantus_events.29 #Ikogshaantus Eagle Hobgoblin Event
 		ikogshaantus_events.30 #Ikogshaantus Soulseeker Ogre Event
 		flavor_ovdal_az_an.100 # Ovdal Az An yearly checks.
@@ -6757,6 +6842,9 @@ on_yearly_pulse = {
 		}
 		sponsored_adventurer_yearly_rp_effect = { VARIABLE = reform_progress_dev_variable }
 	}
+	if = { limit = { owns = 3020 } 
+		country_event = { id = deepwoods.1 } # Yearly check for ending Verdant Pact, on top of on_peace_actor check.
+	}
 }
 on_yearly_pulse_2 = {
 	#Ruler/Heir/Consort Death
@@ -6946,7 +7034,18 @@ on_yearly_pulse_3 = {
 		}
 	}
 
-
+	#Zokka
+	if = {
+		limit = { tag = F29 }
+		if = {
+			limit = { has_country_flag = zokka_something_is_coming_flag }
+			country_event = { id = flavour_zokka.1001 }
+		}
+		if = {
+			limit = { has_country_flag = zokka_maelstrom_flag }
+			country_event = { id = flavour_zokka.1002 }
+		}
+	}
 }
 on_yearly_pulse_4 = {
 	events = {
@@ -6954,6 +7053,9 @@ on_yearly_pulse_4 = {
 	}
 }
 on_yearly_pulse_5 = {
+	events = {
+		bulwar_flavour.300
+	}
 }
 
 # country random events
@@ -6981,6 +7083,7 @@ on_bi_yearly_pulse = {
 		the_hunt_events.100 #tolerance privilege
 		the_hunt_events.101 #tolerance privilege monsters
 		flavour_vrendzan.2
+		harpy_events.1 # Harpy roost construction event manager
 	}
 	if = { limit = { ruler_can_revive = yes } save_ruler_stats = yes }
 	if = {
@@ -9121,6 +9224,12 @@ on_thri_yearly_pulse_4 = {
 		mystic_accord_events.14
 		mystic_accord_events.15
 	}
+
+	# Zokka
+	if = {
+		limit = { OR = { has_reform = zokka_hand_feeds has_reform = zokka_hand_feeds2 } }
+		country_event = { id = flavour_zokka.500 }
+	}
 }
 
 on_four_year_pulse = {
@@ -9830,7 +9939,15 @@ on_four_year_pulse_3 = {
 		200 = mengi_flavor_events.6 #shadow silt
 		200 = mengi_flavor_events.7 #bad deal event chain (more common as requires loans, and negstab/income)
 		50 = mengi_flavor_events.10 #play event chain
-		200 = mengi_flavor_events.13 #mengi convert to jadd chain (may need to change based on if to many or no jadd converts appear) 
+		200 = mengi_flavor_events.13 #mengi convert to jadd chain (may need to change based on if to many or no jadd converts appear)
+		100 = shadow_pact.11
+		100 = shadow_pact.12
+		100 = shadow_pact.13
+		100 = shadow_pact.14
+		100 = shadow_pact.15
+		100 = shadow_pact.16
+		100 = shadow_pact.17
+		100 = shadow_pact.18  
 	}
 	
 	#taychend flavour events. Moved from five year pulse to make room for future kheionai events + to increase frequency
@@ -9869,7 +9986,15 @@ on_four_year_pulse_3 = {
 		100 = taychendi_empire_events.102 #Family Member Rebels
 		100 = taychendi_empire_events.103 #The Slave Revolt of YEAR
 	}
-	
+
+	random_events = {
+		#Cannor Religious Flavour Events & Anbennar Empire Flavour Events
+		100 = cannor_religious_flavour.1
+		100 = cannor_religious_flavour.2
+		100 = cannor_religious_flavour.3
+		100 = cannor_religious_flavour.4
+		100 = cannor_religious_flavour.5
+	}
 	
 	#Discovers the unreachable Nomsyulhan tradenode in 6838 if you see the provinces around it
 	if = {
@@ -9923,6 +10048,26 @@ on_four_year_pulse_3 = {
 			}
 			9 = { }
 		}
+	}
+
+	random_events = {
+		# Deepwoods random events
+		4000 = deepwoods.15 	# Fall of House X. Should happen fairly quickly for an AI post-1500 and post-verdant pact.
+		150 = deepwoods.33
+		200 = deepwoods.34
+		1500 = deepwoods.35
+		1000 = deepwoods.36
+		1000 = deepwoods.37
+		1000 = deepwoods.38
+		400 = deepwoods.40
+		200 = deepwoods.42
+		200 = deepwoods.46
+		200 = deepwoods.47
+		200 = deepwoods.48
+		200 = deepwoods.49
+		500 = deepwoods.51
+		500 = deepwoods.52
+		80 = deepwoods.60
 	}
 }
 
@@ -11414,6 +11559,12 @@ on_five_year_pulse_4 = {
 
 		800 = 0
 	}
+
+	# Zokka
+	if = {
+		limit = { OR = { has_reform = zokka_mouth_eats has_reform = zokka_mouth_eats2 } }
+		country_event = { id = flavour_zokka.501 }
+	}
 }
 
 # El Dorado
@@ -11906,7 +12057,6 @@ on_province_religion_changed = {
 	# using a country event or similar in an else_if              #
 	# or using a trigger switch                                   #
 	###############################################################
-
 	if = {
 		limit = {
 			region = akasik_region
@@ -12030,6 +12180,17 @@ on_province_religion_changed = {
 		limit = { has_province_modifier = raithtall_disarmed_population }
 		remove_province_modifier = raithtall_disarmed_population
 	}
+	#Shadow Pact Events
+	if = {
+		limit = {
+			has_province_modifier = purge_of_hags
+			NOT = {
+				religion = shadow_pact
+				religion = night_coven
+			}
+		}
+		remove_province_modifier = purge_of_hags
+	}
 	#Transmutative Path
 	if = {
 		limit = {
@@ -12038,6 +12199,63 @@ on_province_religion_changed = {
 		}
 		transmutative_path_destroy_chi_wellspring_effect = yes
 	}
+	#Zokka
+	if = {
+		limit = { has_province_modifier = zokka_left_behind }
+		remove_province_modifier = zokka_left_behind
+	}
+	if = {
+		limit = { owner = { tag = F29 } }
+		if = {
+			limit = { religion = xhazobkult }
+			zokka_xhazobkult_effect = yes
+		}
+		else = { zokka_religion_effect = yes }
+	}
+	if = {
+		limit = { religion_group = bulwari has_global_flag = zokka_killed_sun_cult_flag }
+		add_province_modifier = {
+			name = zokka_sunset_prov
+			duration = -1
+		}
+	}
+	if = {
+		limit = { has_province_modifier = zokka_sunset_prov NOT = { religion_group = bulwari } }
+		remove_province_modifier = zokka_sunset_prov
+	}
+	if = {
+		limit = {
+			F29 = { has_country_flag = zokka_sun_cult_tracker } 
+			NOT = { continent = north_america } 
+			NOT = { continent = south_america } 
+			NOT = { continent = oceania } 
+		}
+		zokka_has_killed_sun_cult_yet_effect = yes
+	}
+	if = {
+		limit = { #Events on temples converted to JAD
+			religion = the_jadd
+			owner = {
+				religion = the_jadd
+			}
+			OR = {
+				province_id = 643 #Azka Sur
+				province_id = 631 #Eduz Vacyn
+				province_id = 601 #Bulwar
+			}
+		}
+		owner = {
+			country_event = {
+				id = bulwar_flavour.145
+			}
+			country_event = {
+				id = bulwar_flavour.146
+			}
+			country_event = {
+				id = bulwar_flavour.147
+			}
+		}
+	} 
 }
 
 # province
@@ -12093,6 +12311,8 @@ on_province_culture_changed = {
 	on_province_culture_converted_estate_privilges_effect = yes
 	on_province_culture_change_effect = yes
 
+	harpy_roost_se_on_province_culture_changed = yes
+
 	if = {
 		limit = {
 			has_province_modifier = brokenjaw_mass_settling
@@ -12119,7 +12339,7 @@ on_province_culture_changed = {
             limit = {
                 NOT = { culture = metobesebi }
                 superregion = east_sarhal_superregion
-				NOT = { has_province_modifier = harpy_roost }
+				NOT = { harpy_roost_st_has_non_fledgling_roost = yes }
             }
             change_culture = metobesebi
         }
@@ -12131,6 +12351,34 @@ on_province_culture_changed = {
         }
         owner = { remove_country_modifier = apikhoxi_good_enighbor }
     }
+	#Zokka
+	if = {
+		limit = { owner = { tag = F29 } }
+		zokka_culture_effect = yes
+	}
+	if = {
+		limit = {
+			owner = {
+				owns = 365
+			}
+			365 = {
+				has_great_project = {
+					type = ascajar
+					tier = 1
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_owner_accepted_culture = yes
+				has_owner_culture = yes
+			}
+			ascajar_accepted_culture_modifier = yes
+		}
+		else = {
+			ascajar_remove_culture_modifier = yes
+		}
+	}
 }
 
 
@@ -12151,12 +12399,13 @@ on_province_owner_change = {
 		unraveling.10
 		spirits.006 #Temple restoration/corruption/purification cleanup
 		flavor_nuugdan_tsarai.84 #fanwang system
-		flavor_nuugdan_tsarai.8	#giving land to subjects part of scripted peace with daengun
+		flavor_nuugdan_tsarai.8	#giving land to subjects part of scripted peace with danggun
 		anb_miscevents.20 #Command warcamp replacement
 		kheionai.99 #Fires the nekhei province transfer effects so the game doesn't crash
 		besolaki_events.1100 #Besolaki, Anisikheion gets Andeios islands if they're your subject
 		gerudia.35 #taric and cagodic culture stuff
 		transmutative_path.3 #chi wellspring calc stuff
+		flavour_zokka.9998 #zokka stop slave states leaving spine
 	}
 	if = {
 		limit = {
@@ -12194,7 +12443,10 @@ on_province_owner_change = {
 	}
 	
 	on_province_owner_change_effect = yes
+	on_province_owner_change_monuments = yes
 	sedentarization_on_province_owner_change = yes
+
+	harpy_roost_se_on_province_owner_change = yes
 
 	if = {
 		limit = {
@@ -12990,6 +13242,26 @@ on_province_owner_change = {
 			}
 		}
 	}
+	
+	if = { #Shelokmengi Population center modifier
+		limit = {
+			owner = { mission_completed = S57_my_empire_of_grain } 
+		}
+		if = {
+			limit = { trade_goods = grain }
+    		add_province_modifier = {
+				name = S57_the_population_center
+				duration = -1
+			}
+		}
+		if = {
+			limit = { has_building = farm_estate }
+			add_province_modifier = {
+				name = S57_empire_of_grain
+				duration = -1
+			}
+		}
+	}
 
 	#Bladeskeep
 	if = {
@@ -13069,6 +13341,16 @@ on_province_owner_change = {
 		}
 	}
 
+	#Zokka
+	if = {
+		limit = { owner = { tag = F29 } }
+		zokka_ownership_effect = yes
+		if = {
+			limit = { owner = { has_country_flag = zokka_rename_bulwar_flag } }
+			zokka_name_change_effect = yes
+		}
+	}
+
 	#Raj
 	if = {
 		limit = {
@@ -13097,6 +13379,20 @@ on_province_owner_change = {
 				who = overlord
 				modifier = raja_opinion_unlawful_territory
 			}
+		}
+	}
+	if = { limit = { owner = { has_country_modifier = deepwoods_verdant_pact } } 
+		trigger_switch = {
+			on_trigger = province_group
+			deepwoods_lake_grove 	 = { owner = { country_event = { id = deepwoods.3 } } }  # Liberate Salla Elyn?
+			deepwoods_mountain_grove = { owner = { country_event = { id = deepwoods.4 } } }  # Liberate Salla Myna?
+			deepwoods_thorn_grove 	 = { owner = { country_event = { id = deepwoods.5 } } }  # Liberate Salla Drennen?
+			deepwoods_bone_grove 	 = { owner = { country_event = { id = deepwoods.6 } } }  # Liberate Salla Cenag?
+			deepwoods_hunter_grove 	 = { owner = { country_event = { id = deepwoods.7 } } }  # Liberate Salla Fealgarn?
+			deepwoods_flower_grove 	 = { owner = { country_event = { id = deepwoods.8 } } }  # Liberate Salla Scotha?
+			deepwoods_river_grove 	 = { owner = { country_event = { id = deepwoods.9 } } }  # Liberate Salla Ahain?
+			deepwoods_arrow_grove 	 = { owner = { country_event = { id = deepwoods.10 } } } # Liberate Salla Ayeth?
+			deepwoods_shadow_grove 	 = { owner = { country_event = { id = deepwoods.11 } } } # Liberate Salla Ghul?
 		}
 	}
 }	
@@ -13508,6 +13804,29 @@ on_consecrate_patriarch = {
 	if = {
 		limit = { owner = { has_country_flag = rakkaz_local_cult_gives_manpower } }
 		every_province_in_state = { add_base_manpower = 1 }
+	}
+	if = {
+		limit = { owner = { has_estate_privilege = estate_mages_moment_of_congruence } NOT = { has_province_flag = zokka_congruence_flag } }
+		every_province_in_state = {
+			add_base_tax = 1
+			add_base_manpower = 1
+			add_base_production = 1
+			set_province_flag = zokka_congruence_flag
+		}
+	}
+	if = {
+		limit = { owner = { has_estate_privilege = estate_church_eternal_congruence } }
+		every_province_in_state = {
+			add_nationalism = -5
+			if = {
+				limit = { NOT = { culture = sandfang_gnoll } NOT = { culture = primal_harimari } }
+				add_province_modifier = {
+					name = zokka_congruence
+					duration = -1
+					hidden = yes
+				}
+			}
+		}
 	}
 }
 
@@ -14058,6 +14377,26 @@ on_culture_promoted = {
 		change_variable = {
 			which = reform_progress_cultures_variable
 			value = 1
+		}
+	}
+	if = {
+		limit = {
+			owns = 365
+			365 = {
+				has_great_project = {
+					type = ascajar
+					tier = 1
+				}
+			}
+		}
+		every_owned_province = {
+			limit = {
+				OR = {
+					has_owner_accepted_culture = yes
+					has_owner_culture = yes
+				}
+			}
+			ascajar_accepted_culture_modifier = yes
 		}
 	}
 }
@@ -14665,7 +15004,9 @@ on_dependency_gained = {
 	if = {
 		limit = {
 			FROM = { is_subject_of_type = slave_state }
-			NOT = { culture_group = hobgoblin } # the revolter commands can inherit slave states too
+			NOT = { culture_group = hobgoblin } #the command, and the revolter commands, fail here - so they don't get their slave states taken away by firing the event
+			NOT = { has_country_flag = can_have_slave_states } #zokka fails here, as they can have slave states
+			# everyone else passes and gets their slave states taken away
 		}
 		# logic moved into event to prevent crashes
 		FROM = { country_event = { id = the_command.3001 } }
@@ -14951,6 +15292,20 @@ on_dependency_gained = {
 			make_random_highest_prestige_sri_baginda = yes
 		}
 	}
+
+	#Convert Sponsored Adventurer to regular vassal
+	if = {
+	    limit = {
+			FROM = { is_subject_of_type = sponsored_adventurer_subject }
+			ROOT = { 
+				NOT = {
+					tag = S97
+					tag = S98
+				}
+			}
+		}
+		FROM = { country_event = { id = sponsored_adventurers.001 } }
+	}
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -14971,6 +15326,7 @@ on_dependency_lost = {
 				ROOT = { country_event = { id = rahenraj.2100 days = 1 } }
 			}
 			if = { limit = { is_subject_of_type = great_daimyo_vassal }
+				clr_country_flag = senapti_flag
 				4411 = { change_variable = { rajNbSenapti = -1 } }
 			}
 		}
@@ -15167,6 +15523,17 @@ on_dependency_lost = {
 			clr_country_flag = h35_debarment_moment
 		}
 	}
+
+	if = {
+		limit = {
+			FROM = {
+				has_reform = sponsored_adventurer_reform
+			}
+		}
+		FROM = {
+			remove_government_reform = sponsored_adventurer_reform
+		}
+	}
 }
 
 # ROOT = New vassal, FROM = Overlord
@@ -15278,6 +15645,22 @@ on_create_vassal = {
 		limit = { religion = kheionism }
 		initialize_kheionism_variables = yes
 		country_event = { id = kheionism.3 } #Set your deity
+	}
+
+	if = { #Shuvuush/Kuuldaar tags become horde and gets the privilege
+		limit = {
+			OR = {
+				primary_culture = shuvuush
+				primary_culture = kuuldaar
+			}
+			NOT = {
+				tag = Y98 #Daxugo
+				tag = Y86 #Guwaamud
+			}
+		}
+		change_government = tribal
+		add_government_reform = steppe_horde
+		country_event = { id = flavour_gozengun.1000 days = 1 } #Adding the privilege, doesn't work within the same day/effect, need to delay with effect
 	}
 }
 
@@ -15686,6 +16069,22 @@ on_country_released = {
 		limit = { religion = kheionism }
 		initialize_kheionism_variables = yes
 		country_event = { id = kheionism.3 } #Set your deity
+	}
+
+	if = { #Shuvuush/Kuuldaar tags become horde and gets the privilege
+		limit = {
+			OR = {
+				primary_culture = shuvuush
+				primary_culture = kuuldaar
+			}
+			NOT = {
+				tag = Y98 #Daxugo
+				tag = Y86 #Guwaamud
+			}
+		}
+		change_government = tribal
+		add_government_reform = steppe_horde
+		country_event = { id = flavour_gozengun.1000 days = 1 } #Adding the privilege, doesn't work within the same day/effect, need to delay with effect
 	}
 }
 
@@ -16259,6 +16658,36 @@ on_trade_good_changed = {
 		}
 		else = {
 			remove_province_modifier = wineport_wine_25
+		}
+	}
+
+	# Zokka
+	if = {
+		limit = { trade_goods = slaves FROM = { has_government_attribute = enables_corrivalry } NOT = { has_province_modifier = zokka_ekxiem_zokka_boost } }
+		add_province_modifier = {
+			name = zokka_ekxiem_zokka_boost
+			duration = -1
+			hidden = yes
+		}
+	}
+	if = {
+		limit = { has_province_modifier = zokka_ekxiem_zokka_boost NOT = { trade_goods = slaves } }
+		remove_province_modifier = zokka_ekxiem_zokka_boost
+	}
+	
+	if = { #Shelokmengi Population center modifier
+		limit = {
+			owner = { mission_completed = S57_my_empire_of_grain } 
+		}
+		if = {
+			limit = { trade_goods = grain }
+    		add_province_modifier = {
+				name = S57_the_population_center
+				duration = -1
+			}
+		}
+		else = {
+			remove_province_modifier = S57_the_population_center
 		}
 	}
 }
@@ -16892,7 +17321,7 @@ on_country_creation = {
 		else_if = {
 			limit = {
 				OR = {
-					religion = bangujonsi
+					religion = neokttareum
 					religion = mystic_accord
 				}
 			}
@@ -18066,12 +18495,24 @@ on_new_age = {
 	if = {
 		limit = { 
 			current_age = age_of_absolutism
-			any_owned_province = {
-				province_group = escann_proper
-				is_potential_escanni_culture = yes
-			} 
 		}
-		country_event = { id = marcher.3 days = 180 random = 185 }
+		if = {
+			limit = {
+				any_owned_province = {
+					province_group = escann_proper
+					is_potential_escanni_culture = yes
+				}
+			} 
+			country_event = { id = marcher.3 days = 180 random = 185 }
+		}
+		if = {
+			limit = {
+				any_owned_province = {
+					has_province_modifier = spirit_farm_settlements
+				}
+			}
+			country_event = { id = flavour_gozengun.1 days = 1 }
+		}
 	}
 
 	if = {
@@ -18520,6 +18961,7 @@ on_colony_finished = { #ROOT - Province
 	events = {
 		kheionai.99 #Fires the nekhei province transfer effects so the game doesn't crash
 		gerudia.35 #Taric and Cagodic stuff
+		flavour_zokka.9998 #zokka slave state limit to spine
 	}
 	on_colony_finished_effect = yes
 
@@ -19094,6 +19536,36 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 				raj_become_prabhi = yes
 			}
 		}
+	}
+	#Zokka
+	if = {
+		limit = { 
+			tag = F29 
+			has_country_flag = zokka_siadan_war_flag 
+			NOT = { war_with = F48 }
+			NOT = { war_with = F50 }
+		}
+		clr_country_flag = zokka_siadan_war_flag
+		every_neighbor_country = {
+			limit = { has_country_modifier = centaur_administration }
+			reverse_add_casus_belli = {
+				target = ROOT
+				type = cb_force_tributary_mission
+				months = 300
+			}
+		}
+		irdu_ageeneas_area = { discover_country = ROOT }
+	}
+	if = {
+		limit = { OR = { tag = F48 tag = F50 } has_country_modifier = zokka_mothers_love }
+		remove_country_modifier = zokka_mothers_love
+	}
+	if = {
+		limit = { 
+			has_country_flag = zokka_emp_war
+			NOT = { emperor = { war_with = ROOT } }
+		}
+		clr_country_flag = zokka_emp_war
 	}
 }
 
