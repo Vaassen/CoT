@@ -177,73 +177,13 @@ update_advancement_progress_bar = {
 	divide_variable = { which = expFoo which = magic_experience_target }
 	multiply_variable = { expFoo = 100 }
 	set_variable = { which = current_experience_percent which = expFoo }
-
-	#simulate a month of xp to get the numbers we need
-	export_to_variable = {
-		which = last_months_xp_gain
-		value = modifier:monthly_magic_experience_gain
-	}
-
-	if = {
-		limit = { has_ruler_flag = magic_advancement }
-		if = {
-			limit = { is_long_lived_ruler = yes }
-			divide_variable = { last_months_xp_gain = 2 }
-		}
-
-		export_to_variable = {
-			variable_name = ruler_experience_modifier
-			value = modifier:mages_ruler_experience_mod
-		}
-		calc_school_experience_modifiers = { type = ruler }
-		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-		change_variable = { ruler_experience_modifier = 1 }
-
-		multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
-	}
-	else_if = {
-		limit = { has_heir_flag = magic_advancement }
-		if = {
-			limit = { is_long_lived_heir = yes }
-			divide_variable = { last_months_xp_gain = 2 }
-		}
-
-		export_to_variable = {
-			variable_name = heir_experience_modifier
-			value = modifier:mages_ruler_experience_mod
-		}
-		calc_school_experience_modifiers = { type = heir }
-		change_variable = { which = heir_experience_modifier which = school_experience_modifier }
-		change_variable = { heir_experience_modifier = 1 }
-
-		multiply_variable = { which = last_months_xp_gain which = heir_experience_modifier }
-	}
-	else_if = { limit = { has_country_flag = magic_advancement }
-		divide_variable = { which = last_months_xp_gain value = 3 }
-
-		export_to_variable = {
-			variable_name = country_experience_modifier
-			value = modifier:mages_estate_experience_mod
-		}
-		calc_school_experience_modifiers = { type = country }
-		change_variable = { which = country_experience_modifier which = school_experience_modifier }
-		change_variable = { country_experience_modifier = 1 }
-
-		multiply_variable = { which = last_months_xp_gain which = country_experience_modifier }
-	}
-
-	divide_variable = { last_months_xp_gain = 10 } #truncation
-	multiply_variable = { last_months_xp_gain = 10 }
-
-	set_variable = { which = months_till_advancement_done which = magic_experience_target }
-	subtract_variable = { which = months_till_advancement_done which = $type$_magic_experience }
-	divide_variable = { which = months_till_advancement_done which = last_months_xp_gain }
-	round_variable = { which = months_till_advancement_done value = 1 }
 }
 
 update_magic_ui_experience_modifiers = { #Generates variables with all of the xp modifiers. Their names are their values but in green or red. They are broken up between a whole number and decimal portion.
 	set_variable = { total_experience_mod_val = 0 }
 	export_to_variable = { which = base_magic_xp_gain_val value = modifier:monthly_magic_experience_gain }
+	export_to_variable = { which = last_months_xp_gain value = modifier:monthly_magic_experience_gain }
+	set_variable = { which = months_till_advancement_done which = magic_experience_target }
 	
 	export_to_variable = { which = mages_ruler_experience_mod_val value = modifier:mages_ruler_experience_mod }
 	export_to_variable = { which = mages_estate_experience_mod_val value = modifier:mages_estate_experience_mod }
@@ -258,9 +198,24 @@ update_magic_ui_experience_modifiers = { #Generates variables with all of the xp
 
 	if = { limit = { has_country_flag = magic_advancement }
 		set_variable = { which = total_experience_mod_val which = mages_estate_experience_mod_val }
+		subtract_variable = { which = months_till_advancement_done which = country_magic_experience }
+		divide_variable = { last_months_xp_gain = 3 }
 	}
-	else_if = { limit = { OR = { has_ruler_flag = magic_advancement has_heir_flag = magic_advancement } }
+	else_if = { limit = { has_ruler_flag = magic_advancement }
 		set_variable = { which = total_experience_mod_val which = mages_ruler_experience_mod_val }
+		subtract_variable = { which = months_till_advancement_done which = ruler_magic_experience }
+		if = {
+			limit = { is_long_lived_ruler = yes }
+			divide_variable = { last_months_xp_gain = 2 }
+		}
+	}
+	else_if = { limit = { has_heir_flag = magic_advancement }
+		set_variable = { which = total_experience_mod_val which = mages_ruler_experience_mod_val }
+		subtract_variable = { which = months_till_advancement_done which = heir_magic_experience }
+		if = {
+			limit = { is_long_lived_heir = yes }
+			divide_variable = { last_months_xp_gain = 2 }
+		}
 	}
 	
 	if = { limit = { is_overall_advancing_school = { school = abjuration } }
@@ -291,6 +246,14 @@ update_magic_ui_experience_modifiers = { #Generates variables with all of the xp
 	update_magic_xp_val_deci = { category = necromancy }
 	update_magic_xp_val_deci = { category = transmutation }
 	update_magic_xp_val_deci = { category = total }
+
+	set_variable = { which = expFoo which = total_experience_mod_val }
+	change_variable = { expFoo = 1 }
+	multiply_variable = { which = last_months_xp_gain which = expFoo }
+	truncate_variable_3 = { which = last_months_xp_gain }
+
+	divide_variable = { which = months_till_advancement_done which = last_months_xp_gain }
+	round_variable = { which = months_till_advancement_done value = 1 } #round up
 }
 update_magic_xp_val_deci = {
 	multiply_variable = { $category$_experience_mod_val = 100 }
@@ -956,8 +919,7 @@ increase_magic_experience = {
 
 				change_variable = { which = experienceGain which = unmodifiedExperience }
 
-				divide_variable = { experienceGain = 10 } #truncation
-				multiply_variable = { experienceGain = 10 }
+				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = ruler_magic_experience
@@ -980,8 +942,7 @@ increase_magic_experience = {
 
 				change_variable = { which = experienceGain which = unmodifiedExperience }
 
-				divide_variable = { experienceGain = 10 } #truncation
-				multiply_variable = { experienceGain = 10 }
+				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = heir_magic_experience
@@ -1003,8 +964,7 @@ increase_magic_experience = {
 
 				change_variable = { which = experienceGain which = unmodifiedExperience }
 
-				divide_variable = { experienceGain = 10 } #truncation
-				multiply_variable = { experienceGain = 10 }
+				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = country_magic_experience
