@@ -177,6 +177,59 @@ update_advancement_progress_bar = {
 	divide_variable = { which = expFoo which = magic_experience_target }
 	multiply_variable = { expFoo = 100 }
 	set_variable = { which = current_experience_percent which = expFoo }
+
+	#simulate a month of xp to get the numbers we need
+	export_to_variable = {
+		which = last_months_xp_gain
+		value = modifier:monthly_magic_experience_gain
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_ruler_flag = magic_advancement
+				has_heir_flag = magic_advancement
+			}
+		}
+
+		if = {
+			limit = {
+				OR = {
+					AND = { has_ruler_flag = magic_advancement is_long_lived_ruler = yes }
+					AND = { has_heir_flag = magic_advancement is_long_lived_heir = yes }
+				}
+			}
+			divide_variable = { last_months_xp_gain = 2 }
+		}
+		export_to_variable = {
+			variable_name = ruler_experience_modifier
+			value = modifier:mages_ruler_experience_mod
+		}
+
+		calc_school_experience_modifiers = { type = ruler }
+		change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
+
+		change_variable = { ruler_experience_modifier = 1 }
+		multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
+	}
+	else_if = { limit = { has_country_flag = magic_advancement }
+		divide_variable = { which = last_months_xp_gain value = 3 }
+		export_to_variable = {
+			variable_name = country_experience_modifier
+			value = modifier:mages_estate_experience_mod
+		}
+
+		calc_school_experience_modifiers = { type = country }
+		change_variable = { which = country_experience_modifier which = school_experience_modifier }
+
+		change_variable = { country_experience_modifier = 1 }
+		multiply_variable = { which = last_months_xp_gain which = country_experience_modifier }
+	}
+
+	set_variable = { which = months_till_advancement_done which = magic_experience_target }
+	subtract_variable = { which = months_till_advancement_done which = $type$_magic_experience }
+	divide_variable = { which = months_till_advancement_done which = last_months_xp_gain }
+	round_variable = { which = months_till_advancement_done value = 1 }
 }
 
 update_magic_ui_experience_modifiers = { #Generates variables with all of the xp modifiers. Their names are their values but in green or red. They are broken up between a whole number and decimal portion.
@@ -949,27 +1002,24 @@ increase_magic_experience = {
 
 calc_school_experience_modifiers = {
 	set_variable = { school_experience_modifier = 0 }
-	if = {
-		limit = { NOT = { has_country_flag = magic_infrastructure } }
-		trigger_switch = {
-			on_trigger = has_$type$_flag
-			abjuration_advancement = { calc_school_experience_modifers_effect = { school = abjuration } }
-			conjuration_advancement = { calc_school_experience_modifers_effect = { school = conjuration } }
-			divination_advancement = { calc_school_experience_modifers_effect = { school = divination } }
-			enchantment_advancement = { calc_school_experience_modifers_effect = { school = enchantment } }
-			evocation_advancement = { calc_school_experience_modifers_effect = { school = evocation } }
-			illusion_advancement = { calc_school_experience_modifers_effect = { school = illusion } }
-			necromancy_advancement = { calc_school_experience_modifers_effect = { school = necromancy } }
-			transmutation_advancement = { calc_school_experience_modifers_effect = { school = necromancy } }
-		}
+	trigger_switch = {
+		on_trigger = has_$type$_flag
+
+		abjuration_advancement = { calc_school_experience_modifier_effect = { school = abjuration } }
+		conjuration_advancement = { calc_school_experience_modifier_effect = { school = conjuration } }
+		divination_advancement = { calc_school_experience_modifier_effect = { school = divination } }
+		enchantment_advancement = { calc_school_experience_modifier_effect = { school = enchantment } }
+		evocation_advancement = { calc_school_experience_modifier_effect = { school = evocation } }
+		illusion_advancement = { calc_school_experience_modifier_effect = { school = illusion } }
+		necromancy_advancement = { calc_school_experience_modifier_effect = { school = necromancy } }
+		transmutation_advancement = { calc_school_experience_modifier_effect = { school = necromancy } }
 	}
 }
-calc_school_experience_modifers_effect = {
+calc_school_experience_modifier_effect = {
 	export_to_variable = {
-		variable_name = expFoo
+		variable_name = school_experience_modifier
 		value = modifier:$school$_experience_mod
 	}
-	change_variable = { which = school_experience_modifier which = expFoo }
 }
 
 ai_pay_for_xp = { #AI advancements -- formatted to miminize lines of code when compiled (expanded)
