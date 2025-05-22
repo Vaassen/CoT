@@ -404,30 +404,6 @@ custom_button = { #Back button
 		hidden_effect = {
 			close_all_magic_menus = yes
 			set_country_flag = magic_menu_main_flag
-			# if = {
-			# 	limit = {
-			# 		has_country_flag = magic_menu_advancement_flag
-			# 	}
-			# 	clr_country_flag = magic_menu_advancement_flag
-			# }
-			# else_if = {
-			# 	limit = {
-			# 		has_country_flag = magic_menu_spellbook_flag
-			# 	}
-			# 	clr_country_flag = magic_menu_spellbook_flag
-			# }
-			# else_if = {
-			# 	limit = {
-			# 		has_country_flag = magic_menu_patron_flag
-			# 	}
-			# 	clr_country_flag = magic_menu_patron_flag
-			# }
-			# else_if = {
-			# 	limit = {
-			# 		has_country_flag = magic_menu_main_flag
-			# 	}
-			# 	clr_country_flag = magic_menu_main_flag
-			# }
 		}
 	}
 	tooltip = return_to_main_magic_menu_tt
@@ -489,11 +465,18 @@ custom_button = { #Back button
 	}
 	custom_button = { #Main Menu Open Patron Button
 		name = magicui_open_patrons
+		# potential = {
+		# 	OR = {
+		# 		has_a_patron_trigger = yes
+		# 		has_ruler_flag = spirit_patron_delayed
+		# 	}
+		# 	is_lesser_in_union = no
+		# }
 		effect = {
 			update_magic_menu_effect = yes
 			hidden_effect = {
 				close_all_magic_menus = yes
-				set_country_flag = magic_menu_patron_flag #TODO Jothell prepping for patron UI
+				set_country_flag = magic_menu_patron_flag
 			}
 		}
 		frame = {
@@ -583,9 +566,10 @@ custom_text_box = {
 	tooltip = magic_menu_infamy_breakdown
 }
 
-#Patron stuff
+#Patron stuff #TODO Jothell put these into a window and share the has_a_patron_trigger
 	custom_text_box = {
 		name = magic_menu_patron_name
+		tooltip = magic_menu_patron_tt
 	}
 	custom_icon = {
 		name = patron_favoured_school_1
@@ -747,6 +731,7 @@ custom_text_box = {
 	}
 	custom_icon = {
 		name = patron_approval_bar
+		potential = { has_a_patron_trigger = yes }
 		frame = {
 			number = 80
 			trigger = { check_variable = { PatronApproval = 8 } }
@@ -789,10 +774,108 @@ custom_text_box = {
 	}
 	custom_button = {
 		name = patron_interaction_event
+		trigger = {
+			hidden_trigger = {
+				has_a_patron_trigger = yes
+			}
+			if = { limit = { is_lesser_in_union = yes }
+				is_lesser_in_union = no
+			}
+		}
 		effect = {
 			update_magic_menu_effect = yes
 			hidden_effect = {
 				country_event = { id = patrons_events.1 }
+			}
+		}
+	}
+	custom_button = {
+		name = patron_seek_event
+		potential = {
+			has_a_patron_trigger = no
+			OR = {
+				has_ruler_flag = spirit_patron_delayed
+				capital_scope = {
+					OR = {
+						superregion = yanshen_superregion
+						superregion = gozengun_superregion
+						superregion = vimdatrong_superregion
+					}
+				}
+			}
+		}
+		trigger = {
+			if = {
+				limit = { NOT = { tag = Y26 } }
+				adm_power = 50
+				dip_power = 50
+				mil_power = 50
+				OR = {
+					is_ruler_conjuration_level_3 = yes
+					AND = {
+						is_ruler_conjuration_level_2 = yes
+						is_ruler_divination_level_2_minimum = yes
+					}
+				}
+				# if = { limit = { is_or_was_tag = { tag = Y26 } }
+				# 	custom_trigger_tooltip = {
+				# 		tooltip = we_are_yinquan_tt
+				# 		always = no
+				# 	}
+				# }
+				if = { limit = { has_ruler_flag = magic_project_summoning_started }
+					custom_trigger_tooltip = {
+						tooltip = magic_project_started_tt
+						always = no
+					}
+				}
+				if = { limit = { has_ruler_flag = magic_project_summoning_complete }
+					custom_trigger_tooltip = {
+						tooltip = magic_project_already_done_tt
+						always = no
+					}
+				}
+			}
+			if = { limit = { has_country_modifier = patron_succession_cooldown }
+				NOT = { has_country_modifier = patron_succession_cooldown }
+			}
+			if = {
+				limit = { has_country_flag = seek_patron_randomisation_ptm }
+				hidden_trigger = {
+					NOT = { has_country_flag = seek_patron_randomisation_ptm }
+				}
+			}
+			# if = {
+			# 	limit = { capital_scope = { has_active_triggered_province_modifier = seek_patron_randomisation_ptm } }
+			# 	NOT = { capital_scope = { has_active_triggered_province_modifier = seek_patron_randomisation_ptm } }
+			# }
+			if = { limit = { is_lesser_in_union = yes }
+				is_lesser_in_union = no
+			}
+		}
+		effect = {
+			update_magic_menu_effect = yes
+			if = { #Y26
+				limit = { has_ruler_flag = spirit_patron_delayed }
+				tooltip = {
+					country_event = { id = patrons_on_action.1 days = 30 }
+				}
+				hidden_effect = {
+					set_country_flag = seek_patron_randomisation_ptm_Y26
+				}
+			}
+			else = {
+				add_adm_power = -50
+				add_dip_power = -50
+				add_mil_power = -50
+				tooltip = {
+					country_event = { id = magic_project_summoning.1 days = 30 }
+				}
+				custom_tooltip = magic_summoning_desc_tt
+			}
+			hidden_effect = {
+				capital_scope = { add_province_triggered_modifier = seek_patron_randomisation_ptm }
+				set_country_flag = seek_patron_randomisation_ptm
 			}
 		}
 	}
