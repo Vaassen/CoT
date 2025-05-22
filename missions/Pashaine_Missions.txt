@@ -2537,9 +2537,50 @@ pashaine_2_post_unity = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			num_of_owned_provinces_with = {
+				has_forcelimit_building_trigger = yes
+				has_manpower_building_trigger = yes
+				base_production = 6
+				value = 50
+			}
+			soldier_households = 50
+			custom_trigger_tooltip = {
+				tooltip = pashaine_legions_clad_in_black_army_prof_tt
+				if = { #20% Lower For Every AT
+					limit = { NOT = { army_tradition = 20 } }
+					army_professionalism = 70
+				}
+				else_if = {
+					limit = { NOT = { army_tradition = 40 } }
+					army_professionalism = 60
+				}
+				else_if = {
+					limit = { NOT = { army_tradition = 60 } }
+					army_professionalism = 50
+				}
+				else_if = {
+					limit = { NOT = { army_tradition = 80 } }
+					army_professionalism = 40
+				}
+				else_if = {
+					limit = { NOT = { army_tradition = 100 } }
+					army_professionalism = 30
+				}
+			}
+			num_of_regiments_at_full_drill = 40
+			num_of_revolutionary_guard = 100
+		} 
 
-		effect = {  } 
+		effect = {  
+			remove_country_modifier = pashaine_blackpowder_guard
+			add_country_modifier = {
+				name = pashaine_blackpowder_legions
+				duration = -1
+			}
+			set_country_flag = guardsmen_privilege_no_limit
+			custom_tooltip = pashaine_guardsmen_privilege_no_limit_tt
+		} 
 	}
 
 	pashaine_one_god_one_people = {
@@ -2549,11 +2590,28 @@ pashaine_2_post_unity = {
 			pashaine_legions_clad_in_black
 			pashaine_spread_the_flames
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			religious_unity = 0.95
+			calc_true_if = {
+				europe = {
+					type = all
+					custom_trigger_tooltip = {
+						tooltip = pashaine_one_god_one_people_tt
+						owner = { religion = ravelian }
+					}
+				}
+				amount = 500
+			}
+			is_defender_of_faith = yes
+		} 
 
-		effect = {  } 
+		effect = {  
+			country_event = { id = flavour_pashaine.34 } #One People, One Faith
+		} 
 	}
 }
 
@@ -2599,7 +2657,6 @@ pashaine_3_post_unity = {
 			every_owned_province = {
 				limit = { has_province_flag = was_part_of_hre }
 				add_nationalism = -100
-				clr_province_flag = was_part_of_hre
 			}
 			if = {
 				limit = { government = republic }
@@ -2610,6 +2667,7 @@ pashaine_3_post_unity = {
 				add_government_reform = blackpowder_commonwealth_monarchy
 			}
 			else = {
+				change_government = republic
 				add_government_reform = blackpowder_commonwealth_republic
 			}
 		} 
@@ -2661,22 +2719,159 @@ pashaine_3_post_unity = {
 			pashaine_break_the_land_of_lions
 			pashaine_concert_of_cannor
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			owner = {
+				is_revolutionary = yes
+				NOT = { tag = ROOT }
+				OR = {
+					NOT = { has_15_opinion_getting_subsidies = { target = ROOT } }
+					NOT = { has_25_opinion_sent_gift = { target = ROOT } }
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			calc_true_if = {
+				all_known_country = {
+					is_revolutionary = yes
+					has_15_opinion_getting_subsidies = { target = ROOT }
+					has_25_opinion_sent_gift = { target = ROOT }
+				}
+				amount = 4
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			add_country_modifier = {
+				name = pashaine_flames_feed_the_hearth
+				duration = 1825 #5 years
+			}
+			custom_tooltip = pashaine_spread_the_flames_tt
+			tooltip = {
+				add_splendor = 50
+				add_prestige = 10
+				add_revolutionary_zeal = 10
+				custom_tooltip = pashaine_capital_area_10_prosperity
+				capital_scope = {
+					area = {
+						add_prosperity = 10
+					}
+				}
+			}
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						is_revolutionary = yes
+						has_15_opinion_getting_subsidies = { target = ROOT }
+						has_25_opinion_sent_gift = { target = ROOT }
+					}
+					ROOT = {
+						change_variable = {
+							which = pashaine_flames_amount
+							value = 1
+						}
+					}
+				}
+				if = { #10 Max
+					limit = {
+						check_variable = { 
+							which = pashaine_flames_amount
+							value = 10
+						}
+					}
+					set_variable = {
+						which = pashaine_flames_amount
+						value = 10
+					}
+				}
+				while = {
+					limit = {
+						check_variable = {
+							which = pashaine_flames_amount
+							value = 1
+						}
+					}
+					change_variable = {
+						which = pashaine_flames_amount
+						value = -1
+					}
+					add_splendor = 50
+					add_prestige = 10
+					add_revolutionary_zeal = 10
+					capital_scope = {
+						area = {
+							add_prosperity = 10
+						}
+					}
+					extend_country_modifier = {
+						name = pashaine_flames_feed_the_hearth
+						duration = 912 #2.5 years
+					}
+				}
+			}
+		}
 	}
 
 	pashaine_the_hearth_gives_warmth = {
 		icon = mission_sunset
 		position = 15
 		required_missions = { pashaine_spread_the_flames } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			province_group = luna_river_basin
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			OR = {
+				in_golden_age = yes
+				has_had_golden_age = yes
+			}
+			development_in_provinces = {
+				province_group = luna_river_basin
+				value = 800
+			}
+			luna_river_basin = {
+				type  = all
+				num_of_buildings_in_province = 12
+				is_prosperous = yes
+			}
+			898 = { #Aranthil
+				province_has_center_of_trade_of_level = 3
+			}
+			284 = { #Thanallen
+				province_has_center_of_trade_of_level = 3
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			custom_tooltip = ARB_golden_age_renewal_tt
+			hidden_effect = {
+				if = {
+					limit = { has_had_golden_age = yes } 
+					reset_golden_age = yes 
+				}
+				else_if = {
+					limit = { in_golden_age = yes } 
+					extend_golden_age = 600
+				}
+			}
+			custom_tooltip = pashaine_age_of_luna_mods_permanent_tt
+			hidden_effect = {
+				if = {
+					limit = { has_country_modifier = pashaine_age_of_luna_country_mod }
+					extend_country_modifier = {
+						name = pashaine_age_of_luna_country_mod
+						duration = -1
+					}
+				}
+				every_owned_province = {
+					limit = { has_province_modifier = pashaine_age_of_luna_prov_mod }
+					extend_province_modifier = {
+						name = pashaine_age_of_luna_prov_mod
+						duration = 1
+					}
+				}
+			}
+		} 
 	}
 
 	pashaine_the_dream = {
@@ -2689,9 +2884,32 @@ pashaine_3_post_unity = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			all_known_country = {
+				OR = {
+					NOT = {
+						is_great_power = no
+						capital_scope = { continent = europe }
+					}
+					ROOT = {
+						has_won_war_against = {
+							who = PREV
+							max_years_since = 25
+						}
+					}
+				}
+			}
+			total_development = 3000
+			religious_unity = 0.95
+			is_hegemon_of_any_type_and_100 = yes 
+			can_claim_economic_hegemon = yes
+			can_claim_naval_hegemon = yes
+			can_claim_military_hegemon = yes
+		} 
 
-		effect = {  } 
+		effect = {  
+			country_event = { id = flavour_pashaine.36 }
+		} 
 	}
 }
 
@@ -2786,11 +3004,68 @@ pashaine_4_post_unity = {
 			pashaine_goods_of_anbennar
 			pashaine_expand_the_luna_banks
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {  
+					province_id = 912
+					OR = {
+						NOT = { is_core  = ROOT }
+						NOT = { development = 50 }
+					}
+				}
+				owner = {
+					capital_scope = { continent = serpentspine }
+					culture_is_dwarven = yes
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			OR = {
+				has_institution = industrialization
+				AND = {
+					has_institution = enlightenment
+					innovativeness = 90
+				}
+			}
+			912 = { #Anvilwright
+				is_core  = ROOT
+				development = 50
+			}
+			treasury = 5000
+			if = {
+				limit = {
+					any_country = {
+						capital_scope = { continent = serpentspine }
+						culture_is_dwarven = yes
+					}
+				}
+				any_country = {
+					capital_scope = { continent = serpentspine }
+					culture_is_dwarven = yes
+					is_revolutionary = yes
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			add_treasury = -5000  
+			add_country_modifier = {
+				name = pashaine_mithril_bonus
+				duration = -1
+			}
+			912 = {
+				add_province_modifier = {
+					name = pashaine_industrial_growth
+					duration = -1
+				}
+				add_province_modifier = {
+					name = pashaine_foundry_of_anbennar
+					duration = -1
+				}
+			}
+			add_government_reform = economic_heart_of_cannor
+		} 
 	}
 
 	pashaine_wither_the_rose = {
@@ -2800,11 +3075,63 @@ pashaine_4_post_unity = {
 			pashaine_spread_the_flames
 			pashaine_industrial_complexes
 		}
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		provinces_to_highlight = {
+			if = {
+				limit = { A01 = { exists = yes } }
+				has_port = yes
+				owner = { tag = A01 }
+				NOT = {
+					is_blockaded_by = ROOT
+					controlled_by = ROOT
+				}
+			}
+			else = {
+				owner = {
+					NOT = { tag = ROOT }
+					capital_scope = { region = lencenor_region }
+					navy_size = ROOT
+				}
+			}
+		}
+		trigger = {  
+			num_of_owned_provinces_with = {
+				has_shipyard_building_trigger = yes
+				has_dock_building_trigger = yes
+				value = 75
+			}
+			if = {
+				limit = { A01 = { exists = yes } } #Lorent
+				A01 = { 
+					war_with = ROOT
+					all_owned_province = {
+						OR = {
+							has_port = no
+							OR = {
+								is_blockaded_by = ROOT
+								controlled_by = ROOT
+							}
+						}
+					} 
+				}
+			}
+			else = {
+				NOT = {
+					any_known_country = {
+						capital_scope = { region = lencenor_region }
+						navy_size = ROOT
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			add_country_modifier = {
+				name = pashaine_broken_opposition_on_seas
+				duration = -1
+			}
+			country_event = { id = flavour_pashaine.35 }
+		} 
 	}
 }
 
