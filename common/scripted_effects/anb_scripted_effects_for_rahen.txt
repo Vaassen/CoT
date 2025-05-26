@@ -3368,32 +3368,33 @@ end_suhans_reformation = {
 ###############
 ### Raj 3.0 ###
 ###############
-rahen_raj_calc_cohesion = {
-	event_target:raj_raja_global_target = {
+rahen_raj_calc_cohesion = {	#use only inside raja country scope
+	4411 = {
 		set_variable = { which = raj_var_cohesion value = 0 }
 		set_variable = { which = raj_var_cohesion_impact_num_senaptia value = 0 }
 
 		# Legitimacy
-		export_to_variable = { variable_name = raj_var_cohesion_impact_legitimacy value = trigger_value:legitimacy }
+		export_to_variable = { variable_name = raj_var_cohesion_impact_legitimacy value = trigger_value:legitimacy who = PREV }
 		change_variable = { which = raj_var_cohesion_impact_legitimacy value = -50 }
 		divide_variable = { which = raj_var_cohesion_impact_legitimacy value = 3.5 }
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_legitimacy }
 		round_variable = { which = raj_var_cohesion_impact_legitimacy value = 0 }
 
 		# Prestige
-		export_to_variable = { variable_name = raj_var_cohesion_impact_prestige value = trigger_value:prestige }
+		export_to_variable = { variable_name = raj_var_cohesion_impact_prestige value = trigger_value:prestige who = PREV }
 		divide_variable = { which = raj_var_cohesion_impact_prestige value = 10 }
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_prestige }
 		round_variable = { which = raj_var_cohesion_impact_prestige value = 0 }
 
 		# War exhaustion
-		export_to_variable = { variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion }
+		export_to_variable = { variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion who = PREV }
+		multiply_variable = { which = raj_var_cohesion_impact_war_exhaustion value = 1.3 }
 		subtract_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_war_exhaustion }
 		round_variable = { which = raj_var_cohesion_impact_war_exhaustion value = 0 }
 
 		# Stability
-		export_to_variable = { variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability }
-		if = { limit = { NOT = { stability = 0 } }	 # For some reason the trigger value is one higher than it should be at negative stab?
+		export_to_variable = { variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
+		if = { limit = { PREV = { NOT = { stability = 0 } } }	# For some reason the trigger value is one higher than it should be at negative stab?
 			subtract_variable = { which = raj_var_cohesion_impact_stability value = 1 }
 		}
 		multiply_variable = { which = raj_var_cohesion_impact_stability value = 4 }
@@ -3402,22 +3403,24 @@ rahen_raj_calc_cohesion = {
 		# Subject loyalty and number of senapti.
 		set_variable = { which = raj_var_subject_weighed_ld 		value = 0 }
 		set_variable = { which = raj_var_subject_development_total 	value = 0 }
-		every_subject_country = {
-            ROOT = {
-                export_to_variable = { which = raj_var_subject_ld_individual value = trigger_value:liberty_desire who = PREV }
-                export_to_variable = { which = raj_var_subject_dev_individual value = trigger_value:total_development who = PREV }
-                change_variable =     { which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
-                multiply_variable = { which = raj_var_subject_ld_individual     which = raj_var_subject_dev_individual }
-                change_variable =     { which = raj_var_subject_weighed_ld         which = raj_var_subject_ld_individual }
+		PREV = {
+            every_subject_country = {
+				4411 = {
+					export_to_variable = { which = raj_var_subject_ld_individual value = trigger_value:liberty_desire who = PREV }
+					export_to_variable = { which = raj_var_subject_dev_individual value = trigger_value:total_development who = PREV }
+					set_variable = { which = raj_var_subject_ld_balancing which = raj_var_subject_ld_individual }
+					if = { limit = { PREV = { liberty_desire = 50 } }
+						multiply_variable = { which = raj_var_subject_ld_balancing value = 0.2 }	#tweak this two numbers when attempting balancing cohesion from loyalty
+					}
+					else = { multiply_variable = { which = raj_var_subject_ld_balancing value = -0.2 } }
+					change_variable = { which = raj_var_subject_ld_individual which = raj_var_subject_ld_balancing }
+					change_variable = { which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
+					multiply_variable = { which = raj_var_subject_ld_individual     which = raj_var_subject_dev_individual }
+					change_variable = { which = raj_var_subject_weighed_ld         which = raj_var_subject_ld_individual }
+				}
             }
         }
 		divide_variable = { which = raj_var_subject_weighed_ld 	which = raj_var_subject_development_total }
-		if = { limit = { check_variable = { which = raj_var_subject_weighed_ld value = 100 } } # Need to investigate whether the LD can go beyond 0-100, just leave this in for now.
-			set_variable = { which = raj_var_subject_weighed_ld value = 100 }
-		}
-		if = { limit = { NOT = { check_variable = { which = raj_var_subject_weighed_ld value = 0 } } } 
-			set_variable = { which = raj_var_subject_weighed_ld value = 0 }
-		}
 		set_variable = 		{ which = raj_var_cohesion_impact_subject_loyalty value = 100 }
 		subtract_variable = { which = raj_var_cohesion_impact_subject_loyalty which = raj_var_subject_weighed_ld }
 		multiply_variable = { which = raj_var_cohesion_impact_subject_loyalty value = 0.4 }
@@ -3432,172 +3435,177 @@ rahen_raj_calc_cohesion = {
 		}
 
 		# Ministries loyalty
-		if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 50 } } # 50-100
-			if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 77 } } # 77-100
-				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 90 } } # 90-100
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 97 } }
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 100 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 30 } # 100
+		PREV = {
+			if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 50 } } # 50-100
+				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 77 } } # 77-100
+					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 90 } } # 90-100
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 97 } }
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 100 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 30 } # 100
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 29 } # 97
+							}
 						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 29 } # 97
+						else = { # 62-69
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 94 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 28 } # 94
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 27 } # 90
+							}
 						}
 					}
-					else = { # 62-69
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 94 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 28 } # 94
+					else = { # 77-89
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 84 } } # 84-89
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 87 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 26 } # 87
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 25 } # 84
+							}
 						}
 						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 27 } # 90
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 80 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 24 } # 80
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 23 } # 77
+							}
 						}
 					}
 				}
-				else = { # 77-89
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 84 } } # 84-89
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 87 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 26 } # 87
+				else = { # 50-76
+					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 64 } } # 64-76
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 70 } } # 70-76
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 74 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 22 } # 74
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 21 } # 70
+							}
 						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 25 } # 84
+						else = { # 62-69
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 67 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 20 } # 67
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 19 } # 64
+							}
 						}
 					}
-					else = {
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 80 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 24 } # 80
+					else = { # 50-62
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 57 } } # 57-63
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 60 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 18 } # 60
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 17 } # 57
+							}
 						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 23 } # 77
+						else = { # 50-57
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 67 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 16 } # 54
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 15 } # 50
+							}
 						}
 					}
 				}
 			}
-			else = { # 50-76
-				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 64 } } # 64-76
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 70 } } # 70-76
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 74 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 22 } # 74
+			else = { # Below 50
+				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 24 } } # 24-49
+					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 37 } }  # 37-49
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 44 } }  # 37-49
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 47 } } # 44-49
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 14 } # 47
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 13 } # 44
+							}
 						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 21 } # 70
+						else = { # 37-43
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 40 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 12 } # 40
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 11 } # 37
+							}
 						}
 					}
-					else = { # 62-69
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 67 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 20 } # 67
+					else = { # 24-36
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 30 } }
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 34 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 10 } # 34
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 9 } # 30
+							}
 						}
 						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 19 } # 64
+							if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 27 } }
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 8 } # 27
+							}
+							else = {
+								set_variable = { which = raj_var_cohesion_impact_ministries value = 7 } # 24
+							}
 						}
 					}
 				}
-				else = { # 50-62
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 57 } } # 57-63
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 60 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 18 } # 60
+				else = { # 0-23
+					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 14 } } 
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 20 } } 
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 6 } # 20
+						}
+						else_if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 17 } } 
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 5 } # 17
 						}
 						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 17 } # 57
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 4 } # 14
 						}
 					}
-					else = { # 50-57
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 67 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 16 } # 54
+					else = {
+						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 10 } } 
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 3 } # 10
+						}
+						else_if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 7 } } 
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 2 } # 7
 						}
 						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 15 } # 50
+							set_variable = { which = raj_var_cohesion_impact_ministries value = 1 } # 4
 						}
 					}
 				}
 			}
 		}
-		else = { # Below 50
-			if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 24 } } # 24-49
-				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 37 } }  # 37-49
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 44 } }  # 37-49
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 47 } } # 44-49
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 14 } # 47
-						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 13 } # 44
-						}
-					}
-					else = { # 37-43
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 40 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 12 } # 40
-						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 11 } # 37
-						}
-					}
-				}
-				else = { # 24-36
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 30 } }
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 34 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 10 } # 34
-						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 9 } # 30
-						}
-					}
-					else = {
-						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 27 } }
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 8 } # 27
-						}
-						else = {
-							set_variable = { which = raj_var_cohesion_impact_ministries value = 7 } # 24
-						}
-					}
-				}
-			}
-			else = { # 0-23
-				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 14 } } 
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 20 } } 
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 6 } # 20
-					}
-					else_if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 17 } } 
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 5 } # 17
-					}
-					else = {
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 4 } # 14
-					}
-				}
-				else = {
-					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 10 } } 
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 3 } # 10
-					}
-					else_if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 7 } } 
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 2 } # 7
-					}
-					else = {
-						set_variable = { which = raj_var_cohesion_impact_ministries value = 1 } # 4
-					}
-				}
-			}
-		}
+		set_variable = { which = raj_var_cohesion_impact_ministries which = PREV }
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_ministries }
 		round_variable = { which = raj_var_cohesion_impact_ministries value = 0 }
 
 		# Power projection
-		export_to_variable = { variable_name = raj_var_cohesion_impact_power_projection value = trigger_value:power_projection }
+		export_to_variable = { variable_name = raj_var_cohesion_impact_power_projection value = trigger_value:power_projection who = PREV }
 		divide_variable = { which = raj_var_cohesion_impact_power_projection value = 10 }
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_power_projection }
 		
-		#Bonus 
-		if = {
-			limit = {
-				has_country_flag = raj_agenda_cohesion_set
-				NOT = { has_country_modifier = raj_agenda_cohesion }
+		#Bonus
+		PREV = {
+			if = {
+				limit = {
+					has_country_flag = raj_agenda_cohesion_set
+					NOT = { has_country_modifier = raj_agenda_cohesion }
+				}
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
+				clr_country_flag = raj_agenda_cohesion_set
 			}
-			change_variable = { which = raj_var_cohesion_impact_bonus value = -5 }
-			clr_country_flag = raj_agenda_cohesion_set
-		}
-		if = {
-			limit = {
-				has_country_flag = raj_agenda_cohesion_bad_set
-				NOT = { has_country_modifier = raj_agenda_cohesion_bad }
+			if = {
+				limit = {
+					has_country_flag = raj_agenda_cohesion_bad_set
+					NOT = { has_country_modifier = raj_agenda_cohesion_bad }
+				}
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
+				clr_country_flag = raj_agenda_cohesion_bad_set
 			}
-			change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
-			clr_country_flag = raj_agenda_cohesion_bad_set
 		}
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_bonus }
 
@@ -3610,20 +3618,20 @@ rahen_raj_calc_cohesion = {
 			}
 			set_variable = { which = raj_var_cohesion value = 100 }
 		}
-
-		# Easier access for non-Raja tags.
-		4411 = {
-			set_variable = { which = raj_var_cohesion which = PREV }
-		}
 	}
 }
 
 raj_cohesion_change_bonus = {	#might be useful later
-	hidden_effect = {
-		change_variable = { which = raj_var_cohesion_impact_bonus value = $amount$ }
-		rahen_raj_calc_cohesion = yes
+	if = {
+		limit = {
+			NOT = { has_global_flag = destroyed_raj }
+		}
+		hidden_effect = {
+			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = $amount$ } }
+			event_target:raj_raja_global_target = { rahen_raj_calc_cohesion = yes }
+		}
+		tooltip = { change_variable = { which = raj_var_cohesion value = $amount$ } }
 	}
-	tooltip = { change_variable = { which = raj_cohesion value = $amount$ } }
 }
 
 rahen_raj_variables_startup = {
@@ -3640,7 +3648,7 @@ rahen_raj_variables_startup = {
 	}
 	save_global_event_target_as = raj_raja_global_target
 	R52 = { save_global_event_target_as = raj_vizier_global_target }
-	set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
+	4411 = { set_variable = { which = raj_var_cohesion_impact_bonus value = 0 } }
 	rahen_raj_calc_cohesion = yes
 	check_if_at_senaptia_cap_pick_best_if_not = yes
 	country_event = {
@@ -3866,6 +3874,11 @@ check_if_at_senaptia_cap_pick_best_if_not = {
 			which = raj_max_allowed_senaptia
 			value = 0
 		}
+
+		change_variable = {
+			which = raj_max_allowed_senaptia
+			which = raj_bonus_allowed_senaptia
+		}
 				
 		# #Checking if you have too many Senaptia	hopefully I'm accounting for everything and this is not needed
 		# set_variable = { which = rajNbSenapti value = 0 }
@@ -3994,13 +4007,14 @@ raja_completed_ministries_agenda = {
 				limit = {
 					NOT = { has_country_modifier = raj_agenda_cohesion }
 				}
-				change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
 				set_country_flag = raj_agenda_cohesion_set
 			}
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion
 				duration = 3650
-			}			
+			}
+			rahen_raj_calc_cohesion = yes
 		}
 		custom_tooltip = raj_agenda_cohesion_tt
 	}
@@ -4014,14 +4028,53 @@ raja_failed_ministries_agenda = {
 				limit = {
 					NOT = { has_country_modifier = raj_agenda_cohesion_bad }
 				}
-				change_variable = { which = raj_var_cohesion_impact_bonus value = -5 }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
 				set_country_flag = raj_agenda_cohesion_bad_set
 			}
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion_bad
 				duration = 3650
 			}
+			rahen_raj_calc_cohesion = yes
 		}
 		custom_tooltip = raj_agenda_cohesion_bad_tt
+	}
+}
+
+raja_add_bonus_max_senaptia = {	#you probably will have to add the tt to the loc if you add more than 1 max senapti
+	custom_tooltip = add_$value$_max_senapti_tt
+	hidden_effect = {
+		4411 = {
+			change_variable = {
+				which = raj_bonus_allowed_senaptia
+				value = $value$
+			}
+		}
+	}
+}
+
+ruby_gardens_wedding_effect = {
+	$owner$ = { add_country_modifier = { name = ruby_gardens_tier_$tier$_marriage duration = 9125 } }
+	$target$ = {
+		add_opinion = { who = $owner$ modifier = ruby_gardens_tier_$tier$_marriage }
+		custom_tooltip = ruby_gardens_decrease_ae_$tier$
+		hidden_effect = {
+			capital_scope = {
+				region = {
+					limit = {
+						is_capital = yes
+						owner = {
+							NOT = {
+								tag = $owner$
+								is_rival = $owner$
+								is_enemy = $owner$
+								has_country_modifier = monstrous_nation
+							}
+						}
+					}
+					owner = { add_aggressive_expansion = { who = $owner$ value = $ae$ apply_calc = no } }
+				}
+			}
+		}
 	}
 }
