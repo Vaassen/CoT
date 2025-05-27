@@ -648,7 +648,7 @@ calc_completed_magic_projects = { #Non-unique
 	if = { limit = { at_least_magic_project_level = { project = enchant_legendary_artifact level = 3 } } 	change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = battlemage_academy level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = theatre_of_simulacra level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
-	if = { limit = { has_country_flag = ruled_by_lich } 													change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { ruler_is_lich = yes } 																	change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = homunculus level = 3 } } 					change_variable = { magic_projects_completed = 1 } }
 }
 
@@ -1533,7 +1533,7 @@ magic_on_ruler_death = {
 	}
 
 	if = { #For liches who die badly
-		limit = { NOT = { has_country_flag = ruled_by_lich } }
+		limit = { ruler_is_not_lich = yes }
 		set_variable = { lichdom_level = 0 }
 		if = {
 			limit = { has_country_flag = b38_entef_ruler }
@@ -1944,10 +1944,70 @@ become_a_witch_king_effect = {
 		remove_country_modifier = infamy_respected_modifier
 	}
 	set_country_flag = ruled_by_witch_king
-	add_ruler_modifier = { name = witch_king_modifier duration = -1 }
 	set_ruler_flag = 32_witch_king_points #in case they weren't there already
+
+	if = {
+		limit = { has_country_flag = witch_king_thorns }
+		add_ruler_modifier = { name = witch_king_thorns_modifier duration = -1 }
+		add_ruler_modifier = { name = enchantment_2_1_mod duration = -1 }
+	}
+	if = {
+		limit = { has_country_flag = witch_king_armies }
+		add_ruler_modifier = { name = witch_king_armies_modifier duration = -1 }
+		add_ruler_modifier = { name = necromancy_1_0_mod duration = -1 }
+	}
+	if = {
+		limit = { has_country_flag = witch_king_will }
+		add_ruler_modifier = { name = witch_king_will_modifier duration = -1 }
+		add_ruler_modifier = { name = enchantment_2_0_mod duration = -1 }
+		set_ruler_flag = witch_king_war_magic
+		make_spell_half_off = { school = enchantment level = 3 id = 0 ruler = yes }
+	}
+	if = {
+		limit = { has_country_flag = witch_king_skill }
+		add_ruler_modifier = { name = witch_king_skill_modifier duration = -1 }
+		add_ruler_modifier = { name = divination_2_1_mod_buffed duration = -1 }
+		set_ruler_flag = witch_king_war_magic
+	}
+	if = {
+		limit = { has_country_flag = witch_king_build }
+		add_ruler_modifier = { name = witch_king_build_modifier duration = -1 }
+		add_ruler_modifier = { name = transmutation_2_1_mod duration = -1 }
+		make_spell_half_off = { school = evocation level = 2 id = 0 ruler = yes }
+	}
+	if = {
+		limit = { has_country_flag = witch_king_keep }
+		add_ruler_modifier = { name = witch_king_keep_modifier duration = -1 }
+		add_ruler_modifier = { name = abjuration_2_1_mod duration = -1 }
+	}
+	if = {
+		limit = {
+			NOT = { #we haven't chosen a type of witch-king yet
+				has_country_flag = witch_king_thorns
+				has_country_flag = witch_king_armies
+				has_country_flag = witch_king_will
+				has_country_flag = witch_king_skill
+				has_country_flag = witch_king_build
+				has_country_flag = witch_king_keep
+			}
+		}
+		country_event = { id = magic_ruler.66 } #Choose what kind of witch-king you are
+	}
 	
 	hidden_effect = { country_event = { id = magic_ruler.77 } } #if the conditions are right, flip BD
+}
+
+clr_witch_king_country_flags = {
+	clr_country_flag = ruled_by_witch_king
+	trigger_switch = {
+		on_trigger = has_country_flag
+		witch_king_thorns = { clr_country_flag = witch_king_thorns }
+		witch_king_armies = { clr_country_flag = witch_king_armies }
+		witch_king_will = { clr_country_flag = witch_king_will }
+		witch_king_skill = { clr_country_flag = witch_king_skill }
+		witch_king_build = { clr_country_flag = witch_king_build }
+		witch_king_keep = { clr_country_flag = witch_king_keep }
+	}
 }
 
 calculate_magical_infamy_modifier = {
@@ -1957,7 +2017,16 @@ calculate_magical_infamy_modifier = {
 		remove_country_modifier = infamy_respected_modifier
 	}
 	if = {
-		limit = { NOT = { has_ruler_modifier = witch_king_modifier } }
+		limit = { #to account for ascending/reviving witch-kings
+			NOT = {
+				has_ruler_modifier = witch_king_thorns_modifier
+				has_ruler_modifier = witch_king_armies_modifier
+				has_ruler_modifier = witch_king_will_modifier
+				has_ruler_modifier = witch_king_skill_modifier
+				has_ruler_modifier = witch_king_build_modifier
+				has_ruler_modifier = witch_king_keep_modifier
+			}
+		}
 		if = {
 			limit = {
 				OR = {
@@ -1965,7 +2034,7 @@ calculate_magical_infamy_modifier = {
 					has_government_attribute = always_witch_king
 				}
 			}
-			country_event = { id = magic_ruler.66 }
+			become_a_witch_king_effect = yes
 		}
 		else_if = {
 			limit = { type_has_infamy_denounced = { type = ruler } }
@@ -1981,7 +2050,17 @@ calculate_magical_infamy_modifier = {
 		}
 	}
 	if = {
-		limit = { has_ruler_modifier = witch_king_modifier NOT = { type_has_infamy_witch_king = { type = ruler } } }
+		limit = { #To account for ascending/reviving witch-kings
+			OR = {
+				has_ruler_modifier = witch_king_thorns_modifier
+				has_ruler_modifier = witch_king_armies_modifier
+				has_ruler_modifier = witch_king_will_modifier
+				has_ruler_modifier = witch_king_skill_modifier
+				has_ruler_modifier = witch_king_build_modifier
+				has_ruler_modifier = witch_king_keep_modifier
+			}
+			NOT = { type_has_infamy_witch_king = { type = ruler } }
+		}
 		country_event = { id = magic_ruler.68 days = 1825 random = 365 }
 	}
 }
