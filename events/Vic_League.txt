@@ -1,0 +1,215 @@
+
+namespace = flavour_vic_league
+
+country_event = { #Calculation for Expand the League
+	id = flavour_vic_league.1
+	title = flavour_vic_league.1.t
+	desc = flavour_vic_league.1.d
+	picture = REFUGEES_ESCAPING_eventPicture
+	
+	is_triggered_only = yes
+	#hidden = yes
+	
+	immediate = {
+		if = {
+			limit = {
+				has_government_attribute = expand_the_league_3_attribute
+			}
+			every_known_country = {
+				limit = {
+					guaranteed_by = ROOT
+					NOT = { total_development = 200 }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_saved_event_target = expand_the_league_target }
+							event_target:expand_the_league_target = { NOT = { total_development = PREV } }
+						}
+					}
+					save_event_target_as = expand_the_league_target
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_government_attribute = expand_the_league_2_attribute
+			}
+			every_known_country = {
+				limit = {
+					guaranteed_by = ROOT
+					capital_scope = {
+						superregion = gerudia_superregion
+					}
+					NOT = { total_development = 150 }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_saved_event_target = expand_the_league_target }
+							event_target:expand_the_league_target = { NOT = { total_development = PREV } }
+						}
+					}
+					save_event_target_as = expand_the_league_target
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_government_attribute = expand_the_league_1_attribute
+			}
+			every_known_country = {
+				limit = {
+					guaranteed_by = ROOT
+					nation_considered_blue_reachman = yes
+					NOT = { total_development = 100 }
+				}
+				if = {
+					limit = {
+						OR = {
+							NOT = { has_saved_event_target = expand_the_league_target }
+							event_target:expand_the_league_target = { NOT = { total_development = PREV } }
+						}
+					}
+					save_event_target_as = expand_the_league_target
+				}
+			}
+		}
+		
+		set_variable = { VicTotal = 0 }
+		
+		set_variable = { VicDipRep = 0 }
+		export_to_variable = {
+			which = VicDipRep
+			value = diplomatic_reputation
+			who = ROOT
+		}
+		multiply_variable = {
+			which = VicDipRep
+			value = 5
+		}
+		change_variable = {
+			which = VicTotal
+			which = VicDipRep
+		}
+		
+		set_variable = { VicOpinion = 0 }
+		export_to_variable = {
+			which = VicOpinion
+			value = opinion
+			who = event_target:expand_the_league_target #checkthis, not sure it works, may need to reverse it and save the variable inside target country instead
+		}
+		divide_variable = {
+			which = VicOpinion
+			value = 2
+		}
+		change_variable = {
+			which = VicTotal
+			which = VicOpinion
+		}
+		
+		set_variable = { VicDev = 0 }
+		export_to_variable = {
+			which = VicDev
+			value = total_development
+			who = event_target:expand_the_league_target
+		}
+		divide_variable = {
+			which = VicDev
+			value = 2
+		}
+		substract_variable = {
+			which = VicTotal
+			which = VicDev
+		}
+		
+		set_variable = { VicLeagueSize = 0 }
+		every_subject_country = {
+			limit = { is_subject_of_type = vic_league_member }
+			ROOT = {
+				change_variable = {
+					which = VicLeagueSize
+					value = 1
+				}
+			}
+		}
+		multiply_variable = {
+			which = VicLeagueSize
+			value = 10
+		}
+		change_variable = {
+			which = VicTotal
+			which = VicLeagueSize
+		}
+	}
+
+	option = {
+		name = flavour_vic_league.1.a
+		custom_tooltip = vic_league_failure_tt #check if the variables were properly set
+		if = { #Success!
+			limit = { check_variable = { which = VicTotal value = 0 } }
+			country_event = { id = flavour_vic_league.2 }
+		}
+		else = { #Failure...
+			country_event = { id = flavour_vic_league.4 }
+		}
+	}
+}
+
+country_event = { #Expand the League - Success (Leader)
+	id = flavour_vic_league.2
+	title = flavour_vic_league.2.t
+	desc = flavour_vic_league.2.d
+	picture = REFUGEES_ESCAPING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_vic_league.2.a
+		create_subject = {
+			subject_type = vic_league_member
+			subject = event_target:expand_the_league_target
+		}
+		hidden_effect = { event_target:expand_the_league_target = { country_event = { id = flavour_vic_league.3 } } }
+	}
+}
+
+country_event = { #Expand the League - Success (Target)
+	id = flavour_vic_league.3
+	title = flavour_vic_league.3.t
+	desc = flavour_vic_league.3.d
+	picture = REFUGEES_ESCAPING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_vic_league.3.a
+		tooltip = {
+			overlord = {
+				create_subject = {
+					subject_type = vic_league_member
+					subject = ROOT
+				}
+			}
+		}
+	}
+}
+
+country_event = { #Expand the League - Failure
+	id = flavour_vic_league.4
+	title = flavour_vic_league.4.t
+	desc = flavour_vic_league.4.d
+	picture = REFUGEES_ESCAPING_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_vic_league.4.a
+		custom_tooltip = vic_league_failure_tt
+		add_government_power = {
+			mechanic_type = vic_league_mechanic
+			power_type = vic_league_dip_power
+			value = 50
+		}
+	}
+}
