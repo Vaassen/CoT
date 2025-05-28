@@ -8,7 +8,7 @@ country_event = { #Calculation for Expand the League
 	picture = REFUGEES_ESCAPING_eventPicture
 	
 	is_triggered_only = yes
-	#hidden = yes
+	hidden = yes
 	
 	immediate = {
 		if = {
@@ -19,6 +19,7 @@ country_event = { #Calculation for Expand the League
 				limit = {
 					guaranteed_by = ROOT
 					NOT = { total_development = 200 }
+					NOT = { num_of_subjects = 1 }
 				}
 				if = {
 					limit = {
@@ -42,6 +43,7 @@ country_event = { #Calculation for Expand the League
 						superregion = gerudia_superregion
 					}
 					NOT = { total_development = 150 }
+					NOT = { num_of_subjects = 1 }
 				}
 				if = {
 					limit = {
@@ -63,6 +65,7 @@ country_event = { #Calculation for Expand the League
 					guaranteed_by = ROOT
 					nation_considered_blue_reachman = yes
 					NOT = { total_development = 100 }
+					NOT = { num_of_subjects = 1 }
 				}
 				if = {
 					limit = {
@@ -118,7 +121,7 @@ country_event = { #Calculation for Expand the League
 			which = VicDev
 			value = 2
 		}
-		substract_variable = {
+		subtract_variable = {
 			which = VicTotal
 			which = VicDev
 		}
@@ -137,7 +140,7 @@ country_event = { #Calculation for Expand the League
 			which = VicLeagueSize
 			value = 10
 		}
-		change_variable = {
+		subtract_variable = {
 			which = VicTotal
 			which = VicLeagueSize
 		}
@@ -145,52 +148,89 @@ country_event = { #Calculation for Expand the League
 
 	option = {
 		name = flavour_vic_league.1.a
-		custom_tooltip = vic_league_failure_tt #check if the variables were properly set
-		if = { #Success!
+		
+		if = {
+			limit = { event_target:expand_the_league_target = { ai = no } }
+			save_event_target_as = prospective_league_leader
+			event_target:expand_the_league_target = {
+				country_event = { id = flavour_vic_league.2 }
+			}
+		}
+		else_if = { #Success!
 			limit = { check_variable = { which = VicTotal value = 0 } }
-			country_event = { id = flavour_vic_league.2 }
+			country_event = { id = flavour_vic_league.3 }
+			custom_tooltip = vic_league_success_tt #check if the variables were properly set
 		}
 		else = { #Failure...
-			country_event = { id = flavour_vic_league.4 }
+			country_event = { id = flavour_vic_league.5 }
+			custom_tooltip = vic_league_failure_tt #check if the variables were properly set
 		}
 	}
 }
 
-country_event = { #Expand the League - Success (Leader)
+country_event = { #Expand the League - Player Target
 	id = flavour_vic_league.2
 	title = flavour_vic_league.2.t
 	desc = flavour_vic_league.2.d
-	picture = REFUGEES_ESCAPING_eventPicture
+	picture = DIPLOMACY_eventPicture
 	
 	is_triggered_only = yes
 	
 	option = {
 		name = flavour_vic_league.2.a
-		create_subject = {
-			subject_type = vic_league_member
-			subject = event_target:expand_the_league_target
-		}
-		hidden_effect = { event_target:expand_the_league_target = { country_event = { id = flavour_vic_league.3 } } }
-	}
-}
-
-country_event = { #Expand the League - Success (Target)
-	id = flavour_vic_league.3
-	title = flavour_vic_league.3.t
-	desc = flavour_vic_league.3.d
-	picture = REFUGEES_ESCAPING_eventPicture
-	
-	is_triggered_only = yes
-	
-	option = {
-		name = flavour_vic_league.3.a
 		tooltip = {
-			overlord = {
+			event_target:prospective_league_leader = {
 				create_subject = {
 					subject_type = vic_league_member
 					subject = ROOT
 				}
 			}
+		}
+		hidden_effect = { country_event = { id = flavour_vic_league.3 } }
+	}
+	
+	option = {
+		name = flavour_vic_league.2.b
+		tooltip = {
+			remove_guarantee = event_target:prospective_league_leader
+		}
+		hidden_effect = { country_event = { id = flavour_vic_league.4 } }
+	}
+
+country_event = { #Expand the League - Success
+	id = flavour_vic_league.3
+	title = flavour_vic_league.3.t
+	desc = flavour_vic_league.3.d
+	picture = DIPLOMACY_eventPicture
+	
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_vic_league.3.a
+		create_subject = {
+			subject_type = vic_league_member
+			subject = event_target:expand_the_league_target
+		}
+		if = {
+			limit = { event_target:expand_the_league_target = { ai = no } }
+			custom_tooltip = vic_league_success_player_tt
+		}
+		else = {
+			custom_tooltip = vic_league_success_tt
+		}
+		if = {
+			limit = { has_government_attribute = expand_the_league_2_attribute }
+			event_target:expand_the_league_target = {
+				capital_scope = {
+					add_trade_modifier = {
+						who = ROOT
+						duration = -1
+						power = 25
+						key = vic_commonwealth_trade_bonus
+					}
+				}
+			}
+			custom_tooltip = vic_league_expand_the_league_upgrade_tt
 		}
 	}
 }
@@ -199,17 +239,233 @@ country_event = { #Expand the League - Failure
 	id = flavour_vic_league.4
 	title = flavour_vic_league.4.t
 	desc = flavour_vic_league.4.d
-	picture = REFUGEES_ESCAPING_eventPicture
+	picture = ACCUSATION_eventPicture
 	
 	is_triggered_only = yes
 	
 	option = {
 		name = flavour_vic_league.4.a
-		custom_tooltip = vic_league_failure_tt
+		if = {
+			limit = { event_target:expand_the_league_target = { ai = no } }
+			custom_tooltip = vic_league_failure_player_tt
+		}
+		else = {
+			custom_tooltip = vic_league_failure_tt
+		}
+		remove_guarantee = event_target:prospective_league_leader
 		add_government_power = {
-			mechanic_type = vic_league_mechanic
+			mechanic_type = vic_league_leader_mechanic
 			power_type = vic_league_dip_power
 			value = 50
+		}
+		if = {
+			limit = { has_government_attribute = expand_the_league_2_attribute }
+			add_country_modifier = {
+				name = vic_domestic_trade_expansion
+				duration = 3650
+			}
+		}
+	}
+}
+
+country_event = { #Release Vic League members on_dependency_gained if the new overlord is not a Blue Reachman tag (need to be here to avoid potential CTD)
+	id = flavour_vic_league.5
+	title = flavour_vic_league.5.t
+	desc = flavour_vic_league.5.d
+	picture = REFUGEES_ESCAPING_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	option = {
+		name = flavour_vic_league.5.a
+		every_subject_country = {
+			limit = { is_subject_of_type = vic_league_member }
+			grant_independence = yes
+		}
+	}
+}
+
+country_event = { #declare war
+	id = flavour_vic_league.6
+	title = flavour_vic_league.6.t
+	desc = flavour_vic_league.6.d
+	picture = DEBATE_REPUBLICAN_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		overlord = {
+			every_subject_country = {
+				limit = {
+					is_subject_of_type = vic_league_member
+					liberty_desire = 50
+				}
+				set_country_flag = vic_supremacy_flag
+			}
+		}
+	}
+	
+	option = {
+		name = flavour_vic_league.6.a
+		
+		declare_war_with_cb = {
+			casus_belli = cb_vic_league_fight_for_supremacy
+			who = overlord
+		}
+		add_stability = -1
+		every_known_country = {
+			limit = { has_country_flag = vic_supremacy_flag }
+			ROOT = {
+				create_subject = {
+					subject_type = vic_league_member
+					subject = PREV
+				}
+			}
+			add_stability = -1
+			join_all_offensive_wars_of = ROOT
+			clr_country_flag = vic_supremacy_flag
+		}
+	}
+}
+
+country_event = { #Resolve war
+	id = flavour_vic_league.7
+	title = flavour_vic_league.7.t
+	desc = flavour_vic_league.7.d
+	picture = DEBATE_REPUBLICAN_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		random_known_country = {
+			limit = {
+				has_country_flag = vic_supremacy_war_loser
+			}
+			clr_country_flag = vic_supremacy_war_loser
+			save_event_target_as = vic_supremacy_war_loser_target
+		}
+	}
+	
+	option = {
+		name = flavour_vic_league.8.a
+
+		event_target:vic_supremacy_war_loser_target = {
+			every_owned_province = {
+				limit = { NOT = { is_capital = yes } region = alenic_reach_region }
+				cede_province = ROOT
+			}
+			every_subject_country = {
+				limit = { is_subject_of_type = vic_league_member }
+				ROOT = {
+					create_subject = {
+						subject_type = vic_league_member
+						subject = PREV
+					}
+				}
+			}
+			if = {
+				limit = {
+					any_known_country = {
+						has_subject_of_type = vic_league_member
+						NOT = { tag = ROOT }
+					}
+				}
+				random_known_country = {
+					limit = { 
+						has_subject_of_type = vic_league_member
+						NOT = { tag = ROOT }
+					}
+					create_subject = {
+						subject_type = vic_league_member
+						subject = event_target:vic_supremacy_war_loser_target
+					}
+				}
+			}
+			else = {
+				ROOT = {
+					create_subject = {
+						subject_type = vic_league_member
+						subject = event_target:vic_supremacy_war_loser_target
+					}
+				}
+			}
+		}
+	}
+}
+
+country_event = { #The Ordal Compromise
+	id = flavour_vic_league.100
+	title = flavour_vic_league.100.t
+	desc = flavour_vic_league.100.d
+	picture = DEBATE_REPUBLICAN_eventPicture
+
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { government = monarchy }
+				set_country_flag = the_reach_formed_as_monarchy
+			}
+			else_if = {
+				limit = { government = theocracy }
+				set_country_flag = the_reach_formed_as_theocracy
+			}
+			else = {
+				set_country_flag = the_reach_formed_as_republic
+			}
+		}
+	}
+			
+			
+	option = {
+		name = flavour_vic_league.100.a
+		if = {
+			limit = { NOT = { government = republic } }
+			change_government = republic
+		}
+		add_government_reform = ragnian_commonwealth
+		if = {
+			limit = { has_country_flag = the_reach_formed_as_republic }
+			custom_tooltip = the_reach_formed_as_republic_tt
+			if = {
+				limit = {
+					has_estate_privilege = estate_burghers_land_of_commerce
+				}
+				change_estate_land_share = {
+					estate = all
+					share = 5
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = the_reach_formed_as_monarchy }
+			custom_tooltip = the_reach_formed_as_monarchy_tt
+			if = {
+				limit = {
+					has_estate_privilege = estate_nobles_nobility_primacy
+				}
+				change_estate_land_share = {
+					estate = all
+					share = 5
+				}
+			}
+		}
+		if = {
+			limit = { has_country_flag = the_reach_formed_as_theocracy }
+			custom_tooltip = the_reach_formed_as_theocracy_tt
+			if = {
+				limit = {
+					has_estate_privilege = estate_church_religious_state
+				}
+				change_estate_land_share = {
+					estate = all
+					share = 5
+				}
+			}
 		}
 	}
 }
