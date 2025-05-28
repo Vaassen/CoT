@@ -2007,6 +2007,10 @@ country_event = { #Spawn of Alefisol
 			limit = {
 				NOT = { ai = yes }
 				religion = rinta_seekers
+				has_disaster_progress = {
+					disaster = darkmagicks
+					value = 1
+				}
 			}
 			country_event = {
 				id = rinta_seeker_events.206
@@ -2065,13 +2069,55 @@ country_event = {
 			duration = 365
 		}
 		OR = {
-			war_score = 95
-			NOT = { war_score = -95 }
+			NOT = { war_score = -98 } # lose!
+			AND = { # also lose!
+				check_variable = {
+					which = alefisol_lost_6
+					value = 6
+				}
+				OR = {
+					capital_scope = {
+						NOT = { controlled_by = S93 }
+					}
+				NOT = { war_score = -74 }
+				}
+			}
+			war_score = 95 # win!
 		}
 	}
 	option = {
 		name = rinta_seeker_events.215.a
-		alefisol_invasion_siege_won_effect = yes
+		if = {
+			limit = { #Alefisol losing
+				NOT = { war_score = -74 }
+			}
+			every_known_country = {
+				limit = { has_disaster = darkmagicks }
+				country_event = { id = rinta_seeker_events.211 days = 1 }
+			}
+			if = {
+				limit = { S93 = { exists = yes } }
+				S93 = {
+					remove_country_modifier = alefisol_modifier
+					every_owned_province = {
+						remove_core = ROOT
+						cede_province = previous_owner
+					}
+					if = {
+						limit = { S93 = { exists = yes } }
+						remove_country = yes
+					}
+				}
+			}
+			clr_global_flag = darkmagicks_flag
+			clr_global_flag = incident_rinta_dark_magic_ongoing_flag
+		}
+		else_if = {
+			limit = { #Alefisol win
+				war_score = 95
+			}
+			country_event = { id = rinta_seeker_events.212 days = 1 }
+		}
 	}
 }
 country_event = {
@@ -4674,12 +4720,6 @@ country_event = { #Factional Skirmish
 
 	option = {
 		name = rinta_seeker_events.351.a
-		trigger = {
-			estate_loyalty = {
-				estate = estate_adeen
-				loyalty = 30
-			}
-		}
 		if = {
 			limit = {
 				estate_loyalty = {
@@ -4933,12 +4973,6 @@ country_event = { #Local Secession
 	option = {
 		name = rinta_seeker_events.354.b
 		goto = adeeni_target_1
-		trigger = {
-			estate_loyalty = {
-				estate = estate_adeen
-				loyalty = 30
-			}
-		}
 		event_target:adeeni_target_1 = {
 			add_local_autonomy = 20
 		}
