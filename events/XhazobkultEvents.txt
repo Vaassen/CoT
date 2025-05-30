@@ -1,7 +1,5 @@
 namespace = xhazobkult_events
 
-
-
 ###########################
 ###      Systems        ###
 ###########################
@@ -269,8 +267,232 @@ country_event = { #Local gnolls do their own ritual
 	}
 }
 
+###########################
+###   Ger-Bexamurr    ###
+###########################
 
+#"The Phylactery was the friends we ate along the way" event chain
 
+province_event = { #Check for current hunt
+	id = xhazobkult_events.201
+	title = xhazobkult_events.201.t
+	desc = xhazobkult_events.201.d
+	picture = END_OF_TIME_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		controller = {
+			owns = 6104
+			6104 = { has_great_project = { type = ger_bexamurr tier = 2 } }
+			culture_group = gnollish
+			religion = xhazobkult
+			NOT = { has_country_flag = active_hunt_for_powerful_mages }
+		}
+		owner = {
+			ruler_has_mage_personality = yes
+			NOT = { has_country_flag = hunt_for_powerful_mages_happened_to_us }
+		}
+		is_capital = yes
+		NOT = { controlled_by = owner }
+	}
+
+	option = { 
+		name = xhazobkult_events.201.a
+		ai_chance = { factor = 1 }
+		owner = { 
+			save_event_target_as = hunt_for_powerful_mages_victim
+			country_event = { id = xhazobkult_events.202 } #Notice for owner
+			set_country_flag = hunt_for_powerful_mages_happened_to_us #Once a war
+		}
+		controller = {
+			save_event_target_as = hunt_for_powerful_mages_gnoll
+			country_event = { id = xhazobkult_events.203 } #Notice for besieger
+			set_country_flag = active_hunt_for_powerful_mages #Only one active hunt at a time
+		} 
+		save_event_target_as = hunt_for_powerful_mages_capital
+		province_event = { id = xhazobkult_events.204 days = 120 random = 60 } #Outcome
+	}
+}
+
+country_event = { #A death by inches
+	id = xhazobkult_events.202
+	title = xhazobkult_events.202.t
+	desc = xhazobkult_events.202.d
+	picture = LOOMING_DEATH_eventPicture
+	goto = hunt_for_powerful_mages_capital
+
+	is_triggered_only = yes
+
+	option = { #There is no escape
+		name = xhazobkult_events.202.a
+		add_prestige = -10
+		custom_tooltip = hunt_for_powerful_mages_notice_tt
+	}
+}
+
+country_event = { #Chasing shadows
+	id = xhazobkult_events.203
+	title = xhazobkult_events.203.t
+	desc = xhazobkult_events.203.d
+	picture = THE_COVENANT_eventPicture
+	goto = hunt_for_powerful_mages_capital
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_country_flag = hunt_for_powerful_mages_story_skipper }
+	}
+
+	option = { #The hunt is on
+		name = xhazobkult_events.203.a
+		ai_chance = { factor = 1 }
+	}
+
+	option = { #The hunt is on, so don't tell me again
+		name = xhazobkult_events.203.b
+		ai_chance = { factor = 0 }
+		set_country_flag = hunt_for_powerful_mages_story_skipper
+	}
+}
+
+province_event = { #Hunt outcome
+	id = xhazobkult_events.204
+	title = xhazobkult_events.204.t
+	desc = xhazobkult_events.204.d
+	picture = END_OF_TIME_eventPicture
+
+	hidden = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = xhazobkult_events.204.a
+		ai_chance = { factor = 1 }
+		if = { #Successful
+			limit = {
+				controller = {
+					owns = 6104
+					6104 = { has_great_project = { type = ger_bexamurr tier = 2 } }
+					culture_group = gnollish
+					religion = xhazobkult
+				}
+				owner = { ruler_has_mage_personality = yes }
+				is_capital = yes
+				NOT = { controlled_by = owner }
+			}
+			controller = { country_event = { id = xhazobkult_events.205 } }
+		}
+		else = { #Failed, check for next hunt
+			event_target:hunt_for_powerful_mages_gnoll = {
+				clr_country_flag = active_hunt_for_powerful_mages
+				random_war_enemy_country = {
+					limit = {
+						ruler_has_mage_personality = yes
+						NOT = { has_country_flag = hunt_for_powerful_mages_happened_to_us }
+						capital_scope = { controlled_by = event_target:hunt_for_powerful_mages_gnoll }
+					}
+					capital_scope = { province_event = { id = xhazobkult_events.201 days = 30 } }
+				}
+			}
+		}
+	}
+}
+
+country_event = { #The Abyss
+	id = xhazobkult_events.205
+	title = xhazobkult_events.205.t
+	desc = xhazobkult_events.205.d
+	picture = THE_COVENANT_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Where am I?
+		name = xhazobkult_events.205.a
+		hidden_effect = {
+			set_variable = {
+				which = SacrificeRulerAdm
+				value = 0
+			}
+			set_variable = {
+				which = SacrificeRulerDip
+				value = 0
+			}
+			set_variable = {
+				which = SacrificeRulerMil
+				value = 0
+			}
+			export_to_variable = {
+				which = SacrificeRulerAdm
+				value = ADM
+				who = event_target:hunt_for_powerful_mages_victim
+			}
+			export_to_variable = {
+				which = SacrificeRulerDip
+				value = DIP
+				who = event_target:hunt_for_powerful_mages_victim
+			}
+			export_to_variable = {
+				which = SacrificeRulerMil
+				value = MIL
+				who = event_target:hunt_for_powerful_mages_victim
+			}
+			while = {
+				limit = { check_variable = { which = SacrificeRulerAdm value = 1 } }
+				add_adm_power = 10
+				subtract_variable = { which = SacrificeRulerAdm value = 1 }
+			}
+			while = {
+				limit = { check_variable = { which = SacrificeRulerDip value = 1 } }
+				add_dip_power = 10
+				subtract_variable = { which = SacrificeRulerDip value = 1 }
+			}
+			while = {
+				limit = { check_variable = { which = SacrificeRulerMil value = 1 } }
+				add_mil_power = 10
+				subtract_variable = { which = SacrificeRulerMil value = 1 }
+			}
+		}
+		custom_tooltip = hunt_for_powerful_mages_sacrifice_tt
+		add_stability = 1
+		add_patriarch_authority = 0.1
+		event_target:hunt_for_powerful_mages_victim = {
+			tooltip = {
+				kill_ruler = yes
+			}
+			country_event = { id = xhazobkult_events.206 } 
+		}
+		hidden_effect = {
+			clr_country_flag = active_hunt_for_powerful_mages
+			random_war_enemy_country = {
+				limit = {
+					ruler_has_mage_personality = yes
+					NOT = { has_country_flag = hunt_for_powerful_mages_happened_to_us }
+					capital_scope = {
+						controlled_by = event_target:hunt_for_powerful_mages_gnoll
+					}
+				}
+				capital_scope = {
+					province_event = { id = xhazobkult_events.201 days = 30	}
+				}
+			}
+		}
+	}
+}
+
+country_event = { #Gone
+	id = xhazobkult_events.206
+	title = xhazobkult_events.206.t
+	desc = xhazobkult_events.206.d
+	picture = LOOMING_DEATH_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Ashen skies!
+		name = xhazobkult_events.203.a
+		kill_ruler = yes
+	}
+}
 
 ###########################
 ###   Great Xhaz    ###
@@ -298,8 +520,12 @@ country_event = {
 	option = {
 		name = xhazobkult_events.3000.a
 		if = {
-			limit = { ai = no }
+			limit = { ai = no NOT = { has_country_flag = zokka_xhaz_buff_flag } }
 			add_patriarch_authority = -0.65
+		}
+		else_if = {
+			limit = { ai = no has_country_flag = zokka_xhaz_buff_flag }
+			add_patriarch_authority = -0.35
 		}
 		custom_tooltip = xhazobkult_events.3000.tooltip
 		if = {
