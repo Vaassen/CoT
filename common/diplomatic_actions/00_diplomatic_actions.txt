@@ -500,16 +500,6 @@ declarewar = {
 		}
 		allow = { always = no }
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
-		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
-		}
-	}
 
 	condition = {
 		tooltip = DWAROVAR_AI
@@ -1709,16 +1699,6 @@ allianceaction = {
 			}
 		}
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
-		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
-		}
-	}
 
 	condition = {
 		tooltip = OVERLORD_AMBITION
@@ -1921,6 +1901,7 @@ royal_marriage = {
 		potential = {
 			ruler_culture = sun_elf
 			primary_culture = sun_elf #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			NOT = { religion = the_jadd }
 		}
 		allow = {
 			OR = {
@@ -1936,6 +1917,7 @@ royal_marriage = {
 		potential = {
 			FROM = { ruler_culture = sun_elf } 
 			FROM = { primary_culture = sun_elf } #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			FROM = { NOT = { religion = the_jadd } }
 		}
 		allow = {
 			OR = {
@@ -1955,6 +1937,8 @@ royal_marriage = {
 				culture_group = elven
 				NOT = { ruler_culture = desert_elf }
 				NOT = { primary_culture = desert_elf }
+				NOT = { ruler_culture = sun_elf }
+				NOT = { primary_culture = sun_elf }
 			}
 		}
 		allow = {
@@ -1973,6 +1957,9 @@ royal_marriage = {
 			culture_group = elven
 			NOT = { ruler_culture = desert_elf }
 			NOT = { primary_culture = desert_elf }
+			NOT = { ruler_culture = sun_elf }
+			NOT = { primary_culture = sun_elf }
+			
 		}
 		allow = {
 			OR = {
@@ -2413,14 +2400,38 @@ royal_marriage = {
 			}
 		}
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
+	effect = {
+		if = {
+			limit = {
+				ROOT = {
+					owns_ruby_gardens = { tier = 2 }
+					NOT = { has_country_modifier = ruby_gardens_tier_2_marriage }
+					NOT = { has_country_modifier = ruby_gardens_tier_3_marriage }
+				}
+			}
+			if = {
+				limit = { ROOT = { owns_ruby_gardens = { tier = 3 } } }
+				ruby_gardens_wedding_effect = { owner = ROOT target = FROM tier = 3 ae = -20 }
+			}
+			else = {
+				ruby_gardens_wedding_effect = { owner = ROOT target = FROM tier = 2 ae = -10 }
+			}
 		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
+		else_if = {
+			limit = {
+				FROM = {
+					owns_ruby_gardens = { tier = 2 }
+					NOT = { has_country_modifier = ruby_gardens_tier_2_marriage }
+					NOT = { has_country_modifier = ruby_gardens_tier_3_marriage }
+				}
+			}
+			if = {
+				limit = { FROM = { owns_ruby_gardens = { tier = 3 } } }
+				ruby_gardens_wedding_effect = { owner = FROM target = ROOT tier = 3 ae = -20 }
+			}
+			else = {
+				ruby_gardens_wedding_effect = { owner = FROM target = ROOT tier = 2 ae = -10 }
+			}
 		}
 	}
 }
@@ -3681,6 +3692,35 @@ requestpeace = {
 			always = no
 		}
 	}
+	condition = {
+		tooltip = F29_NO_PEACE_TT
+		potential = {
+			ROOT = {
+				has_country_flag = zokka_final_war
+			}
+		}
+		allow = {
+			always = no
+        }
+	}
+	
+	condition = { #Rinta seekers Alefisol disaster war after Magicks incident
+		tooltip = ALEFISOL_INVASION_WAR_NAME_tt
+		potential = {
+			OR = {
+				tag = S93
+				FROM = { tag = S93 }
+			}
+		}
+		allow = {
+			NOT = {
+				AND = {
+					is_in_war = { casus_belli = cb_alefisol_war }
+					FROM = { is_in_war = { casus_belli = cb_alefisol_war } }
+				}
+			}
+		}
+	}
 }
 
 support_heir = {
@@ -3852,4 +3892,43 @@ trade_favors_for_sailors = {
 		}
 	}
 }
+
+grant_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+                }
+                emperor = { NOT = { has_country_modifier = A77_preatorian_electors } }
+            }
+            emperor = {
+                add_country_modifier = {
+                    name = A77_preatorian_electors
+                    duration = -1
+                }
+            }
+        }
+    }
+}
+
+remove_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+					is_elector = yes
+                }
+                emperor = { has_country_modifier = A77_preatorian_electors }
+            }
+            emperor = {
+				remove_country_modifier = A77_preatorian_electors
+            }
+        }
+    }
+}
+
 
