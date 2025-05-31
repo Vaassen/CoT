@@ -12771,36 +12771,24 @@ on_province_owner_change_monuments = {
 		}
 	}
 	if = { #Imperial Palace
-		limit = { province_id = 8 }
-		if = {
+		limit = {
+			province_id = 8
+			has_great_project = { type = imperial_palace_anbenncost tier = 1 }
+		}
+		if = { #exactly tier 0
 			limit = {
-				has_great_project = {
-					type = imperial_palace_anbenncost
-					tier = 2
-				}
+				NOT = { has_great_project = { type = imperial_palace_anbenncost tier = 1 } }
 			}
 			every_country = {
 				limit = { is_part_of_hre = yes }
-				remove_country_modifier = imperial_palace_prince_modifier_tier_3
-				add_country_modifier = {
-					name = imperial_palace_prince_modifier_tier_2
-					duration = -1
-				}
+				remove_country_modifier = imperial_palace_prince_modifier_tier_1
 			}
-			emperor = {
-				remove_country_modifier = imperial_palace_modifier_tier_3
-				add_ruler_modifier = {
-					name = imperial_palace_modifier_tier_2
-					duration = -1
-				}
-			}
+			emperor = { remove_country_modifier = imperial_palace_modifier_tier_1 }
 		}
-		else_if = {
+		if = { #exactly tier 1
 			limit = {
-				has_great_project = {
-					type = imperial_palace_anbenncost
-					tier = 1
-				}
+				has_great_project = { type = imperial_palace_anbenncost tier = 1 }
+				NOT = { has_great_project = { type = imperial_palace_anbenncost tier = 2 } }
 			}
 			every_country = {
 				limit = { is_part_of_hre = yes }
@@ -12818,13 +12806,118 @@ on_province_owner_change_monuments = {
 				}
 			}
 		}
-		else = {
+		if = { #exactly tier 2
+			limit = {
+				has_great_project = { type = imperial_palace_anbenncost tier = 2 }
+				NOT = { has_great_project = { type = imperial_palace_anbenncost tier = 3 } }
+			}
 			every_country = {
 				limit = { is_part_of_hre = yes }
-				remove_country_modifier = imperial_palace_prince_modifier_tier_1
+				remove_country_modifier = imperial_palace_prince_modifier_tier_3
+				add_country_modifier = {
+					name = imperial_palace_prince_modifier_tier_2
+					duration = -1
+				}
 			}
 			emperor = {
-				remove_country_modifier = imperial_palace_modifier_tier_1
+				remove_country_modifier = imperial_palace_modifier_tier_3
+				add_ruler_modifier = {
+					name = imperial_palace_modifier_tier_2
+					duration = -1
+				}
+			}
+		}
+	}
+	if = { #Refuge of the Glasslords
+		limit = { province_id = 86 }
+		if = { #can use monument
+			limit = {
+				owner = {
+					NOT = { low_tolerance_dwarven_race_trigger = yes }
+					OR = {
+						culture_group = lencori
+						culture_group = dwarven
+						tag = A19
+						tag = A80
+						tag = A03
+					}
+				}
+				has_great_project = { type = refuge_of_the_glasslords tier = 1 }
+			}
+			if = { #in case of diplo annexing
+				limit = { has_great_project = { type = refuge_of_the_glasslords tier = 3 } }
+				set_variable = {
+					which = glasslord_wine_CoTs
+					value = 0
+				}
+				clear_glasslord_network = yes
+				owner = {
+					set_country_flag = bonus_on_wine_provinces_50
+					every_owned_province = {
+						limit = { trade_goods = wine }
+						add_province_modifier = {
+							name = generic_production_50
+							duration = -1
+						}
+						if = {
+							limit = { province_has_center_of_trade_of_level = 1 }
+							add_dwarven_minority_size_effect = yes
+							86 = {
+								change_variable = {
+									which = glasslord_wine_CoTs
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
+			if = { #downgrade to level 2, remove tier 3 from previous owner, add tier 2 to current owner
+				limit = {
+					has_great_project = { type = refuge_of_the_glasslords tier = 2 }
+					NOT = { has_great_project = { type = refuge_of_the_glasslords tier = 3 } } 
+				}
+				clear_glasslord_network = yes #in case the monument was tier 3 before
+				FROM = {
+					clr_country_flag = bonus_on_wine_provinces_50
+					every_owned_province = {
+						limit = { trade_goods = wine }
+						remove_province_modifier = generic_production_50
+					}
+				}
+				owner = {
+					set_country_flag = bonus_on_wine_provinces_25
+					every_owned_province = {
+						limit = { trade_goods = wine }
+						add_province_modifier = {
+							name = generic_production_25
+							duration = -1
+						}
+					}
+				}
+			}
+			if = { #downgrade to level 1, remove tier 2 from previous owner
+				limit = {
+					NOT = { has_great_project = { type = refuge_of_the_glasslords tier = 2 } } 
+				}
+				FROM = {
+					clr_country_flag = bonus_on_wine_provinces_25
+					every_owned_province = {
+						limit = { trade_goods = wine }
+						remove_province_modifier = generic_production_25
+					}
+				}
+			}
+		}
+		else = { #Can't use the monument, clear from previous owner
+			FROM = {
+				clr_country_flag = bonus_on_wine_provinces_25
+				clr_country_flag = bonus_on_wine_provinces_50
+				every_owned_province = {
+					limit = { trade_goods = wine }
+					remove_province_modifier = generic_production_25
+					remove_province_modifier = generic_production_50
+				}
 			}
 		}
 	}
@@ -12888,32 +12981,58 @@ on_province_owner_change_monuments = {
 				has_terrain = forest
 			}
 		}
-		if = { #if tier 1 only on ancient forest
-			limit = { owner = { has_country_flag = grave_forest_ancient_forest_effect_1 } has_terrain = ancient_forest }
-			add_province_modifier = {
-				name = obrtrol_expanded_infrastructure
-				duration = -1
-				hidden = yes
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_country_flag = grave_forest_ancient_forest_effect_1
+						has_country_flag = grave_forest_ancient_forest_effect_2
+					}
+				}
+			}
+			if = { #if tier 1 only on ancient forest
+				limit = { owner = { has_country_flag = grave_forest_ancient_forest_effect_1 } has_terrain = ancient_forest }
+				add_province_modifier = {
+					name = obrtrol_expanded_infrastructure
+					duration = -1
+					hidden = yes
+				}
+			}
+			if = { #if tier 2+ on ancient forest, forest and woods
+				limit = { owner = { has_country_flag = grave_forest_ancient_forest_effect_2 } }
+				add_province_modifier = {
+					name = obrtrol_expanded_infrastructure
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-		if = { #if tier 2+ on ancient forest, forest and woods
-			limit = { owner = { has_country_flag = grave_forest_ancient_forest_effect_2 } }
-			add_province_modifier = {
-				name = obrtrol_expanded_infrastructure
-				duration = -1
-				hidden = yes
-			}
-		}
+		else = { remove_province_modifier = obrtrol_expanded_infrastructure } #removes the modifier
 	}
-	if = { #Grave Forest of Ilvandet removal
-		limit = {
-			OR = { region = lencenor_region region = west_dameshead_region }
-			has_province_modifier = obrtrol_expanded_infrastructure
-			owner = {
-				NOT = { has_country_flag = grave_forest_ancient_forest_effect_1 }
-				NOT = { has_country_flag = grave_forest_ancient_forest_effect_2 }
+	if = { #Refuge of the Glasslords
+		limit = { trade_goods = wine }
+		if = {
+			limit = {
+				owner = { owns = 86 }
+				86 = { has_great_project = { type = refuge_of_the_glasslords tier = 2 } }
+			}
+			if = { #exactly tier 3
+				limit = { 86 = { has_great_project = { type = refuge_of_the_glasslords tier = 3 } } }
+				add_province_modifier = {
+					name = generic_production_50
+					duration = -1
+				}
+			}
+			else = { #exactly tier 2
+				add_province_modifier = {
+					name = generic_production_25
+					duration = -1
+				}
 			}
 		}
-		remove_province_modifier = obrtrol_expanded_infrastructure
+		else = { #remove the modifier
+			remove_province_modifier = generic_production_25
+			remove_province_modifier = generic_production_50
+		}
 	}
 }
