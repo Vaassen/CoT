@@ -64,32 +64,23 @@ salla_cenag_col_1_goblin_fate_tolerance = {
 			deepwoods_bone_grove = {
 				type = all
 				is_state_core = ROOT
-			}
-			custom_trigger_tooltip = {
-				tooltip = salla_cenag_uneasy_peace_tolerance_autonomy_tt
-				NOT = {
-					deepwoods_bone_grove = {
-						type = all
-						culture = forest_goblin
-						NOT = { has_province_modifier = autonomy_increased } 
-					}
-				}
+				NOT = { unrest = 2 }
 			}
 		}
 
 		effect = {
 			add_country_modifier = {
 				name = "salla_cenag_goblin_tolerance_reward"
-				duration = 7200
+				duration = 7300
 			}
 			deepwoods_bone_grove = {
 				add_province_modifier = {
 					name = "salla_cenag_uneasy_peace_reward"
-					duration = 7200
+					duration = 7300
 				}
 			}
 			define_advisor = {
-				type = inquisitor
+				type = trader
 				skill = 2
 				cost_multiplier = 0.5
 				culture = forest_goblin
@@ -110,13 +101,22 @@ salla_cenag_col_1_goblin_fate_tolerance = {
 				value = 60
 			}
 			medium_tolerance_goblin_race_trigger = yes
+			calc_true_if = {
+				deepwoods_bone_grove = {
+					OR = {
+						has_building = temple
+						has_building = marketplace
+					}	
+				}
+				amount = 3
+			}
 		}
 
 		effect = {
 			deepwoods_bone_grove = {
 				add_province_modifier = {
 					name = "salla_cenag_struggling_together"
-					duration = 7200
+					duration = 7300
 				}
 				hidden_effect = {
 					if = {
@@ -232,7 +232,7 @@ salla_cenag_col_1_base = {
 			}
 			calc_true_if = {
 				daravans_folly_region = { has_discovered = ROOT } 
-				amount = 5
+				amount = 3
 			}
 		}
 
@@ -255,20 +255,7 @@ salla_cenag_col_1_base = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			lencmarck_area = {
-				type = all
-				OR = {
-					owned_by = U16
-					owned_by = ROOT
-				}
-			}
-			tencmarck_area = {
-				type = all
-				OR = {
-					owned_by = U16
-					owned_by = ROOT
-				}
-			}
+			num_of_ports = 1
 		}
 
 		effect = {
@@ -277,7 +264,13 @@ salla_cenag_col_1_base = {
 				reuyel_area = { discover_country = ROOT } 
 			}
 			country_event = { id = salla_cenag.13 } 
-			custom_tooltip = salla_cenag.13.insight
+			if = {
+				limit = { has_ruler_flag = salla_cenag_ruled_by_alara } 
+				custom_tooltip = salla_cenag.13alara.insight
+			}
+			else = {
+				custom_tooltip = salla_cenag.13.insight
+			}
 		}
 	}
 }
@@ -372,14 +365,20 @@ salla_cenag_col_1_ourdia_liberate = {
 
 		trigger = {
 			U16 = { has_75_opinion_improved_relation = { target = ROOT }  } 
-			diplomatic_reputation = 3
-			has_global_modifier_value = {
-				which = improve_relation_modifier
-				value = 0.3
+			OR = {
+				diplomatic_reputation = 3
+				has_global_modifier_value = {
+					which = improve_relation_modifier
+					value = 0.3
+				}
 			}
 		}
 
 		effect = {
+			hidden_effect = {
+				force_remove_rival = U16
+				U16 = { force_remove_rival = ROOT }
+			}
 			add_historical_friend_mutual = { tag = U16 } 
 			every_owned_province = {
 				limit = { is_core = U16 } 
@@ -448,6 +447,8 @@ salla_cenag_col_2 = {
 		}
 
 		effect = {
+			#disable explore folly option for deepwoods expedition
+			set_country_flag = explored_folly
 			define_conquistador = {
 				shock = 1
 				fire = 1
@@ -485,7 +486,6 @@ salla_cenag_col_2 = {
 				custom_tooltip = salla_cenag.11alara.insight
 			}
 			else = {
-				country_event = { id = salla_cenag.11 } 
 				custom_tooltip = salla_cenag.11.insight
 			}
 		}
@@ -523,7 +523,7 @@ salla_cenag_col_2 = {
 		effect = {
 			change_government_reform_progress = 100
 			add_country_modifier = {
-				name = "salla_cenag_wide_eyes"
+				name = salla_cenag_wide_eyes_reward
 				duration = 3650
 			}
 			country_event = { id = salla_cenag.14 } 
@@ -531,22 +531,31 @@ salla_cenag_col_2 = {
 		}
 	}
 
-	salla_cenag_lead_the_way = {
+	salla_cenag_across_haless = {
 		icon = mission_cossack_cavalry
-		position = 7
-		required_missions = { salla_cenag_second_conclave } 
+		position = 6
+		required_missions = { salla_cenag_wide_eyes } 
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			calc_true_if = {
-				all_ally = { is_in_war = { participants = ROOT }  } 
-				amount = 4
+			has_reform = embrace_the_outside_world
+			custom_trigger_tooltip = {
+				AND = {
+					has_country_flag = explored_s_castanor
+					has_country_flag = explored_harpy_hills
+				}
+				tooltip = salla_cenag_across_haless_expedition_tt
 			}
 		}
 
 		effect = {
+			#TODO revisit giving rangers something
 			add_country_modifier = {
-				name = "salla_cenag_lead_from_the_front"
+				name = salla_cenag_across_haless_castanor_reward
+				duration = 3650
+			}
+			add_country_modifier = {
+				name = salla_cenag_across_haless_harpies_reward
 				duration = 3650
 			}
 		}
@@ -654,15 +663,22 @@ salla_cenag_col_3 = {
 		}
 
 		effect = {
-			define_advisor = {
-				type = court_mage
-				skill = 2
-				culture = wood_elf
-				religion = fey_court
-				cost_multiplier = 0.5
+			change_innovativeness = 5
+			add_country_modifier = {
+				name = salla_cenag_stubborn_thorns_reward
+				duration = 3650
 			}
-			country_event = { id = salla_cenag.15 } 
-			custom_tooltip = salla_cenag.15.insight
+			I28 = {
+				add_country_modifier = {
+					name = salla_cenag_stubborn_thorns_reward
+					duration = 3650
+				}
+			}
+			if = {
+				limit = { has_ruler_flag = salla_cenag_ruled_by_alara } 
+				country_event = { id = salla_cenag.15 } 
+				custom_tooltip = salla_cenag.15.insight
+			}
 		}
 	}
 
@@ -703,9 +719,10 @@ salla_cenag_col_3 = {
 
 	salla_cenag_ceannasai = {
 		icon = mission_a_crown
-		position = 8
+		position = 7
 		required_missions = {
-			salla_cenag_lead_the_way
+			salla_cenag_second_conclave
+			salla_cenag_across_haless
 			salla_cenag_on_all_fronts
 		}
 		provinces_to_highlight = {  } 
@@ -824,6 +841,20 @@ salla_cenag_col_4 = {
 				type = all
 				owned_by = I33
 			}
+			OR = {
+				I33 = {
+					development_in_provinces = {
+						province_group = deepwoods_arrow_grove
+						value = 60
+					}
+					calc_true_if = {
+						deepwoods_arrow_grove = {
+							has_influencing_fort = yes
+						}
+						amount = 4
+					}
+				}
+			}
 		}
 
 		effect = {
@@ -836,31 +867,23 @@ salla_cenag_col_4 = {
 
 	salla_cenag_on_all_fronts = {
 		icon = mission_mounted_battle
-		position = 7
-		required_missions = { salla_cenag_second_conclave } 
+		position = 6
+		required_missions = { salla_cenag_bonecoated_infiltrators } 
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			calc_true_if = {
-				all_province = {
-					province_group = deepwoods_feytouched_gladeways
-					OR = {
-						owner = { culture = wood_elf } 
-						controlled_by = I26
-						controlled_by = I27
-						controlled_by = I29
-					}
-				}
-				amount = 5
+			all_province = {
+				province_group = deepwoods_feytouched_gladeways
+				owner = { culture = wood_elf } 
 			}
 		}
 
 		effect = {
-			deepwoods_feytouched_gladeways = {
-				limit = { NOT = { owner = { culture = wood_elf }  }  } 
-				cede_province = ROOT
-			}
 			change_mil = 1
+			add_country_modifier = {
+				name = salla_cenag_on_all_fronts_reward
+				duration = 3650
+			}
 		}
 	}
 }
@@ -912,12 +935,10 @@ salla_cenag_col_5 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			I33 = {
-				num_of_cities = 3
-				owes_favors = {
-					who = I29
-					value = 20
-				}
+			I33 = { num_of_cities = 3 }
+			OR = {
+				NOT = { exists = I36 }
+				NOT = { exists = I42 }
 			}
 		}
 
@@ -926,6 +947,22 @@ salla_cenag_col_5 = {
 				name = "salla_cenag_swift_as_an_arrow_reward"
 				duration = 3650
 			}
+			I33 = {
+				add_country_modifier = {
+					name = "salla_cenag_swift_as_an_arrow_reward"
+					duration = 3650
+				}
+			}
+			hidden_effect = {
+				every_owned_province = {
+					limit = { province_group = deepwoods_arrow_grove } 
+					cede_province = I33
+					root = {
+						capital_scope = { cawa_infantry = I29 }
+					}
+				}
+			}
+			custom_tooltip = salla_cenag_swift_arrow_bonus_reward_tt
 		}
 	}
 
@@ -939,12 +976,17 @@ salla_cenag_col_5 = {
 			OR = {
 				fey_court_unseelie_court_delighted_trigger = yes
 				has_reform = favor_the_unseelie
+				church_power = 50
 			}
-			church_power = 50
-			has_global_modifier_value = {
-				which = discipline
-				value = 0.2
+			OR = {
+				army_professionalism = 0.15
+				has_global_modifier_value = {
+					which = discipline
+					value = 0.2
+				}
 			}
+			# TODO ranger camp trigger
+			num_of_cawa = 6
 		}
 
 		effect = {
@@ -952,7 +994,17 @@ salla_cenag_col_5 = {
 				name = "salla_cenag_bonecoated_infiltrators"
 				duration = -1
 			}
-			add_church_power = -50
+			if = {
+				limit = { 
+					NOT = {
+						OR = { 
+							fey_court_unseelie_court_delighted_trigger = yes
+							has_reform = favor_the_unseelie
+						}					
+					}
+				}
+				add_church_power = -50
+			}
 		}
 	}
 }
