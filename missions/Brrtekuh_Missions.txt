@@ -12,10 +12,28 @@ Brrtekuh_1a = {
         required_missions = { U10_second_wind }
         provinces_to_highlight = { }
         trigger = {
+            # MAGIC REWORK
+            # if = {
+            #     limit = { has_ruler_flag = THE_brrtekuh }
+            #     stability = 1
+            #     if = {
+            #         limit = { ai = no }
+            #         has_cast_enchanting_embassy = yes
+            #     }
+            #     else = {
+            #         enchantment_2_1_trigger = yes
+            #     }
+            # }
             if = {
                 limit = { has_ruler_flag = THE_brrtekuh }
-                stability = 1
-                have_cast_magnificent_feast = yes
+                if = {
+                    limit = { ai = yes }
+                    stability = 2
+                }
+                else = {
+                    stability = 1
+                    have_cast_magnificent_feast = yes
+                }
             }
             else = {
                 legitimacy = 75
@@ -35,6 +53,11 @@ Brrtekuh_1a = {
             if = {
                 limit = { has_ruler_flag = THE_brrtekuh }
                 set_estate_privilege = estate_monstrous_tribes_U10_proving_trials
+                # MAGIC REWORK
+                # if = {
+                #     limit = { ai = yes }
+                #     generic_cast_spell = { school = enchantment level = 2 id = 1 }
+                # }
             }
             else = {
                 define_advisor = {
@@ -56,11 +79,18 @@ Brrtekuh_1a = {
         icon = mission_female_throne
         position = 3
         required_missions = { U10_the_loyal_pack }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            ROOT = { NOT = { has_ruler_flag = THE_brrtekuh } }
+            owned_by = ROOT
+            culture_group = gnollish
+            unrest = 0.1
+        }
         trigger = {
             if = {
                 limit = { has_ruler_flag = THE_brrtekuh }
                 ruler_has_mage_personality = yes
+                # MAGIC REWORK
+                # ruler_is_powerful_mage = yes
                 church_power = 100
                 custom_trigger_tooltip = {
                     tooltip = employing_mil3
@@ -103,6 +133,8 @@ Brrtekuh_1a = {
                     siege = 8
                     trait = war_wizard_personality
                 }
+                # MAGIC REWORK
+                # define_type_to_war_wizard_effect = { type = ruler }
             }
             else = {
                 add_mil_power = 100
@@ -181,7 +213,20 @@ Brrtekuh_2a = {
         icon = mission_three_death
         position = 1
         required_missions = { }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            ROOT = { NOT = { has_ruler_flag = THE_brrtekuh } }
+            OR = {
+                AND = {
+                    is_capital_of = U06
+                    exists = U06
+                }
+                AND = {
+                    is_capital_of = F58
+                    exists = F58
+                }
+            }
+        }
+
         trigger = {
             if =  {
                 limit = { has_ruler_flag = THE_brrtekuh }
@@ -190,19 +235,14 @@ Brrtekuh_2a = {
                 employed_advisor = { category = DIP }
                 employed_advisor = { category = MIL }
             }
-            else = { army_size_percentage = 1
+            else = {
+                army_size_percentage = 1
                 OR = {
-                    U06 = {
-                        has_opinion_modifier = {
-                            WHO = ROOT
-                            modifier = scornfully_insulted
-                        }
-                    }
-                    F58 = {
-                        has_opinion_modifier = {
-                            WHO = ROOT
-                            modifier = scornfully_insulted
-                        }
+                    U06 = { has_been_insulted_by_root = yes }
+                    F58 = { has_been_insulted_by_root = yes }
+                    AND = {
+                        NOT = { exists = U06 }
+                        NOT = { exists = F58 }
                     }
                 }
             }
@@ -225,7 +265,15 @@ Brrtekuh_2a = {
         icon = jap_deploy_atakebune
         position = 2
         required_missions = { U10_second_wind }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            has_port = yes
+            country_or_non_sovereign_subject_holds = ROOT
+            NOT = {
+                devastation = 3
+                has_province_modifier = province_razed
+                is_core = owner
+            }
+        }
         trigger = {
             dip_tech = 3
             church_power = 50
@@ -235,7 +283,7 @@ Brrtekuh_2a = {
                 OR = {
                     devastation = 3
                     has_province_modifier = province_razed
-                    is_core = ROOT
+                    is_core = owner
                 }
             }
         }
@@ -251,9 +299,15 @@ Brrtekuh_2a = {
         position = 3
         required_missions = { U10_makeshift_navy U10_prepare_the_pack }
         provinces_to_highlight = {
-            if = {
-                limit = { exists = A47 }
-                is_capital_of = A47
+            OR = {
+                AND = {
+                    is_capital_of = A47
+                    exists = A47
+                }
+                AND = {
+                    province_id = 1296
+                    NOT = { exists = A47 }
+                }
             }
         }
         trigger = {
@@ -308,21 +362,46 @@ Brrtekuh_2a = {
         required_missions = { U10_consume_the_king }
         provinces_to_highlight = {
             OR = {
-                area = oris_area
-                area = deshak_area
-            }
-            NOT = {
-                has_province_modifier = province_razed
-                is_core = ROOT
-            }
-            OR = {
-                NOT = { unrest = 0.1 }
-                NOT = { local_autonomy = 25 }
+                AND = {
+                    OR = {
+                        area = oris_area
+                        area = deshak_area
+                    }
+                    owned_by = ROOT
+                    NOT = {
+                        AND = {
+                            OR = {
+                                has_province_modifier = province_razed
+                                is_core = ROOT
+                            }
+                            NOT = { unrest = 0.1 }
+                            NOT = { local_autonomy = 25 }
+                        }
+                    }
+                }
+                AND = {
+                    area = oris_area
+                    OR = {
+                        has_terrain = coastal_desert
+                        has_terrain = desert
+                    }
+                    NOT = {
+                        area_for_scope_province = {
+                            OR = {
+                                has_terrain = coastal_desert
+                                has_terrain = desert
+                            }
+                            owned_by = ROOT
+                            has_fort_building_trigger = yes
+                        }
+                    }
+                }
             }
         }
         trigger = {
             deshak_area = {
                 type = all
+                owned_by = ROOT
                 OR = {
                     has_province_modifier = province_razed
                     is_core = ROOT
@@ -332,6 +411,7 @@ Brrtekuh_2a = {
             }
             oris_area = {
                 type = all
+                owned_by = ROOT
                 OR = {
                     has_province_modifier = province_razed
                     is_core = ROOT
@@ -389,9 +469,30 @@ Brrtekuh_2a = {
         icon = mission_trade_with_cathay
         position = 5
         required_missions = { U10_riches_of_deshak }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            OR = {
+                AND = {
+                    is_capital_of = U07
+                    exists = U07
+                }
+                AND = {
+                    province_id = 1296
+                    NOT = {
+                        has_privateer_share_in_trade_node = {
+                            who = ROOT
+                            share = 0.2
+                        }
+                    }
+                }
+            }
+        }
         trigger = {
-            U07 = { trust = { who = ROOT value = 70 } }
+            U07 = {
+                OR = {
+                    exists = no
+                    trust = { who = ROOT value = 70 }
+                }
+            }
             OR = {
                 num_of_galley = 20
                 num_of_heavy_ship = 5
@@ -417,7 +518,6 @@ Brrtekuh_2a = {
                         limit = {
                             has_port = yes
                             province_has_center_of_trade_of_level = 1
-                            same_trade_node_as = 1296
                         }
                         add_province_modifier = { name = U10_rampant_piracy duration = -1 }
                     }
@@ -466,7 +566,7 @@ Brrtekuh_2a = {
             decrease_monstrous_10 = yes
             custom_tooltip = U10_an_offer_of_freedom_tt2
             if = {
-                limit ={
+                limit = {
                     NOT = {
                         estate_influence = {
                             estate = estate_nobles
@@ -486,37 +586,40 @@ Brrtekuh_2a = {
             OR = {
                 AND = {
                     region = akasik_region
-                    OR = {
-                        has_small_harpy_minority_trigger = yes
-                        has_large_harpy_minority_trigger = yes
-                    }
+                    fast_has_pop_of_race = { race = harpy }
                     NOT = { num_of_times_improved_by_owner = 1 }
                 }
                 AND = {
-                    owner = { has_country_modifier = harpy_administration }
                     is_capital = yes
+                    continent = africa
+                    owner = { has_country_modifier = harpy_administration }
                 }
             }
         }
         trigger = {
             has_country_modifier = racial_focus_harpy
             if = {
-				limit = { any_known_country = { has_country_modifier = harpy_administration } }
-                any_known_country = {
-                    has_country_modifier = harpy_administration
-                    OR = {
-                        alliance_with = ROOT
-                        vassal_of = ROOT
+				limit = {
+                    any_known_country = {
+                        has_country_modifier = harpy_administration
+                        capital_scope = { continent = africa }
+                    }
+                }
+                OR = {
+                    any_ally = {
+                        has_country_modifier = harpy_administration
+                        capital_scope = { continent = africa }
+                    }
+                    any_subject_country = {
+                        has_country_modifier = harpy_administration
+                        capital_scope = { continent = africa }
                     }
                 }
             }
             NOT = {
                 any_owned_province = {
                     region = akasik_region
-                    OR = {
-                        has_small_harpy_minority_trigger = yes
-                        has_large_harpy_minority_trigger = yes
-                    }
+                    fast_has_pop_of_race = { race = harpy }
                     NOT = { num_of_times_improved_by_owner = 1 }
                 }
             }
@@ -528,24 +631,20 @@ Brrtekuh_2a = {
                 name = U10_scavenger_talons
                 duration = -1
             }
-            every_known_country = {
-                limit = {
-                    has_country_modifier = harpy_administration
-                    OR = {
-                        alliance_with = ROOT
-                        vassal_of = ROOT
-                    }
-                }
+            every_ally = {
+                limit = { has_country_modifier = harpy_administration }
                 add_trust = {
                     who = ROOT
                     value = 10
                     mutual = yes
                 }
             }
-            every_known_country = {
-                limit = {
-                    has_country_modifier = harpy_administration
-                    vassal_of = ROOT
+            every_subject_country = {
+                limit = { has_country_modifier = harpy_administration }
+                add_trust = {
+                    who = ROOT
+                    value = 10
+                    mutual = yes
                 }
                 change_religion = kvangahga
             }
@@ -570,7 +669,10 @@ Brrtekuh_3a = {
         }
         trigger = {
             NOT = { is_subject_of_type = tributary_state }
-            ohitsopot_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
+            ohitsopot_area = {
+                type = all
+                country_or_non_sovereign_subject_holds = ROOT
+            }
             custom_trigger_tooltip = {
                 tooltip = U10_sold_land_tt
                 has_country_flag = recent_land_distribution
@@ -626,7 +728,17 @@ Brrtekuh_3a = {
         position = 3
         required_missions = { U10_prepare_the_pack }
         provinces_to_highlight = {
-            is_capital_of = F69
+            OR = {
+                AND = {
+                    is_capital_of = F69
+                    exists = F69
+                }
+                AND = {
+                    culture = windhowler_gnoll
+                    NOT = { country_or_non_sovereign_subject_holds = ROOT }
+                    NOT = { exists = F69 }
+                }
+            }
         }
         trigger = {
             if = {
@@ -667,12 +779,27 @@ Brrtekuh_3a = {
         required_missions = { U10_splitting_the_sands }
         provinces_to_highlight = {
             area = western_krahway_area
-            has_terrain = desert
+            OR = {
+                has_terrain = coastal_desert
+                has_terrain = desert
+            }
+            NOT = {
+                AND = {
+                    owned_by = ROOT
+                    is_core = ROOT
+                    has_fort_building_trigger = yes
+                }
+            }
         }
         trigger = {
             treasury = 100
             western_krahway_area = {
-                has_terrain = desert
+                owned_by = ROOT
+                is_core = ROOT
+                OR = {
+                    has_terrain = coastal_desert
+                    has_terrain = desert
+                }
                 has_fort_building_trigger = yes
             }
         }
@@ -682,6 +809,7 @@ Brrtekuh_3a = {
             random_owned_province = {
                 limit = {
                     area = western_krahway_area
+                    is_core = ROOT
                     OR = {
                         has_terrain = coastal_desert
                         has_terrain = desert
@@ -698,38 +826,83 @@ Brrtekuh_3a = {
         position = 7
         required_missions = { U10_thief_of_torrents }
         provinces_to_highlight = {
-            area = coastal_krahway_area
-            owned_by = ROOT
             OR = {
-                has_terrain = desert
-                has_terrain = coastal_desert
+                AND = {
+                    area = coastal_krahway_area
+                    OR = {
+                        has_terrain = desert
+                        has_terrain = coastal_desert
+                    }
+                    NOT = {
+                        area_for_scope_province = {
+                            OR = {
+                                has_terrain = desert
+                                has_terrain = coastal_desert
+                            }
+                            owned_by = ROOT
+                            has_fort_building_trigger = yes
+                        }
+                    }
+                }
+                AND = {
+                    OR = {
+                        area = coastal_krahway_area
+                        area = western_krahway_area
+                    }
+                    NOT = {
+                        AND = {
+                            owned_by = ROOT
+                            is_core = ROOT
+                        }
+                        AND = {
+                            owned_by = U07
+                            is_core = U07
+                        }
+                    }
+                }
             }
         }
         trigger = {
             coastal_krahway_area = {
                 owned_by = ROOT
-                    OR = {
-                        has_terrain = desert
-                        has_terrain = coastal_desert
-                    }
-                    has_fort_building_trigger = yes
+                OR = {
+                    has_terrain = desert
+                    has_terrain = coastal_desert
                 }
+                has_fort_building_trigger = yes
+            }
             coastal_krahway_area = {
                 type = all
                 OR = {
-                    owned_by = ROOT
-                    owned_by = U07
+                    AND = {
+                        owned_by = ROOT
+                        is_core = ROOT
+                    }
+                    AND = {
+                        owned_by = U07
+                        is_core = U07
+                    }
                 }
             }
             western_krahway_area = {
                 type = all
-                owned_by = ROOT
+                OR = {
+                    AND = {
+                        owned_by = ROOT
+                        is_core = ROOT
+                    }
+                    AND = {
+                        owned_by = U07
+                        is_core = U07
+                    }
+                }
             }
         }
         effect = {
-            coastal_krahway_area = {
+            random_owned_province = {
                 limit = {
                     area = coastal_krahway_area
+                    is_core = ROOT
                     OR = {
                         has_terrain = coastal_desert
                         has_terrain = desert
@@ -750,7 +923,14 @@ Brrtekuh_3a = {
         position = 8
         required_missions = { U10_from_sands_to_salty_sands }
         provinces_to_highlight = {
-            culture = ndurubu
+            continent = africa
+            OR = {
+                culture = ndurubu
+                AND = {
+                    NOT = { F69 = { vassal_of = ROOT } }
+                    culture = windhowler_gnoll
+                }
+            }
             NOT = { country_or_non_sovereign_subject_holds = ROOT }
         }
         trigger = {
@@ -763,7 +943,7 @@ Brrtekuh_3a = {
             OR =  {
                 F69 = { vassal_of = ROOT }
                 NOT = {
-                    any_province = {
+                    africa = {
                         culture = windhowler_gnoll
                         NOT = { country_or_non_sovereign_subject_holds = ROOT }
                     }
@@ -771,7 +951,7 @@ Brrtekuh_3a = {
             }
         }
         effect = {
-            every_province = {
+            africa = {
                 limit = {
                     country_or_non_sovereign_subject_holds = ROOT
                     culture = ndurubu
@@ -785,14 +965,21 @@ Brrtekuh_3a = {
                 change_trade_goods = slaves
             }
             custom_tooltip = U10_prove_our_kinship_tt
-            hidden_effect =   {
-                select_highest_dev_province_with_limit = {
-                    limit = "culture = ndurubu"
-                    effect = "add_base_manpower = -2
-                    add_base_tax = -2
-                    add_base_production = -2
-                    change_religion = kvangahga
-                    change_culture = windhowler_gnoll"
+            hidden_effect = {
+                select_highest_dev_province_in_location_with_limit = {
+                    index = 0
+                    location = africa
+                    limit = "
+                        country_or_non_sovereign_subject_holds = ROOT
+                        culture = ndurubu
+                    "
+                    effect = "
+                        add_base_manpower = -2
+                        add_base_tax = -2
+                        add_base_production = -2
+                        change_religion = kvangahga
+                        change_culture = windhowler_gnoll
+                    "
                 }
             }
             add_prestige = 50
@@ -819,6 +1006,16 @@ Brrtekuh_3a = {
         position = 9
         required_missions = { U10_prove_our_kinship }
         provinces_to_highlight = {
+            OR = {
+                AND = {
+                    is_capital_of = F69
+                    exists = F69
+                }
+                AND = {
+                    region = akasik_region
+                    religion = xhazobkult
+                }
+            }
         }
         trigger = {
             if = {
@@ -831,12 +1028,12 @@ Brrtekuh_3a = {
                 }
             }
             NOT = {
-                akasik_region = {  religion = xhazobkult }
+                akasik_region = { religion = xhazobkult }
             }
         }
         effect = {
             hidden_effect = {
-                set_global_flag = U10_buff_clerical_ministers
+                set_country_flag = U10_buff_clerical_ministers
                 set_country_flag = U10_no_rep_loss
                 set_country_flag = war_against_heresy_flag
             }
@@ -855,10 +1052,8 @@ Brrtekuh_4a = {
         position = 3
         required_missions = { U10_prepare_the_pack }
         provinces_to_highlight = {
-            if = {
-                limit = { exists = U05 }
-                is_capital_of = U05
-            }
+            is_capital_of = U05
+            exists = U05
         }
         trigger = {
             if = {
@@ -872,7 +1067,7 @@ Brrtekuh_4a = {
                             capital_scope = { is_blockaded = yes }
                             has_spy_network_from = { who = U10 value = 40 }
                         }
-                        U10 = {
+                        ROOT = {
                             war_score_against = { who = U05 value = 20 }
                         }
                     }
@@ -910,6 +1105,16 @@ Brrtekuh_4a = {
             OR = {
                 has_terrain = desert
                 has_terrain = coastal_desert
+            }
+            NOT = {
+                area_for_scope_province = {
+                    OR = {
+                        has_terrain = coastal_desert
+                        has_terrain = desert
+                    }
+                    owned_by = ROOT
+                    has_fort_building_trigger = yes
+                }
             }
         }
         trigger = {
@@ -985,26 +1190,47 @@ Brrtekuh_4a = {
         required_missions = { U10_commence_the_endgame }
         provinces_to_highlight = {
             province_group = mothers_sorrow_group
-            NOT = { owned_by = ROOT }
-        }
-        trigger = {
             NOT = {
-                mothers_sorrow_group = {
-                    type = all
-                    NOT = { owned_by = ROOT }
+                AND = {
+                    owned_by = ROOT
+                    NOT = { unrest = 0.1 }
+                    NOT = { local_autonomy = 10 }
                 }
             }
+        }
+        trigger = {
+            mothers_sorrow_group = {
+                type = all
+                owned_by = ROOT
+                NOT = { unrest = 0.1 }
+                NOT = { local_autonomy = 10 }
+            }
             OR = {
-                OR = { #This OR is redundant?
-                    calc_true_if = {
-                        is_enchantment_2 = yes
-                        is_evocation_2 = yes
-                        is_divination_2 = yes
-                        amount = 2
+                # MAGIC REWORK
+                # is_overall_enchantment_level_3 = yes
+                # is_overall_evocation_level_3 = yes
+                # is_overall_divination_level_3 = yes
+                is_enchantment_3 = yes
+                is_evocation_3 = yes
+                is_divination_3 = yes
+                calc_true_if = {
+                    # MAGIC REWORK
+                    # is_overall_enchantment_level_2_minimum = yes
+                    # is_overall_evocation_level_2_minimum = yes
+                    # is_overall_divination_level_2_minimum = yes
+                    custom_trigger_tooltip = {
+                        tooltip = is_enchantment_2_tt
+                        has_ruler_flag = enchantment_2
                     }
-                    is_enchantment_3 = yes
-                    is_evocation_3 = yes
-                    is_divination_3 = yes
+                    custom_trigger_tooltip = {
+                        tooltip = is_evocation_2_tt
+                        has_ruler_flag = evocation_2
+                    }
+                    custom_trigger_tooltip = {
+                        tooltip = is_divination_2_tt
+                        has_ruler_flag = divination_2
+                    }
+                    amount = 2
                 }
                 AND = {
                     has_estate_privilege = estate_mages_battlemage_academies
@@ -1085,14 +1311,17 @@ Brrtekuh_4a = {
                 }
                 if = {
                     limit = { has_country_modifier = U10_oxh_power }
+                    custom_tooltip = U10_inherit_magic_by_eating_oxh
                     set_ruler_magic_from_ekxiemgo_schools = { ruler_type = oxh }
                 }
                 if = {
                     limit = { has_country_modifier = U10_zakr_power }
+                    custom_tooltip = U10_inherit_magic_by_eating_zakr
                     set_ruler_magic_from_ekxiemgo_schools = { ruler_type = zakr }
                 }
                 if = {
                     limit = { has_country_modifier = U10_yzhil_power }
+                    custom_tooltip = U10_inherit_magic_by_eating_yzhil
                     set_ruler_magic_from_ekxiemgo_schools = { ruler_type = yzhil }
                 }
             }
@@ -1208,7 +1437,23 @@ Brrtekuh_5a = {
         icon = mission_gnome_tinkering
         position = 4
         required_missions = { U10_beneath_the_sands }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            OR = {
+                AND = {
+                    province_id = 463
+                    NOT = { owned_by = ROOT }
+                }
+                AND = {
+                    ROOT = {
+                        NOT = {
+                            innovativeness = 30
+                            fast_owns_num_pops_of_race = { race = gnomish amount = 1 }
+                        }
+                    }
+                    fast_has_pop_of_race = { race = gnomish }
+                }
+            }
+        }
         trigger = {
             OR = {
                 high_tolerance_gnomish_race_trigger = yes
@@ -1217,10 +1462,8 @@ Brrtekuh_5a = {
             any_owned_province = {
                 has_great_project = { type = koroshesh_library tier = 0 }
             }
-            OR =  {
-                any_owned_province = {
-                    has_gnomish_minority_trigger = yes
-                }
+            OR = {
+                fast_owns_num_pops_of_race = { race = gnomish amount = 1 }
                 innovativeness = 30
             }
             OR = {
@@ -1260,21 +1503,29 @@ Brrtekuh_5a = {
         required_missions = { U10_collaborative_protection }
         provinces_to_highlight = {
             OR = {
-                area = coast_of_tears_area
-                area = mothers_delta_area
-                area = lower_sorrow_area
-                area = upper_sorrow_area
-                area = hapmot_area
-                area = kheterat_proper_area
-                area = golkora_stretch_area
-                area = garpix_grizaka_area
+                AND = {
+                    OR = {
+                        area = coast_of_tears_area
+                        area = mothers_delta_area
+                        area = lower_sorrow_area
+                        area = upper_sorrow_area
+                        area = hapmot_area
+                        area = kheterat_proper_area
+                        area = golkora_stretch_area
+                        area = garpix_grizaka_area
+                    }
+                    NOT = { owned_by = ROOT }
+                }
+                AND = {
+                    owned_by = ROOT
+                    devastation = 10
+                }
             }
-            NOT = { country_or_non_sovereign_subject_holds = ROOT }
         }
         trigger = {
             has_institution = feudalism
             NOT = { any_owned_province = { devastation = 10 } }
-            num_of_owned_provinces_with = { #TODO Test
+            num_of_owned_provinces_with = {
                 value = 24
                 OR = {
                     area = coast_of_tears_area
@@ -1287,17 +1538,6 @@ Brrtekuh_5a = {
                     area = garpix_grizaka_area
                 }
             }
-            # calc_true_if = {
-            #     coast_of_tears_area      = { type = all owned_by = ROOT }
-            #     mothers_delta_area       = { type = all owned_by = ROOT }
-            #     lower_sorrow_area        = { type = all owned_by = ROOT }
-            #     upper_sorrow_area        = { type = all owned_by = ROOT }
-            #     hapmot_area              = { type = all owned_by = ROOT }
-            #     kheterat_proper_area     = { type = all owned_by = ROOT }
-            #     golkora_stretch_area     = { type = all owned_by = ROOT }
-            #     garpix_grizaka_area      = { type = all owned_by = ROOT }
-            #     amount = 24
-            # }
         }
         effect = {
             country_event = { id = flavour_brrtekuh.12 days = 120 }
@@ -1311,8 +1551,32 @@ Brrtekuh_5a = {
             U10_bulwarks_against_bulwar
         }
         provinces_to_highlight = {
+            OR = {
+                AND = {
+                    owned_by = ROOT
+                    devastation = 10
+                }
+                AND = {
+                    OR = {
+                        area = coast_of_tears_area
+                        area = mothers_delta_area
+                        area = lower_sorrow_area
+                        area = upper_sorrow_area
+                        area = kheterat_proper_area
+                    }
+                    owned_by = ROOT
+                    NOT = {
+                        area_for_scope_province = {
+                            owned_by = ROOT
+                            has_fort_building_trigger = yes
+                        }
+                    }
+                }
+            }
         }
         trigger = {
+            # MAGIC REWORK
+            # has_cast_scry = yes
             have_cast_scry_dissidents = yes
             mil_power = 200
             adm_power = 200
@@ -1320,34 +1584,24 @@ Brrtekuh_5a = {
             has_country_modifier = U10_murdered_a_khet
             NOT = { any_owned_province = { devastation = 10 } }
             coast_of_tears_area = {
-                OR = {
-                    has_influencing_fort = yes
-                    any_neighbor_province = { has_influencing_fort = yes }
-                }
+                owned_by = ROOT
+                has_fort_building_trigger = yes
             }
             mothers_delta_area = {
-                OR = {
-                    has_influencing_fort = yes
-                    any_neighbor_province = { has_influencing_fort = yes }
-                }
+                owned_by = ROOT
+                has_fort_building_trigger = yes
             }
             lower_sorrow_area = {
-                OR = {
-                    has_influencing_fort = yes
-                    any_neighbor_province = { has_influencing_fort = yes }
-                }
+                owned_by = ROOT
+                has_fort_building_trigger = yes
             }
             upper_sorrow_area = {
-                OR = {
-                    has_influencing_fort = yes
-                    any_neighbor_province = { has_influencing_fort = yes }
-                }
+                owned_by = ROOT
+                has_fort_building_trigger = yes
             }
             kheterat_proper_area = {
-                OR = {
-                    has_influencing_fort = yes
-                    any_neighbor_province = { has_influencing_fort = yes }
-                }
+                owned_by = ROOT
+                has_fort_building_trigger = yes
             }
         }
         
@@ -1466,7 +1720,10 @@ Brrtekuh_5a = {
             trade_goods = slaves
         }
         trigger = {
-            NOT = { has_ruler_flag = THE_brrtekuh }
+            custom_trigger_tooltip = {
+                tooltip = U10_is_not_original_brrtekuh
+                NOT = { has_ruler_flag = THE_brrtekuh }
+            }
             OR = {
                 inquisitor = 3
                 theologian = 3
@@ -1549,6 +1806,9 @@ Brrtekuh_1b = {
         position = 6
         required_missions = { U10_inheritance_of_respect }
         provinces_to_highlight = {
+            owned_by = ROOT
+            development = 10
+            NOT = { has_tax_building_trigger = yes }
         }
         trigger = {
             num_of_owned_provinces_with = {
@@ -1573,7 +1833,10 @@ Brrtekuh_1b = {
         icon = mission_swear_fealty_knight
         position = 8
         required_missions = { U10_proof_of_the_soul_within U10_an_offer_of_freedom }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            is_capital_of = U07
+            exists = U07
+        }
         trigger = {
             OR = {
                 is_enemy = U07
@@ -1585,7 +1848,8 @@ Brrtekuh_1b = {
                 AND = {
                     OR = {
                         NOT = { exists = U07 }
-                        U07 = { is_vassal = yes }
+                        U07 = { is_subject = yes }
+                        U07 = { is_subject_of = ROOT }
                     }
                     has_estate_privilege = estate_church_for_the_faith
                 }
@@ -1599,10 +1863,13 @@ Brrtekuh_1b = {
             if = {
                 limit = {
                     exists = U07
-                    U07 = { is_vassal = yes }
+                    U07 = {
+                        is_subject = yes
+                        NOT = { is_subject_of = ROOT }
+                    }
                 }
                 U07 = {
-                    country_event = { id = flavour_brrtekuh.14 }
+                    country_event = { id = flavour_brrtekuh.15 }
                 }
             }
             else = {
@@ -1617,22 +1884,21 @@ Brrtekuh_1b = {
         provinces_to_highlight = {
             region = akasik_region
             religion = xhazobkult
+            is_city = yes
         }
         trigger = {
             church_power = 200
             OR = {
-                OR = {
-                    custom_trigger_tooltip = {
-                        tooltip = tolerance_to_xhazobkult_0
-                        xhazobkult = 0
-                    }
-                    has_country_modifier = demons_of_the_sorrow_tradition_modifier
-                    has_country_modifier = monstrous_pedigrees_tradition_modifier
-                    has_country_modifier = children_of_goxma_tradition_modifier
-                    has_country_modifier = kult_of_the_packmother_tradition_modifier
-                    has_country_modifier = demonic_shamans_tradition_modifier
-                    has_country_modifier = umbral_bargains_tradition_modifier
+                custom_trigger_tooltip = {
+                    tooltip = tolerance_to_xhazobkult_0
+                    xhazobkult = 0
                 }
+                has_country_modifier = demons_of_the_sorrow_tradition_modifier
+                has_country_modifier = monstrous_pedigrees_tradition_modifier
+                has_country_modifier = children_of_goxma_tradition_modifier
+                has_country_modifier = kult_of_the_packmother_tradition_modifier
+                has_country_modifier = demonic_shamans_tradition_modifier
+                has_country_modifier = umbral_bargains_tradition_modifier
             }
             NOT = {
                 num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
@@ -1709,8 +1975,18 @@ Brrtekuh_1b = {
         required_missions = { U10_skysea_warfare }
         provinces_to_highlight = {
             owned_by = ROOT
-            NOT = { development = 10 }
-            trade_goods = slaves
+            OR = {
+                AND = {
+                    ROOT = { has_country_flag = upgraded_ancestral_armaments_1 }
+                    trade_goods = slaves
+                    NOT = { development = 10 }
+                }
+                AND = {
+                    ROOT = { has_country_flag = upgraded_ancestral_armaments_2 }
+                    has_province_modifier = U10_toxazg_akaz
+                    NOT = { development = 20 }
+                }
+            }
         }
         trigger = {
             has_commanding_three_star = yes
@@ -1768,7 +2044,23 @@ Brrtekuh_2b = {
         icon = mission_pirate_flag
         position = 9
         required_missions = { U10_auxillary_vultures U10_reforge_the_course }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            OR = {
+                AND = {
+                    is_capital_of = U07
+                    exists = U07
+                }
+                AND = {
+                    province_id = 1296
+                    NOT = {
+                        has_privateer_share_in_trade_node = {
+                            who = ROOT
+                            share = 0.3
+                        }
+                    }
+                }
+            }
+        }
         trigger = {
             1296 = {
                 has_privateer_share_in_trade_node = {
@@ -1795,14 +2087,23 @@ Brrtekuh_2b = {
         icon = mission_approach_throne
         position = 13
         required_missions = { U10_united_in_faith }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            is_capital = yes
+            owner = {
+                religion = kvangahga
+                total_development = ROOT
+                NOT = { tag = ROOT }
+            }
+        }
         trigger = {
             NOT = {
                 any_known_country = {
                     religion = kvangahga
-                    total_development = U10
+                    total_development = ROOT
                 }
             }
+            # MAGIC REWORK
+            # is_overall_enchantment_level_2_minimum = yes
             is_enchantment_2 = yes
             has_institution = printing_press
             religious_unity = 0.99
@@ -1938,29 +2239,45 @@ Brrtekuh_3b = {
         required_missions = { U10_united_in_faith U10_3_peoples_1_nation }
         provinces_to_highlight = {
             continent = africa
+            is_capital = yes
+            NOT = { owned_by = ROOT }
             owner = {
-                NOT = { tag = U10 }
                 development_in_provinces = {
                     value = 800
                     continent = africa
                 }
+                NOT = {
+                    humiliated_by = ROOT
+                    alliance_with = ROOT
+                    is_subject_of = ROOT
+                    NOT = {
+                        military_strength = {
+                            who = ROOT
+                            value = 0.5
+                        }
+                    }
+                }
             }
         }
         trigger = {
-            NOT = {
-                any_country = {
-                    NOT = { tag = U10 }
-                    development_in_provinces = {
-                        value = 800
-                        continent = africa
-                    }
-                    NOT = {
-                        humiliated_by = U10
-                        alliance_with = U10
+            custom_trigger_tooltip = {
+                tooltip = U10_seize_sarhals_destiny_cttt
+                NOT = {
+                    any_country = {
+                        NOT = { tag = ROOT }
+                        development_in_provinces = {
+                            value = 800
+                            continent = africa
+                        }
                         NOT = {
-                            military_strength = {
-                                who = ROOT
-                                value = 0.5
+                            humiliated_by = ROOT
+                            alliance_with = ROOT
+                            is_subject_of = ROOT
+                            NOT = {
+                                military_strength = {
+                                    who = ROOT
+                                    value = 0.5
+                                }
                             }
                         }
                     }
@@ -1992,16 +2309,18 @@ Brrtekuh_3b = {
             U10_bone_and_iron
             U10_patient_rebuilding
         }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            is_capital = yes
+            NOT = { owned_by = ROOT }
+            owner = {
+                is_great_power = yes
+                NOT = { trade_embargo_by = ROOT }
+            }
+        }
         trigger = {
-            custom_trigger_tooltip = {
-                tooltip = U10_apex_of_power_trt
-                NOT = {
-                    any_country = {
-                        is_great_power = yes
-                        NOT = { tag = U10 }
-                        NOT = { trade_embargo_by = U10 }
-                    }
+            NOT = {
+                any_other_great_power = {
+                    NOT = { trade_embargo_by = ROOT }
                 }
             }
             is_hegemon = yes
@@ -2117,7 +2436,9 @@ Brrtekuh_5b = {
         icon = mission_white_tower
         position = 13
         required_missions = { U10_3_peoples_1_nation }
-        provinces_to_highlight = { }
+        provinces_to_highlight = {
+            province_id = 456
+        }
         trigger = {
             estate_loyalty = {
                 estate = estate_burghers
