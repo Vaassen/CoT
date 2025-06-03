@@ -763,9 +763,9 @@ country_event = {
 			}
 		}
 		calc_court_bonus = yes
-		emperor = {
+		if = {
 			limit = {
-				exists = yes
+				emperor = { exists = yes }
 			}
 			country_event = { id = flavour_eoa.13 days = 30 }
 		}
@@ -1008,7 +1008,7 @@ country_event = { #establish religious peace (AI should ideally always do this)
 		}
 	}
 }
-country_event = { #establish RC as main religion
+country_event = { #invite to RC
 	id = flavour_eoa.20
 	title = flavour_eoa.20.t
 	desc = flavour_eoa.20.d
@@ -1016,21 +1016,30 @@ country_event = { #establish RC as main religion
 	is_triggered_only = yes
 	immediate = {
 		hidden_effect = {
-			emperor = {
-				set_hre_religion = regent_court
-				set_hre_religion_locked = yes
+			if = {
+				limit = {
+					hre_religion_locked = yes
+					hre_religion = regent_court
+				}
+				every_known_country = {
+					limit = {
+						is_part_of_hre = yes
+						NOT = { religion = regent_court }
+					}
+					country_event = {
+						id = flavour_eoa.27
+					}
+				}
 			}
+			
 		}
 	}
 	option = {
 		name = flavour_eoa.20.a
-		tooltip = {
-			set_hre_religion = regent_court
-			set_hre_religion_locked = yes
-		}
+		custom_tooltip = eoa_religion_invited
 	}
 }
-country_event = { #establish corinite as main religion
+country_event = { #invite to corinite
 	id = flavour_eoa.21
 	title = flavour_eoa.21.t
 	desc = flavour_eoa.21.d
@@ -1038,20 +1047,30 @@ country_event = { #establish corinite as main religion
 	is_triggered_only = yes
 	immediate = {
 		hidden_effect = {
-			emperor = {
-				set_hre_religion = corinite
-				set_hre_religion_locked = yes
+			if = {
+				limit = {
+					hre_religion_locked = yes
+					hre_religion = corinite
+				}
+				every_known_country = {
+					limit = {
+						is_part_of_hre = yes
+						NOT = { religion = corinite }
+					}
+					country_event = {
+						id = flavour_eoa.27
+					}
+				}
 			}
+			
 		}
 	}
 	option = {
-		tooltip = {
-			set_hre_religion = corinite
-			set_hre_religion_locked = yes
-		}
+		name = flavour_eoa.21.a
+		custom_tooltip = eoa_religion_invited
 	}
 }
-country_event = { #establish ravelian as main religion
+country_event = { #invite to ravelian
 	id = flavour_eoa.22
 	title = flavour_eoa.22.t
 	desc = flavour_eoa.22.d
@@ -1059,17 +1078,27 @@ country_event = { #establish ravelian as main religion
 	is_triggered_only = yes
 	immediate = {
 		hidden_effect = {
-			emperor = {
-				set_hre_religion = ravelian
-				set_hre_religion_locked = yes
+			if = {
+				limit = {
+					hre_religion_locked = yes
+					hre_religion = ravelian
+				}
+				every_known_country = {
+					limit = {
+						is_part_of_hre = yes
+						NOT = { religion = ravelian }
+					}
+					country_event = {
+						id = flavour_eoa.27
+					}
+				}
 			}
+			
 		}
 	}
 	option = {
-		tooltip = {
-			set_hre_religion = ravelian
-			set_hre_religion_locked = yes
-		}
+		name = flavour_eoa.22.a
+		custom_tooltip = eoa_religion_invited
 	}
 }
 country_event = { #promote unification sentiment
@@ -1087,7 +1116,7 @@ country_event = { #promote unification sentiment
 		}
 	}
 	option = {
-		name = flavour_eoa.23
+		name = flavour_eoa.23.a
 		tooltip = {
 			add_country_modifier = {
 				name = eoa_unification_fever
@@ -1106,5 +1135,114 @@ country_event = {
 	option = {
 		name = flavour_eoa.24.a
 		custom_tooltip = eoa_help_colony_burghers
+	}
+}
+
+country_event = { #if people wanna click the last reform but still keep the empire separated
+	id = flavour_eoa.25
+	title = flavour_eoa.25.t
+	desc = flavour_eoa.25.d
+	picture = HRE_eventPicture
+	is_triggered_only = yes
+	major = yes #inform others
+	option = {
+		name = flavour_eoa.25.a
+		add_prestige = 10
+		ai_chance = { factor = 1 }
+	}
+	option = { #choose to not unite the empire
+		name = flavour_eoa.25.b
+		set_global_flag = eoa_wont_unite
+		ai_chance = { factor = 0 } #player only
+	}
+}
+
+country_event = { #invite eoa tags to your religion (aristocratic path imperial parliament issue)
+	id = flavour_eoa.27
+	title = flavour_eoa.27.t
+	desc = flavour_eoa.27.d
+	picture = RELIGIOUS_WARS_eventPicture
+	is_triggered_only = yes
+	option = { #accept
+		name = flavour_eoa.27.a
+		if = {
+			limit = {
+				hre_religion = regent_court
+			}
+			change_religion = regent_court
+		}
+		else_if = {
+			limit = {
+				hre_religion = corinite
+			}
+			change_religion = corinite
+		}
+		else_if = {
+			limit = {
+				hre_religion = ravelian
+			}
+			change_religion = ravelian
+		}
+		ai_chance = {
+			factor = 3 #3 for accepting, 7 for rejecting, but read modifiers
+			modifier = {
+				factor = 3
+				alliance_with = emperor
+			}
+			modifier = {
+				factor = 1.5
+				has_opinion = {
+					who = emperor
+					value = 75
+				}
+			}
+			modifier = {
+				factor = 2
+				trust = {
+					who = emperor
+					value = 70
+				}
+			}
+			modifier = { #personalities who would convert
+				factor = 2
+				OR = {
+					ruler_has_personality = sinner_personality
+					ruler_has_personality = craven_personality
+					ruler_has_personality = careful_personality
+				}
+			}
+			modifier = { #if not good relations with the current clergy
+				factor = 2
+				NOT = {
+					estate_loyalty = {
+						estate = estate_church
+						loyalty = 30
+					}
+				}
+			}
+			modifier = { #afraid of emperor's military
+				factor = 1.75
+				NOT = {
+					army_size = emperor
+				}
+			}
+		}
+	}
+	option = { #nah
+		name = flavour_eoa.27.b
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 20
+		}
+		emperor = { #emperor can come in and force your hand
+			add_casus_belli = {
+				type = cb_religious_conformance
+				target = THIS
+				months = 240
+			}
+		}
+		ai_chance = {
+			factor = 7 #7 by default, modified down by modifiers above
+		}
 	}
 }
