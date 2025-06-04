@@ -132,6 +132,19 @@ khatalashya_1_missions = {
 		}
 
 		provinces_to_highlight = {
+			OR = {
+				province_id = 4963
+				NOT = { owned_by = ROOT }
+			}
+			OR = {
+				province_id = 6000
+				NOT = {
+					has_great_project = {
+						type = great_merfolk_canal
+						tier = 2
+					}
+				}
+			}
 		}
 
 		trigger = {
@@ -139,7 +152,7 @@ khatalashya_1_missions = {
 				tooltip = khatalashya_empire_of_souls_tt
 				has_country_flag = empire_333_of_souls_happen
 			}
-			1366 = {
+			4963 = {
 				owned_by = ROOT
 			}
 			6000 = {
@@ -247,6 +260,29 @@ khatalashya_1_missions = {
 		}
 
 		provinces_to_highlight = {
+			if = {
+				limit = { 
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 10
+								region = lupulan_rainforest_region
+							}
+						}
+					}
+				}
+				region = lupulan_rainforest_region
+				NOT = { owned_by = ROOT }
+			}
+			else = {
+				has_terrain = ancient_forest
+				NOT = {
+					num_of_units_in_province = {
+						amount = 10
+						who = ROOT
+					}
+				}
+			}
 		}
 
 		trigger = {
@@ -318,13 +354,9 @@ khatalashya_1_missions = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = khatalashya_beyond_the_stormwall_tt2
-					4559 = {
-						NOT = {
-							check_variable = {
-								which = rendingMonthsLeft
-								value = 1
-							}
-						}
+					AND = {
+						has_global_flag = rending_happened 
+						NOT = { has_global_flag = rending_active }
 					}
 				}
 			}
@@ -789,12 +821,15 @@ khatalashya_2_missions = {
 		}
 
 		trigger = {
-			any_known_country = {
+			any_subject_country = {
 				is_colonial_nation_of = ROOT
-				capital_scope = {
-					OR = {
-						continent = south_america
-						continent = north_america
+				custom_trigger_tooltip = {
+					tooltip = "Capital: Is on the continent Aelantir"
+					capital_scope = {
+						OR = {
+							continent = south_america
+							continent = north_america
+						}
 					}
 				}
 				NOT = { liberty_desire = 10 } 
@@ -835,6 +870,7 @@ khatalashya_2_missions = {
 		}
 
 		provinces_to_highlight = {
+
 		}
 
 		trigger = {
@@ -844,12 +880,73 @@ khatalashya_2_missions = {
 				NOT = { is_island = yes }
 			}
 			national_focus = DIP
-			#has_discovered =  ###########PUT HERE ISLANDS ON THE OCEAN OF THE LOST WHEN THEY ARE ADDED
+			has_discovered = torn_isles_area  ###########PUT HERE ISLANDS ON THE OCEAN OF THE LOST WHEN THEY ARE ADDED
 		}
 
 		effect = {
+			torn_isles_area = {
+				add_permanent_claim = ROOT
+			}
 			##############################claims on these islands
-
+			if = {
+				limit = {
+					NOT = { has_global_flag = pf_end_portal_nexus_flag_global }
+				}
+				set_global_flag = pf_end_portal_nexus_flag_global
+				every_country = {
+					limit = { has_country_modifier = pf_portal_nexus_ruin }
+					FROM = { clear_precursor_fragments_search = yes }
+				}
+			}
+			if = {
+				limit = { 
+					any_subject_country = {
+						capital_scope = {
+							continent = south_america
+						}
+					} 
+				}
+				random_subject_country = {
+					limit = {
+						capital_scope = {
+							continent = south_america
+						}
+					}
+					pick_best_province = {
+						scope = every_owned_province
+						scale = higher_development_than
+						global_trigger = "continent = south_america"
+						event_target_name = "khat_pillar_prov_target"
+						number = 1
+					}
+				}
+			}
+			else = {
+				pick_best_province = {
+					scope = every_province
+					scale = higher_development_than
+					global_trigger = "continent = south_america"
+					event_target_name = "khat_pillar_prov_target"
+					number = 1
+				}
+			}
+			if = {
+				limit = {
+					has_saved_event_target = khat_pillar_prov_target
+				}
+				event_target:khat_pillar_prov_target_1 = {
+					add_permanent_province_modifier = {
+						name = portal_nexus
+						duration = -1
+					}
+					hidden_effect = { set_province_flag = permanent_precursor_relics }
+					set_add_relics_count = yes
+					change_trade_goods = precursor_relics
+					add_base_production = 6
+					add_base_tax = 2
+					add_base_manpower = 2
+				}
+			}
 		}
 	}
 
@@ -861,11 +958,17 @@ khatalashya_2_missions = {
 		}
 
 		provinces_to_highlight = {
-
+			province_id = 2170
 		}
 
 		trigger = {
-
+			2170 ={
+				owned_by = ROOT
+				has_trade_company_investment_in_area  = {
+					investment = company_depot
+					investor = ROOT
+				}
+			}
 		}
 
 		effect = {
@@ -1457,7 +1560,7 @@ khatalashya_3_missions = {
 		}
 
 		trigger = {
-			has_country_modifier = 333_kazakesh_colony
+			has_country_modifier = 333_kazakesh_colony_country_dummy
 			has_country_modifier = 333_khus_an_zhyani_colony
 		}
 
@@ -1489,8 +1592,10 @@ khatalashya_3_missions = {
 						NOT = { num_of_times_expanded_infrastructure = 1 }
 					}
 				}
-				culture_group = lizardfolk
-				NOT = { owned_by = ROOT }
+				AND = {
+					culture_group = lizardfolk
+					NOT = { owned_by = ROOT }
+				}
 			}
 		}
 
@@ -1500,12 +1605,15 @@ khatalashya_3_missions = {
 					NOT = { culture_group = lizardfolk }
 					AND = {
 						culture_group = lizardfolk
-						owned_by = ROOT
+						OR = {
+							owned_by = ROOT
+							owned_by_subject_of = ROOT
+						}
 						devastation = 0.01
 					}
 				}
 			}
-			num_of_owned_provinces_with = {
+			num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
 				value = 10
 				has_province_modifier = lizardfolk_mutation_home_province
 				has_tax_building_trigger = yes
@@ -1538,14 +1646,17 @@ khatalashya_3_missions = {
 
 		provinces_to_highlight = {
 			province_id = 5932
-			NOT = {
-				development = 60
-				num_free_building_slots = 0
-			}
 		}
 
 		trigger = {
-			#Bestowed Gifts to Planetary Colonies
+			all_subject_country = {
+				OR = {
+					NOT = {
+						is_subject_of_type = space_colony
+					}
+					NOT = { liberty_desire = 1 }
+				}
+			}
 			5932 = {
 				development = 60
 				num_free_building_slots = 0
@@ -1557,7 +1668,15 @@ khatalashya_3_missions = {
 		}
 
 		effect = {
-			#Every Space Colony gets 333_colonial_nagas modifier
+			every_subject_country = {
+				limit = {
+					is_subject_of_type = space_colony
+				}
+				add_country_modifier = {
+					name = 333_colonial_nagas
+					duration = -1
+				}
+			}
 		}
 	}
 	
@@ -1571,11 +1690,17 @@ khatalashya_3_missions = {
 		}
 
 		provinces_to_highlight = {
-			#Space colony colations?
 		}
 
 		trigger = {
-			#Have all Space colonies
+			has_country_modifier = 333_khus_an_zhyani_colony
+			has_country_modifier = 333_kazakesh_colony_country_dummy 
+			has_country_modifier = 333_kuiika_gamyi_colony
+			has_country_modifier = 333_kuvunika_citadel_colony
+			has_country_modifier = 333_khaga_yatsa_colony
+			has_country_modifier = 333_arskitse_colony
+			has_country_modifier = 333_tovchiheshu_colony
+			has_country_modifier = 333_gate_of_earth_colony_country
 		}
 
 		effect = {
@@ -2015,7 +2140,9 @@ khatalashya_4_missions = {
 			khatalashya_agradent_materials
 		}
 
-		provinces_to_highlight = {  
+		provinces_to_highlight = { 
+			province_id = 6690
+			province_id = 5971
 		}
 
 		trigger = {
@@ -2060,12 +2187,27 @@ khatalashya_4_missions = {
 		}
 
 		trigger = {
-			#subsudize space colonies and hav 190 relation
 			calc_amount_of_lizard_folk_mutations = { amount = 15 }
+			all_subject_country = {
+				OR = {
+					NOT = {
+						is_subject_of_type = space_colony
+					}
+					has_subsidize_armies = yes
+				}
+			}
 		}
 
 		effect = {
-			#All colonies get 333_space_mutation
+			every_subject_country = {
+				limit = {
+					is_subject_of_type = space_colony
+				}
+				add_country_modifier = {
+					name = 333_space_mutation
+					duration = -1
+				}
+			}
 		}
 	}
 	
@@ -2077,15 +2219,16 @@ khatalashya_4_missions = {
 		}
 
 		provinces_to_highlight = {
+			province_id = 6032
 		}
 
 		trigger = {
-			#have space mutation Glitz
+			has_estate_privilege = estate_nobility_glidz_mutation
 			owns = 6032
 		}
 
 		effect = {
-			#Repair Arskitse
+			custom_tooltip = "Unlock ability to repair Arskitse Spire"
 			add_faith_in_the_prophecy = yes
 		}
 	}
@@ -2311,7 +2454,17 @@ khatalashya_5_missions = {
 		}
 
 		trigger = {
-			#3 Space Colonies
+			calc_true_if = {
+				amount = 3
+				has_country_modifier = 333_khus_an_zhyani_colony
+				has_country_modifier = 333_kazakesh_colony_country_dummy 
+				has_country_modifier = 333_kuiika_gamyi_colony
+				has_country_modifier = 333_kuvunika_citadel_colony
+				has_country_modifier = 333_khaga_yatsa_colony
+				has_country_modifier = 333_arskitse_colony
+				has_country_modifier = 333_tovchiheshu_colony
+				has_country_modifier = 333_gate_of_earth_colony_country
+			}
 		}
 
 		effect = {
