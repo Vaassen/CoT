@@ -49,6 +49,7 @@ update_magic_menu_effect = {
 		generic_calc_spell_levels = { type = ruler }
 		generic_calc_spell_levels = { type = heir }
 		generic_calc_spell_levels = { type = country }
+		update_spell_tooltips = yes #For Conjuration mercs rn
 	}
 }
 
@@ -287,6 +288,39 @@ study_experience_preview_effect = { #study needs a separate set of variables
 	else_if = { limit = { has_country_flag = magic_study_setup_transmutation_flag } change_variable = { which = study_xp_preview which = transmutation_experience_mod_val } }
 }
 
+update_spell_tooltips = {
+	if = { #development
+		limit = { total_development = 600 }
+		set_variable = { feral_animals_reg = 600 }
+	}
+	else = { export_to_variable = { which = feral_animals_reg value = total_development } }
+	set_variable = { which = leashed_elementals_reg which = feral_animals_reg }
+
+	multiply_variable = { feral_animals_reg = 0.06 } #Reg per dev
+	if = {
+		limit = { NOT = { check_variable = { feral_animals_reg = 4 } } }
+		set_variable = { feral_animals_reg = 4 } #Minimum of 4 regiments
+	}
+	else = { round_variable = { which = feral_animals_reg value = -1 } }
+	set_variable = { which = feral_animals_cav which = feral_animals_reg }
+	multiply_variable = { feral_animals_cav = 0.2 }
+	round_variable = { which = feral_animals_cav value = -1 } #cavalry
+	set_variable = { which = feral_animals_inf which = feral_animals_reg }
+	subtract_variable = { which = feral_animals_inf which = feral_animals_cav } #infantry
+
+	multiply_variable = { leashed_elementals_reg = 0.04 } #Reg per dev
+	if = {
+		limit = { NOT = { check_variable = { leashed_elementals_reg = 4 } } }
+		set_variable = { leashed_elementals_reg = 4 } #Minimum of 4 regiments
+	}
+	else = { round_variable = { which = leashed_elementals_reg value = -1 } }
+	set_variable = { which = leashed_elementals_cav which = leashed_elementals_reg }
+	multiply_variable = { leashed_elementals_cav = 0.33 }
+	round_variable = { which = leashed_elementals_cav value = -1 } #cavalry
+	set_variable = { which = leashed_elementals_inf which = leashed_elementals_reg }
+	subtract_variable = { which = leashed_elementals_inf which = leashed_elementals_cav } #infantry
+}
+
 ############
 ### MANA ###
 ############
@@ -353,13 +387,19 @@ update_mana_regen_vars = { #use whenever you change the mana-per-month amount
 			modulo_variable = { manaFoo = 1 }
 			if = {
 				limit = { is_variable_equal = { which = manaFoo value = 0 } }
+				clr_country_flag = mana_regen_mult_one_decimal
 				set_country_flag = mana_regen_mult_whole_number
 			}
 			else = {
 				modulo_variable = { manaFoo = 0.1 }
 				if = {
 					limit = { is_variable_equal = { which = manaFoo value = 0 } }
+					clr_country_flag = mana_regen_mult_whole_number
 					set_country_flag = mana_regen_mult_one_decimal
+				}
+				else = {
+					clr_country_flag = mana_regen_mult_whole_number
+					clr_country_flag = mana_regen_mult_one_decimal
 				}
 			}
 
@@ -389,7 +429,7 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 		clr_country_flag = magical_fortress_project
 		clr_country_flag = summon_extraplanars_project
 		clr_country_flag = orb_of_omniscience_project
-		clr_country_flag = enchant_legendary_artifact_project
+		clr_country_flag = artifact_of_enthrallment_project
 		clr_country_flag = battlemage_academy_project
 		clr_country_flag = theatre_of_simulacra_project
 		clr_country_flag = lichdom_project
@@ -414,6 +454,8 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 		clr_country_flag = theatre_picked_group_of_mages
 		clr_country_flag = magic_project_first_event_happened
 		clr_country_flag = magic_project_second_event_happened
+		remove_country_modifier = studying_battlemage_academy_mod_1
+		remove_country_modifier = studying_battlemage_academy_mod_2
 	}
 }
 magic_advancement_clr_type_flags = {
@@ -650,7 +692,7 @@ calc_completed_magic_projects = { #Non-unique
 	if = { limit = { at_least_magic_project_level = { project = magical_fortress level = 3 } } 				change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = summon_extraplanars level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
-	if = { limit = { at_least_magic_project_level = { project = enchant_legendary_artifact level = 3 } } 	change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { at_least_magic_project_level = { project = artifact_of_enthrallment level = 3 } } 	change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = battlemage_academy level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = theatre_of_simulacra level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { ruler_is_lich = yes } 																	change_variable = { magic_projects_completed = 1 } }
@@ -1573,7 +1615,7 @@ magic_on_ruler_death = {
 	}
 
 	if = { #Undead Army
-		limit = { has_country_modifier = undead_military }
+		limit = { has_cast_undead_army = yes }
 		country_event = { id = magic_spell.702 days = 60 } 
 	}
 }
