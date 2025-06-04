@@ -20,20 +20,20 @@
 ###############################
 
 initialize_infrastructure = {
-
-	#Tag specific infrastructure setup
-	#TODO Jothell Could also be defined in "history\countries\A85 - Magisterium.txt"
-	if = {
-		limit = { tag = A85 }
-		add_country_modifier = { name = magical_infrastructure_3 duration = -1 }
+	if = { limit = { has_country_modifier = magical_infrastructure_4 }
+		set_variable = { mana_regen_infra = 0.8 }
+	}
+	else_if = { limit = { has_country_modifier = magical_infrastructure_3 }
 		set_variable = { mana_regen_infra = 0.6 }
 	}
-	else = {
-		add_country_modifier = {
-			name = magical_infrastructure_1
-			duration = -1
-		}
+	else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+		set_variable = { mana_regen_infra = 0.4 }
+	}
+	else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
 		set_variable = { mana_regen_infra = 0.2 }
+	}
+	else = {
+		set_variable = { mana_regen_infra = 0 }
 	}
 }
 
@@ -363,7 +363,7 @@ update_mana_regen_vars = { #use whenever you change the mana-per-month amount
 				}
 			}
 
-			subtract_variable = { mana_regen_other = 0.8 } #Base
+			subtract_variable = { mana_regen_other = 1.0 } #Base
 			subtract_variable = { which = mana_regen_other which = mana_regen_ruler } #Ruler
 			subtract_variable = { which = mana_regen_other which = mana_regen_infra } #Infra
 		}
@@ -613,12 +613,17 @@ magic_project_level_up = {
 }
 magic_infrastructure_level_up = {
 	custom_tooltip = level_up_magical_infrastructure_tt
-	trigger_switch = {
-		on_trigger = has_country_modifier
-		magical_infrastructure_1 = { remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 } }
-		magical_infrastructure_2 = { remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 } }
-		magical_infrastructure_3 = { remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 } }
-		magical_infrastructure_4 = { remove_country_modifier = magical_infrastructure_4 add_country_modifier = { name = magical_infrastructure_5 duration = -1 } }
+	if = { limit = { has_country_modifier = magical_infrastructure_3 }
+		remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 }
+	}
+	else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+		remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 }
+	}
+	else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
+		remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 }
+	}
+	else = {
+		add_country_modifier = { name = magical_infrastructure_1 duration = -1 }
 	}
 	hidden_effect = {
 		change_variable = { mana_regen_infra = 0.2 }
@@ -640,7 +645,7 @@ magic_infrastructure_level_up = {
 
 calc_completed_magic_projects = { #Non-unique
 	set_variable = { magic_projects_completed = 0 }
-	if = { limit = { at_least_magical_infrastructure_level_5 = yes }										change_variable = { magic_projects_completed = 1 } }
+	if = { limit = { at_least_magical_infrastructure_level_4 = yes }										change_variable = { magic_projects_completed = 1 } }
 
 	if = { limit = { at_least_magic_project_level = { project = magical_fortress level = 3 } } 				change_variable = { magic_projects_completed = 1 } }
 	if = { limit = { at_least_magic_project_level = { project = summon_extraplanars level = 3 } } 			change_variable = { magic_projects_completed = 1 } }
@@ -786,12 +791,17 @@ set_magic_experience_target = {
 	else_if = {
 		limit = { has_country_flag = infra_temp_flag }
 		set_variable = { magic_experience_target = 400 } #Base experience
-		trigger_switch = {
-			on_trigger = has_country_modifier
-			magical_infrastructure_1 = { multiply_variable = { magic_experience_target = 1 } } # Lvl 1 to 2
-			magical_infrastructure_2 = { multiply_variable = { magic_experience_target = 2 } } # Lvl 2 to 3
-			magical_infrastructure_3 = { multiply_variable = { magic_experience_target = 3 } } # Lvl 3 to 4
-			magical_infrastructure_4 = { multiply_variable = { magic_experience_target = 4 } } # Lvl 4 to 5
+		if = { limit = { has_country_modifier = magical_infrastructure_3 }
+			multiply_variable = { magic_experience_target = 4 } # Lvl 3 to 4
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+			multiply_variable = { magic_experience_target = 3 } # Lvl 2 to 3
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
+			multiply_variable = { magic_experience_target = 2 } # Lvl 1 to 2
+		}
+		else = {
+			multiply_variable = { magic_experience_target = 1 } # Lvl 0 to 1
 		}
 	}
 	#[[xptarget]]
@@ -1031,12 +1041,17 @@ ai_pay_for_xp = { #AI advancements -- formatted to miminize lines of code when c
 	]
 	[[school] calc_ai_school_xp_modifier = { school = $school$ } ] #for project
 	[[infrastructure]
-		trigger_switch = {
-			on_trigger = has_country_modifier
-			magical_infrastructure_1 = { set_variable = { ai_magic_foo = 400 } } # Lvl 1 to 2
-			magical_infrastructure_2 = { set_variable = { ai_magic_foo = 800 } } # Lvl 2 to 3
-			magical_infrastructure_3 = { set_variable = { ai_magic_foo = 1200 } } # Lvl 3 to 4
-			magical_infrastructure_4 = { set_variable = { ai_magic_foo = 1600 } } # Lvl 4 to 5
+		if = { limit = { has_country_modifier = magical_infrastructure_3 }
+			set_variable = { ai_magic_foo = 1600 } # Lvl 3 to 4
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+			set_variable = { ai_magic_foo = 1200 } # Lvl 2 to 3
+		}
+		else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
+			set_variable = { ai_magic_foo = 800 } # Lvl 1 to 2
+		}
+		else = {
+			set_variable = { ai_magic_foo = 400 } # Lvl 0 to 1
 		}
 		calc_ai_country_xp_modifier = yes
 	]
