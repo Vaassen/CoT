@@ -2851,6 +2851,7 @@ estate_burghers_reduce_corruption = {
 #Protect against Piracy
 estate_burghers_protect_against_piracy = {
 	can_select = {
+		is_emperor = no
 		any_active_trade_node = {
 			trade_share = {
 				country = root
@@ -3358,7 +3359,7 @@ estate_burghers_stablize_indebted_prince = {
 		}
 	}
 	pre_effect = {
-		every_known_country = {
+		random_known_country = {
 			limit = {
 				is_part_of_hre = yes
 				is_great_power = no
@@ -3369,9 +3370,25 @@ estate_burghers_stablize_indebted_prince = {
 		}
 	}
 	task_requirements = {
-		event_target:agenda_country = {
-			NOT = { num_of_loans = 1 }
+		if = {
+			limit = {
+				has_estate_agenda_auto_completion = {
+					estate = estate_burghers
+				}
+			}
+			has_estate_agenda_auto_completion = {
+				estate = estate_burghers
+			}
 		}
+		else = {
+			event_target:agenda_country = {
+				NOT = { num_of_loans = 1 }
+			}
+		}
+	}
+	provinces_to_highlight = {
+		is_capital = yes
+		owner = { tag = event_target:agenda_country }
 	}
     task_completed_effect = {
 		on_completed_agenda_effect = {
@@ -3382,6 +3399,12 @@ estate_burghers_stablize_indebted_prince = {
 			loyalty = 10
 		}
 		add_imperial_influence = 3
+		event_target:agenda_country = {
+			limit = {
+				NOT = { has_country_flag = eoa_emperor_help }
+			}
+			set_country_flag = eoa_emperor_help
+		}
     }
     failing_effect = {
 		on_failed_agenda_effect = yes
@@ -3393,6 +3416,9 @@ estate_burghers_stablize_indebted_prince = {
 			duration = 7300
         }
     }
+	fail_if = {
+		is_emperor = no
+	}
 }
 
 estate_burghers_emperor_combat_pirates = {
@@ -3540,11 +3566,14 @@ estate_burghers_emperor_combat_pirates = {
 		}
 	}
 	fail_if = {
-		event_target:agenda_trade_node = {
-			NOT = {
-				trade_share = {
-					country = root
-					share = 10
+		OR = {
+			is_emperor = no
+			event_target:agenda_trade_node = {
+				NOT = {
+					trade_share = {
+						country = root
+						share = 10
+					}
 				}
 			}
 		}
@@ -3574,13 +3603,15 @@ estate_burghers_emperor_combat_pirates = {
 estate_burghers_support_colonists = {
 	can_select = {
 		is_emperor = yes
-		any_province = {
-			has_construction = colonist
-			OR = {
-				continent = south_america
-				continent = north_america
+		OR = {
+			north_america = {
+				is_colony = yes
+				owner = { is_part_of_hre = yes }
 			}
-			owner = { is_part_of_hre = yes }
+			south_america = {
+				is_colony = yes
+				owner = { is_part_of_hre = yes }
+			}
 		}
 	}
 	selection_weight = {
@@ -3589,7 +3620,7 @@ estate_burghers_support_colonists = {
 	pre_effect = {
 		random_province = {
 			limit = {
-				has_construction = colonist
+				is_colony = yes
 				OR = {
 					continent = south_america
 					continent = north_america
@@ -3601,12 +3632,22 @@ estate_burghers_support_colonists = {
 		}
 	}
 	provinces_to_highlight = {
-		has_saved_event_target = agenda_province2
+		province_id = event_target:agenda_province
 	}
 	task_requirements = {
 		if = {
 			limit = {
-				emperor = {
+				has_estate_agenda_auto_completion = {
+					estate = estate_burghers
+				}
+			}
+			has_estate_agenda_auto_completion = {
+				estate = estate_burghers
+			}
+		}
+		else = {
+			if = {
+				limit = {
 					ai = yes
 				}
 				event_target:agenda_country = {
@@ -3616,18 +3657,14 @@ estate_burghers_support_colonists = {
 					}
 				}
 			}
-		}
-		else = {
-			event_target:agenda_country = {
-				has_opinion_modifier = {
-					who = emperor
-					modifier = sent_gift
-					value = 15
+			else = {
+				event_target:agenda_country = {
+					has_20_opinion_sent_gift = { target = ROOT }
 				}
 			}
-		}
-		emperor = {
-			manpower = 5
+			emperor = {
+				manpower = 5
+			}
 		}
 	}
     task_completed_effect = {
@@ -3645,6 +3682,7 @@ estate_burghers_support_colonists = {
 		event_target:agenda_province = {
 			add_colonysize = 500
 		}
+		#is somewhat likely to accept revoke/unify cause you helped them
 		event_target:agenda_country = { country_event = { id = flavour_eoa.24 } }
     }
     failing_effect = {
@@ -3657,4 +3695,7 @@ estate_burghers_support_colonists = {
 			duration = 7300
         }
     }
+	fail_if = {
+		is_emperor = no
+	}
 }
