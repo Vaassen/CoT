@@ -1143,6 +1143,23 @@ declarewar = {
 			}
 		}
 
+		#Oberon Fealgarn Spawn
+		if = {
+			limit = {
+				has_estate_privilege = estate_nobles_oberons_watchful_eye
+				NOT = { has_ruler_flag = oberon_is_ruling }
+				NOT = { has_leader = "Oberon Fealgarn" }
+			}
+			define_general = {
+				name = "Oberon Fealgarn"
+				fire = 2
+				shock = 5
+				manuever = 5
+				siege = 0
+				trait = born_to_the_saddle_personality
+			}
+		}
+
 		# Raja mandate buffs, declaration of harmony
 		if = {
 			limit = {
@@ -1167,21 +1184,6 @@ declarewar = {
 			}
 			remove_country_modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod
 			FROM = { remove_country_modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod }
-		}
-
-		if = {
-			limit = { FROM = { tag = R62 } }
-			if = {
-				limit = { FROM = { has_country_flag = command_sir_revolt_started } }
-				4348 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-				4354 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			}
-		}
-		if = {
-			limit = {
-				FROM = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-			}
-			FROM = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } every_subject_country = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } } }
 		}
 
 		#Revoke nekhei war rights after they declare a war
@@ -1901,6 +1903,7 @@ royal_marriage = {
 		potential = {
 			ruler_culture = sun_elf
 			primary_culture = sun_elf #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			NOT = { religion = the_jadd }
 		}
 		allow = {
 			OR = {
@@ -1916,6 +1919,7 @@ royal_marriage = {
 		potential = {
 			FROM = { ruler_culture = sun_elf } 
 			FROM = { primary_culture = sun_elf } #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			FROM = { NOT = { religion = the_jadd } }
 		}
 		allow = {
 			OR = {
@@ -1935,6 +1939,8 @@ royal_marriage = {
 				culture_group = elven
 				NOT = { ruler_culture = desert_elf }
 				NOT = { primary_culture = desert_elf }
+				NOT = { ruler_culture = sun_elf }
+				NOT = { primary_culture = sun_elf }
 			}
 		}
 		allow = {
@@ -1953,6 +1959,9 @@ royal_marriage = {
 			culture_group = elven
 			NOT = { ruler_culture = desert_elf }
 			NOT = { primary_culture = desert_elf }
+			NOT = { ruler_culture = sun_elf }
+			NOT = { primary_culture = sun_elf }
+			
 		}
 		allow = {
 			OR = {
@@ -3169,18 +3178,6 @@ callaction = {
 			set_country_flag = ach_called_allies_againt_the_command
 		}
 	}
-
-	effect = {
-		if = {
-			limit = {
-				FROM = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				any_war_enemy_country = {
-					NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				}
-			}
-			FROM = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } }
-		}
-	}
 	
 	effect = {
 		if = {
@@ -3360,23 +3357,9 @@ ask_for_march = {
 }
 
 milaccess = {
-	condition = {
-		tooltip = AZJAKUMA_NO_MIL_ACCESS
-		potential = {
-			FROM = { tag = Y01 }
-		}
-		allow = { always = no }
-	}
 }
 
 offermilaccess = {
-	condition = {
-		tooltip = AZJAKUMA_NO_MIL_ACCESS
-		potential = {
-			tag = Y01
-		}
-		allow = { always = no }
-	}
 }
 
 insultaction = {
@@ -3655,10 +3638,7 @@ requestpeace = {
 		allow = {
 			if = {
 				limit = { R62 = { has_country_flag = command_sir_revolt_started } }
-				NOT = {
-					has_country_flag = command_sir_revolt_started
-					FROM = { has_country_flag = command_sir_revolt_started }
-				}
+				NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 			}
 			else_if = {
 				limit = { R62 = { has_country_flag = insubordination_active_flag } }
@@ -3695,6 +3675,24 @@ requestpeace = {
 		allow = {
 			always = no
         }
+	}
+	
+	condition = { #Rinta seekers Alefisol disaster war after Magicks incident
+		tooltip = ALEFISOL_INVASION_WAR_NAME_tt
+		potential = {
+			OR = {
+				tag = S93
+				FROM = { tag = S93 }
+			}
+		}
+		allow = {
+			NOT = {
+				AND = {
+					is_in_war = { casus_belli = cb_alefisol_war }
+					FROM = { is_in_war = { casus_belli = cb_alefisol_war } }
+				}
+			}
+		}
 	}
 }
 
@@ -3867,4 +3865,43 @@ trade_favors_for_sailors = {
 		}
 	}
 }
+
+grant_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+                }
+                emperor = { NOT = { has_country_modifier = A77_preatorian_electors } }
+            }
+            emperor = {
+                add_country_modifier = {
+                    name = A77_preatorian_electors
+                    duration = -1
+                }
+            }
+        }
+    }
+}
+
+remove_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+					is_elector = yes
+                }
+                emperor = { has_country_modifier = A77_preatorian_electors }
+            }
+            emperor = {
+				remove_country_modifier = A77_preatorian_electors
+            }
+        }
+    }
+}
+
 
