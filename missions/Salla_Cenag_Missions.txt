@@ -57,7 +57,12 @@ salla_cenag_col_1_goblin_fate_tolerance = {
 		required_missions = { salla_cenag_warlocks_wars } 
 		provinces_to_highlight = {
 			province_group = deepwoods_bone_grove
-			NOT = { is_state_core = ROOT } 
+			NOT = {
+				AND = {
+					is_state_core = ROOT
+					NOT = { unrest = 2 }
+				}
+			} 
 		}
 
 		trigger = {
@@ -93,14 +98,23 @@ salla_cenag_col_1_goblin_fate_tolerance = {
 		icon = mission_early_game_buildings
 		position = 3
 		required_missions = { salla_cenag_uneasy_peace_tolerance } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			province_group = deepwoods_bone_grove
+			NOT = {
+					has_trade_building_trigger = yes
+					has_tax_building_trigger = yes
+			}
+		} 
 
 		trigger = {
 			development_in_provinces = {
 				province_group = deepwoods_bone_grove
 				value = 60
 			}
-			medium_tolerance_goblin_race_trigger = yes
+			OR = {
+				medium_tolerance_goblin_race_trigger = yes
+				high_tolerance_goblin_race_trigger = yes
+			}
 			num_of_owned_provinces_with = {
 				province_group = deepwoods_bone_grove
 				OR = {
@@ -166,10 +180,9 @@ salla_cenag_col_1_goblin_fate_intolerance = {
 				is_state_core = ROOT
 			}
 			custom_trigger_tooltip = {
-				tooltip = salla_cenag_uneasy_peace_tolerance_autonomy_tt
+				tooltip = salla_cenag_uneasy_peace_intolerance_autonomy_tt
 				NOT = {
 					deepwoods_bone_grove = {
-						type = all
 						culture = forest_goblin
 						NOT = {
 							has_province_modifier = autonomy_decreased
@@ -234,21 +247,25 @@ salla_cenag_col_1_base = {
 		icon = mission_hanged_tree
 		position = 4
 		required_missions = { salla_cenag_into_the_unknown } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+    	region = daravans_folly_region
+    	is_empty = yes
+		} 
 
 		trigger = {
-			calc_true_if = {
-				all_owned_province = {
-					region = daravans_folly_region
+			num_of_owned_provinces_with = {
+				region = daravans_folly_region
 					OR = {
 						is_colony = yes
 						is_city = yes
 					}
-				}
-				amount = 2
+				value = 2
 			}
 			calc_true_if = {
-				daravans_folly_region = { has_discovered = ROOT } 
+				daravans_folly_region = {
+					type = all
+					has_discovered = ROOT
+				} 
 				amount = 3
 			}
 		}
@@ -347,9 +364,16 @@ salla_cenag_col_1_ourdia_conquer = {
 		position = 6
 		required_missions = { salla_cenag_where_the_land_ends } 
 		provinces_to_highlight = {
-			area = lencmarck_area 
-			NOT = { is_core = ROOT } 
-			507 = { NOT = { has_building = dock }  } 
+			OR = {
+				AND = {
+					area = lencmarck_area 
+					NOT = { is_core = ROOT }
+				}
+				AND = {
+					province_id = 507
+					has_dock_building_trigger = no 
+				}
+			}
 		}
 
 		trigger = {
@@ -357,7 +381,7 @@ salla_cenag_col_1_ourdia_conquer = {
 				type = all
 				is_core = ROOT 
 			}
-			507 = { has_building = dock } 
+			507 = { has_dock_building_trigger = yes } 
 			navy_size_percentage = 0.5
 			num_of_light_ship = 3
 		}
@@ -391,7 +415,9 @@ salla_cenag_col_1_ourdia_liberate = {
 		icon = mission_naval_dominance
 		position = 6
 		required_missions = { salla_cenag_where_the_land_ends } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			owned_by = U16
+		} 
 
 		trigger = {
 			U16 = { has_75_opinion_improved_relation = { target = ROOT }  } 
@@ -763,7 +789,13 @@ salla_cenag_col_3 = {
 			salla_cenag_across_haless
 			salla_cenag_on_all_fronts
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			owner = {
+        is_subject_of = ROOT
+        culture = wood_elf
+        liberty_desire = 50
+    	}
+		} 
 
 		trigger = {
 			is_at_war = no
@@ -771,8 +803,10 @@ salla_cenag_col_3 = {
 			exists = I32
 			exists = I34
 			all_subject_country = {
-				culture = wood_elf
-				NOT = { liberty_desire = 50 } 
+				OR = {
+					NOT = { culture = wood_elf }
+					NOT = { liberty_desire = 50 } 
+				}
 			}
 		}
 
@@ -889,11 +923,10 @@ salla_cenag_col_4 = {
 						value = 65
 					}
 					num_of_owned_provinces_with = {
-						deepwoods_arrow_grove = {
-							OR = {
-								has_influencing_fort = yes
-								any_neighbor_province = { has_influencing_fort = yes }
-							}
+						province_group = deepwoods_arrow_grove
+						OR = {
+							has_influencing_fort = yes
+							any_neighbor_province = { has_influencing_fort = yes }
 						}
 						value = 4
 					}
@@ -902,6 +935,7 @@ salla_cenag_col_4 = {
 		}
 
 		effect = {
+			# TODO elaria fluff
 			add_country_modifier = {
 				name = "salla_cenag_a_shoulder_to_lean_on_reward"
 				duration = 3650
@@ -1044,10 +1078,8 @@ salla_cenag_col_5 = {
 			if = {
 				limit = { 
 					NOT = {
-						OR = { 
-							fey_court_unseelie_court_delighted_trigger = yes
-							has_reform = favor_the_unseelie
-						}					
+						fey_court_unseelie_court_delighted_trigger = yes
+						has_reform = favor_the_unseelie		
 					}
 				}
 				add_church_power = -50
