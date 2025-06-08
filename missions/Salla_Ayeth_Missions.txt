@@ -48,10 +48,7 @@ I33_1 = {
 		position = 4
 		required_missions = { I33_in_his_name } 
 		provinces_to_highlight = {
-			is_capital = yes
-			owner = {
-				tag = I29 #Salla Cenag
-			}
+			is_capital_of = I29
 		} 
 
 		trigger = {
@@ -131,6 +128,7 @@ I33_1 = {
 						8 = { add_liberty_desire = -20 }
 						7 = { add_liberty_desire = -15 }
 						6 = { add_liberty_desire = -10 }
+						5 = { add_liberty_desire = -5 }
 					}
 				}
 			}
@@ -255,33 +253,19 @@ I33_2 = {
 		} 
 
 		trigger = {
-			if = {
-				limit = {
-					7015 = { owned_by = ROOT }
-				}
-				7015 = { owned_by = ROOT }
+			7015 = { 
+				OR = {
+					owned_by = ROOT
+					controlled_by = ROOT
+					controlled_by = I29
+				} 
 			}
-			else = {
-				7015 = { 
-					OR = {
-						controlled_by = ROOT
-						controlled_by = I29
-					} 
-				}
-			}
-			if = {
-				limit = {
-					3035 = { owned_by = ROOT }
-				}
-				3035 = { owned_by = ROOT }
-			}
-			else = {
-				3035 = { 
-					OR = {
-						controlled_by = ROOT
-						controlled_by = I29
-					} 
-				}
+			3035 = { 
+				OR = {
+					owned_by = ROOT
+					controlled_by = ROOT
+					controlled_by = I29
+				} 
 			}
 		}
 
@@ -402,6 +386,14 @@ I33_2 = {
 				AND = {
 					has_terrain = fey_gladeway
 					NOT = { owned_by = ROOT }
+					owner = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 3
+								has_terrain = fey_gladeway
+							}
+						}
+					}
 				}
 				owner = {
 					OR = {
@@ -605,6 +597,7 @@ I33_3 = {
 					owner = { 
 						primary_culture = wood_elf
 						has_been_insulted_by_root = no
+						NOT = { is_subject_of = ROOT }
 					}
 				}
 				AND = {
@@ -658,6 +651,9 @@ I33_3 = {
 						OR = {
 							culture_group = orcish 
 							culture_group = goblin
+						}
+						capital_scope = {
+							superregion = deepwoods_superregion
 						}
 					}
 					reverse_add_casus_belli = {
@@ -823,9 +819,11 @@ I33_4 = {
 		provinces_to_highlight = {
 			owner = {
 				tag = I43
-				has_spy_network_from = {
-					who = ROOT
-					value = 25
+				NOT = {
+					has_spy_network_from = {
+						who = ROOT
+						value = 25
+					}
 				}
 			}
 		}
@@ -844,7 +842,7 @@ I33_4 = {
 		effect = {
 			complex_dynamic_effect = {
 				first_custom_tooltip = I33_obligations_i_have_cde1_tt
-				first_limit = "AND = { fey_court_unseelie_court_pleased_trigger = yes fey_court_seelie_court_pleased_trigger = yes }"
+				first_limit = "fey_court_unseelie_court_pleased_trigger = yes fey_court_seelie_court_pleased_trigger = yes"
 				first_effect = "add_country_modifier = { name = I33_against_invaders duration = 5475 }"
 				second_custom_tooltip = I33_obligations_i_have_cde2_tt
 				second_limit = "fey_court_unseelie_court_pleased_trigger = yes"
@@ -865,36 +863,26 @@ I33_4 = {
 		}
 		provinces_to_highlight = {
 			province_group = deepwoods_shadow_grove
-			AND = {
-				NOT = { controlled_by = ROOT }
-				NOT = { owned_by = ROOT }
-			}
+			NOT = { controlled_by = ROOT }
+			NOT = { owned_by = ROOT }
 		} 
 
 		trigger = {
-			if = {
-				limit = {
-					NOT = {
-						num_of_owned_provinces_with = {
-							value = 4
-							province_group = deepwoods_shadow_grove
+			OR = {
+				AND = {
+					war_score_against = {
+						who = I43
+						value = 25
+					}
+					calc_true_if = {
+						deepwoods_shadow_grove = {
+							type = all
+							controlled_by = ROOT
 						}
+						amount = 4
 					}
 				}
-				war_score_against = {
-					who = I43
-					value = 25
-				}
-				calc_true_if = {
-					deepwoods_shadow_grove = {
-						type = all
-						controlled_by = ROOT
-					}
-					amount = 4
-				}
-			}
-			else = {
-				num_of_owned_provinces_with = {
+				num_of_provinces_owned_or_owned_by_subjects_with = {
 					value = 4
 					province_group = deepwoods_shadow_grove
 				}
@@ -908,10 +896,14 @@ I33_4 = {
 						OR = {
 							owned_by = ROOT
 							controlled_by = ROOT
+							owned_by_subject_of = ROOT
 						}
 					}
 					type = random
-					ashentree_pact_rebels = 1
+					spawn_rebels = {
+						size = 1
+						type = ashentree_pact_rebels
+					}
 				}
 				fey_court_moderately_improve_seelie_court_relations = yes
 				fey_court_moderately_improve_unseelie_court_relations = yes
@@ -996,7 +988,25 @@ I33_4 = {
 			I33_another_conclave
 			I33_her_grove
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					province_id = 3033
+					NOT = {
+						renaissance = 100
+						has_trade_building_trigger = yes
+					}
+				}
+				AND = {
+					province_group = deepwoods_arrow_grove
+					trade_goods = tropical_wood
+					NOT = {
+						num_of_times_improved_by_owner = 1
+						has_production_building_trigger = yes
+					}
+				}
+			}
+		} 
 
 		trigger = {
 			treasury = 50
@@ -1023,19 +1033,20 @@ I33_4 = {
 			add_treasury = -50
 			custom_tooltip = I33_shape_the_spine_tt
 			hidden_effect = {
-				random_owned_province = {
+				pick_best_province = {
+					scope = deepwoods_arrow_grove
+					scale = higher_development_than
+					global_trigger = "trade_goods = tropical_wood"
+					event_target_name = "I33_highest_dev_tropical_wood_target_1"
+					number = 1
+				}
+				if = {
 					limit = {
-						province_group = deepwoods_arrow_grove
-						trade_goods = tropical_wood
-						deepwoods_arrow_grove = {
-							type = all
-							OR = {
-								NOT = { trade_goods = tropical_wood }
-								NOT = { higher_development_than = PREV }
-							}
-						}
+						has_saved_event_target = I33_highest_dev_tropical_wood_target_1
 					}
-					add_or_upgrade_production_building = yes
+					event_target:I33_highest_dev_tropical_wood_target_1 = {
+						add_or_upgrade_production_building = yes
+					}
 				}
 				every_owned_province = {
 					limit = {
@@ -1071,18 +1082,15 @@ I33_5 = {
 			3063 = { has_ruler_leader_from = ROOT }
 			custom_trigger_tooltip = {
 				tooltip = I33_ashentree_whispers_ctt
-				check_variable = {
-					which = unalignedFeyRelations
-					value = 40
-				}
-				check_variable = {
-					which = seelieCourtRelations
-					value = 40
-				}
-				check_variable = {
-					which = unseelieCourtRelations
-					value = 40
-				}
+				fey_court_seelie_court_delighted_trigger = yes
+				fey_court_seelie_court_pleased_trigger = yes
+				fey_court_seelie_court_ambivalent_trigger = yes
+				fey_court_unseelie_court_delighted_trigger = yes
+				fey_court_unseelie_court_pleased_trigger = yes
+				fey_court_unseelie_court_ambivalent_trigger = yes
+				fey_court_unaligned_fey_delighted_trigger = yes
+				fey_court_unaligned_fey_pleased_trigger = yes
+				fey_court_unaligned_fey_ambivalent_trigger = yes
 			}
 		} 
 
@@ -1128,17 +1136,15 @@ I33_5 = {
 			deepwoods_shadow_grove = {
 				type = all
 				owner = {
-					AND = {
-						NOT = { culture_group = orcish }
-						NOT = { culture_group = goblin }
-					}
+					NOT = { culture_group = orcish }
+					NOT = { culture_group = goblin }
 				}
 			}
-			if = {
-				limit = { I34 = { is_subject_of = ROOT } }
-				I34 = { NOT = { liberty_desire = 50 } }
-			}
-			else = {
+			OR = {
+				AND = {
+					I34 = { is_subject_of = ROOT }
+					I34 = { NOT = { liberty_desire = 50 } }
+				}
 				deepwoods_shadow_grove = {
 					type = all
 					OR = { 
@@ -1169,34 +1175,25 @@ I33_5 = {
 		trigger = {
 			custom_trigger_tooltip = {
 				tooltip = I33_favouring_none_1_ctt
-				check_variable = {
-					which = unalignedFeyRelations
-					value = 60
-				}
-				check_variable = {
-					which = seelieCourtRelations
-					value = 60
-				}
-				check_variable = {
-					which = unseelieCourtRelations
-					value = 60
-				}
+				fey_court_seelie_court_delighted_trigger = yes
+				fey_court_seelie_court_pleased_trigger = yes
+				fey_court_unseelie_court_delighted_trigger = yes
+				fey_court_unseelie_court_pleased_trigger = yes
+				fey_court_unaligned_fey_delighted_trigger = yes
+				fey_court_unaligned_fey_pleased_trigger = yes
 			}
-			#custom_trigger_tooltip = {
-			#	tooltip = I33_favouring_none_2_ctt
-				calc_true_if = {
-					amount = 3
-					has_country_modifier = fey_court_seelie_modifier_1
-					has_country_modifier = fey_court_seelie_modifier_2
-					has_country_modifier = fey_court_seelie_modifier_3
-					has_country_modifier = fey_court_unseelie_modifier_1_late_game
-					has_country_modifier = fey_court_unseelie_modifier_2
-					has_country_modifier = fey_court_unseelie_modifier_3
-					has_country_modifier = fey_court_unaligned_modifier_1
-					has_country_modifier = fey_court_unaligned_modifier_2
-					has_country_modifier = fey_court_unaligned_modifier_3
-				}
-			#}
+			calc_true_if = {
+				amount = 3
+				has_country_modifier = fey_court_seelie_modifier_1
+				has_country_modifier = fey_court_seelie_modifier_2
+				has_country_modifier = fey_court_seelie_modifier_3
+				has_country_modifier = fey_court_unseelie_modifier_1_late_game
+				has_country_modifier = fey_court_unseelie_modifier_2
+				has_country_modifier = fey_court_unseelie_modifier_3
+				has_country_modifier = fey_court_unaligned_modifier_1
+				has_country_modifier = fey_court_unaligned_modifier_2
+				has_country_modifier = fey_court_unaligned_modifier_3
+			}
 			religious_unity = 0.9
 
 		} 
