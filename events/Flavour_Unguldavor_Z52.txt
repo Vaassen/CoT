@@ -11,29 +11,19 @@ country_event = { #The First Clan Council
     option = { #Only available option
         name = flavor_unguldavor.1.a
 
-        inner_castanor_region = {
-			if = {
-				limit = {
-					owner = {
-						primary_culture = green_orc
-						NOT = { num_of_cities = 10 }
-						NOT = {
-							tag = Z52
-						}
-						ai = yes
-					}
-				}
-				set_province_flag = inherited_clan
-				owner = {
-					set_country_flag = ung_subclan
-				}
-			}
-		}
-
-		every_known_country = {
-  			limit = { has_country_flag = ung_subclan }
-  			ROOT = { inherit = PREV }
-		}
+        every_known_country = {
+            limit = {
+                primary_culture = green_orc
+                NOT = { num_of_cities = 10 }
+                ai = yes
+                any_owned_province = { region = inner_castanor_region }
+            }
+            every_owned_province = {
+                limit = { region = inner_castanor_region }
+                set_province_flag = inherited_clan
+            }
+            ROOT = { inherit = PREV }
+        }
 
 		every_owned_province = {
 			limit = {
@@ -43,6 +33,7 @@ country_event = { #The First Clan Council
 				name = ung_autonomous_clans
 				duration = -1
 			}
+			clr_province_flag = inherited_clan
 		}
     }
 }
@@ -194,25 +185,27 @@ country_event = { #Our Southern Ally
 
 
 	immediate = {
-		random_known_country = {
-			limit = {
-				low_tolerance_orcish_race_trigger = yes
-				any_owned_province = {
-					region = south_castanor_region
-					culture_group = orcish
+		hidden_effect = {
+			random_known_country = {
+				limit = {
+					low_tolerance_orcish_race_trigger = yes
+					any_owned_province = {
+						region = south_castanor_region
+						culture_group = orcish
+					}
 				}
+				save_event_target_as = enemy_country
 			}
-			save_event_target_as = enemy_country
-		}
-		random_ally = {
-			limit = { 
-				num_of_owned_provinces_with = {
-					region = south_castanor_region
-					value = 1
+			random_ally = {
+				limit = { 
+					any_owned_province = {
+						region = south_castanor_region
+					}
 				}
+				save_event_target_as = ally_country
 			}
-			save_event_target_as = ally_country
 		}
+		
 	}
 	
 
@@ -237,27 +230,28 @@ country_event = { #Our Southern Ally
 			}
 		}
 
-		event_target:ally_country = {
-			random_core_province = {
-				limit = {
-					owner = {
-						NOT = {
-							tag = event_target:ally_country
+		hidden_effect = {
+			event_target:ally_country = {
+				random_core_province = {
+					limit = {
+						owner = {
+							tag = event_target:enemy_country
 						}
 					}
+					save_event_target_as = ally_target_province
 				}
-				save_event_target_as = ally_target_province
 			}
-		}
 
-		event_target:ally_country = {
-			declare_war_with_cb = {
-				who = event_target:enemy_country
-				casus_belli = cb_core
-				war_goal_province = event_target:ally_target_province
+			event_target:ally_country = {
+				declare_war_with_cb = {
+					who = event_target:enemy_country
+					casus_belli = cb_core
+					war_goal_province = event_target:ally_target_province
+				}
 			}
+			join_all_offensive_wars_of = event_target:ally_country
 		}
-		join_all_offensive_wars_of = event_target:ally_country
+		custom_tooltip = ung_join_war
 	}
 
 	option = {
@@ -548,19 +542,18 @@ country_event = { #Whoops!
 	is_triggered_only = yes
 
 	immediate = {
-		random_owned_province = {
-			limit = {
-				OR = {
-					has_terrain = woods
-					has_terrain = forest
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					OR = {
+						has_terrain = woods
+						has_terrain = forest
+					}
+					has_building = mage_tower
 				}
-				has_building = mage_tower
-			}
-			hidden_effect = {
 				save_event_target_as = whoops_province
 			}
 		}
-
 	}
 
 	option = {
@@ -626,12 +619,10 @@ country_event = { #Hostile Home
 			}
 		}
 		west_dwarovar_region = {
-			if = {
-				limit = {
-					is_core = ROOT
-				}
-				add_core = Z36
+			limit = {
+				is_core = ROOT
 			}
+			add_core = Z36
 		}
 
 		create_vassal = Z36
@@ -665,7 +656,6 @@ country_event = { #Hostile Home
 			cede_province = Z36
 		}
 		west_dwarovar_region = {
-			type = all
 			add_permanent_claim = Z36
 		}
 		remove_country_modifier = ung_into_the_depths
@@ -749,7 +739,6 @@ country_event = { #Hostile Home
 			cede_province = Z36
 		}
 		west_dwarovar_region = {
-			type = all
 			add_permanent_claim = Z36
 		}
 		remove_country_modifier = ung_into_the_depths
@@ -789,8 +778,16 @@ country_event = { #Chained Khozrugan
 						}
 					}
 				}
-				ROOT = {
-					inherit = PREV
+				every_owned_province = {
+					limit = {
+						OR = {
+							region = west_castanor_region
+							area = cursewood_area
+							area = whistlevale_area
+						}
+					}
+					add_core = ROOT
+					cede_province = ROOT
 				}
 			}
 		}
@@ -824,6 +821,7 @@ country_event = { #Chained Khozrugan
 			}
 			random_ally = {
 				limit = {
+					primary_culture = green_orc
 					capital_scope = {
 						OR = {
 							region = west_castanor_region
@@ -1038,11 +1036,6 @@ country_event = { #Clans Revolt
 					color = {159 0 0}
 				}
 			}
-
-			inner_castanor_region = {
-				add_core = ROOT
-			}
-
 			
 			B26 = {
 				define_ruler = {
@@ -1617,17 +1610,7 @@ country_event = { #King Grom the Great
 		add_ruler_modifier = {
 			name = ung_unguldavor_bashar
 		}
-		if = {
-			limit = { 
-				ruler = {
-					adm =6
-				}
-			}
-			add_adm_power = 100
-		}
-		else = {
-			change_adm = 1
-		}
+		increase_ruler_adm_effect = yes
 	}
 }
 
@@ -1899,6 +1882,7 @@ country_event = { #Arosha's Dream
 country_event = { #Pulse Event Handler
 	id = flavor_unguldavor.100
 	title = flavor_unguldavor.100.t
+	picture = ORC_WITH_AXE_eventPicture
 	hidden = yes
 
 	is_triggered_only = yes
@@ -1921,6 +1905,14 @@ country_event = { #Pulse Event Handler
 				}
 			}
 			10 = {
+				trigger = {
+					any_owned_province = {
+						any_neighbor_province = {
+    						province_id = 872
+						}
+						has_fort_building_trigger = no
+					}
+				}
 				country_event = {
 					id = flavor_unguldavor.102
 				}
@@ -1931,11 +1923,21 @@ country_event = { #Pulse Event Handler
 				}
 			}
 			10 = {
+				trigger = {
+					NOT = {
+						has_country_modifier = ung_junk_weapons
+					}
+				}
 				country_event = {
 					id = flavor_unguldavor.104
 				}
 			}
 			10 = {
+				trigger = {
+					NOT = {
+						has_country_modifier = ung_invalid_census
+					}
+				}
 				country_event = {
 					id = flavor_unguldavor.105
 				}
@@ -1953,13 +1955,9 @@ country_event = { #Bloodgorger Raids Neighbors
 	is_triggered_only = yes
 
 	immediate = {
-		random_neighbor_country = {
-			save_event_target_as = ung_bloodgorger_raid
-
-			hidden_effect = {
-				random_owned_province = {
-					add_devastation = 25
-				}
+		hidden_effect = {
+			random_neighbor_country = {
+				save_event_target_as = ung_bloodgorger_raid
 			}
 		}
 	}
@@ -1970,6 +1968,9 @@ country_event = { #Bloodgorger Raids Neighbors
 		custom_tooltip = flavor_unguldavor.101.tt
 
 		event_target:ung_bloodgorger_raid = {
+			random_owned_province = {
+				add_devastation = 25
+			}
 			add_opinion = {
 				who = ROOT
 				modifier = unguldavor_sub_raid
@@ -1986,26 +1987,17 @@ country_event = { #Dogeater Internal Raid
 
 	is_triggered_only = yes
 
-	trigger = {
-		any_owned_province = {
-			province_distance = {
-				who = 872
-				distance = 1
-			}
-			has_fort_building_trigger = no
-		}
-	}
-
 	immediate = {
-		random_owned_province = {
-			limit = {
-				province_distance = {
-					who = 872
-					distance = 1
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					any_neighbor_province = {
+   						province_id = 872
+					}
+					has_fort_building_trigger = no
 				}
-				has_fort_building_trigger = no
+				save_event_target_as = ung_dogwood_raid
 			}
-			save_event_target_as = ung_dogwood_raid
 		}
 	}
 
@@ -2015,8 +2007,6 @@ country_event = { #Dogeater Internal Raid
 		event_target:ung_dogwood_raid = {
 			add_devastation = 25
 		}
-
-		
 	}
 }
 
@@ -2075,6 +2065,7 @@ country_event = { #Severed Ear Hiding Taxes
 country_event = { #Hidden new modifier
 	id = flavor_unguldavor.200
 	title = flavor_unguldavor.200.t
+	picture = ORC_WITH_AXE_eventPicture
 	hidden = yes
 
 	is_triggered_only = yes
@@ -2092,6 +2083,7 @@ country_event = { #Hidden new modifier
 province_event = { #Culture convert to half-orc since Paradox is dumb and doesn't allow culture construction to non-primary culture
 	id = flavor_unguldavor.201
 	title = flavor_unguldavor.201.t
+	picture = ORC_WITH_AXE_eventPicture
 	hidden = yes
 
 	is_triggered_only = yes
