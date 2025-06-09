@@ -138,8 +138,7 @@ province_event = {	#on raj capital conquered
 				if = {
 					limit = {
 						OR = {
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 							AND = {
 								has_reform = indep_prabhi_reform
 								NOT = { is_subject = yes }
@@ -193,12 +192,8 @@ province_event = {	#on raj capital conquered
 						id = rahenraj.1001
 						days = 5
 					}
-					if = {
-						limit = { is_variable_equal = { which = raj_var_cohesion_impact_bonus value = 0 } } #it's uninitialised?
-						set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
-					}
+					rahen_raj_calc_cohesion = yes
 				}
-				rahen_raj_calc_cohesion = yes
 			}
 			if = { #Case: new owner is NOT the new Raja, previous Raja lives -> all Prabhi+Senapti go free
 				limit = {
@@ -209,39 +204,7 @@ province_event = {	#on raj capital conquered
 					NOT = { owner = { has_government_attribute = is_raja } }
 				}
 				#Degrade the previous Raja to Prabhi level, release everyone, disband the Raja
-				FROM = {
-					every_subject_country = {
-						limit = {
-							OR = {
-								is_subject_of_type = daimyo_vassal
-								is_subject_of_type = great_daimyo_vassal
-								is_subject_of_type = vizier_vassal
-							}
-						}
-
-						#Grant freedom from old raja
-						PREV = { create_subject = {	subject_type = daimyo_vassal subject = PREV } }	#prevent insta-annexation, pdx bug
-						grant_independence = yes
-						rahen_raj_remove_mandates = yes # Mandates no longer relevant. 
-
-						if = {
-							limit = {
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
-							}
-							#Previous subjects become independent Prabhi
-							add_government_reform = indep_prabhi_reform
-						}
-					}
-
-					#Downgrade rank and force indep_prabhi reform onto old raja
-					set_government_rank = 1
-					add_government_reform = indep_prabhi_reform
-					remove_country_modifier = raj_opened_senapti_ranks
-					remove_country_modifier = raj_closed_senapti_ranks
-					clear_global_event_target = raj_raja_global_target
-					clear_global_event_target = raj_vizier_global_target
-				}
+				raj_dismantling_effect = { releaseSubjects = yes }
 			}
 			if = { #Case: new owner is the new Raja, previous Raja is dead -> all Prabhi+Senapti get transferred to new Raja
 				limit = {
@@ -253,10 +216,7 @@ province_event = {	#on raj capital conquered
 				#Vassalize all old prabhi/senapti.
 				every_country = {
 					limit = {
-						OR = {
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
-						}
+						has_government_attribute = is_raja_subject
 						NOT = { war_with = event_target:raj_raja_global_target }
 					}
 					raj_become_prabhi = yes
@@ -264,10 +224,7 @@ province_event = {	#on raj capital conquered
 				#Any old prabhi/senapti still at war with the new raja get independence
 				every_country = {
 					limit = {
-						OR = {
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
-						}
+						has_government_attribute = is_raja_subject
 						war_with = event_target:raj_raja_global_target
 					}
 					add_government_reform = indep_prabhi_reform
@@ -279,12 +236,8 @@ province_event = {	#on raj capital conquered
 						id = rahenraj.1001
 						days = 5
 					}
-					if = {
-						limit = { is_variable_equal = { which = raj_var_cohesion_impact_bonus value = 0 } } #it's uninitialised?
-						set_variable = { which = raj_var_cohesion_impact_bonus value = 0 }
-					}
+					rahen_raj_calc_cohesion = yes
 				}
-				rahen_raj_calc_cohesion = yes
 			}
 			if = { #Case: new owner is NOT the new Raja, previous Raja dead -> all Prabhi+Senapti go free, disband the Raja
 				limit = {
@@ -297,10 +250,7 @@ province_event = {	#on raj capital conquered
 				#Grant freedom to all old prabhi/senapti
 				every_country = {
 					limit = {
-						OR = {
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
-						}
+						has_government_attribute = is_raja_subject
 					}
 
 					#Grant freedom
@@ -308,6 +258,15 @@ province_event = {	#on raj capital conquered
 					rahen_raj_remove_mandates = yes # Mandates no longer relevant. 
 					add_government_reform = indep_prabhi_reform
 				}
+				set_global_flag = destroyed_raj
+				4411 = {
+					remove_province_modifier = raj_royal_barracks
+					remove_province_modifier = rahen_corrupt_ministery_of_agriculture
+					remove_province_modifier = rahen_corrupt_ministery_of_philosophy
+					remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
+					remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
+				}
+				rahen_superregion = { rahen_clear_court_disaster_province_modifiers = yes }
 				clear_global_event_target = raj_raja_global_target
 				clear_global_event_target = raj_vizier_global_target
 			}
@@ -345,6 +304,10 @@ province_event = {	#on raj capital conquered
 		trigger = { owner = { has_government_attribute = is_raja } }
 		custom_tooltip = claiming_the_raj_tooltip
 		owner = {
+			if = {
+				limit = { tag = event_target:raj_vizier_global_target }
+				set_country_flag = vizier_became_raja
+			}
 			country_event = { id = rahenraj.2100 days = 1 }	#new Vizier election
 		}
 	}
@@ -357,23 +320,9 @@ province_event = {	#on raj capital conquered
 			add_adm_power = 50
 			add_dip_power = 50
 			add_mil_power = 50
-			set_global_flag = destroyed_raj
-			4411 = {
-				remove_province_modifier = raj_royal_barracks
-				remove_province_modifier = rahen_corrupt_ministery_of_agriculture
-				remove_province_modifier = rahen_corrupt_ministery_of_philosophy
-				remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
-				remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
-			}
-		}
-		hidden_effect = { #stip all reformation modifiers from the former Raja
-			rahen_superregion = {
-				rahen_clear_court_disaster_province_modifiers = yes
-			}
-		}
+		}		
 	}
 }
-
 
 #Event to ensure that Senapti and Prabhi keep Harimari rulers
 country_event = { #If a Senapti ruler isn't a harimari
@@ -468,10 +417,7 @@ country_event = { #If a Raj subject has an heir that isn't a harimari
 	}
 
 	trigger = {
-		OR = {
-			has_reform = prabhi_reform
-			has_reform = senapti_reform
-		}
+		has_government_attribute = is_raja_subject
 		overlord = { has_country_modifier = raj_closed_senapti_ranks }
 		has_heir = yes
 		NOT = { has_heir_flag = raj_heir_refused }
@@ -608,7 +554,6 @@ country_event = {
 				ai = yes
 			}
 		}
-		add_legitimacy = -10
 		define_ruler = {
 			name = "Ganyakanar"
 			dynasty = "of the Lotus Claw"
@@ -619,6 +564,7 @@ country_event = {
 			claim = 95
 			culture = royal_harimari
 		}
+		add_legitimacy = -20
 		if = {
 			limit = { has_country_flag = raj_has_exiled_heir }
 			hidden_effect = { R53 = { exile_heir_as = ganyakanar_heir } }
@@ -637,7 +583,6 @@ country_event = {
 				dynasty = ROOT
 			}
 		}
-		add_legitimacy = -40
 		create_alliance = R10
 		create_marriage = R10
 		define_ruler = {
@@ -650,6 +595,7 @@ country_event = {
 			female = yes
 			culture = royal_harimari
 		}
+		add_legitimacy = -40
 		set_country_flag = raj_married_ganjina
 	}
 	after = { clr_country_flag = raj_has_exiled_heir }
@@ -1466,42 +1412,7 @@ country_event = { #Collapse of the Raj
 
 		add_prestige = -50
 
-		4411 = {
-			remove_province_modifier = raj_royal_barracks
-			remove_province_modifier = rahen_corrupt_ministery_of_agriculture
-			remove_province_modifier = rahen_corrupt_ministery_of_philosophy
-			remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
-			remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
-		}
-		if = {
-			limit = { has_reform = raja_magocracy_reform }
-			remove_government_reform = raja_magocracy_reform
-			add_government_reform = magocracy_reform
-		}
-		else = {
-			add_government_reform = feudalism_reform
-		}
-		
-		every_subject_country = {
-			overlord = {
-				create_subject = {
-					subject_type = vassal
-					subject = PREV
-				}
-			}
-			hidden_effect = {
-				rahen_raj_remove_mandates = yes
-			}
-		}
-		hidden_effect = {
-			rahen_superregion = {
-				rahen_clear_court_disaster_province_modifiers = yes
-			}
-			clr_country_flag = reformed_rahen_court
-			set_global_flag = destroyed_raj
-			remove_country_modifier = raj_opened_senapti_ranks
-			remove_country_modifier = raj_closed_senapti_ranks
-		}
+		raj_dismantling_effect = { makeSubjectsVassals = yes }
 	}
 }
 country_event = { #A Raj falling apart
@@ -1529,8 +1440,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1540,8 +1450,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1557,8 +1466,7 @@ country_event = { #A Raj falling apart
 						any_neighbor_country = {
 							NOT = {
 								has_government_attribute = is_raja
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
+								has_government_attribute = is_raja_subject
 							}
 						}
 						any_owned_province = { has_port = yes }
@@ -1574,8 +1482,7 @@ country_event = { #A Raj falling apart
 						any_neighbor_country = {
 							NOT = {
 								has_government_attribute = is_raja
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
+								has_government_attribute = is_raja_subject
 							}
 						}
 						any_owned_province = { has_port = yes }
@@ -1594,8 +1501,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1605,8 +1511,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1622,8 +1527,7 @@ country_event = { #A Raj falling apart
 						any_neighbor_country = {
 							NOT = {
 								has_government_attribute = is_raja
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
+								has_government_attribute = is_raja_subject
 							}
 						}
 						any_owned_province = { has_port = yes }
@@ -1639,8 +1543,7 @@ country_event = { #A Raj falling apart
 						any_neighbor_country = {
 							NOT = {
 								has_government_attribute = is_raja
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
+								has_government_attribute = is_raja_subject
 							}
 						}
 						any_owned_province = { has_port = yes }
@@ -1662,8 +1565,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1673,8 +1575,7 @@ country_event = { #A Raj falling apart
 					all_neighbor_country = {
 						NOT = {
 							has_government_attribute = is_raja
-							has_reform = prabhi_reform
-							has_reform = senapti_reform
+							has_government_attribute = is_raja_subject
 						}
 					}
 				}
@@ -1689,8 +1590,7 @@ country_event = { #A Raj falling apart
 						any_neighbor_country = {
 							NOT = {
 								has_government_attribute = is_raja
-								has_reform = prabhi_reform
-								has_reform = senapti_reform
+								has_government_attribute = is_raja_subject
 							}
 						}
 						any_owned_province = { has_port = yes }
@@ -1728,12 +1628,7 @@ country_event = { #A Raj falling apart
 		}
 		grant_independence = yes
 		if = {
-			limit = {
-				OR = {
-					has_reform = senapti_reform
-					has_reform = prabhi_reform
-				}
-			}
+			limit = { has_government_attribute = is_raja_subject }
 			add_government_reform = indep_prabhi_reform
 		}
 	}
@@ -1759,68 +1654,112 @@ country_event = { #[From.GetName] has left the Raj!
 ### General Raj Management Extras ###
 #####################################
 
-# country_event = {			#insurance event, uncomment if we see it's needed, also uncomment in on_action
-# 	id = rahenraj.1000
-# 	title = rahenraj.1000.t
-# 	desc = rahenraj.1000.d
-# 	picture = COURT_eventPicture
+country_event = {				#address the issue of nations released inside the raj with the wrong government reform or/and wrong subject type
+	id = rahenraj.1000			#e.g. in internal raja wars, forcibly released tags gain their parent tags subject types (for some reason??)
+	title = rahenraj.1000.t		#need to wait 1 day in the on_action or fizzles, as they are considered an independent nation when on_new_monarch take effect
+	desc = rahenraj.1000.d
+	picture = COURT_eventPicture
 
-# 	hidden = yes
-# 	is_triggered_only = yes
+	hidden = yes
+	is_triggered_only = yes
 
-# 	trigger = {
-# 		OR = {
-# 			has_government_attribute = is_raja
-# 			overlord = { has_government_attribute = is_raja }
-# 		}
-# 		OR = {
-# 			AND = {
-# 				is_subject_of_type = daimyo_vassal
-# 				NOT = { has_reform = prabhi_reform }
-# 			}
-# 			AND = {
-# 				OR = {
-# 					is_subject_of_type = great_daimyo_vassal
-# 					is_subject_of_type = vizier_vassal
-# 				}
-# 				NOT = { has_reform = senapti_reform }
-# 			}
-# 			NOT = {
-# 				has_estate_privilege = estate_raj_ministries_raj_cohesion
-# 			}
-# 		}
-# 	}
+	trigger = {
+		OR = {
+			has_government_attribute = is_raja
+			overlord = { has_government_attribute = is_raja }
+		}
+		OR = {
+			AND = {
+				is_subject_of_type = daimyo_vassal
+				NOT = { has_reform = prabhi_reform }
+			}
+			AND = {
+				is_subject_of_type = great_daimyo_vassal
+				NOT = {
+					AND = {
+						has_reform = senapti_reform
+						has_country_flag = senapti_flag
+					}
+				}
+			}
+			AND = {
+				is_subject_of_type = vizier_vassal
+				NOT = {
+					AND = {
+						has_reform = senapti_reform
+						tag = event_target:raj_vizier_global_target
+					}
+				}
+			}
+			NOT = {
+				has_estate_privilege = estate_raj_ministries_raj_cohesion
+			}
+		}
+	}
 
-# 	immediate = {
-# 		if = {
-# 			limit = {
-# 				is_subject_of_type = daimyo_vassal
-# 				NOT = { has_reform = prabhi_reform }
-# 			}
-# 			add_government_reform = prabhi_reform
-# 		}
-# 		else_if = {
-# 			limit = {
-# 				OR = {
-# 					is_subject_of_type = great_daimyo_vassal
-# 					is_subject_of_type = vizier_vassal
-# 				}
-# 				NOT = { has_reform = senapti_reform }
-# 			}
-# 			add_government_reform = senapti_reform
-# 		}
+	immediate = {
+		if = {
+			limit = {
+				is_subject_of_type = vizier_vassal
+				NOT = { tag = event_target:raj_vizier_global_target }
+			}
+			event_target:raj_raja_global_target = {
+				create_subject = {
+					subject_type = daimyo_vassal
+					subject = PREV
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				is_subject_of_type = great_daimyo_vassal
+				NOT = { has_country_flag = senapti_flag }
+			}
+			event_target:raj_raja_global_target = {
+				create_subject = {
+					subject_type = daimyo_vassal
+					subject = PREV
+				}
+			}
+		}
+		if = {
+			limit = {
+				is_subject_of_type = daimyo_vassal
+				NOT = { has_reform = prabhi_reform }
+			}
+			if = {
+				limit = { NOT = { government = monarchy } }
+				change_government = monarchy
+			}
+			add_government_reform = prabhi_reform
+		}
+		else_if = {
+			limit = {
+				OR = {
+					is_subject_of_type = great_daimyo_vassal
+					is_subject_of_type = vizier_vassal
+				}
+				NOT = { has_reform = senapti_reform }
+			}
+			if = {
+				limit = { NOT = { government = monarchy } }
+				change_government = monarchy
+			}
+			add_government_reform = senapti_reform
+		}
+		
 
-# 		if = {
-# 			limit = { NOT = { has_estate_privilege = estate_raj_ministries_raj_cohesion } }
-# 			set_estate_privilege = estate_raj_ministries_raj_cohesion
-# 		}
-# 	}
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_raj_ministries_raj_cohesion } }
+			set_estate_privilege = estate_raj_ministries_raj_cohesion
+		}
+	}
 
-# 	option = {
-# 		ai_chance = { factor = 1 }
-# 		name = rahenraj.1000.a
-# 	}
-# }
+	option = {
+		ai_chance = { factor = 1 }
+		name = rahenraj.1000.a
+	}
+}
 
 #Open or Closed Senapti Ranks?
 country_event = {
@@ -1986,9 +1925,15 @@ country_event = {
 		trigger = {
 			NOT = { has_country_flag = vizier_nomination_on_new_raja }
 			NOT = { has_country_flag = raj_vizier_just_died }
+			NOT = { has_country_flag = vizier_became_raja }
 		}
 		desc = rahenraj.2100.dc
 	}
+	desc = {
+		trigger = { has_country_flag = vizier_became_raja }
+		desc = rahenraj.2100.dd
+	}
+
 	picture = COURT_eventPicture
 
 	is_triggered_only = yes
@@ -2002,7 +1947,7 @@ country_event = {
 		hidden_effect = {
 			if = {
 				limit = {
-					any_subject_country = { is_subject_of_type = great_daimyo_vassal }
+					any_subject_country = { is_subject_of_type = great_daimyo_vassal army_size = 1 }	#pick best tag is silly, army_size is a safety net
 				}
 				pick_best_tags = { scope = every_subject_country scale = army_size 5 = yes event_target_name = strongest_senapti global_trigger = "is_subject_of_type = great_daimyo_vassal ai = yes" }
 				event_target:strongest_senapti_1 = { capital_scope = { save_event_target_as = senapti1_capital } }
@@ -2029,8 +1974,8 @@ country_event = {
 		name = rahenraj.2100.a
 		goto = current_vizier_capital
 		trigger = {
-			any_subject_country = { tag = event_target:raj_vizier_global_target }
 			has_country_flag = vizier_nomination_on_new_raja
+			any_subject_country = { tag = event_target:raj_vizier_global_target }
 		}
 		ai_chance = {
 			factor = 100
@@ -2079,12 +2024,12 @@ country_event = {
 		name = rahenraj.2100.c
 		goto = senapti1_capital
 		ai_chance = { factor = 1 }
-		trigger = { has_saved_event_target = strongest_senapti_1 event_target:raj_vizier_global_target = { ai = yes } }
+		trigger = { has_saved_event_target = strongest_senapti_1 event_target:raj_vizier_global_target = { OR = { ai = yes tag = ROOT } } }
 		event_target:strongest_senapti_1 = { raj_become_vizier = yes }
 	}
 
 	option = {
-		name = rahenraj.2100.dd
+		name = rahenraj.2100.d
 		goto = senapti2_capital
 		trigger = { has_saved_event_target = strongest_senapti_2 ai = no }
 		event_target:strongest_senapti_2 = { raj_become_vizier = yes }
@@ -2121,6 +2066,7 @@ country_event = {
 	after = {
 		clr_country_flag = vizier_nomination_on_new_raja
 		clr_country_flag = raj_vizier_just_died
+		clr_country_flag = vizier_became_raja
 		country_event = { id = rahenraj.2101 }
 	}
 }
@@ -3132,6 +3078,17 @@ country_event = {
 		name = rahenraj.5010.a
 		event_target:prabhi_victim = {
 			every_neighbor_country = {
+				limit = {
+					is_subject_of_type = daimyo_vassal
+					ai = yes
+					NOT = {
+						truce_with = ROOT
+						war_with = ROOT
+					}
+				}
+				join_all_defensive_wars_of = overlord
+			}
+			every_ally = {
 				limit = {
 					is_subject_of_type = daimyo_vassal
 					ai = yes
