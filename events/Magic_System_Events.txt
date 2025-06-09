@@ -27,7 +27,7 @@ country_event = { #Monthly magic upkeep
 
 		export_to_variable = {
 			which = last_months_xp_gain
-			value = modifier:monthly_magic_experience_gain
+			value = modifier:mages_monthly_experience
 		}
 
 		if = { limit = { has_ruler_flag = magic_advancement }
@@ -224,12 +224,6 @@ country_event = { #The on_new_monarch catch-all event for powerful mages
 		update_mana_regen_vars = yes
 		calc_schools_total_level = yes
 
-		#If artificery-only, you may choose to enter mixed mode
-		if = {
-			limit = { has_country_flag = magic_artificery_artificery_only }
-			country_event = { id = magic_system.22 }
-		}
-
 		#If you have witch-king points (such as from choices made while an heir), get the appropriate modifier
 		calculate_magical_infamy_modifier = yes
 
@@ -328,32 +322,6 @@ country_event = { # Initialize spell schools for any character who hasn't alread
 	}
 	after = {
 		calc_schools_total_level = yes
-	}
-}
-country_event = { #Choose what to do about the powerful mage ruler
-	id = magic_system.22
-	title = magic_system.22.t
-	desc =  magic_system.22.d
-	picture = WAR_OF_THE_ROSES_eventPicture
-
-	is_triggered_only = yes
-	trigger = {
-		has_country_flag = magic_artificery_artificery_only
-		ruler_is_powerful_mage = yes
-	}
-
-	option = {
-		name = magic_system.22.a
-		ai_chance = { factor = 1 }
-		update_artifice_points = yes
-	}
-
-	option = {
-		name = magic_system.22.b
-		ai_chance = { factor = 0 }
-		
-		custom_tooltip = ruler_will_have_magic_tt
-		artifice_magic_switch_to_mixed_mode = yes
 	}
 }
 
@@ -584,12 +552,15 @@ country_event = { #AI can cast spells
 			which = ai_magic_foo_2
 		}
 		multiply_variable = { ai_magic_foo = 24 }
-		change_mana = { var_amount = ai_magic_foo }
+		change_variable = { which = currentMana which = ai_magic_foo }
 
 		#AI reduces infamy passively
 		random = {
 			chance = 20
-			decrease_ruler_witch_king_points = { size = small }
+			if = {
+				limit = { ruler_is_powerful_mage = yes }
+				decrease_ruler_witch_king_points = { size = small }
+			}
 			decrease_estate_witch_king_points = { size = small }
 		}
 	}
@@ -618,20 +589,6 @@ country_event = { #AI can cast spells
 			1 = {
 				trigger = { is_at_war = yes }
 				country_event = { id = magic_system.303 } #magic cast during war that is not war magic
-			}
-			1 = {
-				trigger = {
-					is_at_war = yes
-					has_war_wizard = yes
-					any_army = {
-						location = {
-							fort_level = 1
-							sieged_by = ROOT
-							unit_has_leader = yes
-						}
-					}
-				}
-				country_event = { id = magic_system.304 } #siege magic handler
 			}
 			2 = { country_event = { id = magic_system.301 } } #generic spellcasting handler
 		}
@@ -1192,7 +1149,7 @@ country_event = { #AI can do advancements
 	immediate = { #give 60 months of xp
 		export_to_variable = {
 			which = ai_magic_foo
-			value = modifier:monthly_magic_experience_gain
+			value = modifier:mages_monthly_experience
 		}
 		multiply_variable = { ai_magic_foo = 60 }
 		change_variable = { which = ai_magic_experience which = ai_magic_foo }
@@ -1215,7 +1172,7 @@ country_event = { #AI can do advancements
 
 		if = { #upgrade infrastructure is top priority
 			limit = {
-				check_variable = { which = country_spell_schools which = maximum_estate_spell_schools }
+				check_variable = { which = country_spell_schools which = max_estate_spell_levels }
 				NOT = { has_country_modifier = magical_infrastructure_4 }
 			}
 			ai_pay_for_xp = { infrastructure = yes }
@@ -1225,7 +1182,7 @@ country_event = { #AI can do advancements
 		else = {
 			random_list = { #AI will NOT naturally become a lich
 				3 = {
-					trigger = { NOT = { check_variable = { which = country_spell_schools which = maximum_estate_spell_schools } } }
+					trigger = { NOT = { check_variable = { which = country_spell_schools which = max_estate_spell_levels } } }
 					ai_random_study = { type = country }
 					#log = "[Root.GetName] leveled up country magic (xp [Root.ai_magic_experience.GetValue])"
 				}
@@ -1276,6 +1233,20 @@ country_event = { #AI can do advancements
 					modifier = { factor = 2 is_estate_evocation_level_2 = yes }
 					modifier = { factor = 4 is_estate_evocation_level_3 = yes }
 					ai_pay_for_xp = { project = battlemage_academy school = evocation }
+					random_list = {
+						1 = {
+							trigger = { NOT = { has_country_modifier = battlemage_academy_outhouse_1 has_country_modifier = battlemage_academy_outhouse_2 } }
+							set_country_flag = battlemage_academy_outhouse_flag
+						}
+						1 = {
+							trigger = { NOT = { has_country_modifier = battlemage_academy_graffiti_1 has_country_modifier = battlemage_academy_graffiti_2 } }
+							set_country_flag = battlemage_academy_graffiti_flag
+						}
+						1 = {
+							trigger = { NOT = { has_country_modifier = battlemage_academy_underwear_1 has_country_modifier = battlemage_academy_underwear_2 } }
+							set_country_flag = battlemage_academy_underwear_flag
+						}
+					}
 					magic_project_level_up = { project = battlemage_academy }
 					#log = "[Root.GetName] leveled up project battlemage academy (xp [Root.ai_magic_experience.GetValue])"
 				}
