@@ -1,18 +1,52 @@
 
-konolkhatep_rule_pack_effect = {
+konolkhatep_rule_pack_release_effect = {
+	hidden_effect = { every_subject_country = { clr_country_flag = konol_temp_tt_flag } }
 	if = {
-		limit = { exists = $tag$ NOT = { $tag$ = { is_subject_of_type = medasi_subject } } }
+		limit = { exists = $tag$ NOT = { $tag$ = { is_subject_of_type = medasi_subject is_subject_of_type = personal_union } } }
+		hidden_effect = {
+			every_subject_country = {
+				limit = { any_owned_province = { is_core = $tag$ } NOT = { tag = $tag$ } }
+				if = {
+					limit = { is_subject_of_type = tributary_state }
+					add_liberty_desire = 25
+				}
+				else = {
+					add_liberty_desire = 15
+				}
+				every_owned_province = {
+					limit = { is_core = $tag$ }
+					cede_province = $tag$
+				}
+			}
+		}
 		$tag$ = { 
 			kill_ruler = yes 
 			hidden_effect = { grant_independence = yes }
 		}
+		change_government_to_monarchy = yes
 		create_subject = {
 			subject_type = personal_union
 			who = $tag$
 		}	
 	}
 	else = {
-		release = $tag$
+		hidden_effect = {
+			every_subject_country = {
+				limit = { any_owned_province = { is_core = $tag$ } NOT = { tag = $tag$ } }
+				if = {
+					limit = { is_subject_of_type = tributary_state }
+					add_liberty_desire = 25
+				}
+				else = {
+					add_liberty_desire = 15
+				}
+				every_owned_province = {
+					limit = { is_core = $tag$ }
+					cede_province = ROOT
+				}
+			}
+		}
+		release_with_religion_and_culture = { tag = $tag$ religion = $religion$ culture = $culture$ }
 		create_subject = {
 			subject_type = personal_union
 			who = $tag$
@@ -22,9 +56,50 @@ konolkhatep_rule_pack_effect = {
 		add_liberty_desire = -50
 		add_opinion = { who = ROOT modifier = opinion_loyal_pack }
 	}
+	custom_tooltip = konolkhatep_rule_pack_free_subject_tt
+	if = {
+		limit = { any_subject_country = { has_country_flag = konol_temp_tt_flag } }
+		custom_tooltip = konolkhatep_rule_pack_release_effect_tt
+	}
+	tooltip = {
+		every_subject_country = {
+			limit = {
+				has_country_flag = konol_temp_tt_flag
+				is_subject_of_type = tributary_state
+			}
+			add_liberty_desire = 25
+		}
+		every_subject_country = {
+			limit = {
+				has_country_flag = konol_temp_tt_flag
+				NOT = { is_subject_of_type = tributary_state }
+			}
+			add_liberty_desire = 15
+		}
+	}
 }
 
-
+konolkhatep_rule_pack_absorb_effect = {
+	hidden_effect = { every_subject_country = { clr_country_flag = konol_temp_tt_flag } }
+	if = {
+		limit = { any_subject_country = { has_country_flag = konol_temp_tt_flag } }
+		custom_tooltip = konolkhatep_rule_pack_absorb_effect_tt
+	}
+	every_subject_country = {
+		limit = { any_owned_province = { is_core = $tag$ } }
+		if = {
+			limit = { is_subject_of_type = tributary_state }
+			add_liberty_desire = 25
+		}
+		else = {
+			add_liberty_desire = 15
+		}
+		every_owned_province = {
+			limit = { is_core = $tag$ }
+			cede_province = F66
+		}
+	}
+}
 
 
 
@@ -343,7 +418,21 @@ konolkhatep_slave_project_effect_yes = {
 	}
 	set_country_flag = konolkhatep_slave_project_ongoing
 	set_country_flag = konolkhatep_$project$_flag
+	set_country_flag = konolkhatep_$project$_ongoing_flag
 	custom_tooltip = konolkhatep_slave_project_explanation_tt
+	hidden_effect = {
+		set_variable = { which = konol_project_start value = 0 }
+		set_variable = { which = konol_project_end_min value = 5 }
+		set_variable = { which = konol_project_end_max value = 10 }
+		export_to_variable = {
+			which = konol_project_start
+			value = heir_age
+			who = ROOT
+		}
+		change_variable = { konol_project_start = 1 }
+		change_variable = { which = konol_project_end_min which = konol_project_start }
+		change_variable = { which = konol_project_end_max which = konol_project_start }
+	}
 }
 
 konolkhatep_slave_project_effect_no = {
@@ -398,6 +487,7 @@ konolkhatep_slave_road_project_effect_yes = {
 	}
 	set_country_flag = konolkhatep_slave_road_project_ongoing
 	set_country_flag = konolkhatep_$project$_flag
+	set_country_flag = konolkhatep_$project$_ongoing_flag
 	custom_tooltip = konolkhatep_slave_project_$road$_explanation_tt
 	tooltip = {
 		$province$ = {
@@ -406,6 +496,31 @@ konolkhatep_slave_road_project_effect_yes = {
 				duration = -1
 			}
 		}
+	}
+	hidden_effect = {
+		set_variable = { which = konol_road_project_start value = 0 }
+		export_to_variable = {
+			which = konol_road_project_start
+			value = heir_age
+			who = ROOT
+		}
+		change_variable = { konol_road_project_start = 1 }
+	}
+}
+
+konolkhatep_slave_project_end_effect = {
+	clr_country_flag = konolkhatep_slave_project_ongoing
+	clr_country_flag = konolkhatep_$project$_ongoing_flag
+	set_variable = { which = konol_project_start value = 0 }
+	set_variable = { which = konol_project_end_min value = 5 }
+	set_variable = { which = konol_project_end_max value = 10 }
+}
+
+konolkhatep_road_slave_project_end_effect = {
+	hidden_effect = {
+		clr_country_flag = konolkhatep_slave_road_project_ongoing
+		clr_country_flag = konolkhatep_$project$_ongoing_flag
+		set_variable = { which = konol_road_project_start value = 0 }
 	}
 }
 
@@ -863,4 +978,38 @@ horutep_switch_planetouched_personality_effect = {
 	if = { limit = { ruler_has_personality = life_planetouched_personality } remove_ruler_personality = life_planetouched_personality }
 	hidden_effect = { add_ruler_personality = $type$_planetouched_personality }
 	custom_tooltip = horutep_switch_planetouched_$type$_tt
+}
+
+konolkhatep_get_road_highlight_effect = {
+	if = {
+		limit = { NOT = { has_country_flag = konolkhatep_$project$_flag } }
+		if = {
+			limit = {
+				OR = {
+					konolkhatep_road_$road$ = {
+						type = all
+						NOT = { country_or_subject_holds = ROOT }
+					}
+					konolkhatep_road_$road$ = {
+						type = all
+						country_or_subject_holds = ROOT
+					}
+				}
+			}
+			$prov$ = { save_event_target_as = konol_$road$_target }
+		}
+		else = {
+			random_province = {
+				limit = {
+					province_group = konolkhatep_road_$road$
+					NOT = { country_or_subject_holds = ROOT }
+					any_neighbor_province = {
+						province_group = konolkhatep_road_$road$
+						country_or_subject_holds = ROOT
+					}
+				}
+				save_event_target_as = konol_$road$_target
+			}
+		}
+	}
 }
