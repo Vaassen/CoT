@@ -1626,21 +1626,35 @@ magic_on_consort_death = {
 }
 
 set_heir_mage_effect = {
-	set_heir_flag = is_powerful_mage
-	add_ruler_modifier = {
-		name = heir_mage_personality_mod
-		duration = -1
+	if = {
+		limit = { has_consort_flag = is_a_homunculus }
+		custom_tooltip = homunculi_no_mage_hint_tt
+		tooltip = { add_ruler_modifier = { name = heir_mage_personality_mod duration = -1 } }
+	}
+	else = {
+		set_heir_flag = is_powerful_mage
+		add_ruler_modifier = {
+			name = heir_mage_personality_mod
+			duration = -1
+		}
 	}
 }
 
 set_consort_mage_effect = {
 	if = {
+		limit = { has_consort_flag = is_a_homunculus }
+		custom_tooltip = homunculi_no_mage_hint_tt
+		tooltip = { add_queen_personality = mage_personality }
+	}
+	else_if = {
 		limit = { has_consort_regency = yes }
 		add_queen_personality = mage_personality
-		if = {
-			limit = { consort_is_not_powerful_mage = yes }
-			remove_random_vanilla_consort_personality = yes
-			add_queen_personality = mage_personality
+		hidden_effect = {
+			if = {
+				limit = { consort_is_not_powerful_mage = yes }
+				remove_random_vanilla_consort_personality = yes
+				add_queen_personality = mage_personality
+			}
 		}
 	}
 	else = {
@@ -1653,12 +1667,19 @@ set_consort_mage_effect = {
 }
 
 set_ruler_mage_effect = {
-	add_ruler_personality = mage_personality
-	hidden_effect = {
-		if = {
-			limit = { ruler_is_not_powerful_mage = yes }
-			remove_random_vanilla_ruler_personality = yes
-			add_ruler_personality = mage_personality
+	if = {
+		limit = { has_ruler_flag = is_a_homunculus }
+		custom_tooltip = homunculi_no_mage_hint_tt
+		tooltip = { add_ruler_personality = mage_personality }
+	}
+	else = {
+		add_ruler_personality = mage_personality
+		hidden_effect = {
+			if = {
+				limit = { ruler_is_not_powerful_mage = yes }
+				remove_random_vanilla_ruler_personality = yes
+				add_ruler_personality = mage_personality
+			}
 		}
 	}
 }
@@ -1685,7 +1706,10 @@ define_powerful_mage = { #types are ruler, heir, and consort
 		set_$type$_mage_effect = yes
 	}
 	if = {
-		limit = { NOT = { has_$type$_flag = initialized_magic_flags } }
+		limit = {
+			NOT = { has_$type$_flag = is_a_homunculus }
+			NOT = { has_$type$_flag = initialized_magic_flags }
+		}
 		clear_all_spell_levels_for_type = { type = $type$ } #Just in case
 		hidden_effect = { set_variable = { random_starting_schools = 0 } }
 
@@ -1719,12 +1743,12 @@ define_powerful_mage = { #types are ruler, heir, and consort
 				calc_schools_total_level = yes
 			}
 		}
-	}
 
-	[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
-	[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
-	[[witch_king]		become_a_witch_king_effect = yes ]
-	[[lich]				become_a_lich_effect = yes ]
+		[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
+		[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
+		[[witch_king]		become_a_witch_king_effect = yes ]
+		[[lich]				become_a_lich_effect = yes ]
+	}
 }
 
 define_type_to_war_wizard_effect = { #works on heir and ruler, else statements in scripted effects break general traits
