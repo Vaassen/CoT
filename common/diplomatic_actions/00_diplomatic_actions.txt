@@ -500,16 +500,6 @@ declarewar = {
 		}
 		allow = { always = no }
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
-		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
-		}
-	}
 
 	condition = {
 		tooltip = DWAROVAR_AI
@@ -616,6 +606,31 @@ declarewar = {
 		tooltip = EKHA_NO_WAR
 		potential = {
 			has_country_flag = ekhasi_plotting
+		}
+		allow = {
+			always = no
+		}
+	}
+
+	condition = { #Loyal Tributaries/Satrapies of the same overlord with the "The Weak Serve the Strong" privilege can't declare war on each other.
+		tooltip = gnolls_too_strong
+		potential = {
+			is_right_subject_type_xhazobkult = yes
+			overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+			NOT = { liberty_desire = 50 }
+			FROM = {
+				OR = {
+					is_subject_of_type_with_overlord = {
+						who = ROOT
+						type = tributary_state_anb
+					}
+					is_subject_of_type_with_overlord = {
+						who = ROOT
+						type = tributary_state
+					}
+				}
+			}
+			ai = yes
 		}
 		allow = {
 			always = no
@@ -1153,6 +1168,23 @@ declarewar = {
 			}
 		}
 
+		#Oberon Fealgarn Spawn
+		if = {
+			limit = {
+				has_estate_privilege = estate_nobles_oberons_watchful_eye
+				NOT = { has_ruler_flag = oberon_is_ruling }
+				NOT = { has_leader = "Oberon Fealgarn" }
+			}
+			define_general = {
+				name = "Oberon Fealgarn"
+				fire = 2
+				shock = 5
+				manuever = 5
+				siege = 0
+				trait = born_to_the_saddle_personality
+			}
+		}
+
 		# Raja mandate buffs, declaration of harmony
 		if = {
 			limit = {
@@ -1177,21 +1209,6 @@ declarewar = {
 			}
 			remove_country_modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod
 			FROM = { remove_country_modifier = rahen_raj_mandate_vizier_2_vizier_senaptia_peace_mod }
-		}
-
-		if = {
-			limit = { FROM = { tag = R62 } }
-			if = {
-				limit = { FROM = { has_country_flag = command_sir_revolt_started } }
-				4348 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-				4354 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			}
-		}
-		if = {
-			limit = {
-				FROM = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-			}
-			FROM = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } every_subject_country = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } } }
 		}
 
 		#Revoke nekhei war rights after they declare a war
@@ -1709,16 +1726,6 @@ allianceaction = {
 			}
 		}
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
-		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
-		}
-	}
 
 	condition = {
 		tooltip = OVERLORD_AMBITION
@@ -1873,6 +1880,55 @@ allianceaction = {
 			always = no
 		}
 	}
+	condition = { #Loyal Tributaries/Satrapies of overlord with the "The Weak Serve the Strong" privilege can only ally other Tributaries/Satrapies of the same overlord
+		tooltip = gnolls_too_strong
+		potential = {
+			OR = {
+				AND = {
+					is_right_subject_type_xhazobkult = yes
+					overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+					NOT = { liberty_desire = 50 }
+					NOT = {
+						FROM = {
+							OR = {
+								is_subject_of_type_with_overlord = {
+									who = ROOT
+									type = tributary_state_anb
+								}
+								is_subject_of_type_with_overlord = {
+									who = ROOT
+									type = tributary_state
+								}
+							}
+						}
+					}
+					ai = yes
+				}
+				FROM = { 
+					is_right_subject_type_xhazobkult = yes
+					overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+					NOT = { liberty_desire = 50 }
+					ROOT = {
+						NOT = {
+							OR = {
+								is_subject_of_type_with_overlord = {
+									who = ROOT
+									type = tributary_state_anb
+								}
+								is_subject_of_type_with_overlord = {
+									who = ROOT
+									type = tributary_state
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 }
 
 enforce_peace = {
@@ -1921,6 +1977,7 @@ royal_marriage = {
 		potential = {
 			ruler_culture = sun_elf
 			primary_culture = sun_elf #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			NOT = { religion = the_jadd }
 		}
 		allow = {
 			OR = {
@@ -1936,6 +1993,7 @@ royal_marriage = {
 		potential = {
 			FROM = { ruler_culture = sun_elf } 
 			FROM = { primary_culture = sun_elf } #Sun Elf rulers ruling non Sun Elf countries shouldn't care as much
+			FROM = { NOT = { religion = the_jadd } }
 		}
 		allow = {
 			OR = {
@@ -1955,6 +2013,8 @@ royal_marriage = {
 				culture_group = elven
 				NOT = { ruler_culture = desert_elf }
 				NOT = { primary_culture = desert_elf }
+				NOT = { ruler_culture = sun_elf }
+				NOT = { primary_culture = sun_elf }
 			}
 		}
 		allow = {
@@ -1973,6 +2033,9 @@ royal_marriage = {
 			culture_group = elven
 			NOT = { ruler_culture = desert_elf }
 			NOT = { primary_culture = desert_elf }
+			NOT = { ruler_culture = sun_elf }
+			NOT = { primary_culture = sun_elf }
+			
 		}
 		allow = {
 			OR = {
@@ -2413,14 +2476,38 @@ royal_marriage = {
 			}
 		}
 	}
-	
-	condition = {
-		tooltip = ISOLATIONIST_DAENGUN
-		potential = {
-			tag = Y93
+	effect = {
+		if = {
+			limit = {
+				ROOT = {
+					owns_ruby_gardens = { tier = 2 }
+					NOT = { has_country_modifier = ruby_gardens_tier_2_marriage }
+					NOT = { has_country_modifier = ruby_gardens_tier_3_marriage }
+				}
+			}
+			if = {
+				limit = { ROOT = { owns_ruby_gardens = { tier = 3 } } }
+				ruby_gardens_wedding_effect = { owner = ROOT target = FROM tier = 3 ae = -20 }
+			}
+			else = {
+				ruby_gardens_wedding_effect = { owner = ROOT target = FROM tier = 2 ae = -10 }
+			}
 		}
-		allow = {
-			NOT = { has_reform = isolated_kingdom_reform }
+		else_if = {
+			limit = {
+				FROM = {
+					owns_ruby_gardens = { tier = 2 }
+					NOT = { has_country_modifier = ruby_gardens_tier_2_marriage }
+					NOT = { has_country_modifier = ruby_gardens_tier_3_marriage }
+				}
+			}
+			if = {
+				limit = { FROM = { owns_ruby_gardens = { tier = 3 } } }
+				ruby_gardens_wedding_effect = { owner = FROM target = ROOT tier = 3 ae = -20 }
+			}
+			else = {
+				ruby_gardens_wedding_effect = { owner = FROM target = ROOT tier = 2 ae = -10 }
+			}
 		}
 	}
 }
@@ -2436,8 +2523,7 @@ annexationaction = {
 						is_subject_of = ROOT
 						is_subject_of_type = medasi_subject
 					}
-				}
-				NOT = { is_subject_of_type = daimyo_vassal }
+				}				
 			}
 		}
 		allow = {
@@ -2459,7 +2545,7 @@ annexationaction = {
 			4411 = {
 				check_variable = {
 					which = raj_var_cohesion
-					value = 70
+					value = 75
 				}
 			}
 		}
@@ -3165,18 +3251,6 @@ callaction = {
 			set_country_flag = ach_called_allies_againt_the_command
 		}
 	}
-
-	effect = {
-		if = {
-			limit = {
-				FROM = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				any_war_enemy_country = {
-					NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				}
-			}
-			FROM = { capital_scope = { remove_province_modifier = command_defensiveness_for_ai } }
-		}
-	}
 	
 	effect = {
 		if = {
@@ -3356,23 +3430,9 @@ ask_for_march = {
 }
 
 milaccess = {
-	condition = {
-		tooltip = AZJAKUMA_NO_MIL_ACCESS
-		potential = {
-			FROM = { tag = Y01 }
-		}
-		allow = { always = no }
-	}
 }
 
 offermilaccess = {
-	condition = {
-		tooltip = AZJAKUMA_NO_MIL_ACCESS
-		potential = {
-			tag = Y01
-		}
-		allow = { always = no }
-	}
 }
 
 insultaction = {
@@ -3651,10 +3711,7 @@ requestpeace = {
 		allow = {
 			if = {
 				limit = { R62 = { has_country_flag = command_sir_revolt_started } }
-				NOT = {
-					has_country_flag = command_sir_revolt_started
-					FROM = { has_country_flag = command_sir_revolt_started }
-				}
+				NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 			}
 			else_if = {
 				limit = { R62 = { has_country_flag = insubordination_active_flag } }
@@ -3679,6 +3736,35 @@ requestpeace = {
 		}
 		allow = {
 			always = no
+		}
+	}
+	condition = {
+		tooltip = F29_NO_PEACE_TT
+		potential = {
+			ROOT = {
+				has_country_flag = zokka_final_war
+			}
+		}
+		allow = {
+			always = no
+        }
+	}
+	
+	condition = { #Rinta seekers Alefisol disaster war after Magicks incident
+		tooltip = ALEFISOL_INVASION_WAR_NAME_tt
+		potential = {
+			OR = {
+				tag = S93
+				FROM = { tag = S93 }
+			}
+		}
+		allow = {
+			NOT = {
+				AND = {
+					is_in_war = { casus_belli = cb_alefisol_war }
+					FROM = { is_in_war = { casus_belli = cb_alefisol_war } }
+				}
+			}
 		}
 	}
 }
@@ -3735,6 +3821,45 @@ guaranteeaction = {
 					overlord = { has_country_flag = no_tributary_alliances }
 				}
 			}
+		}
+		allow = {
+			always = no
+		}
+	}
+	effect = {
+		if = {
+			limit = {
+				is_or_was_tag = { tag = G87 }
+				has_country_flag = chaqway_marriages_unlocked
+				NOT = {
+					FROM = {
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = chaqway_fake_marriage
+						}
+					}
+				}
+			}
+			FROM = {
+				add_opinion = {
+					who = ROOT
+					modifier = chaqway_fake_marriage
+				}
+				add_trust = {
+					who = ROOT
+					value = 10
+					mutual = yes
+				}
+			}
+		}
+	}
+	condition = { #Loyal Tributaries/Satrapies of overlord with the "The Weak Serve the Strong" can't proclaim guarantees
+		tooltip = gnolls_too_strong
+		potential = {
+			is_right_subject_type_xhazobkult = yes
+			overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+			NOT = { liberty_desire = 50 }
+			ai = yes
 		}
 		allow = {
 			always = no
@@ -3825,4 +3950,43 @@ trade_favors_for_sailors = {
 		}
 	}
 }
+
+grant_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+                }
+                emperor = { NOT = { has_country_modifier = A77_preatorian_electors } }
+            }
+            emperor = {
+                add_country_modifier = {
+                    name = A77_preatorian_electors
+                    duration = -1
+                }
+            }
+        }
+    }
+}
+
+remove_electorate = {
+    effect = {
+        if = {
+            limit = {
+                FROM = {
+                    tag = A77
+                    is_subject_of_type = imperial_bodyguard
+					is_elector = yes
+                }
+                emperor = { has_country_modifier = A77_preatorian_electors }
+            }
+            emperor = {
+				remove_country_modifier = A77_preatorian_electors
+            }
+        }
+    }
+}
+
 
