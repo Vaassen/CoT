@@ -32,7 +32,7 @@ Column_1_part_1 = {
 		effect = {
 			if = {
 				limit = {
-					A90 = { exists = yes }
+					A90 = { exists = yes ai = yes }
 				}
 				add_spy_network_in = {
 					who = A90
@@ -65,7 +65,7 @@ Column_1_part_1 = {
 			area = damerian_dales_area
 			NOT = {
 				AND = {
-					has_building = temple
+					has_tax_building_trigger = yes
 					has_seat_in_parliament = yes
 				}
 			}
@@ -74,7 +74,7 @@ Column_1_part_1 = {
 		trigger = {
 			damerian_dales_area = {
 				type = all 
-				has_building = temple
+				has_tax_building_trigger = yes
 				has_seat_in_parliament = yes
 			}
 			damerian_dales_area = { 
@@ -267,17 +267,25 @@ Column_2_part_1 = {
 
 		trigger = {
 			army_size_percentage = 0.9
-			A04 = {
-				OR = {
-					exists = no
-					has_been_insulted_by_root = yes
-				}	
-			}
-			A98 = {
-				OR = {
-					exists = no
-					has_been_insulted_by_root = yes
+			if = {
+				limit = {
+					ai = no
 				}
+				A04 = {
+					OR = {
+						exists = no
+						has_been_insulted_by_root = yes
+					}	
+				}
+				A98 = {
+					OR = {
+						exists = no
+						has_been_insulted_by_root = yes
+					}
+				}
+			}
+			else = {
+				mil_power = 100
 			}
 		} 
 
@@ -294,6 +302,12 @@ Column_2_part_1 = {
 				}
 			}
 			set_country_flag = A45_ae_reduce
+			if = {
+				limit = {
+					ai = yes
+				}
+				add_mil_power = -100
+			}
 		} 
 	}
 
@@ -304,23 +318,33 @@ Column_2_part_1 = {
 			A45_rose_covered_twilight
 			A45_flame_in_the_dawn
 		}
-		provinces_to_highlight = { 
+		provinces_to_highlight = {
 			OR = {
 				AND = {
-					OR = {
-						area = heartlands_area
-						area = eastneck_area
-					}
-					NOT ={
+					area = heartlands_area
+					NOT = {
 						AND = {
-							NOT = { local_autonomy = 10}
-							has_province_modifier =  autonomy_decreased
+							
+							country_or_non_sovereign_subject_holds = ROOT
+							OR = {
+								NOT = { local_autonomy = 10 }
+								has_province_modifier = autonomy_decreased
+							}
 						}
 					}
 				}
 				AND = {
-					owned_by = A98
-					NOT = { area = upper_luna_area }
+					area = eastneck_area
+					NOT = {
+						owner = { alliance_with = ROOT }
+						AND = {
+							country_or_non_sovereign_subject_holds = ROOT
+							OR = {
+								NOT = { local_autonomy = 10 }
+								has_province_modifier = autonomy_decreased
+							}
+						}
+					}
 				}
 			}
 		} 
@@ -390,10 +414,17 @@ Column_2_part_1 = {
 			owned_by = ROOT
 			NOT = {
 				AND = {
-					base_manpower = 4
-					has_manpower_building_trigger = yes
+					OR = {
+						base_manpower = 4
+						has_manpower_building_trigger = yes
+					}
+					num_of_units_in_province = {
+						type = infantry
+						who = ROOT
+						amount = 1
+					}
 				}
-			} 
+			}
 		} 
 
 		trigger = {
@@ -432,11 +463,7 @@ Column_2_part_1 = {
 								amount = 1
 							}
 						}
-						kill_units = {
-							who = ROOT
-							type = infantry
-							amount = 1
-						}
+						kill_units = { who = ROOT type = infantry amount = 1 }
 					}
 				"
 			}
@@ -473,11 +500,13 @@ Column_2_part_1 = {
 						area = windtower_area
 					}
 					NOT = {
-						owner = {
-							tag = ROOT
-							alliance_with = ROOT
-						}
-					}
+                        owner = {
+                            OR = {
+                                tag = ROOT
+                                alliance_with = ROOT
+                            }
+                        }
+                    }
 				}
 				is_capital_of = A04
 			}
@@ -564,6 +593,7 @@ Column_3_part_1 = {
 				limit = {
 					ai = yes
 				}
+				mil_power = 100
 			}
 			else = {
 				has_estate_privilege = estate_church_one_faith_one_culture
@@ -636,22 +666,24 @@ Column_3_part_1 = {
 			}
 		} 
 
-		trigger = { 
-			OR = {
-				AND = {
+		trigger = {
+			if = {
+				limit = {
 					A77 = {
 						exists = yes
 					}
+				}
+				OR = {
 					has_spy_network_in = {
 						who = A77
 						value = 30
 					}
+					is_emperor = yes
 				}
-				is_emperor = yes
-			}
-			A77 = {
-				has_80_opinion_improved_relation = { target = ROOT }
-				has_any_opinion_sent_gift = { target = ROOT }
+				A77 = {
+					has_80_opinion_improved_relation = { target = ROOT }
+					has_any_opinion_sent_gift = { target = ROOT }
+				}
 			}
 			prestige = 30
 		} 
@@ -684,10 +716,8 @@ Column_3_part_1 = {
 				AND = {
 					area = the_commons_area
 					NOT = {
-						OR = {
-							is_core = ROOT
-							is_core = A42
-						}
+						is_core = ROOT
+						is_core = A42
 					}
 				}
 				AND = {
@@ -715,7 +745,6 @@ Column_3_part_1 = {
 					province_id = 524
 					country_or_non_sovereign_subject_holds = ROOT
 				}
-				
 			}
 			army_size = A30
 		} 
@@ -724,38 +753,18 @@ Column_3_part_1 = {
 			remove_country_modifier = lilac_wars_moon_party_lost
 			remove_country_modifier = lilac_wars_moon_party_member_Elect
 			west_damesear_area = {
-				limit = {
-					NOT = { is_core = ROOT } 
-					NOT = { owned_by = ROOT } 
-				}
 				add_permanent_claim = ROOT
 			}
 			wesdam_area = {
-				limit = {
-					NOT = { is_core = ROOT } 
-					NOT = { owned_by = ROOT } 
-				}
 				add_permanent_claim = ROOT
 			}
 			upper_luna_area = {
-				limit = {
-					NOT = { is_core = ROOT } 
-					NOT = { owned_by = ROOT } 
-				}
 				add_permanent_claim = ROOT
 			}
 			ottocam_area = {
-				limit = {
-					NOT = { is_core = ROOT } 
-					NOT = { owned_by = ROOT } 
-				}
 				add_permanent_claim = ROOT
 			}
 			wexhills_area = {
-				limit = {
-					NOT = { is_core = ROOT } 
-					NOT = { owned_by = ROOT } 
-				}
 				add_permanent_claim = ROOT	
 			}
 			hidden_effect = {
@@ -800,7 +809,7 @@ Column_3_part_1 = {
 							who = ROOT
 							value = 150
 						}
-						has_90_opinion_improved_relation = {target = A45}
+						has_90_opinion_improved_relation = { target = ROOT }
 					}
 				}
 				OR = {
@@ -942,7 +951,7 @@ Column_4_part_1 = {
 					}
 				}
 			}
-		 } 
+		} 
 
 		effect = { 
 			add_favors = {
@@ -997,17 +1006,22 @@ Column_4_part_1 = {
 		trigger = { 
 			upper_luna_area = {
 				type = all
+				owned_by = ROOT
 				is_core = ROOT
 			}
 			ottocam_area = {
 				type = all
 				OR = {
 					province_id = 903
-					is_core = ROOT
+					AND = {
+						is_core = ROOT
+						owned_by = ROOT
+					}
 				}
 			}
 			wexhills_area = {
 				type = all
+				owned_by = ROOT
 				is_core = ROOT
 			}
 			any_hired_mercenary_company = {
@@ -1062,24 +1076,32 @@ Column_5_part_1 = {
 		trigger = {
 			calc_true_if = {
 				amount = 2
-				all_ally = {
+				A31 = {
 					OR = {
-						tag = A31
-						tag = A33
-						tag = A73
+						AND = {
+							is_rival = ROOT
+							has_50_opinion_improved_relation = { target = ROOT }
+						}
+						alliance_with = ROOT
 					}
 				}
-				A31 = {
-					is_rival = ROOT
-					has_50_opinion_improved_relation = { target = ROOT }
-				}
 				A33 = {
-					is_rival = ROOT
-					has_50_opinion_improved_relation = { target = ROOT }
+					OR = {
+						AND = {
+							is_rival = ROOT
+							has_50_opinion_improved_relation = { target = ROOT }
+						}
+						alliance_with = ROOT
+					}
 				}
 				A73 = {
-					is_rival = ROOT
-					has_50_opinion_improved_relation = { target = ROOT }
+					OR = {
+						AND = {
+							is_rival = ROOT
+							has_50_opinion_improved_relation = { target = ROOT }
+						}
+						alliance_with = ROOT
+					}
 				}
 			}
 			custom_trigger_tooltip = {
@@ -1439,7 +1461,7 @@ Column_2_part_2 = {
 					hre_religion = corinite
 					hre_religion_locked = yes
 				}
-				hre_reform_passed = emperor_landfriede
+				hre_reform_passed = anbennar_reinforce_imperial_frontiers 
 			}
 			custom_trigger_tooltip = {
 				tooltip = A45_leagues_oney_tt
@@ -1500,11 +1522,9 @@ Column_2_part_2 = {
 			}
 		} 
 
-		trigger = {  
-			AND = {
-				hre_religion = corinite
-				hre_religion_locked = yes
-			}
+		trigger = {
+			hre_religion = corinite
+			hre_religion_locked = yes
 			calc_true_if = {
 				amount = 35
 				all_known_country = {
@@ -1529,13 +1549,17 @@ Column_2_part_2 = {
 			OR = {
 				has_province_modifier = ravelian_lodge
 				has_province_modifier = ravelian_society
+				religion = ravelian
 			}
 			owner = {
 				NOT = {
 					has_50_opinion_improved_relation = {
 						target = ROOT
 					}
+					is_subject_of = ROOT
+					tag = ROOT
 				}
+				is_part_of_hre = yes
 			}
 		} 
 
@@ -1583,6 +1607,7 @@ Column_2_part_2 = {
 				hidden_effect = {
 					every_known_country = {
 						limit = {
+							is_part_of_hre = yes
 							religion = corinite
 							has_50_opinion_improved_relation = {
 								target = ROOT
@@ -1678,63 +1703,28 @@ Column_3_part_2 = {
 		provinces_to_highlight = {  
 			OR = {
 				AND = {
-					is_capital_of = A73
-					A73 = {
-						NOT = {
-							alliance_with = ROOT
-							trust = {
-								who = ROOT
-								value = 100
-							}
-							OR = {
-								has_opinion_modifier = {
-									who = ROOT
-									modifier = great_power_influence
-								}
-								has_25_opinion_sent_gift = {
-									target = ROOT
-								}
-							}
+					is_capital = yes
+					owner = {
+						OR = {
+							tag = A73
+							tag = A33
+							tag = A31
 						}
-					}
-				}
-				AND = {
-					is_capital_of = A33
-					A33 = {
 						NOT = {
-							alliance_with = ROOT
-							trust = {
-								who = ROOT
-								value = 100
-							}
-							OR = {
-								has_opinion_modifier = {
+							AND = {
+								alliance_with = ROOT
+								trust = {
 									who = ROOT
-									modifier = great_power_influence
+									value = 100
 								}
-								has_25_opinion_sent_gift = {
-									target = ROOT
-								}
-							}
-						}
-					}
-				}
-				AND = {
-					is_capital_of = A31
-					A31 = {
-						NOT = {
-							alliance_with = ROOT
-							trust = {
-								who = ROOT
-								value = 100
-							}
-							OR = {
-								has_opinion_modifier = {
-									who = ROOT
-									modifier = great_power_influence
-								}
-								has_25_opinion_sent_gift = {
-									target = ROOT
+								OR = {
+									has_opinion_modifier = {
+										who = ROOT
+										modifier = great_power_influence
+									}
+									has_25_opinion_sent_gift = {
+										target = ROOT
+									}
 								}
 							}
 						}
@@ -1862,9 +1852,6 @@ Column_3_part_2 = {
 						owned_by = ROOT
 					}
 				}
-				ROOT = {
-					dip_power = 150
-				}
 			}
 			high_esmar_area = {
 				type = all
@@ -1913,12 +1900,12 @@ Column_3_part_2 = {
 		provinces_to_highlight = {  
 			region = businor_region
 			NOT = {
-				is_part_of_hre = yes
 				AND = {
-					NOT = {
-						country_or_non_sovereign_subject_holds = ROOT
+					is_part_of_hre = yes
+					OR = {
+						NOT = { country_or_non_sovereign_subject_holds = ROOT }
+						religion = corinite
 					}
-					religion = corinite
 				}
 			}
 		} 
@@ -2079,29 +2066,19 @@ Column_3_part_2 = {
 			A45_khamshes_ek_kusret
 			A45_the_moon_shines
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			is_capital = yes
+			owner = {
+				is_subject_of = ROOT
+				liberty_desire = 25
+			}
+		} 
 
 		trigger = {  
-			calc_true_if = {
-				amount = 9
-				hre_reform_passed = emperor_gemeinerpfennig
-				hre_reform_passed = emperor_erbkaisertum
-				hre_reform_passed = emperor_perpetual_diet
-				hre_reform_passed = emperor_reichskrieg
-				hre_reform_passed = emperor_landsknechtswesen
-				hre_reform_passed = emperor_landfriede
-				hre_reform_passed = emperor_geteilte_macht
-				hre_reform_passed = emperor_reichstag_collegia
-				hre_reform_passed = emperor_expand_gemeiner_pfennig
-				hre_reform_passed = emperor_rechenschaft
-				hre_reform_passed = emperor_hofgericht
-				hre_reform_passed = emperor_imperial_estates
-				hre_reform_passed = emperor_privilegia_de_non_appelando
-				hre_reform_passed = emperor_renovatio #form anbennar
-				hre_reform_passed = emperor_reichsreform
-				hre_reform_passed = emperor_reichsregiment
-				hre_reform_passed = emperor_reichsstabilitaet
-			}
+			OR = {
+				hre_reform_passed = anbennar_regulate_artificery
+				hre_reform_passed = anbennar_imperial_embassies
+			} 
 			diplomatic_reputation = 10
 			imperial_influence = 100
 			all_subject_country = {
@@ -2135,7 +2112,8 @@ Column_4_part_2 = {
 		icon = mission_modern_knight_army
 		position = 7
 		required_missions = { A45_damerias_heir } 
-		provinces_to_highlight = {  
+		provinces_to_highlight = {
+			owned_by = ROOT
 			NOT = {
 				has_manpower_building_trigger = yes
 			}
@@ -2178,8 +2156,11 @@ Column_4_part_2 = {
 			}
 		} 
 
-		trigger = {  
-			hre_reform_passed = emperor_gemeinerpfennig #CHANGE WITH EMPIRE REWORK?
+		trigger = {
+			OR = {
+				hre_reform_passed = anbennar_expand_marquis_rank
+				hre_reform_passed = anbennar_nobles_of_the_wand
+			}
 			NOT = { num_of_foreign_hre_provinces = 1 }
 		} 
 
@@ -2294,34 +2275,37 @@ Column_4_part_2 = {
 			}
 		}
 
-		trigger = {  
-			lencenor_region = {
-				type = all
-				OR = {
-					area = venail_area
-					is_part_of_hre = yes
-				}
-				OR = {
-					NOT = {
-						country_or_non_sovereign_subject_holds = ROOT
+		trigger = {
+			custom_trigger_tooltip = {
+				tooltip = A45_moon_shines_tt
+				lencenor_region = {
+					type = all
+					OR = {
+						area = venail_area
+						is_part_of_hre = yes
 					}
-					AND = {
-						religion = corinite
-						NOT = { unrest = 0.01 }
-					}
-				}
-			}
-			all_known_country = {
-				OR = {
-					NOT = {
-						any_owned_province = {
-							region = lencenor_region
+					OR = {
+						NOT = {
+							country_or_non_sovereign_subject_holds = ROOT
+						}
+						AND = {
+							religion = corinite
+							NOT = { unrest = 0.01 }
 						}
 					}
-					religion = corinite
+				}
+				all_known_country = {
+					OR = {
+						NOT = {
+							any_owned_province = {
+								region = lencenor_region
+							}
+						}
+						religion = corinite
+					}
 				}
 			}
-		} 
+		}
 
 		effect = {  
 			country_event = {
