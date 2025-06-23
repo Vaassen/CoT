@@ -1755,6 +1755,7 @@ anb_scripted_effects_for_ruler_death  = {
 		country_event = { id = flavour_gelkalis.27 days = 1 }
 	}
 
+	#Atlas Death Events
 	#Death of Delian
 	if = {
 		limit = {
@@ -1764,6 +1765,21 @@ anb_scripted_effects_for_ruler_death  = {
 		}
 		country_event = { id = flavor_orda_aldresia.12 days = 1 }
 		clr_country_flag = delian_tries
+	}
+
+	#Death of Oberon
+	if = {
+		limit = {
+			ai = no
+			OR = {
+				tag = I30
+				was_tag = I30
+			}
+			NOT = { has_ruler_flag = oberon_is_ruling }
+			has_country_flag = oberon_no_longer_immortal
+		}
+		country_event = { id = flavor_salla_fealgarn.26 days = 1 }
+		clr_country_flag = oberon_no_longer_immortal
 	}
 	
 	# If your guy dies during the whaling expedition
@@ -3316,42 +3332,7 @@ on_battle_won_unit_effect = {
 		}
 	}
 
-
-	if = { #Aldarian event chain
-		limit = {
-			unit_owner = {
-				has_leader = "Aldarian Surpašilu"
-				has_country_flag = aldarian_is_general
-				is_at_war = yes
-				NOT = {
-					has_country_modifier = aldarian_battle_cooldown
-				}
-			}
-		}
-		unit_owner = {
-			change_variable = {
-				which = aldarian_battles_won 
-				value = 1
-			}
-			add_country_modifier = {
-				name = aldarian_battle_cooldown
-				duration = 5
-				hidden = yes
-			}
-			if = {
-				limit = {
-					check_variable = {
-						which = aldarian_battles_won
-						value = 2
-					}
-				}
-				country_event = {
-					id = bulwar_flavour.140
-				}
-			}
-		}
-	}
-
+	aldarian_scripted_effect = yes
 
 	if = {  #BINSPLOSION
 		limit = {
@@ -3422,6 +3403,18 @@ on_battle_won_unit_effect = {
 		unit_owner = {
 			change_variable = {
 				which = vaeng_orcbattlescount
+				value = 1
+			}
+		}
+	}
+	if = {	
+		limit = {
+			unit_owner = { tag = A45 }
+			is_ruler_commanding_unit = yes
+		}
+		A45 = {
+			change_variable = {
+				which = Aucannabattleswon
 				value = 1
 			}
 		}
@@ -3592,6 +3585,39 @@ on_battle_lost_unit_effect = { #this triggers on every unit present
 		}
 	}
 	
+	if = {
+		limit = {
+			enemy_unit = {
+				unit_owner = {
+					is_or_was_tag = { tag = I33 }
+				}
+				is_ruler_commanding_unit = yes
+			}
+			unit_owner = {
+				capital_scope = { superregion = deepwoods_superregion }
+				OR = {
+					primary_culture = green_orc
+					primary_culture = forest_goblin
+					AND = {
+						primary_culture = wood_elf
+						I33 = { has_country_flag = I33_kill_count_versus_elves }
+					}
+				}
+			}
+			is_ruler_commanding_unit = yes	
+		}
+		unit_owner = {
+			add_ruler_modifier = {
+				name = I33_mortally_wounded
+				duration = -1
+			}
+		}
+		if = {
+			limit = { unit_owner = { tag = I42 } }
+			I33 = { country_event = { id = flavour_ayeth.7 } }
+		}
+	}
+
 }
 
 on_battle_won_country_effect = {
@@ -3911,54 +3937,64 @@ on_battle_won_country_effect = {
 			}
 			if = {
 				limit = {
-					check_variable = {
+					NOT = {
+						check_variable = {
+							which = Vaengheim_land_units_num_roosts_allowed
+							value = 12
+						}
+					}
+				}
+				if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 20000
+						}
+					}
+					set_variable = {
+						which = Z88_land_units_calc
 						which = vaengheim_land_units_recovered_total
+					}
+					divide_variable = {
+						which = Z88_land_units_calc
 						value = 20000
 					}
-				}
-				set_variable = {
-					which = Z88_land_units_calc
-					which = vaengheim_land_units_recovered_total
-				}
-				divide_variable = {
-					which = Z88_land_units_calc
-					value = 20000
-				}
-				round_variable = {
-					which = Z88_land_units_calc
-					value = -1
-				}
-				change_variable = {
-					which = Z88_land_units_calc
-					value = 2
-				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					which = Z88_land_units_calc
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = vaengheim_land_units_recovered_total
-						value = 10000
+					round_variable = {
+						which = Z88_land_units_calc
+						value = -1
+					}
+					change_variable = {
+						which = Z88_land_units_calc
+						value = 2
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						which = Z88_land_units_calc
 					}
 				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					value = 2
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = vaengheim_land_units_recovered_total
-						value = 5000
+				else_if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 10000
+						}
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						value = 2
 					}
 				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					value = 1
+				else_if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 5000
+						}
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						value = 1
+					}
 				}
 			}
 			divide_variable = {
@@ -4040,54 +4076,64 @@ on_battle_lost_country_effect = {
 			}
 			if = {
 				limit = {
-					check_variable = {
+					NOT = {
+						check_variable = {
+							which = Vaengheim_land_units_num_roosts_allowed
+							value = 12
+						}
+					}
+				}
+				if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 20000
+						}
+					}
+					set_variable = {
+						which = Z88_land_units_calc
 						which = vaengheim_land_units_recovered_total
+					}
+					divide_variable = {
+						which = Z88_land_units_calc
 						value = 20000
 					}
-				}
-				set_variable = {
-					which = Z88_land_units_calc
-					which = vaengheim_land_units_recovered_total
-				}
-				divide_variable = {
-					which = Z88_land_units_calc
-					value = 20000
-				}
-				round_variable = {
-					which = Z88_land_units_calc
-					value = -1
-				}
-				change_variable = {
-					which = Z88_land_units_calc
-					value = 2
-				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					which = Z88_land_units_calc
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = vaengheim_land_units_recovered_total
-						value = 10000
+					round_variable = {
+						which = Z88_land_units_calc
+						value = -1
+					}
+					change_variable = {
+						which = Z88_land_units_calc
+						value = 2
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						which = Z88_land_units_calc
 					}
 				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					value = 2
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = vaengheim_land_units_recovered_total
-						value = 5000
+				else_if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 10000
+						}
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						value = 2
 					}
 				}
-				set_variable = {
-					which = Vaengheim_land_units_num_roosts_allowed
-					value = 1
+				else_if = {
+					limit = {
+						check_variable = {
+							which = vaengheim_land_units_recovered_total
+							value = 5000
+						}
+					}
+					set_variable = {
+						which = Vaengheim_land_units_num_roosts_allowed
+						value = 1
+					}
 				}
 			}
 			divide_variable = {
@@ -4380,11 +4426,20 @@ on_battle_won_province_effect = {
 			}
 		}
 		owner = {
-			every_owned_province = {
-				limit = { is_core = L95 }
-				add_nationalism = -100
+			country_event = {
+				id = asarta.17
 			}
-			clr_country_flag = asarta_remove_sep
+		}
+	}
+	if = {
+		limit = { 
+			has_ruler_leader_from = I33
+			has_ruler_leader_from = I30
+		}
+		I33 = {
+			country_event = {
+				id = flavour_ayeth.16
+			}
 		}
 	}
 }
@@ -6373,12 +6428,12 @@ on_province_culture_change_effect = {
 			owner = {
 				culture_group = eltibhari_ruinborn_elf
 			}
-			culture = eltikanized_taychendi
+			culture = macamairghe
 		}
-		add_province_modifier = { name = eltikan_eltikanized_taychendi duration = -1 hidden = yes }
+		add_province_modifier = { name = eltikan_macamairghe duration = -1 hidden = yes }
 	}
 	else = {
-		remove_province_modifier = eltikan_eltikanized_taychendi
+		remove_province_modifier = eltikan_macamairghe
 	}
 }
 
@@ -7267,6 +7322,24 @@ on_development_effect = {
 			overlord = { change_variable = { gnoll_tributary_bonus_count = 1 } }
 		}
 	}
+
+	if = {
+		limit = {
+			province_id = 3033
+			check_variable = {
+				which = ayethFamiliesReturning
+				value = 1
+			}
+		}
+		extend_province_modifier = {
+			name = I33_families_returning
+			duration = 365
+		}
+		subtract_variable = {
+			which = ayethFamiliesReturning
+			value = 1
+		}
+	}
 }
 
 # THIS = Province, FROM = Country, ROOT = Merc Unit
@@ -7804,6 +7877,32 @@ on_main_war_won_effect = {
 		}
 		country_event = { id = flavor_nuugdan_tsarai.104 }
 		clr_country_flag = Y91_first_war
+	}
+	#Istralore
+	if = {
+		limit = {
+			tag = A45
+			FROM = {
+				tag = A98
+			}
+			has_country_flag = A45_ae_reduce
+		}
+		every_known_country = {
+			add_aggressive_expansion = {
+				who = A45
+				value = -20
+				apply_calc = yes
+			} 
+		}
+		clr_country_flag = A45_ae_reduce
+	}
+	if = {
+		limit = {
+			is_or_was_tag = { tag = A45 }
+			NOT = { has_matching_religion = FROM }
+			religion = corinite
+		}
+		change_variable = { istraloreReligiousWarsWon = 1 }
 	}
 }
 
@@ -8875,6 +8974,7 @@ startup_1444_effects = {
 				capital_scope = {
 					OR = {
 						superregion = escann_superregion
+						area = gulletpeak_area
 						region = forlorn_vale_region
 					}
 					NOT = { region = dostanor_region region = ourdia_region }
@@ -8883,20 +8983,12 @@ startup_1444_effects = {
 			}
 			country_event = { id = greentide.6 days = 6 }
 		}
-		
-		#Flying Hound
-		if = {
-			limit = {
-				tag = B43 # Flying Hound
-			}
-			country_event = { id = greentide.7 days = 1 }
-		}
 
 		if = {
 			limit = {
 				tag = Z18
 			}
-			country_event = { id = greentide.2 days = 1 } #graytide
+			country_event = { id = greentide.2 } #graytide
 			country_event = { id = flavor_frozenmaw.2 days = 1200 random = 30 } #caught between worlds
 			country_event = { id = flavor_frozenmaw.4 days = 800 random = 20 } #Bakram Winterwind
 			country_event = { id = flavor_frozenmaw.10 days = 30 } #Marosh in Corintar
@@ -9612,6 +9704,14 @@ startup_1444_effects = {
 			country_event = {
 				id = escanni_refugees_settlement.313
 				days = 2250
+			}
+		}
+
+		if = { #Salla Ayeth
+			limit = { tag = I33 }
+			country_event = {
+				id = flavour_ayeth.1
+				days = 23
 			}
 		}
 	}
@@ -12042,6 +12142,13 @@ on_province_owner_change_effect = {
 		}
 		province_event = { id = ravelian.25 }
 	}
+	if = { #Making the societies go away if conquered by a tag that banned them, we must stop ravioli proliferation
+		limit = {
+			owner = { has_country_flag = denied_ravelian_society }
+			has_province_modifier = ravelian_society
+		}
+		remove_province_modifier = ravelian_society
+	}
 	# Reduced gov cap in primary culture
 	if = {
 		limit = { owner = { has_government_attribute = reduced_gov_cost_in_primary_culture } }
@@ -12556,9 +12663,9 @@ on_province_owner_change_effect = {
 			owner = {
 				culture_group = eltibhari_ruinborn_elf
 			}
-			culture = eltikanized_taychendi
+			culture = macamairghe
 		}
-		add_province_modifier = { name = eltikan_eltikanized_taychendi duration = -1 hidden = yes }
+		add_province_modifier = { name = eltikan_macamairghe duration = -1 hidden = yes }
 	}
 
 	# Zokka
@@ -12653,6 +12760,15 @@ on_province_owner_change_effect = {
 				duration = -1
 			}
 		}
+	}
+	#Salla Ayeth
+	if = {
+		limit = {
+			owner = { tag = I33 }
+			has_province_modifier = I33_constant_harassment
+		}
+		I33 = { add_army_tradition = 1 }
+		remove_province_modifier = I33_constant_harassment
 	}
 }
 
@@ -12813,6 +12929,10 @@ on_age_ability_taken = {
 }
 
 on_scorch_earth_effect = {
+	if = {
+		limit = { ROOT = { has_country_flag = I33_clan_of_archers_reward } }
+		ROOT = { add_mil_power = 5 }
+	}
 	if = {
 		limit = {
 			ROOT = { has_government_mechanic = karakhanbar_flames_of_the_black_hearth_mechanic }
