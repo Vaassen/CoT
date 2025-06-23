@@ -31,12 +31,12 @@ country_event = { # A lifetime in pursuit of perfection
 		
 		add_army_tradition = 25
 		capital_scope = {
-			infantry = L53
-			infantry = L53
-			infantry = L53
+			infantry = ROOT
+			infantry = ROOT
+			infantry = ROOT
 		}
 		kunolo_area = {
-			add_permanent_claim = L53
+			add_permanent_claim = ROOT
 		}
 		add_casus_belli = {
 			target = S98
@@ -170,8 +170,10 @@ country_event = { # Another form of Cowardice
 	desc = flavour_tiboktsamo.4.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
 	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = L53_first_ghost_search_completed }
+	}
 	
 	option = {
 		name = flavour_tiboktsamo.4.a
@@ -192,24 +194,26 @@ country_event = { # Ghost stories
 	desc = flavour_tiboktsamo.5.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
 	is_triggered_only = yes
-	#The trigger would be:
-	# trigger = {
-	# 	dao_nako_region = {
-	# 		type = all
-	# 		NOT = { has_province_modifier = L53_eloko_sighting }
-	# 	}
-	# }
 	
-	option = {
-		name = flavour_tiboktsamo.5.a
+	immediate = {
 		add_country_modifier = {
 			name = L53_elokos_prank
 			duration = -1
 		}
+	}
+
+	option = {
+		name = flavour_tiboktsamo.5.a
+		tooltip = {
+			add_country_modifier = {
+				name = L53_elokos_prank
+				duration = -1
+			}
+		}
 		hidden_effect = {
 			clr_country_flag = L53_first_ghost_search_completed
+			set_country_flag = L53_cleared_eloko_sightings
 		}
 
 		#I'm so fucking lazy for doing this, but I'm just gonna copy-paste the same command to add a random rebel in Dao Nako 5 times.
@@ -289,23 +293,63 @@ country_event = { # Aftermath of the prank
 		}
 		5758 = {
 			if = {
-				limit = { is_empty = yes }
+				limit = { is_empty = no } #Colonised?
+				if = { #Yes, colonised
+					limit = { owned_by = ROOT } #Is it us?
+					if = { #Great
+						limit = { is_city = yes }
+						add_base_tax = 2
+						add_base_production = 2
+						add_base_manpower = 2
+					}
+					else = {
+						add_colonysize = 1000 #finish it
+					}
+					change_culture = ROOT
+					change_religion = ROOT
+					change_trade_goods = incense
+				}
+				else = { #It's someone else!
+					add_core = ROOT
+					ROOT = { set_country_flag = L53_has_not_taken_5758 } #Take it later
+				}
+			}
+			else = { #No, not colonised, we can
 				create_colony = 1000
-				change_trade_goods = incense
-				change_culture = ROOT
-				change_religion = ROOT
-			}
-			else = {
-				add_core = ROOT
 				change_culture = ROOT
 				change_religion = ROOT
 				change_trade_goods = incense
-			}
-			add_or_extend_country_modifier = {
-				name = L53_mainland_colonist
-				duration = 9125
 			}
 		}
+
+		#Added on_action for taking the province, leaving this just in case
+		# 5758 = {
+		# 	if = {
+		# 		limit = {
+		# 			is_city = yes
+		# 			NOT = { owned_by = ROOT }
+		# 		}
+		# 		add_core = ROOT
+		# 		ROOT = { set_country_flag = L53_has_not_taken_5758 }
+		# 	}
+		# 	else = {
+		# 		if = {
+		# 			limit = { is_empty = yes }
+		# 			create_colony = 1000
+		# 		}
+		# 		else = { ## Other country colony isn't considered
+		# 			add_colonysize = 1000
+		# 		}
+		# 		change_culture = ROOT
+		# 		change_religion = ROOT
+		# 		change_trade_goods = incense
+		# 	}
+
+		# 	add_or_extend_country_modifier = {
+		# 		name = L53_mainland_colonist
+		# 		duration = 9125
+		# 	}
+		# }
 	}
 }
 
@@ -315,14 +359,7 @@ country_event = { # A Late night Visit
 	desc = flavour_tiboktsamo.7.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
-
 	is_triggered_only = yes
-	immediate = {
-		hidden_effect = {
-			clr_country_flag = L53_eloko_is_pranking
-		}
-	}
 	
 	option = { #Prophets
 		name = flavour_tiboktsamo.7.a
@@ -346,12 +383,13 @@ country_event = { # Issuing the Challenge
 	desc = flavour_tiboktsamo.8.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
-
 	is_triggered_only = yes
 	
 	option = {
 		name = flavour_tiboktsamo.8.a
+		chibuswa_area = {
+			add_permanent_claim = ROOT
+		}
 	}
 }
 
@@ -368,7 +406,6 @@ country_event = { # Tougher than the Toughest
 		NOT = { has_country_flag = tougher_than_the_toughest_completed }
 		mission_completed = L53_a_brothers_betrayal
 		is_free_or_tributary_trigger = yes
-		is_at_war = no
 		num_of_battles = { amount = 10 }
 		num_of_wars = { amount = 5 }
 	}
@@ -412,13 +449,16 @@ country_event = { # Two tales of the tailed
 	desc = flavour_tiboktsamo.10.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
-
 	is_triggered_only = yes
+	trigger = {
+		NOT = { has_country_flag = two_tails_completed }
+	}
 	
 	option = { #Anti lizard
 		name = flavour_tiboktsamo.10.a
 
+		medium_decrease_of_lizardfolk_tolerance_effect = yes
+		add_mercantilism = 5
 		5845 = {
 			add_province_modifier = {
 				name = L53_foes_of_vadronoma
@@ -429,6 +469,7 @@ country_event = { # Two tales of the tailed
 	option = { #Pro lizard
 		name = flavour_tiboktsamo.10.b
 
+		medium_increase_of_lizardfolk_tolerance_effect = yes
 		5763 = {
 			add_province_modifier = {
 				name = L53_friends_of_torapinoma
@@ -449,8 +490,6 @@ country_event = { # The truest discussion
 	desc = flavour_tiboktsamo.11.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = {
@@ -479,6 +518,8 @@ country_event = { # The truest discussion
 				speed = 0.5
 			}
 		}
+		custom_tooltip = L53_discount_ananoma_saikinoma
+		hidden_effect = { set_country_flag = ananoma_repair_discount_saikinoma }
 
 		add_mil_power = 100
 		add_adm_power = 100
@@ -496,13 +537,12 @@ country_event = { # A Rightful Jakatany
 	desc = flavour_tiboktsamo.12.d
 	picture = ARTWORK_eventPicture
 	
-	fire_only_once = yes
-
 	is_triggered_only = yes
 
 	option = { #Monarchy
 		name = flavour_tiboktsamo.12.a
 		change_government_to_monarchy = yes
+		set_government_rank = 2
 		add_country_modifier = {
 			name = L53_true_jakatany
 			duration = -1
@@ -511,6 +551,7 @@ country_event = { # A Rightful Jakatany
 
 	option = { #Republic
 		name = flavour_tiboktsamo.12.b
+		set_government_rank = 2
 		add_country_modifier = {
 			name = L53_council_of_the_tower
 			duration = -1
@@ -522,7 +563,6 @@ country_event = { # A prophecy fulfilled
 	id = flavour_tiboktsamo.13
 	title = flavour_tiboktsamo.13.t
 	picture = ARTWORK_eventPicture
-	# desc = flavour_tiboktsamo.13.d
 	desc = {
 		trigger = {
 			NOT = { has_country_flag = L53_reached_rank_5_kolovadoy }
@@ -543,8 +583,8 @@ country_event = { # A prophecy fulfilled
         }
 		desc = flavour_tiboktsamo.13.d3
     }
-	fire_only_once = yes
 
+	fire_only_once = yes
 	is_triggered_only = yes
 
 	after = {
