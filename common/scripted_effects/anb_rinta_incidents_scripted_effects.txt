@@ -307,6 +307,95 @@ rinta_invest_in_telescope = {
 	rinta_check_telescope_invest_level = yes
 }
 
+#For level investment - MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 - Only supports multiples of 0.5 from 0 to 5
+#refund = yes to get the money back
+#Does not reduce the total amount invested just your contribution to it
+rinta_reduce_investment_in_telescope = {
+	[[amount] #Invest a certain amount
+		custom_tooltip = rinta_invest_in_telescope_$amount$_tt
+		hidden_effect = {
+			subtract_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				value = $amount$
+			}
+			rinta_pay_telescope_cost = { #Remove the amount invested
+				pay = $refund$
+				effect = "add_treasury = $amount$"
+			}
+		}
+	]
+	[[all] #Invest all of your country's money
+		custom_tooltip = rinta_invest_in_telescope_all_tt
+		hidden_effect = {
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = treasury
+			}
+			subtract_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = sky_incident_treasury_country_temp
+			}
+			rinta_pay_telescope_cost = { #Double your cash
+				pay = $refund$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = +
+					}
+				"
+			}
+		}
+	]
+	[[half] #Invest 1/2 your country's money
+		custom_tooltip = rinta_invest_in_telescope_half_tt
+		hidden_effect = {
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = treasury
+			}
+			divide_variable = { #Set the amount being invested to half your treasury
+				which = sky_incident_treasury_country_temp
+				value = 2
+			}
+			subtract_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = sky_incident_treasury_country_temp
+			}
+			rinta_pay_telescope_cost = { #1.5x half your cash
+				pay = $refund$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = +
+					}
+				"
+			}
+		}
+	]
+	[[level] #Invest based on level of telescope
+		custom_tooltip = rinta_reduce_investment_in_telescope_level_$level$_tt
+		hidden_effect = {
+			subtract_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_lvl_$level$_cost
+			}
+			rinta_pay_telescope_cost = { #Add amount of cash as in the level
+				pay = $refund$
+				effect = "
+					var_effect = {
+						var = rinta_telescope_lvl_$level$_cost
+						effect = add_treasury
+						sign = +
+					}
+				"
+			}
+		}
+	]
+	rinta_check_telescope_invest_level = yes
+}
+
 rinta_check_telescope_invest_level = {
 	hidden_effect = {
 		if = { 
