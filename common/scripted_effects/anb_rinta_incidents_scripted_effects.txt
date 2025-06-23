@@ -104,3 +104,260 @@ alefisol_invasion_siege_won_effect = {
 		country_event = { id = rinta_seeker_events.212 days = 1 }
 	}
 }
+
+rinta_get_telescope_multiplier = {
+	export_to_variable = {
+		which = $variable$
+		value = modifier:telescope_investment_efficency
+		who = event_target:night_sky_country_target #Using ROOT instead doesn't work if anyone's curious
+	}
+	change_variable = {
+		which = $variable$
+		value = 1
+	}
+	[[value] #For flat amounts
+		multiply_variable = {
+			which = $variable$
+			value = $cost$
+		}
+	]
+	[[which] #For dynamic amounts (everything else)
+		multiply_variable = {
+			which = $variable$
+			which = $cost$
+		}
+	]
+}
+
+#Needs a seperate scripted effect because pdx doesn't like me putting [] inside of other [] ig
+rinta_pay_telescope_cost = {
+	[[pay]
+		$effect$
+	]
+}
+
+#amount is for flat amounts
+#level is for an amount based on the different telescope levels - MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 - Only supports multiples of 0.5 from 0 to 5
+#all is to invest all your money
+#half is to invest half your money
+
+#pay = yes if you want players to lose the cash they're investing
+rinta_invest_in_telescope = {
+	save_event_target_as = night_sky_country_target
+	[[amount] #Invest a certain amount
+		custom_tooltip = rinta_invest_in_telescope_$amount$_tt
+		hidden_effect = {
+			6678 = { #Qasri Maroodiqya
+				rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+					variable = rinta_telescope_amount_raised_multiplier
+					cost = $amount$
+					value = yes
+				}
+				change_variable = { #Update the total amount raised
+					which = rinta_telescope_amount_raised
+					which = rinta_telescope_amount_raised_multiplier
+				}
+			}
+			rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+				variable = rinta_telescope_amount_raised_multiplier
+				cost = $amount$
+				value = yes
+			}
+			change_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_amount_raised_multiplier
+			}
+			rinta_pay_telescope_cost = { #Remove the amount invested
+				pay = $pay$
+				effect = "add_treasury = -$amount$"
+			}
+		}
+	]
+	[[all] #Invest all of your country's money
+		custom_tooltip = rinta_invest_in_telescope_all_tt
+		hidden_effect = {
+			6678 = { #Qasri Maroodiqya
+				export_to_variable = { #Set the amount being invested to your treasury
+					which = sky_incident_treasury_temp
+					value = treasury
+					who = PREV
+				}
+				rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+					variable = rinta_telescope_amount_raised_multiplier
+					cost = sky_incident_treasury_temp
+					which = yes
+				}
+				change_variable = { #Update the total amount raised
+					which = rinta_telescope_amount_raised
+					which = rinta_telescope_amount_raised_multiplier
+				}
+			}
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = treasury
+			}
+			rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+				variable = rinta_telescope_amount_raised_multiplier
+				cost = sky_incident_treasury_country_temp
+				which = yes
+			}
+			change_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_amount_raised_multiplier
+			}
+			rinta_pay_telescope_cost = { #Remove your cash
+				pay = $pay$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = -
+					}
+				"
+			}
+		}
+	]
+	[[half] #Invest 1/2 your country's money
+		custom_tooltip = rinta_invest_in_telescope_half_tt
+		hidden_effect = {
+			6678 = { #Qasri Maroodiqya
+				export_to_variable = {
+					which = sky_incident_treasury_temp
+					value = treasury
+					who = PREV
+				}
+				divide_variable = { #Set the amount being invested to half your treasury
+					which = sky_incident_treasury_temp
+					value = 2
+				}
+				rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+					variable = rinta_telescope_amount_raised_multiplier
+					cost = sky_incident_treasury_temp
+					which = yes
+				}
+				change_variable = { #Update the total amount raised
+					which = rinta_telescope_amount_raised
+					which = rinta_telescope_amount_raised_multiplier
+				}
+			}
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = treasury
+			}
+			divide_variable = { #Set the amount being invested to half your treasury
+				which = sky_incident_treasury_country_temp
+				value = 2
+			}
+			rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+				variable = rinta_telescope_amount_raised_multiplier
+				cost = sky_incident_treasury_country_temp
+				which = yes
+			}
+			change_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_amount_raised_multiplier
+			}
+			rinta_pay_telescope_cost = { #Remove half your cash
+				pay = $pay$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = -
+					}
+				"
+			}
+		}
+	]
+	[[level] #Invest based on level of telescope
+		custom_tooltip = rinta_invest_in_telescope_level_$level$_tt
+		hidden_effect = {
+			6678 = { #Qasri Maroodiqya
+				rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+					variable = rinta_telescope_amount_raised_multiplier
+					cost = rinta_telescope_lvl_$level$_cost
+					which = yes
+				}
+				change_variable = { #Update the total amount raised
+					which = rinta_telescope_amount_raised
+					which = rinta_telescope_amount_raised_multiplier
+				}
+			}
+			rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+				variable = rinta_telescope_amount_raised_multiplier
+				cost = rinta_telescope_lvl_$level$_cost
+				which = yes
+			}
+			change_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_amount_raised_multiplier
+			}
+			rinta_pay_telescope_cost = { #Remove amount of cash as in the level
+				pay = $pay$
+				effect = "
+					var_effect = {
+						var = rinta_telescope_lvl_$level$_cost
+						effect = add_treasury
+						sign = -
+					}
+				"
+			}
+		}
+	]
+	rinta_check_telescope_invest_level = yes
+}
+
+rinta_check_telescope_invest_level = {
+	hidden_effect = {
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_0_5_cost } }
+			set_country_flag = rinta_telescope_lvl_0_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_0_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_1_cost } }
+			set_country_flag = rinta_telescope_lvl_1_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_1_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_1_5_cost } }
+			set_country_flag = rinta_telescope_lvl_1_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_1_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_2_cost } }
+			set_country_flag = rinta_telescope_lvl_2_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_2_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_2_5_cost } }
+			set_country_flag = rinta_telescope_lvl_2_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_2_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_3_cost } }
+			set_country_flag = rinta_telescope_lvl_3_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_3_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_3_5_cost } }
+			set_country_flag = rinta_telescope_lvl_3_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_3_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_4_cost } }
+			set_country_flag = rinta_telescope_lvl_4_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_4_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_4_5_cost } }
+			set_country_flag = rinta_telescope_lvl_4_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_4_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_5_cost } }
+			set_country_flag = rinta_telescope_lvl_5_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_5_reached_flag }
+	}
+}
