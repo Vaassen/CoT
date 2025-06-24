@@ -137,7 +137,10 @@ rinta_pay_telescope_cost = {
 }
 
 #amount is for flat amounts
-#level is for an amount based on the different telescope levels - MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 - Only supports multiples of 0.5 from 0 to 5
+#years_of_income is for investing based on your years of income
+#level is for an amount based on the different telescope levels 
+#	- MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 
+#	- Only supports 0.25 and multiples of 0.5 from 0 to 5
 #all is to invest all your money
 #half is to invest half your money
 
@@ -170,6 +173,58 @@ rinta_invest_in_telescope = {
 			rinta_pay_telescope_cost = { #Remove the amount invested
 				pay = $pay$
 				effect = "add_treasury = -$amount$"
+			}
+		}
+	]
+	[[years_of_income] #Invest a certain number of years of income
+		custom_tooltip = rinta_invest_in_telescope_$years_of_income$_yoi_tt
+		hidden_effect = {
+			6678 = { #Qasri Maroodiqya
+				export_to_variable = { #Set the amount being invested to 1 yoi
+					which = sky_incident_treasury_temp
+					value = years_of_income
+					who = PREV
+				}
+				multiply_variable = { #Set the amount being invested to however many yoi are wanted
+					which = sky_incident_treasury_temp
+					value = $years_of_income$
+				}
+				rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+					variable = rinta_telescope_amount_raised_multiplier
+					cost = sky_incident_treasury_temp
+					which = yes
+				}
+				change_variable = { #Update the total amount raised
+					which = rinta_telescope_amount_raised
+					which = rinta_telescope_amount_raised_multiplier
+				}
+			}
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = years_of_income
+			}
+			multiply_variable = { #Set the amount being invested to however many yoi are wanted
+				which = sky_incident_treasury_country_temp
+				value = $years_of_income$
+			}
+			rinta_get_telescope_multiplier = { #Change the amount invested by your multiplier
+				variable = rinta_telescope_amount_raised_multiplier
+				cost = sky_incident_treasury_country_temp
+				which = yes
+			}
+			change_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = rinta_telescope_amount_raised_multiplier
+			}
+			rinta_pay_telescope_cost = { #Remove your cash
+				pay = $pay$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = -
+					}
+				"
 			}
 		}
 	]
@@ -307,7 +362,9 @@ rinta_invest_in_telescope = {
 	rinta_check_telescope_invest_level = yes
 }
 
-#For level investment - MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 - Only supports multiples of 0.5 from 0 to 5
+#For level investment 
+#	- MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 
+#	- Only supports 0.25 and multiples of 0.5 from 0 to 5
 #refund = yes to get the money back
 #Does not reduce the total amount invested just your contribution to it
 #Is not affected by your multipliers
@@ -322,6 +379,33 @@ rinta_reduce_investment_in_telescope = {
 			rinta_pay_telescope_cost = { #Remove the amount invested
 				pay = $refund$
 				effect = "add_treasury = $amount$"
+			}
+		}
+	]
+	[[years_of_income] #Invest a certain number of years of income
+		custom_tooltip = rinta_invest_in_telescope_$years_of_income$_yoi_tt
+		hidden_effect = {
+			export_to_variable = {
+				which = sky_incident_treasury_country_temp
+				value = years_of_income
+			}
+			multiply_variable = { #Set the amount being invested to however many yoi are wanted
+				which = sky_incident_treasury_country_temp
+				value = $years_of_income$
+			}
+			subtract_variable = { #Update your total amount raised
+				which = rinta_telescope_amount_invested
+				which = sky_incident_treasury_country_temp
+			}
+			rinta_pay_telescope_cost = { #Remove your cash
+				pay = $refund$
+				effect = "
+					var_effect = {
+						var = sky_incident_treasury_country_temp
+						effect = add_treasury
+						sign = +
+					}
+				"
 			}
 		}
 	]
@@ -399,6 +483,11 @@ rinta_reduce_investment_in_telescope = {
 
 rinta_check_telescope_invest_level = {
 	hidden_effect = {
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_0_25_cost } }
+			set_country_flag = rinta_telescope_lvl_0_25_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_0_25_reached_flag }
 		if = { 
 			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_0_5_cost } }
 			set_country_flag = rinta_telescope_lvl_0_5_reached_flag
