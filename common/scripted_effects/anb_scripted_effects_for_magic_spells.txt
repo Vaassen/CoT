@@ -308,32 +308,8 @@ abjuration_1_0_effect = { # Protective Ward
 	PREV = {
 		custom_tooltip = change_siege_negative_tt
 		hidden_effect = { change_siege = -1 }
-		if = { #Assign ward modifier based on patron
-			limit = { PREV = { OR = { has_ruler_flag = yaksha_patron has_ruler_flag = maiden_patron } } }
-			custom_tooltip = magic_booster_by_patron_tt
-			if = {
-				limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 2 } } }
-				add_province_modifier = { name = patron_abjuration_fortress_ward duration = 3650 }
-				custom_tooltip = abjuration_1_0_upgrade_yes
-			}
-			else = {
-				add_province_modifier = { name = patron_abjuration_ward duration = 3650 }
-				custom_tooltip = abjuration_1_0_upgrade_no
-			}
-		}
-		else = {
-			if = {
-				limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 2 } } }
-				add_province_modifier = { name = abjuration_1_0_mod_buffed duration = 3650 }
-				custom_tooltip = abjuration_1_0_upgrade_yes
-			}
-			else = {
-				add_province_modifier = { name = abjuration_1_0_mod duration = 3650 }
-				custom_tooltip = abjuration_1_0_upgrade_no
-			}
-		}
 
-		#Kheionai Deathwinds can't be in an else since it fires an event
+		#Kheionai Deathwinds don't fire errors in the sub-effect for this spell, but they do for mass ward
 		if = {
 			limit = { region = alecand_region }
 			if = {
@@ -347,6 +323,35 @@ abjuration_1_0_effect = { # Protective Ward
 				add_temporary_windward_level = { level = 2 length = 3650 }
 			}
 		}
+
+		abjuration_1_0_sub_effect = { duration = 3650 }
+	}
+}
+abjuration_1_0_sub_effect = { # Protective Ward sub-effect
+	if = { #Patron buffs
+		limit = { PREV = { OR = { has_ruler_flag = yaksha_patron has_ruler_flag = maiden_patron } } }
+		custom_tooltip = magic_booster_by_patron_tt
+		add_province_modifier = { name = patron_abjuration_ward duration = $duration$ }
+	}
+
+	if = {
+		limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } } }
+		add_province_modifier = { name = abjuration_1_0_mod_3 duration = $duration$ }
+		custom_tooltip = abjuration_1_0_upgrade_3
+	}
+	else_if = {
+		limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 2 } } }
+		add_province_modifier = { name = abjuration_1_0_mod_2 duration = $duration$ }
+		custom_tooltip = abjuration_1_0_upgrade_2
+	}
+	else_if = {
+		limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 1 } } }
+		add_province_modifier = { name = abjuration_1_0_mod_1 duration = $duration$ }
+		custom_tooltip = abjuration_1_0_upgrade_1
+	}
+	else = {
+		add_province_modifier = { name = abjuration_1_0_mod_0 duration = $duration$ }
+		custom_tooltip = abjuration_1_0_upgrade_0
 	}
 }
 abjuration_1_1_effect = { # Protected Journey
@@ -355,43 +360,21 @@ abjuration_1_1_effect = { # Protected Journey
 abjuration_2_0_effect = { # Mass Ward
 	custom_tooltip = abjuration_2_0_spell_effect_tt
 	hidden_effect = {
-		if = {
-			limit = { OR = { has_ruler_flag = yaksha_patron has_ruler_flag = maiden_patron } }
-			if = {
-				limit = { at_least_magic_project_level = { project = magical_fortress level = 2 } }
-				every_owned_province = { limit = { fort_level = 1 controlled_by = PREV }
-					add_province_modifier = { name = patron_abjuration_fortress_ward duration = 1825 }
-				}
-			}
-			else = {
-				every_owned_province = { limit = { fort_level = 1 controlled_by = PREV }
-					add_province_modifier = { name = patron_abjuration_ward duration = 1825 }
-				}
-			}
-		}
-		else = {
-			if = {
-				limit = { at_least_magic_project_level = { project = magical_fortress level = 2 } }
-				every_owned_province = { limit = { fort_level = 1 controlled_by = PREV }
-					add_province_modifier = { name = abjuration_1_0_mod_buffed duration = 1825 }
-				}
-			}
-			else = {
-				every_owned_province = { limit = { fort_level = 1 controlled_by = PREV }
-					add_province_modifier = { name = abjuration_1_0_mod duration = 1825 }
-				}
-			}
-		}
-
-		#Kheionai Deathwinds has to be manually written out or it fires errors
 		every_owned_province = {
-			limit = { fort_level = 1 controlled_by = PREV region = alecand_region NOT = { has_province_flag = has_temporary_windward_level } }
+			limit = { fort_level = 1 controlled_by = PREV }
+			abjuration_1_0_sub_effect = { duration = 1825 }
+		}
 
-			set_province_flag = has_temporary_windward_level
-			change_variable = { temporaryWindWardLevel = 2 }
-			province_event = { id = kheionai.15 days = 1825 }
-			province_event = { id = kheionai.2 } #literally just using this to get calculate_windward_level to fire correctly
-			province_event = { id = kheionai.2 days = 1825 } #and in case you got fort levels
+		if = { #Kheionai Deathwinds fire errors inside the scripted effect due to region check
+			limit = { at_least_magic_project_level = { project = magical_fortress level = 2 } }
+			every_owned_province = {
+				limit = { region = alecand_region fort_level = 1 controlled_by = PREV }
+				set_province_flag = has_temporary_windward_level
+				change_variable = { temporaryWindWardLevel = 2 }
+				province_event = { id = kheionai.15 days = 1825 }
+				province_event = { id = kheionai.2 } #literally just using this to get calculate_windward_level to fire correctly
+				province_event = { id = kheionai.2 days = 1825 } #and in case you got fort levels
+			}
 		}
 	}
 }
@@ -421,13 +404,7 @@ abjuration_3_0_sub_effect = {
 	decrease_estate_witch_king_points = { size = large }
 	add_country_modifier = { name = abjuration_3_0_mod duration = $duration$ }
 	custom_tooltip = abjuration_3_0_spell_effect_tt
-	tooltip = { capital_scope = { add_province_modifier = { name = abjuration_3_0_local_mod duration = $duration$ } } }
-	hidden_effect = { every_owned_province = { add_local_autonomy = -50 remove_province_modifier = religious_zeal_at_conv add_province_modifier = { name = abjuration_3_0_local_mod duration = $duration$ } } }
-	if = {
-		limit = { NOT = { at_least_magic_project_level = { project = magical_fortress level = 3 } } }
-		custom_tooltip = abjuration_3_0_upgrade_no
-	}
-	else = { custom_tooltip = abjuration_3_0_upgrade_yes }
+	hidden_effect = { every_owned_province = { add_local_autonomy = -50 remove_province_modifier = religious_zeal_at_conv } }
 }
 
 ###################
