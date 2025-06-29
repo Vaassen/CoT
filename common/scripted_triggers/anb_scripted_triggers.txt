@@ -88,6 +88,7 @@ has_artificers_organization_privilege = {
 		has_estate_privilege = estate_artificers_organization_giberd_magisterium_oversight
 		has_estate_privilege = estate_artificers_organization_giberd_ravelian_guilds
 		has_estate_privilege = estate_artificers_organization_giberd_beacon_of_harmony
+		has_estate_privilege = estate_artificers_organization_strict_state_supervision
 	}
 }
 
@@ -101,6 +102,7 @@ has_artificers_special_organization_privilege = {
 		has_estate_privilege = estate_artificers_organization_giberd_magisterium_oversight
 		has_estate_privilege = estate_artificers_organization_giberd_ravelian_guilds
 		has_estate_privilege = estate_artificers_organization_giberd_beacon_of_harmony
+		has_estate_privilege = estate_artificers_organization_strict_state_supervision
 	}
 }
 
@@ -1658,7 +1660,7 @@ ruler_is_immortal = {
 		tooltip = ruler_is_immortal_tt
 		OR = {
 			has_ruler_flag = immortal_ruler
-			has_country_flag = vampire_ruler_has_coffin
+			ruler_is_vampire = yes
 			has_country_flag = lich_ruler_has_phylactery
 			has_ruler_flag = is_a_secret_homunculus
 			has_ruler_flag = is_a_exposed_homunculus
@@ -1672,7 +1674,7 @@ ruler_is_immortal = {
 
 ruler_can_revive = {
 	OR = {
-		has_country_flag = vampire_ruler_has_coffin
+		has_country_flag = ruled_by_vampire
 		has_country_flag = lich_ruler_has_phylactery
 	}
 }
@@ -2616,7 +2618,7 @@ is_evil = {
 		tooltip = is_evil_tt
 		OR = {
 			has_country_flag = witch_king_flag
-			has_country_flag = exposed_vampire_ruler
+			ruler_is_exposed_vampire = yes
 			has_country_flag = exposed_lich_ruler
 			religion = infernal_court
 		}
@@ -2626,7 +2628,7 @@ is_not_evil = {
 	custom_trigger_tooltip = {
 		tooltip = is_not_evil_tt
 		NOT = { has_country_flag = witch_king_flag }
-		NOT = { has_country_flag = exposed_vampire_ruler }
+		NOT = { ruler_is_exposed_vampire = yes }
 		NOT = { has_country_flag = exposed_lich_ruler }
 		NOT = { religion = infernal_court }
 	}
@@ -4713,21 +4715,81 @@ is_below_grove_limit_trigger = {
 	}
 }
 
-vaengheim_has_hunts = {
+is_hegemon_of_any_type_and_100 = {
 	OR = {
-		has_province_modifier = Z88_horrible_hag 
-		has_province_modifier = Z88_woeful_werebear
-		has_province_modifier = Z88_nacker_hunt
-		has_province_modifier = Z88_roc_hunt
-		has_province_modifier = Z88_one_armed_skald
-		has_province_modifier = Z88_white_wolf
-		has_province_modifier = Z88_terrible_troll
-		has_province_modifier = Z88_ficklesome_fey
-		has_province_modifier = Z88_disturbed_balance
-		has_province_modifier = Z88_entering_equilibrium
-		has_province_modifier = Z88_equilibriums_end
-		has_province_modifier = Z88_mountain_depths
-		has_province_modifier = Z88_precursor_ruin
+		is_hegemon_of_type = economic_hegemon
+		is_hegemon_of_type = naval_hegemon
+		is_hegemon_of_type = military_hegemon
+	}
+	hegemon_strength = 100
+}
+
+can_claim_economic_hegemon = {
+	custom_trigger_tooltip = {
+		tooltip = can_claim_economic_hegemon_tt
+		is_great_power = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = halve_hegemony_requirements }
+				NOT = { has_country_flag = halve_economic_hegemony_requirements }				
+			}
+			monthly_income = 1000 
+		}
+		else = { monthly_income = 500 } 
+		NOT = { any_other_great_power = { monthly_income = ROOT } }
+		NOT = { has_country_modifier = lost_hegemony }
+	}
+}
+
+can_claim_naval_hegemon = {
+	custom_trigger_tooltip = {
+		tooltip = can_claim_naval_hegemon_tt
+		is_great_power = yes
+		if = {
+			limit = {
+				NOT = { has_country_flag = halve_hegemony_requirements }
+			}
+			navy_size = 500
+			NOT = { any_other_great_power = { num_of_heavy_ship = root } }
+		}
+		else = {
+			navy_size = 250
+			NOT = { any_other_great_power = { num_of_heavy_ship = root } }
+		}
+		NOT = { has_country_modifier = lost_hegemony }
+	}
+}
+
+can_claim_military_hegemon = {
+	custom_trigger_tooltip = {
+		tooltip = can_claim_military_hegemon_tt
+		if = {
+			limit = {
+				NOT = { has_country_flag = halve_hegemony_requirements }
+				#NOT = { has_country_flag = fra_enable_mil_hegemony_flag }
+				NOT = { has_country_flag = karakhanbar_enable_military_hegemon }
+			}
+			army_size = 1000
+		}
+		else_if = {
+			limit = {
+				is_or_was_tag = { tag = Z54 }
+			}
+			OR = {
+				army_size = 1000
+				custom_trigger_tooltip = {
+					tooltip = karakhanbar_complete_mission_tt
+					OR = {
+						mission_completed = Z54_hegemonic_ambitions
+						has_country_flag = karakhanbar_enable_military_hegemon
+					}
+				}
+			}
+		}
+		else = { army_size = 500 }
+		is_great_power = yes
+		NOT = { any_other_great_power = { army_size = root } }
+		NOT = { has_country_modifier = lost_hegemony }
 	}
 }
 
@@ -4737,5 +4799,58 @@ can_use_rangers = {
 		culture = wood_elf
 		culture = eclipse_elf
 	}
+	NOT = { has_country_flag = deepwoods_rangers_disabled }
 }
 
+baths_of_verinus_are_active = {
+	development = 20
+	has_owner_accepted_culture = yes
+	owner = {
+		OR = {
+			culture = west_damerian
+			culture = east_damerian
+			culture = half_elf
+			culture = vernman
+			culture = pashainey
+		}
+	}
+}
+grave_forest_of_ilvandet_is_active = {
+	owner = {
+		OR = {
+			culture = west_damerian
+			culture = carnetori
+			culture = exwesser
+			culture = moon_elf
+			culture = wood_elf
+			culture = lencori_half_elf
+			culture = half_elf
+		}
+	}
+}
+nimsnoms_theatre_is_active = {
+	culture = creek_gnome
+	owner = {
+		OR = {
+			culture_group = lencori
+			culture_group = halfling
+			culture_group = gnomish
+		}
+		high_tolerance_gnomish_race_trigger = yes
+	}
+}
+refuge_of_the_glasslords_is_active = {
+	owner = {
+		OR = {
+			medium_tolerance_dwarven_race_trigger = yes
+			high_tolerance_dwarven_race_trigger = yes
+		}
+		OR = {
+			culture_group = lencori
+			culture_group = dwarven
+			tag = A19
+			tag = A80
+			tag = A03
+		}
+	}
+}
