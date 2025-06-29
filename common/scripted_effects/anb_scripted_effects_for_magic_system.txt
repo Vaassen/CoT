@@ -446,6 +446,7 @@ magic_advancement_clr_type_flags = {
 	#advancement type
 	clr_$type$_flag = magic_study
 	clr_$type$_flag = magic_advancement
+	clr_$type$_flag = in_magic_progress_event
 
 	#School
 	clr_$type$_flag = abjuration_advancement
@@ -574,21 +575,6 @@ start_magic_infrastructure = { #Country only
 	}
 }
 
-finish_magic_study = { #These are called by magic_system.100
-	trigger_switch = {
-		on_trigger = has_$type$_flag
-	
-		abjuration_advancement		= { magic_school_level_up = { type = $type$ school = abjuration } }
-		conjuration_advancement		= { magic_school_level_up = { type = $type$ school = conjuration } }
-		divination_advancement		= { magic_school_level_up = { type = $type$ school = divination } }
-		enchantment_advancement		= { magic_school_level_up = { type = $type$ school = enchantment } }
-		evocation_advancement		= { magic_school_level_up = { type = $type$ school = evocation } }
-		illusion_advancement		= { magic_school_level_up = { type = $type$ school = illusion } }
-		necromancy_advancement		= { magic_school_level_up = { type = $type$ school = necromancy } }
-		transmutation_advancement	= { magic_school_level_up = { type = $type$ school = transmutation } }
-	}
-}
-
 magic_school_level_up = {
 	if = {
 		limit = { NOT = { has_$type$_flag = $school$_3 } }
@@ -622,27 +608,15 @@ magic_school_level_up = {
 		
 		hidden_effect = {
 			if = { #firing notification event
-				limit = { has_$type$_flag = $school$_advancement }
-				if = {
-					limit = { has_ruler_flag = magic_study }
-					country_event = { id = magic_study.2 }
-				}
-				if = {
-					limit = { has_heir_flag = magic_study }
-					country_event = { id = magic_study.3 }
-				}
-				if = {
-					limit = { has_country_flag = magic_study }
-					country_event = { id = magic_study.5 }
-				}
-				magic_advancement_abort_all_effect = yes
+				limit = { has_$type$_flag = magic_study has_$type$_flag = $school$_advancement }
+				country_event = { id = magic_system.99 } #hidden abort event
 			}
 			calc_schools_total_level = yes
 		}
 	}
 	else = { custom_tooltip = is_$type$_$school$_level_3 }
 }
-magic_project_level_up = {
+magic_project_level_up = { #Inefficient in order to accommodate independent usage of this effect
 	change_variable = { $project$_level = 1 }
 	hidden_effect = {
 		set_country_flag = magic_project_completed_flag
@@ -650,10 +624,7 @@ magic_project_level_up = {
 		country_event = { id = magic_project.1 } #clears the completion flag
 		calc_completed_magic_projects = yes
 		if = {
-			limit = {
-				has_country_flag = magic_project
-				has_country_flag = $project$_project
-			}
+			limit = { has_country_flag = $project$_project }
 			country_event = { id = magic_system.99 } #hidden abort event
 		}
 	}
@@ -678,8 +649,7 @@ magic_infrastructure_level_up = {
 
 		if = {
 			limit = { has_country_flag = magic_infrastructure }
-			country_event = { id = magic_study.2 } #TODO: give unique finishing event
-			country_event = { id = magic_system.99 }
+			country_event = { id = magic_system.99 } #hidden abort event
 		}
 		
 		if = {
