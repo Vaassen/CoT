@@ -5099,6 +5099,11 @@ on_emperor_elected = {
             }
         }
     }
+	#Pashaine
+	if = {
+		limit = { tag = B59 }
+		country_event = { id = flavour_pashaine.1024 days = 15 }
+	}
 }
 
 # HRE Prince released by the emperor
@@ -7541,6 +7546,28 @@ on_yearly_pulse = {
 			hre_reform_passed = anbennar_internal_divisions
 		}
 		calc_court_bonus = yes #heavy check so yearly instead of monthly
+	}
+
+	if = {
+		limit = { is_or_was_tag = { tag = G46 } } #Degakheion
+		if = {
+			limit = {
+				has_country_flag = G46_karkares_rebels_flag
+				NOT = { num_of_rebel_armies = 1 }
+			}
+			country_event = {
+				id = flavour_degakheion.11 #The Finishing Touches
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = G46_phylaxana_rebels_flag
+				NOT = { num_of_rebel_armies = 1 }
+			}
+			country_event = {
+				id = flavour_degakheion.13 #The People, Subdued
+			}
+		}
 	}
 }
 on_yearly_pulse_2 = {
@@ -14279,6 +14306,24 @@ on_province_owner_change = {
 		}
 	}
 
+	if = { #Degakheion
+		limit = { owner = { has_country_flag = degakheion_manpower_building_buff } }
+		if = {
+			limit = { has_building = training_fields }
+			add_province_modifier = {
+				name = G46_training_fields_buff
+				duration = -1
+			}
+		}
+		if = {
+			limit = { has_building = barracks }
+			add_province_modifier = {
+				name = G46_barracks_buff
+				duration = -1
+			}
+		}
+	}
+
 	#Wineport
 	if = {
 		limit = {
@@ -14644,7 +14689,6 @@ on_parliament_seat_lost = {
 			}
 		}
 	}
-	
 }
 
 # country
@@ -14656,26 +14700,6 @@ on_parliament_debate_failed = {
 on_parliament_debate_succeeded = {
 	on_parliament_debate_succeeded_effect = yes #1.35
 	increase_issue_passed_counter = yes
-	if = {
-		limit = {
-			has_government_mechanic = argordstun_roughness_mechanic
-		}
-		add_government_power = {
-			mechanic_type = argordstun_roughness_mechanic
-			power_type = argordstun_roughness_power
-			value = -2
-		}
-	}
-	if = {
-		limit = {
-			has_government_mechanic = argordstun_luster_mechanic
-		}
-		add_government_power = {
-			mechanic_type = argordstun_luster_mechanic
-			power_type = argordstun_luster_power
-			value = 5
-		}
-	}
 }
 
 #AnbennarDependencies - we need our own version of this
@@ -15272,6 +15296,13 @@ on_hussars_raised = {
 }
 
 on_revolutionary_guard_raised = {
+	if = {
+		limit = { has_province_modifier = pashaine_supplying_the_guards }
+		extend_province_modifier = {
+			name = pashaine_supplying_the_guards
+			duration = 182 #6 months
+		}
+	}
 }
 
 on_banner_raised = {
@@ -15518,6 +15549,19 @@ on_center_of_trade_upgrade = {
 	if = {
 		limit = { owner = { has_country_modifier = geo_centers_of_trade } }
 		add_base_production = 1 
+	}
+
+	#Pashaine
+	if = {
+		limit = { 
+			owner = {
+				OR = { 
+					has_country_modifier = pashaine_closed_markets 
+					has_country_modifier = pashaine_businori_trade_expertise 
+				}
+			}
+		}
+		add_base_production = 1
 	}
 }
 
@@ -16709,6 +16753,15 @@ on_dependency_gained = {
 		change_variable = { gnoll_tributary_bonus_count = 1 }
 	}
 
+	#Pashaine
+	if = {
+		limit = {
+			FROM = { tag = Z97 } #Ravelian State
+			has_country_flag = pashaine_ravelian_subject
+		}
+		add_government_reform = puppeting_the_rectorate
+		clr_country_flag = pashaine_ravelian_subject
+	}
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -18430,11 +18483,28 @@ on_change_revolution_target = {
 		limit = { has_reform = junior_revolutionary_republic_reform }
 		add_government_reform = revolutionary_republic_reform
 	}
+	if = {
+		limit = {
+			has_global_flag = pashaine_always_revolution_target
+			ai = yes
+			FROM = { 
+				is_or_was_tag = { tag = B59 } #Pashaine
+				exists = yes
+			}
+		}
+		set_revolution_target = FROM
+	}
 }
 
 # this = curia controller (enactor of the bull)
 on_golden_bull_enacted = {
 	set_country_flag = enacted_golden_bull
+	if = {
+		limit = {
+			has_government_attribute = enacting_bull_1_stab_50_adm
+		}
+		add_stability_or_adm_power = yes
+	}
 }
 
 # province:  spawned whenever a new owner takes over the province
@@ -19481,9 +19551,23 @@ on_institution_embracement = {
 			set_global_flag = LizardEmbracedGlobalTrade
 		}
 	}
+
+	#Pashaine
+	if = {
+		limit = {
+			is_or_was_tag = { tag = B59 } 
+			has_institution = manufactories
+			adm_tech = 21
+			303 = { has_province_flag = change_to_coal } 
+		}
+		303 = { change_trade_goods = coal }
+	}
 }
 
-on_national_focus_change = {}
+on_national_focus_change = {
+	#Pashaine
+	pashaine_apply_focus_bonus = yes
+}
 
 #ROOT = new capital province, FROM = old capital province
 on_capital_moved = {
@@ -19786,6 +19870,26 @@ on_expanded_infrastructure = {
 		limit = { has_province_modifier = f27_bulwari_metropol_modifier }
 		owner = { add_adm_power = 8 }
 	}
+
+	#Pashaine
+	if = {
+		limit = { owner = { has_government_attribute = expand_infrastructure_goods_rep_zeal  } }
+		add_province_modifier = {
+			name = pashaine_economic_boom
+			duration = 1825 #5 years
+		}
+		add_republican_tradition = 1
+		add_revolutionary_zeal = 1
+	}
+}
+
+on_expanded_infrastructure_removed = {
+	if = {
+		limit = { owner = { has_government_attribute = expand_infrastructure_goods_rep_zeal  } }
+		remove_province_modifier = pashaine_economic_boom
+		add_republican_tradition = -1
+		add_revolutionary_zeal = -1
+	}
 }
 
 #ROOT = province that was centralized in
@@ -19837,6 +19941,22 @@ on_centralized_state = {
 		}
 		owner = {
 			add_church_power = 10
+		}
+	}
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = centralize_state_half_refund_random_dev
+			}
+		}
+		random_list = {
+			1 = { add_base_tax = 1 }
+			1 = { add_base_production = 1 }
+			1 = { add_base_manpower = 1 }
+		}
+		owner = {
+			add_adm_power = 25
+			change_government_reform_progress = 25
 		}
 	}
 }
@@ -20975,6 +21095,17 @@ on_adm_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 			adm_tech = 5
 		}
 		country_event = { id = cael_deinn.1 }	
+	}
+
+	#Pashaine
+	if = {
+		limit = {
+			is_or_was_tag = { tag = B59 }
+			has_institution = manufactories
+			adm_tech = 21
+			303 = { has_province_flag = change_to_coal } 
+		}
+		303 = { change_trade_goods = coal }
 	}
 }
 
