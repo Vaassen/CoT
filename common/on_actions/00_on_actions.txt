@@ -825,6 +825,12 @@ on_religion_change = {
 			remove_country_modifier = zokka_sunset
 		}
 	}
+
+	#Verne
+	if = {
+		limit = { is_part_of_hre = yes A33 = { mission_completed = A33_united_under_crimson_wings } religion = corinite }
+		A33 = { add_adm_power = 10 add_mil_power = 10 add_dip_power = 10 }
+	}
 }
 
 # country.
@@ -1029,6 +1035,12 @@ on_peace_recipient = {
 			has_country_modifier = blorc_ruler_shows_prowess
 		}
 		remove_country_modifier = blorc_ruler_shows_prowess
+	}
+	if = {
+		limit = { has_country_flag = verne_union_target is_subject_of = A33 }
+		change_religion = corinite
+		change_government_to_monarchy = yes
+		clr_country_flag = verne_union_target
 	}
 }
 
@@ -2627,6 +2639,19 @@ on_added_to_trade_company = {
 		owner = { add_mercantilism = 1 } 
 		add_base_production = 1 
 	}
+	if = {
+		limit = {
+			owner = { has_country_flag = verne_trade_company_conversion }
+			OR = {
+				owner = { is_or_was_tag = { tag = A33 } }
+				region = akasik_region
+			}
+		}
+		add_province_modifier = {
+			name = verne_trade_company_conversion_modifier
+			duration = -1
+		}
+	}
 }
 
 # province
@@ -2638,6 +2663,10 @@ on_removed_from_company = {
 		}
 		owner = { add_mercantilism = -1 } 
 		add_base_production = -1 
+	}
+	if = {
+		limit = { has_province_modifier = verne_trade_company_conversion_modifier}
+		remove_province_modifier = verne_trade_company_conversion_modifier
 	}
 }
 
@@ -7498,6 +7527,11 @@ on_yearly_pulse = {
 			}
 		}
 	}
+	#Verne
+	if = { #gives the spread corin's light CB
+		limit = { has_country_flag = verne_special_cb_enabled }
+		country_event = { id = verne.904 }
+	}
 
 
 
@@ -9216,6 +9250,23 @@ on_thri_yearly_pulse = {
 		#corinsfield
 		100 = flavour_corinsfield.86
 		1000 = 0
+
+		#Sri Baginda System Events
+		100 = lupulan_events.2000
+		100 = lupulan_events.2002
+		100 = lupulan_events.2003
+		100 = lupulan_events.2004
+		100 = lupulan_events.2005
+		100 = lupulan_events.2006
+		100 = lupulan_events.2007
+		100 = lupulan_events.2008
+		20 = lupulan_events.2009
+		100 = lupulan_events.2010
+		100 = lupulan_events.2011
+		34 = lupulan_events.2012
+		100 = lupulan_events.2013
+		100 = lupulan_events.2014
+		100 = lupulan_events.2015
 	}
 
 	events = {
@@ -12123,6 +12174,7 @@ on_five_year_pulse_3 = {
 		merfolk_events.9		#Merfolk Events
 		flavor_frozenmaw.23     #Shaman-u-Yakh events
 		chaqway.6				#Rotating Marriage Fair
+		verne.14 				#Verne Stingport Regatta
 		flavour_bibyobi.003		#Bibyobi monster recurring event handler
     }
 
@@ -12232,6 +12284,22 @@ on_five_year_pulse_3 = {
 		100 = kheionai_flavour.26
 		100 = kheionai_flavour.27
 		100 = kheionai_flavour.28
+	}
+
+	#Half-ruinborn false pops growth
+	if = {
+		limit = { has_country_flag = can_get_half_ruinborn_pops_flag }
+		random_owned_province = {
+			limit = {
+				fast_has_pop_of_race = { race = human }
+				fast_has_pop_of_race = { race = ruinborn }
+				NOT = { has_province_modifier = verne_half_ruinborn_large_modifier }
+			}
+			random = {
+				chance = 25
+				province_event = { id = verne.206 }
+			}
+		}
 	}
 }
 
@@ -13058,7 +13126,7 @@ on_province_religion_changed = {
 				id = bulwar_flavour.147
 			}
 		}
-	} 
+	}
 }
 
 # province
@@ -14356,6 +14424,33 @@ on_province_owner_change = {
 			name = wineport_wine_25
 			duration = -1
 			hidden = yes
+		}
+	}
+	
+	#Verne
+	if = {
+		limit = {
+			country_or_subject_holds = A33
+		}
+		if = {
+			limit = {
+				OR = {
+					religion = oren_nayiru
+					religion = oren_nayiru_reformed
+				}
+				A33 = { has_country_flag = verne_corinite_synchretism_flag }
+			}
+			add_province_modifier = {
+				name = verne_corinite_synchretism
+				duration = -1
+			}
+		}
+		if = {
+			limit = {
+				religion = kheionism
+				A33 = { has_country_flag = verne_corinite_synchretism_flag }
+			}
+			remove_province_modifier = religious_zeal_at_conv
 		}
 	}
 
@@ -19413,6 +19508,12 @@ on_colonial_nation_established = {
 		}
 		set_country_flag = can_use_vernman_doctrine 
 	}
+	if = {
+		limit = {
+			overlord = { tag = A33 }
+		}
+		set_country_flag = can_get_half_ruinborn_pops_flag
+	}
 }
 
 on_colonist_boosting_colony = {
@@ -20928,6 +21029,19 @@ on_colony_finished = { #ROOT - Province
 			province_group = hold_province
 		}
 		owner = { set_capital = ROOT }
+	}
+
+	#Verne
+	if = {
+		limit = { country_or_subject_holds = A33 owner = { NOT = { has_country_modifier = verne_colonial_event_timer } } }
+		random_list = { #triggers could be set here instead, atm frenquency is fine so it doesn't really matter, if too few events are seen it can be tweaked
+			1 = { province_event = { id = verne.200 days = 1 } }
+			1 = { province_event = { id = verne.201 days = 1 } }
+			1 = { province_event = { id = verne.202 days = 1 } }
+			1 = { province_event = { id = verne.203 days = 1 } }
+			5 = { province_event = { id = verne.204 days = 1 } }
+			1 = { province_event = { id = verne.205 days = 1 } }
+		}
 	}
 }
 
