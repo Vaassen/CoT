@@ -26,6 +26,14 @@ country_event = { #At Ayethstir Gate - DONE
 				limit = { NOT = { province_id = 3033 } }
 				set_province_flag = I33_forest_to_be_cut
 			}
+			set_variable = {
+				which = ayethGriefOfElaria
+				value = 0
+			}
+			I29 = {
+				set_consort_flag = is_lanhara_ayeth
+			}
+			set_country_flag = count_wars_won
 		}
 	}
 }
@@ -37,6 +45,12 @@ country_event = { #The Silent Throne - DONE
 	picture = NYAU_RITUAL_eventPicture
 
 	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			set_country_flag = immune_to_inheritance #this is to avoid getting gameovered when this happens
+		}
+	}
 
 	option = {
 		name = flavour_ayeth.2.a
@@ -51,12 +65,16 @@ country_event = { #The Silent Throne - DONE
 				manuever = 3
 				siege = 1
 				trait = cruel_tactician_personality
-			} 
+			}
+			set_ruler_flag = is_elaria_ayeth
 			country_event = {
 				id = flavour_ayeth.3
 				days = 2190
 			}
 		}
+	}
+	after = {
+		clr_country_flag = immune_to_inheritance
 	}
 }
 
@@ -212,6 +230,13 @@ country_event = { #Vengance
 			remove_orcish_minority_size_effect = yes
 		}
 		increase_grief_of_elaria = yes
+		hidden_effect = {
+			country_event = {
+				id = flavour_ayeth.14
+				days = 30
+				random = 5
+			}
+		}
 	}
 }
 
@@ -233,8 +258,25 @@ country_event = { #Last Cackle of the Witch
 		}
 		if = {
 			limit = { I34 = { is_subject_of = ROOT } }
-			#lose 4 dev per development
-			inherit = I34
+			custom_tooltip = flavour_ayeth_10_a_tt
+			hidden_effect = {
+				I34 = {
+					ROOT = {
+						export_to_variable = {
+							which = currentScopeDevelopment
+							value = total_development
+							who = PREV
+						}
+						for_variable_amount = {
+							variable = currentScopeDevelopment
+							effect = "
+								add_dip_power = -4
+							"
+						}
+					}
+				}
+				inherit = I34
+			}
 		}
 		else = {
 			deepwoods_shadow_grove = {
@@ -320,6 +362,7 @@ country_event = { #The Water Remembers
 						culture_group = orcish
 						culture_group = goblin
 					}
+					superregion = deepwoods_superregion
 				}
 				change_culture = wood_elf
 				change_religion = fey_court
@@ -349,14 +392,39 @@ country_event = { #The Pain Fades
 
 	option = {
 		name = flavour_ayeth.12.a
-		#become Cyranvar
 		deepwoods_superregion = {
 			add_permanent_claim = ROOT
 		}
+		add_splendor = 400
+		if = {
+			limit = { check_variable = { which = ayethKillCount value = 11 } }
+			add_country_modifier = {
+				name = I33_kill_count_3
+				duration = -1
+			}
+			add_country_modifier = {
+				name = I33_kill_count_3_bonus
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { check_variable = { which = ayethKillCount value = 6 } }
+			add_country_modifier = {
+				name = I33_kill_count_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = I33_kill_count_1
+				duration = -1
+			}
+		}
+		form_cyranvar = yes
 		custom_tooltip = flavour_ayeth_12_a_tt
 		hidden_effect = {
 			every_known_country = {
-				limit = { capital_scope = { superregion = deepwoods_superregion } primary_culture = wood_elf }
+				limit = { primary_culture = wood_elf capital_scope = { superregion = deepwoods_superregion } }
 				ROOT = {
 					vassalize = PREV
 				}
@@ -368,7 +436,6 @@ country_event = { #The Pain Fades
 			change_mil = 6
 			remove_ruler_personality = cruel_personality
 		}
-		add_splendor = 400
 	}
 }
 
@@ -382,7 +449,6 @@ country_event = { #Thorns in Heart
 
 	option = {
 		name = flavour_ayeth.13.a
-		#become Cyranvar
 		deepwoods_superregion = {
 			add_permanent_claim = ROOT
 		}
@@ -396,7 +462,31 @@ country_event = { #Thorns in Heart
 				}
 			}
 		}
-		#gain_kill_count_reward
+		if = {
+			limit = { check_variable = { which = ayethKillCount value = 11 } }
+			add_country_modifier = {
+				name = I33_kill_count_3
+				duration = -1
+			}
+			add_country_modifier = {
+				name = I33_kill_count_3_bonus
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { check_variable = { which = ayethKillCount value = 6 } }
+			add_country_modifier = {
+				name = I33_kill_count_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = I33_kill_count_1
+				duration = -1
+			}
+		}
+		form_cyranvar = yes
 	}
 }
 
@@ -445,11 +535,14 @@ country_event = { #Clear Shot
 
 	option = {
 		name = flavour_ayeth.16.b
-		every_known_country = {
-			limit = { primary_culture = wood_elf }
-			add_trust = {
-				who = ROOT
-				value = 10
+		custom_tooltip = flavour_ayeth_16_b_tt
+		hidden_effect = {
+			every_known_country = {
+				limit = { primary_culture = wood_elf }
+				add_trust = {
+					who = ROOT
+					value = 10
+				}
 			}
 		}
 	}
@@ -462,10 +555,62 @@ country_event = { #Closing my eyes
 	picture = NYAU_RITUAL_eventPicture
 
 	is_triggered_only = yes
+	fire_only_once = yes
+	major = yes
+	major_trigger = { capital_scope = { superregion = deepwoods_superregion } }
+
+	trigger = {
+		tag = I33
+		OR = {
+			I29 = { ai = yes }
+			I33 = { ai = yes }
+		}
+		NOT = { has_ruler_flag = is_elaria_ayeth }
+		NOT = { has_country_flag = immune_to_inheritance }
+		NOT = { mission_completed = I33_to_my_mother_vehari }
+	}
 
 	option = {
 		name = flavour_ayeth.17.a
-
+		if = {
+			limit = {
+				ai = yes
+			}
+			I29 = { create_union = I33 }
+		}
+		else_if = {
+			limit = { exists = I29 }
+			switch_tag = I29
+			add_treasury = 100
+			add_adm_power = 100
+			add_dip_power = 100
+			add_mil_power = 100
+			set_country_flag = country_was_ayeth
+			hidden_effect = {
+				country_event = {
+					id = flavour_ayeth.28
+					days = 1
+				}
+			}
+		}
+		else = {
+			change_tag = I29
+			remove_country_modifier = I33_against_invaders
+			remove_country_modifier = I33_braving_the_shadows
+			remove_country_modifier = I33_hunters_of_ashentree
+			remove_country_modifier = I33_courting_all_courts
+			remove_country_modifier = I33_vengeful_spectre_of_the_deepwoods
+			remove_country_modifier = I33_sorrow_of_elaria
+			remove_country_modifier = I33_grief_of_elaria
+			remove_country_modifier = I33_anguish_of_elaria
+			remove_country_modifier = I33_despair_of_elaria
+			remove_country_modifier = I33_kill_count
+			remove_country_modifier = I33_kill_count_1
+			remove_country_modifier = I33_kill_count_2
+			remove_country_modifier = I33_kill_count_3
+			remove_country_modifier = I33_kill_count_3_bonus
+			remove_country_modifier = I33_led_by_elaria_example
+		}
 	}
 }
 
@@ -482,6 +627,7 @@ country_event = { #I Have Not Wept
 		name = flavour_ayeth.18.a
 		add_ruler_modifier = {
 			name = I33_sorrow_of_elaria
+			duration = -1
 		}
 		hidden_effect = { 
 			remove_country_modifier = I33_grief_of_elaria
@@ -503,7 +649,6 @@ country_event = { #They Call Themselves Kin
 	option = {
 		name = flavour_ayeth.19.a
 		custom_tooltip = flavour_ayeth_19_a_tt
-		hidden_effect = { set_country_flag = I33_medium_grief_of_elaria }
 		add_ruler_modifier = {
 			name = I33_grief_of_elaria
 			duration = -1
@@ -534,7 +679,9 @@ country_event = { #The Silence Grows
 		hidden_effect = { set_country_flag = I33_high_grief_of_elaria }
 		add_ruler_modifier = {
 			name = I33_anguish_of_elaria
+			duration = -1
 		}
+		custom_tooltip = flavour_ayeth_20_a_tt
 		hidden_effect = { 
 			remove_country_modifier = I33_sorrow_of_elaria
 			remove_country_modifier = I33_grief_of_elaria
@@ -558,6 +705,7 @@ country_event = { #Their Names Join The List
 		hidden_effect = { set_country_flag = I33_kill_count_versus_elves }
 		add_ruler_modifier = {
 			name = I33_despair_of_elaria
+			duration = -1
 		}
 		hidden_effect = { 
 			remove_country_modifier = I33_sorrow_of_elaria
@@ -582,24 +730,6 @@ country_event = { #Face Elaria
 	}
 }
 
-country_event = { #Wounded Ruler
-	id = flavour_ayeth.23
-	title = flavour_ayeth.23.t
-	desc = flavour_ayeth.23.d
-	picture = NYAU_RITUAL_eventPicture
-
-	is_triggered_only = yes
-
-	option = {
-		name = flavour_ayeth.23.a
-		add_ruler_modifier = {
-			name = I33_mortally_wounded
-			duration = 1095
-		}
-		save_global_event_target_as = I33_mortally_wounded_enemy
-	}
-}
-
 country_event = { #Kill Ruler
 	id = flavour_ayeth.24
 	title = flavour_ayeth.24.t
@@ -607,10 +737,11 @@ country_event = { #Kill Ruler
 	picture = NYAU_RITUAL_eventPicture
 
 	is_triggered_only = yes
+	hidden = yes
 
 	option = {
 		name = flavour_ayeth.24.a
-		event_target:I33_mortally_wounded_enemy = { kill_ruler = yes }
+		FROM = { owner = { kill_ruler = yes } }
 		increase_kill_count = yes
 	}
 }
@@ -659,62 +790,17 @@ country_event = { #Broken Promises
 	}
 }
 
-country_event = { #Hidden Effect to trigger Grief of Elaria because PARADOX SAID NO TO EVENT IN ELSE_IF IN SCRIPTED EFFECTS AAAAAA
-	id = flavour_ayeth.27
-	title = flavour_ayeth.27.t
-	desc = flavour_ayeth.27.d
+country_event = { #Closing my eyes 2
+	id = flavour_ayeth.28
+	title = flavour_ayeth.28.t
+	desc = flavour_ayeth.28.d
 	picture = NYAU_RITUAL_eventPicture
 
 	is_triggered_only = yes
 	hidden = yes
-	immediate = {
-		if = {
-			limit = {
-				check_variable = {
-					which = ayethGriefOfElaria
-					value = 8
-				}
-			}
-			country_event = {
-				id = flavour_ayeth.21
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = {
-					which = ayethGriefOfElaria
-					value = 6
-				}
-			}
-			country_event = {
-				id = flavour_ayeth.20
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = {
-					which = ayethGriefOfElaria
-					value = 4
-				}
-			}
-			country_event = {
-				id = flavour_ayeth.19
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = {
-					which = ayethGriefOfElaria
-					value = 2
-				}
-			}
-			country_event = {
-				id = flavour_ayeth.18
-			}
-		}
-	}
 
 	option = {
-		name = flavour_ayeth.27.a
+		name = flavour_ayeth.28.a
+		inherit = I33
 	}
 }
