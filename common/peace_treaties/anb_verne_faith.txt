@@ -8,23 +8,22 @@
 # Nor do they support setting provinces (like cede province) or third party countries (like annull treaties) as targets.
 # FROM = The dude that receive it THIS = The dude that launch the shit
 # Example:
-po_break_the_empire = {
+po_verne_conversion = {
 	# The following strings need localization: 
 	#		"make_dummy_desc" (uses text processing, supporting bracket notation) ("[FROM.GetName] becomes a [THIS.GetName] Dummy")
 	#		"CB_ALLOWED_make_dummy" (uses plain localization) ("Enforced Dumbness")
 	#		"PEACE_make_dummy" (uses plain localization, but with support for $TAKER$, $TAKERS$, $GIVER$ and $GIVERS$) ("Become $TAKERS$ Dummy")
 
 	# Values default to 0 or "no" unless otherwise stated
-	
 	category = 6 # Any number between 0 and 6. Represents the tab under which it will be listed. 6 corresponds to "treaties". This value currently defaults to 6.
 	power_projection = humiliated_rival # "power_projection" will only be applied if giver is your rival.
 	power_cost_base = 0.0 # Base factor for diplomatic power cost when treaty is not allowed by casus belli. Scales with war score cost.
-	prestige_base = 1.0 # Base factor for prestige gain and loss. Scales with war score cost.
+	prestige_base = 0.05 # Base factor for prestige gain and loss. Scales with war score cost.
 	ae_base = 0.0 # Base factor for aggressive expansion. Scales with war score cost.
 	warscore_cost = {
 		# Which of the giver's provinces' war score costs are included and by how much. All entries default to 0. Any combination of entries can be used. Try negative values at your own risk.
 		all_provinces = 0.0 # All the giver's provinces
-		no_provinces = 50 # This is just a constant. Equivalent to a single province with with war score cost 1
+		no_provinces = 1000.0 # This is just a constant. Equivalent to a single province with with war score cost 1
 		owner_keeps = 0.0 # The provinces that are not of any of the types below
 		conquered = 0.0 # Provinces that are selected by a Demand Province treaty
 		returned_core = 0.0 # Provinces that are selected by a Return Core treaty
@@ -38,65 +37,38 @@ po_break_the_empire = {
 	requires_is_allowed = yes # If set to "yes", treaty will only be visible when explicitly allowed by casus belli. If not, it will be available but cost diplomatic power.
 	
 	is_visible = { # Defaults to equivalent of "always = yes"
-		tag = B59
-		OR = {
-			is_in_war = {
-				defender_leader = ROOT
-				casus_belli = imperial_chastening
-			}
-			is_in_war = {
-				attacker_leader = ROOT
-				casus_belli = imperial_chastening
-			}
-		}
-		FROM = { 
-			is_in_war = { casus_belli = imperial_chastening }
-			OR = {
-				is_in_war = {
-					defender_leader = THIS
-					casus_belli = imperial_chastening
-				}
-				is_in_war = {
-					attacker_leader = THIS
-					casus_belli = imperial_chastening
-				}
-			} 
-		}
+		is_in_war = { casus_belli = cb_verne_conversion }
+		FROM = { is_in_war = { casus_belli = cb_verne_conversion } }
+		tag = A33
 	}
 	is_allowed = { # Defaults to equivalent of "always = yes"
-		FROM = {
-			capital_scope = { controlled_by = ROOT }
-		}
+		tag = A33
+		mission_completed = A33_corins_devout_protectors
 	}
 	effect = { # Defaults to empty effect (which makes error log entry but is safe)
-		hidden_effect = { #Needed for MT
-			if = {
-				limit = { tag = B59 }
-			}
-			europe = {
-				limit = { 
-					is_part_of_hre = yes 
-				}
-				set_province_flag = was_part_of_hre
+		FROM = {
+			change_religion = corinite
+			force_converted = yes
+			capital_scope = {
+				change_religion = corinite
 			}
 		}
-		ROOT = { 
-			set_country_flag = broke_the_empire
-			country_event = { id = hre_event.15 }
+		ROOT = {
+			add_adm_power = 10
+			add_dip_power = 10
+			add_mil_power = 10
 		}
-		dismantle_hre = yes
-
 	}
 	ai_weight = { # Defaults to always evaluate to 0
 		export_to_variable = {
-			variable_name = ai_value # Mandatory to have entry called "ai_value". Its value at the end of the ai_weight scope is what will be used
-			value = trigger_value:always
+				variable_name = ai_value # Mandatory to have entry called "ai_value". Its value at the end of the ai_weight scope is what will be used
+				value = trigger_value:always
 		}
 		set_variable = {
-			ai_value = 2000
+				ai_value = 2000
 		}
 		limit = { # if limit evaluates false, ai_weight will evaluate to 0 regardless
-			always = yes
+				always = yes
 		}
 	}
 }
