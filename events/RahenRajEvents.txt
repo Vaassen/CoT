@@ -204,38 +204,7 @@ province_event = {	#on raj capital conquered
 					NOT = { owner = { has_government_attribute = is_raja } }
 				}
 				#Degrade the previous Raja to Prabhi level, release everyone, disband the Raja
-				FROM = {
-					every_subject_country = {
-						limit = {
-							OR = {
-								is_subject_of_type = daimyo_vassal
-								is_subject_of_type = great_daimyo_vassal
-								is_subject_of_type = vizier_vassal
-							}
-						}
-
-						#Grant freedom from old raja
-						PREV = { create_subject = {	subject_type = daimyo_vassal subject = PREV } }	#prevent insta-annexation, pdx bug
-						grant_independence = yes
-						rahen_raj_remove_mandates = yes # Mandates no longer relevant. 
-
-						if = {
-							limit = {
-								has_government_attribute = is_raja_subject
-							}
-							#Previous subjects become independent Prabhi
-							add_government_reform = indep_prabhi_reform
-						}
-					}
-
-					#Downgrade rank and force indep_prabhi reform onto old raja
-					set_government_rank = 1
-					add_government_reform = indep_prabhi_reform
-					remove_country_modifier = raj_opened_senapti_ranks
-					remove_country_modifier = raj_closed_senapti_ranks
-					clear_global_event_target = raj_raja_global_target
-					clear_global_event_target = raj_vizier_global_target
-				}
+				raj_dismantling_effect = { releaseSubjects = yes }
 			}
 			if = { #Case: new owner is the new Raja, previous Raja is dead -> all Prabhi+Senapti get transferred to new Raja
 				limit = {
@@ -289,6 +258,15 @@ province_event = {	#on raj capital conquered
 					rahen_raj_remove_mandates = yes # Mandates no longer relevant. 
 					add_government_reform = indep_prabhi_reform
 				}
+				set_global_flag = destroyed_raj
+				4411 = {
+					remove_province_modifier = raj_royal_barracks
+					remove_province_modifier = rahen_corrupt_ministery_of_agriculture
+					remove_province_modifier = rahen_corrupt_ministery_of_philosophy
+					remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
+					remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
+				}
+				rahen_superregion = { rahen_clear_court_disaster_province_modifiers = yes }
 				clear_global_event_target = raj_raja_global_target
 				clear_global_event_target = raj_vizier_global_target
 			}
@@ -342,20 +320,7 @@ province_event = {	#on raj capital conquered
 			add_adm_power = 50
 			add_dip_power = 50
 			add_mil_power = 50
-			set_global_flag = destroyed_raj
-			4411 = {
-				remove_province_modifier = raj_royal_barracks
-				remove_province_modifier = rahen_corrupt_ministery_of_agriculture
-				remove_province_modifier = rahen_corrupt_ministery_of_philosophy
-				remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
-				remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
-			}
-		}
-		hidden_effect = { #stip all reformation modifiers from the former Raja
-			rahen_superregion = {
-				rahen_clear_court_disaster_province_modifiers = yes
-			}
-		}
+		}		
 	}
 }
 
@@ -1447,42 +1412,7 @@ country_event = { #Collapse of the Raj
 
 		add_prestige = -50
 
-		4411 = {
-			remove_province_modifier = raj_royal_barracks
-			remove_province_modifier = rahen_corrupt_ministery_of_agriculture
-			remove_province_modifier = rahen_corrupt_ministery_of_philosophy
-			remove_province_modifier = rahen_corrupt_ministery_of_internal_relations
-			remove_province_modifier = rahen_corrupt_ministery_of_foreign_relations
-		}
-		if = {
-			limit = { has_reform = raja_magocracy_reform }
-			remove_government_reform = raja_magocracy_reform
-			add_government_reform = magocracy_reform
-		}
-		else = {
-			add_government_reform = feudalism_reform
-		}
-		
-		every_subject_country = {
-			overlord = {
-				create_subject = {
-					subject_type = vassal
-					subject = PREV
-				}
-			}
-			hidden_effect = {
-				rahen_raj_remove_mandates = yes
-			}
-		}
-		hidden_effect = {
-			rahen_superregion = {
-				rahen_clear_court_disaster_province_modifiers = yes
-			}
-			clr_country_flag = reformed_rahen_court
-			set_global_flag = destroyed_raj
-			remove_country_modifier = raj_opened_senapti_ranks
-			remove_country_modifier = raj_closed_senapti_ranks
-		}
+		raj_dismantling_effect = { makeSubjectsVassals = yes }
 	}
 }
 country_event = { #A Raj falling apart
@@ -1797,6 +1727,10 @@ country_event = {				#address the issue of nations released inside the raj with 
 				is_subject_of_type = daimyo_vassal
 				NOT = { has_reform = prabhi_reform }
 			}
+			if = {
+				limit = { NOT = { government = monarchy } }
+				change_government = monarchy
+			}
 			add_government_reform = prabhi_reform
 		}
 		else_if = {
@@ -1806,6 +1740,10 @@ country_event = {				#address the issue of nations released inside the raj with 
 					is_subject_of_type = vizier_vassal
 				}
 				NOT = { has_reform = senapti_reform }
+			}
+			if = {
+				limit = { NOT = { government = monarchy } }
+				change_government = monarchy
 			}
 			add_government_reform = senapti_reform
 		}
@@ -2009,8 +1947,8 @@ country_event = {
 		hidden_effect = {
 			if = {
 				limit = {
-					any_subject_country = { is_subject_of_type = great_daimyo_vassal army_size = 1 }	#pick best tag is silly, army_size is a safety net
-				}
+					any_subject_country = { is_subject_of_type = great_daimyo_vassal army_size = 1 ai = yes }	#pick best tag is silly, army_size is a safety net.
+				}																						#was still giving issues, should be solved now but rip out this ass code as soon as got time
 				pick_best_tags = { scope = every_subject_country scale = army_size 5 = yes event_target_name = strongest_senapti global_trigger = "is_subject_of_type = great_daimyo_vassal ai = yes" }
 				event_target:strongest_senapti_1 = { capital_scope = { save_event_target_as = senapti1_capital } }
 				event_target:strongest_senapti_2 = { capital_scope = { save_event_target_as = senapti2_capital } }
@@ -2093,36 +2031,52 @@ country_event = {
 	option = {
 		name = rahenraj.2100.d
 		goto = senapti2_capital
-		trigger = { has_saved_event_target = strongest_senapti_2 ai = no }
+		trigger = { has_saved_event_target = strongest_senapti_2 ai = no event_target:strongest_senapti_2 = { is_subject_of = ROOT } }
 		event_target:strongest_senapti_2 = { raj_become_vizier = yes }
 	}
 
 	option = {
 		name = rahenraj.2100.e
 		goto = senapti3_capital
-		trigger = { has_saved_event_target = strongest_senapti_3 ai = no }
+		trigger = { has_saved_event_target = strongest_senapti_3 ai = no event_target:strongest_senapti_3 = { is_subject_of = ROOT } }
 		event_target:strongest_senapti_3 = { raj_become_vizier = yes }
 	}
 
 	option = {
 		name = rahenraj.2100.f
 		goto = senapti4_capital
-		trigger = { has_saved_event_target = strongest_senapti_4 ai = no }
+		trigger = { has_saved_event_target = strongest_senapti_4 ai = no event_target:strongest_senapti_4 = { is_subject_of = ROOT } }
 		event_target:strongest_senapti_4 = { raj_become_vizier = yes }
 	}
 	
 	option = {
 		name = rahenraj.2100.g
 		goto = senapti5_capital
-		trigger = { has_saved_event_target = strongest_senapti_5 ai = no }
+		trigger = { has_saved_event_target = strongest_senapti_5 ai = no event_target:strongest_senapti_5 = { is_subject_of = ROOT } }
 		event_target:strongest_senapti_5 = { raj_become_vizier = yes }
 	}
 
 	option = {
 		name = rahenraj.2100.h
 		goto = prabhi1_capital
-		trigger = { has_saved_event_target = prabhi1 ai = no }
+		trigger = { has_saved_event_target = prabhi1 }
 		event_target:prabhi1 = { raj_become_vizier = yes }
+	}
+
+	option = {
+		name = rahenraj.2100.i
+		trigger = {
+			all_subject_country = {
+				OR = {
+					NOT = { has_government_attribute = is_raja_subject }
+					ai = no
+				}
+			}
+		}
+		random_subject_country = {
+			limit = { has_government_attribute = is_raja_subject }
+			raj_become_vizier = yes
+		}
 	}
 
 	after = {
@@ -2847,6 +2801,17 @@ country_event = {	#the raja is in another castle\we got him
 		desc = rahenraj.5001.d1
 	}
 	desc = {
+		trigger = {
+			has_saved_event_target = raja_castle_not_ours
+			has_saved_event_target = go_there_vizier
+		}
+		desc = rahenraj.5001.d3
+	}
+	desc = {
+		trigger = { has_saved_event_target = raja_castle_not_ours }
+		desc = rahenraj.5001.d4
+	}
+	desc = {
 		trigger = { NOT = { has_saved_event_target = got_raja } }
 		desc = rahenraj.5001.d2
 	}
@@ -2867,6 +2832,7 @@ country_event = {	#the raja is in another castle\we got him
 			}
 			random_list = {
 				25 = {
+					trigger = { NOT = { has_saved_event_target = raja_castle_not_ours } }
 					save_event_target_as = got_raja
 					set_country_flag = vizier_captured_raja
 				}
@@ -2875,6 +2841,9 @@ country_event = {	#the raja is in another castle\we got him
 					hidden_effect = {
 						event_target:go_there_vizier = { set_province_flag = raja_new_castle }
 					}
+				}
+				1 = {
+					trigger = { has_saved_event_target = raja_castle_not_ours }
 				}
 			}
 		}
@@ -2888,8 +2857,20 @@ country_event = {	#the raja is in another castle\we got him
 
 	option = {
 		name = rahenraj.5001.b
+		goto = go_there_vizier
 		trigger = { NOT = { has_saved_event_target = got_raja } }
 		custom_tooltip = raja_another_castle_tt
+	}
+
+	option = {
+		name = rahenraj.5001.c
+		trigger = {
+			NOT = {
+				has_saved_event_target = got_raja
+				has_saved_event_target = go_there_vizier
+			}
+		}
+		custom_tooltip = others_got_raja_tt
 	}
 }
 
@@ -3135,11 +3116,44 @@ country_event = {
 	picture = TIGER_BODYGUARD_eventPicture
 	
 	is_triggered_only = yes
+	trigger = {
+		event_target:prabhi_victim = {
+			OR = {
+				any_neighbor_country = {
+					is_subject_of_type = daimyo_vassal
+					ai = yes
+					NOT = {
+						truce_with = ROOT
+						war_with = ROOT
+					}
+				}
+				any_ally = {
+					is_subject_of_type = daimyo_vassal
+					ai = yes
+					NOT = {
+						truce_with = ROOT
+						war_with = ROOT
+					}
+				}
+			}
+		}
+	}
 
 	option = {
 		name = rahenraj.5010.a
 		event_target:prabhi_victim = {
 			every_neighbor_country = {
+				limit = {
+					is_subject_of_type = daimyo_vassal
+					ai = yes
+					NOT = {
+						truce_with = ROOT
+						war_with = ROOT
+					}
+				}
+				join_all_defensive_wars_of = overlord
+			}
+			every_ally = {
 				limit = {
 					is_subject_of_type = daimyo_vassal
 					ai = yes
