@@ -3366,74 +3366,105 @@ end_suhans_reformation = {
 		set_global_flag = suhan_reformation_over
 	}
 }
+
 ###############
 ### Raj 3.0 ###
 ###############
-rahen_raj_calc_cohesion = {	#use only inside raja country scope
+rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 	4411 = {
-		set_variable = { which = raj_var_cohesion value = 0 }
-		set_variable = { which = raj_var_cohesion_impact_num_senaptia value = 0 }
 
-		# Legitimacy
-		export_to_variable = { variable_name = raj_var_cohesion_impact_legitimacy value = trigger_value:legitimacy who = PREV }
-		change_variable = { which = raj_var_cohesion_impact_legitimacy value = -50 }
-		divide_variable = { which = raj_var_cohesion_impact_legitimacy value = 3.5 }
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_legitimacy }
-		round_variable = { which = raj_var_cohesion_impact_legitimacy value = 0 }
+		# ----------------------------- #
+		#      Cohesion Modifiers       #
+		# ----------------------------- #
 
-		# Prestige
-		export_to_variable = { variable_name = raj_var_cohesion_impact_prestige value = trigger_value:prestige who = PREV }
-		divide_variable = { which = raj_var_cohesion_impact_prestige value = 10 }
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_prestige }
-		round_variable = { which = raj_var_cohesion_impact_prestige value = 0 }
+		# Cohesion - Initialize/Reset Variables
+		set_variable = 			{ which = raj_var_cohesion value = 0 } # Total cohesion value
+		set_variable = 			{ which = raj_var_cohesion_impact_num_senaptia value = 0 } # Senaptia impact on cohesion
+		set_variable = 			{ which = raj_var_vizier_ld value = 0 } # Vizier liberty desire
+		set_variable = 			{ which = raj_var_subject_weighed_ld value = 0 } # Weighted average of subject liberty desire
+		set_variable = 			{ which = raj_var_subject_development_total value = 0 } # Total subject development
 
-		# War exhaustion
-		export_to_variable = { variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion who = PREV }
-		multiply_variable = { which = raj_var_cohesion_impact_war_exhaustion value = 1.8 }
-		subtract_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_war_exhaustion }
-		round_variable = { which = raj_var_cohesion_impact_war_exhaustion value = 0 }
+		# Cohesion - Legitimacy
+		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_legitimacy value = trigger_value:legitimacy who = PREV }
+		change_variable = 		{ which = raj_var_cohesion_impact_legitimacy value = -50 }
+		divide_variable = 		{ which = raj_var_cohesion_impact_legitimacy value = 3.5 }
+		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_legitimacy }
+		round_variable = 		{ which = raj_var_cohesion_impact_legitimacy value = 0 }
 
-		# Stability
-		export_to_variable = { variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
-		if = { limit = { PREV = { NOT = { stability = 0 } } }	# For some reason the trigger value is one higher than it should be at negative stab?
-			subtract_variable = { which = raj_var_cohesion_impact_stability value = 1 }
+		# Cohesion - Prestige
+		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_prestige value = trigger_value:prestige who = PREV }
+		divide_variable = 		{ which = raj_var_cohesion_impact_prestige value = 10 }
+		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_prestige }
+		round_variable = 		{ which = raj_var_cohesion_impact_prestige value = 0 }
+
+		# Cohesion - War Exhaustion
+		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion who = PREV }
+		multiply_variable = 	{ which = raj_var_cohesion_impact_war_exhaustion value = 1.8 }
+		subtract_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_war_exhaustion }
+		round_variable = 		{ which = raj_var_cohesion_impact_war_exhaustion value = 0 }
+
+		# Cohesion - Stability
+		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
+		if = { limit = { PREV = { NOT = { stability = 0 } } }
+			subtract_variable = { which = raj_var_cohesion_impact_stability value = 1 } # Compensating for trigger value +1 than expected at negative stab
 		}
-		multiply_variable = { which = raj_var_cohesion_impact_stability value = 4 }
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_stability }
-		
-		# Subject loyalty and number of senapti.
-		set_variable = { which = raj_var_subject_weighed_ld 		value = 0 }
-		set_variable = { which = raj_var_subject_development_total 	value = 0 }
+		multiply_variable = 	{ which = raj_var_cohesion_impact_stability value = 4 }
+		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_stability }
+
+		# Cohesion - Power Projection
+		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_power_projection value = trigger_value:power_projection who = PREV }
+		divide_variable = 		{ which = raj_var_cohesion_impact_power_projection value = 10 }
+		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_power_projection }
+
+		# Cohesion - Vizier Liberty Desire
+		PREV = {
+			every_subject_country = {
+				if = {
+					limit = { 
+						has_reform = vizier_reform
+						liberty_desire = 25
+					}
+					export_to_variable = 	{ which = raj_var_vizier_ld value = trigger_value:liberty_desire who = PREV }
+					subtract_variable = 	{ which = raj_var_vizier_ld value = 25 } # Only values above 25% modify cohesion
+					multiply_variable = 	{ which = raj_var_vizier_ld value = -0.3 }
+					change_variable = 		{ which = raj_var_cohesion which = raj_var_vizier_ld }
+					round_variable = 		{ which = raj_var_vizier_ld value = 0 }
+				}
+			}
+		}
+
+		# Cohesion - Subject Loyalty
 		PREV = {
             every_subject_country = {
 				4411 = {
-					export_to_variable = { which = raj_var_subject_ld_individual value = trigger_value:liberty_desire who = PREV }
-					export_to_variable = { which = raj_var_subject_dev_individual value = trigger_value:total_development who = PREV }
-					set_variable = { which = raj_var_subject_ld_balancing which = raj_var_subject_ld_individual }
-					change_variable = {	raj_var_subject_ld_balancing = -50 }
-					multiply_variable = { which = raj_var_subject_ld_balancing value = 0.2 }	# to increase impact of very high or very low cohesion
-					change_variable = { which = raj_var_subject_ld_individual which = raj_var_subject_ld_balancing }
-					change_variable = { which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
-					multiply_variable = { which = raj_var_subject_ld_individual     which = raj_var_subject_dev_individual }
-					change_variable = { which = raj_var_subject_weighed_ld         which = raj_var_subject_ld_individual }
+					export_to_variable = 	{ which = raj_var_subject_ld_individual 	value = trigger_value:liberty_desire who = PREV }
+					export_to_variable = 	{ which = raj_var_subject_dev_individual 	value = trigger_value:total_development who = PREV }
+					set_variable = 			{ which = raj_var_subject_ld_balancing 		which = raj_var_subject_ld_individual }
+					change_variable = 		{ raj_var_subject_ld_balancing = -50 }
+					multiply_variable = 	{ which = raj_var_subject_ld_balancing 		value = 0.2 } # Increases impact of very high/low cohesion
+					change_variable = 		{ which = raj_var_subject_ld_individual 	which = raj_var_subject_ld_balancing }
+					change_variable = 		{ which = raj_var_subject_development_total which = raj_var_subject_dev_individual }
+					multiply_variable = 	{ which = raj_var_subject_ld_individual     which = raj_var_subject_dev_individual }
+					change_variable = 		{ which = raj_var_subject_weighed_ld        which = raj_var_subject_ld_individual }
 				}
             }
         }
-		divide_variable = { which = raj_var_subject_weighed_ld 	which = raj_var_subject_development_total }
+		divide_variable = 	{ which = raj_var_subject_weighed_ld 	which = raj_var_subject_development_total }
 		set_variable = 		{ which = raj_var_cohesion_impact_subject_loyalty value = 100 }
 		subtract_variable = { which = raj_var_cohesion_impact_subject_loyalty which = raj_var_subject_weighed_ld }
 		multiply_variable = { which = raj_var_cohesion_impact_subject_loyalty value = 0.4 }
 		
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_subject_loyalty }
-		round_variable = { which = raj_var_cohesion_impact_subject_loyalty value = 0 }
+		change_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_subject_loyalty }
+		round_variable = 	{ which = raj_var_cohesion_impact_subject_loyalty value = 0 }
 
+		# Cohesion - Senapti Below Maximum
 		if = { 
 			limit = { raj_below_allowed_senaptia = yes }
 			change_variable = {	which = raj_var_cohesion_impact_num_senaptia value = -5 }
 			change_variable = { which = raj_var_cohesion value = -5 }
 		}
 
-		# Ministries loyalty
+		# Cohesion - Ministries Loyalty
 		PREV = {
 			if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 50 } } # 50-100
 				if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 77 } } # 77-100
@@ -3474,6 +3505,7 @@ rahen_raj_calc_cohesion = {	#use only inside raja country scope
 						}
 					}
 				}
+
 				else = { # 50-76
 					if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 64 } } # 64-76
 						if = { limit = { estate_loyalty = { estate = estate_raj_ministries loyalty = 70 } } # 70-76
@@ -3578,17 +3610,17 @@ rahen_raj_calc_cohesion = {	#use only inside raja country scope
 				}
 			}
 		}
-		set_variable = { which = raj_var_cohesion_impact_ministries which = PREV }
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_ministries }
-		round_variable = { which = raj_var_cohesion_impact_ministries value = 0 }
+		set_variable = 		{ which = raj_var_cohesion_impact_ministries which = PREV }
+		change_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_ministries }
+		round_variable = 	{ which = raj_var_cohesion_impact_ministries value = 0 }
 
-		# Power projection
-		export_to_variable = { variable_name = raj_var_cohesion_impact_power_projection value = trigger_value:power_projection who = PREV }
-		divide_variable = { which = raj_var_cohesion_impact_power_projection value = 10 }
-		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_power_projection }
 		
-		#Bonus
+		
+		# Cohesion - Other Bonuses & Maluses
 		PREV = {
+
+			# - Ministry Agenda Timeouts
+			# - - Successful Agenda
 			if = {
 				limit = {
 					has_country_flag = raj_agenda_cohesion_set
@@ -3597,6 +3629,7 @@ rahen_raj_calc_cohesion = {	#use only inside raja country scope
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
 				clr_country_flag = raj_agenda_cohesion_set
 			}
+			# - - Failed Agenda
 			if = {
 				limit = {
 					has_country_flag = raj_agenda_cohesion_bad_set
@@ -3605,22 +3638,66 @@ rahen_raj_calc_cohesion = {	#use only inside raja country scope
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
 				clr_country_flag = raj_agenda_cohesion_bad_set
 			}
+			
+
+			# - Different Vizier Nominated Malus Timeouts
+			# - - High Influence
+			if = {
+				limit = { had_country_flag = { flag = high_vizier_malus days = 3650 } }
+				clr_country_flag = high_vizier_malus
+				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+			}
+			# - - Medium Influence
+			if = {
+				limit = { had_country_flag = { flag = med_vizier_malus days = 3650 } }
+				clr_country_flag = med_vizier_malus
+				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+			}
+			# - - Low Influence
+			if = {
+				limit = { had_country_flag = { flag = low_vizier_malus days = 3650 } }
+				clr_country_flag = low_vizier_malus
+				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+			}
+			
 		}
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_bonus }
 
-		divide_variable = { which = raj_var_cohesion value = 100 }
+		# ----------------------------- #
+		#        Other Functions        #
+		# ----------------------------- #
+
+		# Trim Cohesion To 2 Decimal Places
+		divide_variable = 	{ which = raj_var_cohesion value = 100 }
 		multiply_variable = { which = raj_var_cohesion value = 100 }
 
+		# Prevent Cohesion Overflow
 		if = {
-			limit = {
-				check_variable = { which = raj_var_cohesion value = 100 }
+			limit = { check_variable = { which = raj_var_cohesion value = 100 } }
+			set_variable = 	{ which = raj_var_cohesion value = 100 }
+		}
+
+		# Calculate Vizier Dev Fraction
+		PREV = { 
+			if = {
+				limit = { NOT = { has_country_flag = pause_vizier_influence_calc } }
+				every_subject_country = { 
+					if = { limit = { has_reform = vizier_reform }
+						export_to_variable = { 
+							which = raj_var_vizier_influence 
+							value = trigger_value:development_of_overlord_fraction 
+							who = PREV 
+						} 
+					}
+				} 
 			}
-			set_variable = { which = raj_var_cohesion value = 100 }
 		}
 	}
 }
 
-raj_cohesion_change_bonus = {	#might be useful later
+# Use this to immediately update Cohesion's "Other Boni & Mali" with a player-facing effect
+# Modify 'raj_var_cohesion_impact_bonus' directly for backend calculations
+raj_cohesion_change_bonus = {
 	if = {
 		limit = {
 			NOT = { has_global_flag = destroyed_raj }
@@ -3630,6 +3707,95 @@ raj_cohesion_change_bonus = {	#might be useful later
 			event_target:raj_raja_global_target = { rahen_raj_calc_cohesion = yes }
 		}
 		tooltip = { change_variable = { which = raj_var_cohesion value = $amount$ } }
+	}
+}
+
+# Assigns a cohesion malus based on previous vizier influence
+# Made to cut down on the length of the vizier nomination event since this would happen per event option
+raj_vizier_influence_malus = {
+	# - High Influence: > 60%
+	if = { 
+		limit = { 
+			event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.6001 } 
+		}
+		
+		hidden_effect = {
+			# If current effect exists already, clear it and recalc cohesion
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = high_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = high_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
+				event_target:raj_raja_global_target = { rahen_raj_calc_cohesion = yes }
+			}
+
+			# Remove lower tier maluses if they already exist
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = med_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = med_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 15 } }
+			}
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = low_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = low_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
+			}
+
+			# Set the malus flag and lower cohesion
+			event_target:raj_raja_global_target = { set_country_flag = high_vizier_malus }
+			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -25 } }
+		}
+		
+	}
+
+	# - Medium Influence: 30% - 60%
+	if = { 
+		limit = { 
+			event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.3001 } 
+			NOT = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.6 } }
+		}
+		
+		hidden_effect = {
+			# If current effect exists already, clear it and recalc cohesion
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = med_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = med_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 15 } }
+				event_target:raj_raja_global_target = { rahen_raj_calc_cohesion = yes }
+			}
+
+			# Remove lower tier maluses if they already exist
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = low_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = low_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
+			}
+
+			# Set the malus flag and lower cohesion
+			event_target:raj_raja_global_target = { set_country_flag = med_vizier_malus }
+			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -15 } }
+		}
+	}
+
+	# - Low Influence: < 30%
+	if = { 
+		limit = { 
+			event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0 } 
+			NOT = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.3 } }
+		}
+		
+		
+		hidden_effect = {
+			# If current effect exists already, clear it and recalc cohesion
+			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = low_vizier_malus } }
+				event_target:raj_raja_global_target = { clr_country_flag = low_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
+				event_target:raj_raja_global_target = { rahen_raj_calc_cohesion = yes }
+			}
+
+			# Remove lower tier maluses if they already exist
+			# N/A
+
+			# Set the malus flag and lower cohesion
+			event_target:raj_raja_global_target = { set_country_flag = low_vizier_malus }
+			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
+
+			
+		}
 	}
 }
 
