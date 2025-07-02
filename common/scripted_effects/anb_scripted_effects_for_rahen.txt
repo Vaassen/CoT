@@ -3373,10 +3373,6 @@ end_suhans_reformation = {
 rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 	4411 = {
 
-		# ----------------------------- #
-		#      Cohesion Modifiers       #
-		# ----------------------------- #
-
 		# Cohesion - Initialize/Reset Variables
 		set_variable = 			{ which = raj_var_cohesion value = 0 } # Total cohesion value
 		set_variable = 			{ which = raj_var_cohesion_impact_num_senaptia value = 0 } # Senaptia impact on cohesion
@@ -3406,7 +3402,7 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		# Cohesion - Stability
 		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
 		if = { limit = { PREV = { NOT = { stability = 0 } } }
-			subtract_variable = { which = raj_var_cohesion_impact_stability value = 1 } # Compensating for trigger value +1 than expected at negative stab
+			subtract_variable = { which = raj_var_cohesion_impact_stability value = 1 } # Compensating for trigger value being +1 than expected at negative stab
 		}
 		multiply_variable = 	{ which = raj_var_cohesion_impact_stability value = 4 }
 		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_stability }
@@ -3453,7 +3449,6 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		set_variable = 		{ which = raj_var_cohesion_impact_subject_loyalty value = 100 }
 		subtract_variable = { which = raj_var_cohesion_impact_subject_loyalty which = raj_var_subject_weighed_ld }
 		multiply_variable = { which = raj_var_cohesion_impact_subject_loyalty value = 0.4 }
-		
 		change_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_subject_loyalty }
 		round_variable = 	{ which = raj_var_cohesion_impact_subject_loyalty value = 0 }
 
@@ -3615,7 +3610,6 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		round_variable = 	{ which = raj_var_cohesion_impact_ministries value = 0 }
 
 		
-		
 		# Cohesion - Other Bonuses & Maluses
 		PREV = {
 
@@ -3663,21 +3657,18 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		}
 		change_variable = { which = raj_var_cohesion which = raj_var_cohesion_impact_bonus }
 
-		# ----------------------------- #
-		#        Other Functions        #
-		# ----------------------------- #
-
-		# Trim Cohesion To 2 Decimal Places
+		
+		# Other - Trim Cohesion To 2 Decimal Places
 		divide_variable = 	{ which = raj_var_cohesion value = 100 }
 		multiply_variable = { which = raj_var_cohesion value = 100 }
 
-		# Prevent Cohesion Overflow
+		# Other - Prevent Cohesion Overflow
 		if = {
 			limit = { check_variable = { which = raj_var_cohesion value = 100 } }
 			set_variable = 	{ which = raj_var_cohesion value = 100 }
 		}
 
-		# Calculate Vizier Dev Fraction
+		# Other - Calculate Vizier Dev Fraction
 		PREV = { 
 			if = {
 				limit = { NOT = { has_country_flag = pause_vizier_influence_calc } }
@@ -3692,6 +3683,9 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 				} 
 			}
 		}
+
+		# Grant & Update Vizier Influence Modifiers
+		raj_vizier_influence_modifiers = yes
 	}
 }
 
@@ -3710,6 +3704,118 @@ raj_cohesion_change_bonus = {
 	}
 }
 
+# Give Raja and Senaptia buffs/debuffs based on vizier influence
+raj_vizier_influence_modifiers = {
+	# - High Influence
+	if = { limit = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.6001 } }
+
+		# Set Raja Modifiers
+		event_target:raj_raja_global_target = { 
+			# - Remove other Raja modifiers
+			remove_country_modifier = rahen_raj_med_vizier_influence_mods_raja 
+			remove_country_modifier = rahen_raj_low_vizier_influence_mods_raja
+
+			# - Grant high influence Raja modifier
+			add_country_modifier = { 
+				name = rahen_raj_high_vizier_influence_mods_raja 
+				duration = -1
+			}
+		}
+
+		# Set Senapti Modifiers
+		event_target:raj_raja_global_target = {
+			every_subject_country = { 
+				limit = { has_reform = senapti_reform }
+
+				# - Remove other Senapti modifiers
+				remove_country_modifier = rahen_raj_med_vizier_influence_mods_senapti
+				remove_country_modifier = rahen_raj_low_vizier_influence_mods_senapti
+
+				# - Grant high influence Senapti modifier
+				add_country_modifier = { 
+					name = rahen_raj_high_vizier_influence_mods_senapti 
+					duration = -1
+				}
+			}
+		}
+	}
+
+	# - Medium Influence
+	if = { 
+		limit = { 
+			event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.3001 } 
+			NOT = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.6 } }
+		}
+		# Set Raja Modifiers
+		event_target:raj_raja_global_target = { 
+			# - Remove other Raja modifiers
+			remove_country_modifier = rahen_raj_high_vizier_influence_mods_raja 
+			remove_country_modifier = rahen_raj_low_vizier_influence_mods_raja
+
+			# - Grant high influence Raja modifier
+			add_country_modifier = { 
+				name = rahen_raj_med_vizier_influence_mods_raja 
+				duration = -1
+			}
+		}
+
+		# Set Senapti Modifiers
+		event_target:raj_raja_global_target = {
+			every_subject_country = { 
+				limit = { has_reform = senapti_reform }
+
+				# - Remove other Senapti modifiers
+				remove_country_modifier = rahen_raj_high_vizier_influence_mods_senapti
+				remove_country_modifier = rahen_raj_low_vizier_influence_mods_senapti
+
+				# - Grant high influence Senapti modifier
+				add_country_modifier = { 
+					name = rahen_raj_med_vizier_influence_mods_senapti 
+					duration = -1
+				}
+			}
+		}
+	}
+
+	# - Low Influence
+	if = { 
+		limit = { 
+			event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0 } 
+			NOT = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.3 } }
+		}
+
+		# Set Raja Modifiers
+		event_target:raj_raja_global_target = { 
+			# - Remove other Raja modifiers
+			remove_country_modifier = rahen_raj_high_vizier_influence_mods_raja 
+			remove_country_modifier = rahen_raj_med_vizier_influence_mods_raja
+
+			# - Grant high influence Raja modifier
+			add_country_modifier = { 
+				name = rahen_raj_low_vizier_influence_mods_raja 
+				duration = -1
+			}
+		}
+
+		# Set Senapti Modifiers
+		event_target:raj_raja_global_target = {
+			every_subject_country = { 
+				limit = { has_reform = senapti_reform }
+
+				# - Remove other Senapti modifiers
+				remove_country_modifier = rahen_raj_high_vizier_influence_mods_senapti
+				remove_country_modifier = rahen_raj_med_vizier_influence_mods_senapti
+
+				# - Grant high influence Senapti modifier
+				add_country_modifier = { 
+					name = rahen_raj_low_vizier_influence_mods_senapti 
+					duration = -1
+				}
+			}
+		}
+	}
+}
+
 # Assigns a cohesion malus based on previous vizier influence
 # Made to cut down on the length of the vizier nomination event since this would happen per event option
 raj_vizier_influence_malus = {
@@ -3720,7 +3826,7 @@ raj_vizier_influence_malus = {
 		}
 		
 		hidden_effect = {
-			# If current effect exists already, clear it and recalc cohesion
+			# If current effect exists already, clear it to be refreshed and recalc cohesion
 			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = high_vizier_malus } }
 				event_target:raj_raja_global_target = { clr_country_flag = high_vizier_malus }
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
@@ -3737,7 +3843,8 @@ raj_vizier_influence_malus = {
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
 			}
 
-			# Set the malus flag and lower cohesion
+			# If higher flag isn't present, set the malus flag and lower cohesion
+			# N/A
 			event_target:raj_raja_global_target = { set_country_flag = high_vizier_malus }
 			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -25 } }
 		}
@@ -3752,7 +3859,7 @@ raj_vizier_influence_malus = {
 		}
 		
 		hidden_effect = {
-			# If current effect exists already, clear it and recalc cohesion
+			# If current effect exists already, clear it to be refreshed and recalc cohesion
 			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = med_vizier_malus } }
 				event_target:raj_raja_global_target = { clr_country_flag = med_vizier_malus }
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 15 } }
@@ -3765,9 +3872,16 @@ raj_vizier_influence_malus = {
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 5 } }
 			}
 
-			# Set the malus flag and lower cohesion
-			event_target:raj_raja_global_target = { set_country_flag = med_vizier_malus }
-			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -15 } }
+			# If higher flag isn't present, set the malus flag and lower cohesion
+			if = { 
+				limit = {
+					NOT = { event_target:raj_raja_global_target = { has_country_flag = high_vizier_malus } } 
+				}
+
+				event_target:raj_raja_global_target = { set_country_flag = med_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -15 } }
+			}
+			
 		}
 	}
 
@@ -3778,9 +3892,8 @@ raj_vizier_influence_malus = {
 			NOT = { event_target:raj_vizier_global_target = { development_of_overlord_fraction = 0.3 } }
 		}
 		
-		
 		hidden_effect = {
-			# If current effect exists already, clear it and recalc cohesion
+			# If current effect exists already, clear it to be refreshed and recalc cohesion
 			if = { limit = { event_target:raj_raja_global_target = { has_country_flag = low_vizier_malus } }
 				event_target:raj_raja_global_target = { clr_country_flag = low_vizier_malus }
 				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
@@ -3790,11 +3903,16 @@ raj_vizier_influence_malus = {
 			# Remove lower tier maluses if they already exist
 			# N/A
 
-			# Set the malus flag and lower cohesion
-			event_target:raj_raja_global_target = { set_country_flag = low_vizier_malus }
-			4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
+			# If higher flag isn't present, set the malus flag and lower cohesion
+			if = { 
+				limit = { AND = {
+					NOT = { event_target:raj_raja_global_target = { has_country_flag = high_vizier_malus } }
+					NOT = { event_target:raj_raja_global_target = { has_country_flag = med_vizier_malus } }
+				} }
 
-			
+				event_target:raj_raja_global_target = { set_country_flag = low_vizier_malus }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = -5 } }
+			}
 		}
 	}
 }
