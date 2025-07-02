@@ -177,6 +177,25 @@ transfer_trade_power = {
 				FROM = { set_country_flag = transfers_trade_to_feiten }
 			}
 		}
+		if = {
+			limit = {
+				has_global_flag = z22_can_have_giesadh
+			}
+			if = {
+				limit = {
+					FROM = { is_or_was_tag = { tag = Z22 } }
+					alliance_with = FROM
+				}
+				z22_giesadh_check_effect = yes
+			}
+			else_if = {
+				limit = {
+					is_or_was_tag = { tag = Z22 }
+					FROM = { alliance_with = ROOT }
+				}
+				FROM = { z22_giesadh_check_effect = yes }
+			}
+		}
 	}
 }
 
@@ -623,6 +642,21 @@ declarewar = {
 				is_right_subject_type_xhazobkult = yes
 			}
 			ai = yes
+		}
+		allow = {
+			always = no
+		}
+	}
+	
+	condition = {
+		tooltip = konol_shadowflame_block_war
+		potential = { 
+			F66 = { has_disaster = konolkhatep_xhaz_disaster }
+			OR = {
+				FROM = { tag = F67 }
+				FROM = { tag = F66 }
+				tag = F67
+			}
 		}
 		allow = {
 			always = no
@@ -1922,6 +1956,23 @@ allianceaction = {
 			always = no
 		}
 	}
+
+	condition = {
+		tooltip = L53_tiboktsamo_no_allies_tooltip
+		potential = {
+			OR = {
+				AND = { #ROOT
+					tag = L53
+					has_country_modifier = L53_the_tower_stands_alone
+				}
+				FROM = {
+					tag = L53
+					has_country_modifier = L53_the_tower_stands_alone
+				}
+			}
+		}
+		allow = { always = no }
+	}
 }
 
 enforce_peace = {
@@ -2515,6 +2566,109 @@ royal_marriage = {
 			}
 			else = {
 				ruby_gardens_wedding_effect = { owner = FROM target = ROOT tier = 2 ae = -10 }
+			}
+		}
+	}
+
+	pre_effect = {
+		if = { #Parahechend - Para sends offer to vassal
+			limit = { 
+				mission_completed = J81_3_1_cunning_trick_crushing_maul 
+				FROM = { 
+					is_subject_of = ROOT 
+					NOT = {
+						dynasty = "Rakulacan"
+						heir_dynasty = "Rakulacan"
+					}
+				}
+			}
+			FROM = {
+				define_ruler = {
+					dynasty = "Rakulacan"
+				}
+				capital_scope = {
+					spawn_rebels = {
+						size = 3
+						type = pretender_rebels
+					}
+				}
+			}
+			if = {
+				limit = { mission_completed = J81_3_5_the_empire_of_blood }
+				FROM = {
+					add_ruler_modifier = {
+						name = J81_rakulacan_tyranny
+						duration = -1
+					}
+				}
+			}
+			else_if = {
+				limit = { mission_completed = J81_2_2_keeping_it_in_the_family }
+				FROM = {
+					add_ruler_modifier = {
+						name = J81_rakulacan_rule
+						duration = -1
+					}
+				}
+			}
+			if = {
+				limit = { has_country_flag = J81_rakulacan_vampire_subjects_flag }
+				FROM = {
+					set_country_flag = J81_rakulacan_vampires_flag
+					set_country_flag = has_vampires_estate
+					ruler_become_vampire = yes
+					clear_vampire_law = yes
+					clear_vampire_organization = yes
+					country_event = {
+						id = taychendi_empire_events.3003
+						days = 2
+					}
+				}
+			}
+		}
+		if = { #Parahechend - Vassal sends offer to Para
+			limit = { 
+				FROM = { mission_completed = J81_3_1_cunning_trick_crushing_maul }
+				is_subject_of = FROM 
+				NOT = {
+					dynasty = "Rakulacan"
+					heir_dynasty = "Rakulacan"
+				}
+			}
+			define_ruler = {
+				dynasty = "Rakulacan"
+			}
+			capital_scope = {
+				spawn_rebels = {
+					size = 3
+					type = pretender_rebels
+				}
+			}
+			if = {
+				limit = { FROM = { mission_completed = J81_3_5_the_empire_of_blood } }
+				add_ruler_modifier = {
+					name = J81_rakulacan_tyranny
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { FROM = { mission_completed = J81_2_2_keeping_it_in_the_family } }
+				add_ruler_modifier = {
+					name = J81_rakulacan_rule
+					duration = -1
+				}
+			}
+			if = {
+				limit = { FROM = { has_country_flag = J81_rakulacan_vampire_subjects_flag } }
+				set_country_flag = J81_rakulacan_vampires_flag
+				set_country_flag = has_vampires_estate
+				ruler_become_vampire = yes
+				clear_vampire_law = yes
+				clear_vampire_organization = yes
+				country_event = {
+					id = taychendi_empire_events.3003
+					days = 2
+				}
 			}
 		}
 	}
@@ -3776,6 +3930,23 @@ requestpeace = {
 			}
 		}
 	}
+	condition = { #Khatalashya Space War
+		tooltip = HIVEMIND_INVASION_WAR_NAME_tt
+		potential = {
+			OR = {
+				tag = S81
+				has_reform = space_colony_government
+			}
+		}
+		allow = {
+			NOT = {
+				AND = {
+					is_in_war = { casus_belli = cb_hivemind_war }
+					FROM = { is_in_war = { casus_belli = cb_hivemind_war } }
+				}
+			}
+		}
+	}
 }
 
 support_heir = {
@@ -3791,6 +3962,19 @@ support_heir = {
 }
 
 break_alliance = {
+	condition = {
+		tooltip = z22_new_world_giesadh_TT
+		potential = {
+			has_country_flag = z22_is_permanent_giesadh
+		}
+		allow = {
+			NOT = {
+				FROM = {
+					is_or_was_tag = { tag = Z22 }
+				}
+			}
+		}
+	}
 	effect = {
 		on_alliance_broken_effect = yes
 	}
@@ -4012,6 +4196,18 @@ intervene_in_war = {
 	}
 }
 
+religious_unity_action = {
+	condition = {
+		tooltip = NO_SUBJECT_EOA_CONVERSION
+		potential = {
+			FROM = {
+				is_subject = yes
+				NOT = { is_subject_of = ROOT }
+			}
+		}
+		allow = { always = no }
+	}
+}
 takeondebt = {
 	effect = {
 		if = { 
