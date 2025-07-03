@@ -9725,6 +9725,13 @@ kheionai_the_kheionolyklos = {
 	effect = {
 		custom_tooltip = kheionai_the_kheionolyklos_effect_tt
 	}
+	
+	removed_effect = {
+		every_owned_province = {
+			remove_province_modifier = kheionai_the_kheionolyklos_good_mod
+			remove_province_modifier = kheionai_the_kheionolyklos_bad_mod
+		}
+	}
 
 	custom_attributes = {
 		has_parliament = yes
@@ -9732,7 +9739,7 @@ kheionai_the_kheionolyklos = {
 	}
 }
 
-kheionai_the_urban_litea = { #TODO
+kheionai_the_urban_litea = {
 	icon = "free_city"
 	potential = {
 		culture_group = kheionai_ruinborn_elf
@@ -9741,12 +9748,56 @@ kheionai_the_urban_litea = { #TODO
 	modifiers = {
 		governing_cost = 0.1
 		governing_capacity_modifier = -0.15
+		expand_infrastructure_cost_modifier = -0.5
 	}
 
 	effect = {
+		custom_tooltip = kheionai_the_urban_litea_effect_tt
+		#Expand Infra Effect must account for:
+		#	Expanding infrastructure +
+		#	Reducing infrastructure - Not possible
+		#	Gaining dev +
+		#	Losing dev +
+		#	Gaining a province +
+		#	Gaining this reform +
+		hidden_effect = {
+			every_owned_province = {
+				limit = { 
+					has_terrain = city_terrain
+					area_for_scope_province = {
+						type = all
+						NOT = { has_province_modifier = kheionai_the_urban_litea_state_mod }
+					}
+				}
+				add_province_modifier = {
+					name = kheionai_the_urban_litea_state_mod
+					duration = -1
+				}
+			}
+			every_owned_province = {
+				limit = { 
+					OR = {
+						has_terrain = city_terrain
+						AND = {
+							development = 20
+							num_of_times_expanded_infrastructure = 1
+							NOT = { region = alecand_region }
+							region_for_scope_province = {
+								type = all
+								NOT = { higher_development_than = PREV }
+							}
+						}
+					}
+				}
+				add_urban_litea_modifiers = yes
+			}
+		}
 	}
-
-	custom_attributes = {
+	
+	removed_effect = {
+		every_owned_province = {
+			remove_urban_litea_modifiers = yes
+		}
 	}
 }
 
@@ -9773,10 +9824,6 @@ kheionai_gelmonian_rule = {
 		reelection_cost = -0.2
 		global_unrest = 2
 		global_manpower_modifier = 0.05
-	}
-
-	effect = {
-		custom_tooltip = kheionai_gelmonian_rule_effect_tt #TODO
 	}
 
 	custom_attributes = {
