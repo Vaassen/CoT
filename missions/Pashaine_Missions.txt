@@ -220,29 +220,43 @@ pashaine_1 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			OR = {  
-				custom_trigger_tooltip = {
-					tooltip = obj_religious_league_war_on_winning_side_tooltip
-					has_country_flag = religious_league_war_on_winning_side
-				}
-				AND = {
-					has_global_flag = peace_of_esmaria
-					hre_religion_treaty = yes
-					diplomatic_reputation = 6
-				}
-				AND = {
-					hre_religion_locked = yes
+			if = {
+				limit = { hre_size = 1 }
+				OR = {  
 					custom_trigger_tooltip = {
-						tooltip = pashaine_lost_league_tt
-						NOT = { has_country_flag = religious_league_war_on_winning_side }
+						tooltip = obj_religious_league_war_on_winning_side_tooltip
+						has_country_flag = religious_league_war_on_winning_side
 					}
-					diplomatic_reputation = 9
-					prestige = 50
+					AND = {
+						has_global_flag = peace_of_esmaria
+						hre_religion_treaty = yes
+						diplomatic_reputation = 6
+					}
+					AND = {
+						hre_religion_locked = yes
+						custom_trigger_tooltip = {
+							tooltip = pashaine_lost_league_tt
+							NOT = { has_country_flag = religious_league_war_on_winning_side }
+						}
+						diplomatic_reputation = 9
+						prestige = 50
+					}
 				}
+			}
+			else = {
+				adm_power = 100
+				dip_power = 100
+				mil_power = 100
 			}
 		} 
 
-		effect = {  
+		effect = {
+			if = {
+				limit = { NOT = { hre_size = 1 } }
+				add_adm_power = -100
+				add_dip_power = -100
+				add_mil_power = -100
+			}
 			complex_dynamic_effect = {
 				first_custom_tooltip = pashaine_won_league_reward_tt
 				first_limit = "has_country_flag = religious_league_war_on_winning_side"
@@ -1327,49 +1341,57 @@ pashaine_5 = {
 
 		trigger = {  
 			diplomatic_reputation = 4
-			OR = {
-				emperor = {
-					has_opinion = {
-						who = ROOT
-						value = 150
-					}
-				}
-				AND = {
-					is_rival = emperor
-					emperor = { NOT = { prestige = ROOT } }
-				}
-			}
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = pashaine_prepare_legislation_elector_1_tt
-					is_elector = yes
-					calc_true_if = {
-						all_known_country = {
-							is_elector = yes
-							has_opinion = {
-								who = ROOT
-								value = 150
-							}
+			if = {
+				limit = { hre_size = 1 }
+				OR = {
+					emperor = {
+						has_opinion = {
+							who = ROOT
+							value = 150
 						}
-						amount = 3
+					}
+					AND = {
+						is_rival = emperor
+						emperor = { NOT = { prestige = ROOT } }
 					}
 				}
-				custom_trigger_tooltip = {
-					tooltip = pashaine_prepare_legislation_elector_2_tt
-					all_known_country = {
-						OR = {
-							NOT = { is_elector = yes }
-							OR = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = pashaine_prepare_legislation_elector_1_tt
+						is_elector = yes
+						calc_true_if = {
+							all_known_country = {
+								is_elector = yes
 								has_opinion = {
 									who = ROOT
 									value = 150
 								}
-								humiliated_by = ROOT
-								has_been_eclipsed_by = ROOT
+							}
+							amount = 3
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = pashaine_prepare_legislation_elector_2_tt
+						all_known_country = {
+							OR = {
+								NOT = { is_elector = yes }
+								OR = {
+									has_opinion = {
+										who = ROOT
+										value = 150
+									}
+									humiliated_by = ROOT
+									has_been_eclipsed_by = ROOT
+								}
 							}
 						}
 					}
 				}
+			}
+			else = {
+				adm_power = 100
+				dip_power = 100
+				dip_power = 100
 			}
 		} 
 
@@ -1378,6 +1400,14 @@ pashaine_5 = {
 			country_event = { #The Chancellor Of The Empire
 				id = flavour_pashaine.3 
 				days = 365 #1 year
+			}
+			if = {
+				limit = { 
+					NOT = { hre_size = 1 }
+				}
+				add_adm_power = -100
+				add_dip_power = -100
+				add_dip_power = -100
 			}
 		} 
 	}
@@ -1764,7 +1794,11 @@ pashaine_2_post_prelude = {
 					has_building = fort_18th
 				}
 			}
-			capital_scope = { higher_development_than = 8 }
+			capital_scope = { 
+				higher_development_than = 8 #Anbenncost
+				has_any_ongoing_construction = no
+				has_siege = no
+			}
 			treasury = 3500
 		} 
 
@@ -1803,6 +1837,7 @@ pashaine_2_post_prelude = {
 					destroy_great_project = {
 						type = imperial_palace_anbenncost
 					}
+					set_province_flag = imperial_palace_destroyed_flag
 				}
 				capital_scope = {
 					set_province_flag = palace_of_unity
@@ -1907,10 +1942,24 @@ pashaine_3_post_prelude = {
 
 		trigger = {  
 			pashaine_clue_check = { amount = 6 }
-			has_country_modifier = pashaine_careful_maneouvering
+			if = {
+				limit = { hre_size = 1 }
+				has_country_modifier = pashaine_careful_maneouvering
+			}
+			else = {
+				adm_power = 300
+				dip_power = 300
+				mil_power = 300
+			}
 		} 
 
-		effect = {  
+		effect = {
+			if = {
+				limit = { NOT = { hre_size = 1 } }
+				add_adm_power = -300
+				add_dip_power = -300
+				add_mil_power = -300
+			}  
 			country_event = { id = flavour_pashaine.18 }
 			custom_tooltip = pashaine_empire_war_warning_tt
 		} 
@@ -2280,8 +2329,12 @@ pashaine_5_post_prelude = {
 					}
 				}
 			}
-			has_estate_privilege = estate_burghers_exclusive_trade_rights
-			has_estate_privilege = estate_burghers_development_of_cities
+			if = { limit = { has_dlc = "Emperor" }
+				has_estate_privilege = estate_burghers_exclusive_trade_rights
+			}
+			if = { limit = { has_dlc = "Domination" }
+				has_estate_privilege = estate_burghers_development_of_cities
+			}
 		} 
 
 		effect = {
@@ -2645,14 +2698,18 @@ pashaine_1_post_unity = {
 					duration = -1
 				}
 			}
-			hidden_effect = {  
-				every_owned_province = {
-					limit = { has_building = university }
-					add_province_modifier = {
-						name = pashaine_market_of_ideas
-						duration = -1
-					}
-				}
+			hidden_effect = {
+				for = {
+					amount = 50
+					effect = "
+						random_owned_province = {
+						limit = { has_building = university }
+						add_province_modifier = {
+							name = pashaine_market_of_ideas
+							duration = -1
+						}
+					}"
+				}  
 			}
 			allow_double_radical_reforms = yes
 		} 
@@ -3289,6 +3346,8 @@ pashaine_4_post_unity = {
 					limit = { 
 						continent = europe
 						trade_goods = wool
+						has_production_manufactory_or_gold_trigger = yes
+						development = 15
 					}
 					change_trade_goods = cloth
 				}
