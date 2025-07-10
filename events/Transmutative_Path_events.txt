@@ -10,7 +10,7 @@ province_event = { #province level interaction stage 1
 	is_triggered_only = yes
 
 	immediate = {
-		hidden_effect = { owner = { set_country_flag = transmutative_path_infuse_chi_menu_open } }
+		hidden_effect = { owner = { set_country_flag = transmutative_path_infuse_chi_menu_open save_event_target_as = province_owner_target } }
 	}
 	option = { #back out
 		name = transmutative_path.1.a
@@ -24,8 +24,13 @@ province_event = { #province level interaction stage 1
 		custom_tooltip = build_chi_wellspring_tt
 		if = {
 			limit = {
-				NOT = { transmutative_path_has_chi_wellspring_trigger = yes }
-				NOT = { has_province_flag = no_chi_wellspring }
+				province_has_no_chi_wellspring_trigger = yes
+				NOT = {
+					any_neighbor_province = {
+						owned_by = event_target:province_owner_target
+						province_has_chi_wellspring_trigger = yes
+					}
+				}
 				NOT = { transmutative_path_infuse_province_trigger = yes }
 				NOT = { is_capital = yes }
 				development = 10
@@ -324,7 +329,7 @@ province_event = { #province level interaction stage 2
 	}
 }
 
-province_event = {
+province_event = { #For conquering a Chi Wellspring, destroy it unless conditions are right
 	id = transmutative_path.3
 	title = transmutative_path.3.t
 	desc = transmutative_path.3.d
@@ -333,58 +338,28 @@ province_event = {
 	is_triggered_only = yes
 	hidden = yes
 
-	trigger = {
-		owner = {
-			religion = transmutative_path
-		}
-	}
+	trigger = { province_has_chi_wellspring_trigger = yes }
 
 	immediate = {
-		owner = { save_event_target_as = transmutative_path_wellspring_calc_event_target }
-	}
+		owner = { save_event_target_as = province_owner_target }
 
-	option = {
-		name = transmutative_path.3.a
 		if = {
 			limit = {
-				transmutative_path_has_chi_wellspring_trigger = yes
-				any_neighbor_province = {
-					owned_by = event_target:transmutative_path_wellspring_calc_event_target
-					transmutative_path_has_chi_wellspring_trigger = yes
+				OR = {
+					owner = { NOT = { religion = transmutative_path } }
+					any_neighbor_province = {
+						owned_by = event_target:province_owner_target
+						province_has_chi_wellspring_trigger = yes
+					}
 				}
 			}
 			transmutative_path_destroy_chi_wellspring_effect = yes
 			owner = { country_event = { id = transmutative_path.4 } }
 		}
-		else_if = {
-			limit = {
-				has_province_flag = no_chi_wellspring
-				all_neighbor_province = {
-					OR = {
-						AND = {
-							owned_by = event_target:transmutative_path_wellspring_calc_event_target
-							transmutative_path_has_chi_wellspring_trigger = no
-						}
-						NOT = {
-							owned_by = event_target:transmutative_path_wellspring_calc_event_target
-						}
-					}
-				}
-			}
-			clr_province_flag = no_chi_wellspring
-		}
-		else_if = {
-			limit = {
-				NOT = {
-					has_province_flag = no_chi_wellspring
-				}
-				any_neighbor_province = {
-					owned_by = event_target:transmutative_path_wellspring_calc_event_target
-					transmutative_path_has_chi_wellspring_trigger = yes
-				}
-			}
-			set_province_flag = no_chi_wellspring
-		}
+	}
+
+	option = {
+		name = transmutative_path.3.a
 	}
 }
 
@@ -396,9 +371,7 @@ country_event = { #Chi Overload
 
 	is_triggered_only = yes
 
-	trigger = {
-		religion = transmutative_path
-	}
+	trigger = { religion = transmutative_path }
 
 	option = {
 		name = transmutative_path.4.a
@@ -414,9 +387,7 @@ country_event = { #Minor Chi Overload
 
 	is_triggered_only = yes
 
-	trigger = {
-		religion = transmutative_path
-	}
+	trigger = { religion = transmutative_path }
 
 	option = {
 		name = transmutative_path.5.a
