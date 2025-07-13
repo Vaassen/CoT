@@ -1,5 +1,10 @@
 namespace = shuvuush
 
+# 0 : religion
+# 1 - 9 : carryover from past, regional events
+# 10 - 99 : Horse Races and related
+# 100+ : MT events
+
 country_event = { #Saanorgegh swap personal deity
 	id = shuvuush.0
 	title = shuvuush.0.t
@@ -86,6 +91,20 @@ country_event = { #The Faceless Queen
 			duration = -1
 		}
 		custom_tooltip = nuugdan_raze_hint
+
+		if = { #AI has to handle stuff by itself
+			limit = { ai = yes }
+			4919 = {
+				remove_building = fort_15th
+				add_core_construction = { speed = 1 cost = 1 }
+			}
+			4921 = {
+				add_base_tax = -1
+				remove_loot = { who = ROOT amount = 10 }
+				add_core_construction = { speed = 1 cost = 1 }
+			}
+			add_adm_power = 25
+		}
 	}
 }
 
@@ -127,6 +146,659 @@ country_event = { #Remove the spirit-farm settlements
 		5417 = { if = { limit = { trade_goods = wool } change_trade_goods = grain } }
 		5408 = { if = { limit = { trade_goods = wool } change_trade_goods = grain } }
 		5412 = { if = { limit = { trade_goods = wool } change_trade_goods = grain } }
+	}
+}
+country_event = { #Selling Noble titles to tribals
+	id = shuvuush.4
+	title = shuvuush.4.t
+	picture = DECLARATION_INDEPENDENCE_eventPicture
+	desc = shuvuush.4.d
+
+	is_triggered_only = yes
+	trigger = { has_estate = estate_nobles }
+	
+	option = { #Sell no titles
+		name = shuvuush.4.a
+		ai_chance = { factor = 0 }
+		add_prestige = 5
+		add_estate_loyalty = {
+			estate = estate_nobles
+			loyalty = 5
+		}
+		every_owned_province = {
+			limit = {
+				OR = {
+					culture = shuvuush
+					culture = guwaadun
+					culture = daxug
+				}
+			}
+			add_unrest = 2
+		}
+	}
+
+	option = { #Sell a few titles
+		name = shuvuush.4.b
+		ai_chance = { factor = 0 }
+		add_years_of_income = 0.2
+		add_estate_loyalty = {
+			estate = estate_nobles
+			loyalty = -5
+		}
+		add_prestige = -5
+		add_legitimacy = -5
+	}
+	
+	option = { #Sell a bunch of titles
+		name = shuvuush.4.c
+		ai_chance = { factor = 0 }
+		add_years_of_income = 0.5
+		add_estate_loyalty = {
+			estate = estate_nobles
+			loyalty = -10
+		}
+		add_prestige = -10
+		add_legitimacy = -10
+	}
+	
+	option = { #Sell a ridiculous amount of titles
+		name = shuvuush.4.e
+		ai_chance = { factor = 100 }
+		add_years_of_income = 1
+		add_estate_loyalty = {
+			estate = estate_nobles
+			loyalty = -15
+		}
+		add_prestige = -20
+		add_legitimacy = -20
+	}
+}
+
+country_event = { #fear of yanshen
+	id = shuvuush.5
+	title = shuvuush.5.t
+	picture = GIFTS_TO_EMPEROR_eventPicture
+	desc = shuvuush.5.d
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	major = yes
+	
+	trigger = {
+		OR = {
+			primary_culture = shuvuush
+			primary_culture = kuuldaar
+		}
+		owns_or_subject_of = 4859 #Yanzhong
+		owns_or_subject_of = 4868 #Jiangdu
+		owns_or_subject_of = 4842 #Jincheng
+	}
+	
+	option = { #cower before us!
+		name = shuvuush.5.a
+		ai_chance = { factor = 100 }
+
+		add_splendor = 800
+		add_power_projection = {
+			type = mission_rewards_power_projection
+			amount = 20
+		}
+		add_country_modifier = {
+			name = shuvuush_fear_of_yanshen
+			duration = 7300
+		}
+	}
+}
+
+country_event = { #danggun Peace treaty event
+	id = shuvuush.6
+	title = shuvuush.6.t
+	picture = LAND_MILITARY_eventPicture
+	desc = shuvuush.6.d
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { #Rework -- consider if kuuldaar culture should get this event?
+		OR = {
+			primary_culture = shuvuush
+			primary_culture = kuuldaar
+		}
+		if = {
+			limit = { ai = no }
+			is_in_war = {
+				defenders = Y93
+				attackers = ROOT
+				casus_belli = cb_horde_vs_civ
+			}
+			war_score_against = {
+				who = Y93
+				value = 60
+			}
+			NOT = {
+				AND = {
+					ondeok_area = {
+						type = all
+						OR = {
+							owned_by = Y91
+							owned_by = Y92
+						}
+					}
+					jangaram_area = {
+						type = all
+						OR = {
+							owned_by = Y91
+							owned_by = Y92
+						}
+					}
+				}
+			}
+		}
+		else = {
+			is_in_war = {
+				defenders = Y93
+				attackers = ROOT
+				casus_belli = cb_horde_vs_civ
+			}
+			war_score_against = {
+				who = Y93
+				value = 35
+			}
+		}
+	}
+
+	option = {
+		name = shuvuush.6.a
+		ai_chance = { factor = 100 }
+		if = {
+			limit = {
+				Y93 = {
+					ai = yes
+				}
+			}
+			tooltip = {
+				white_peace = Y93
+				Y93 = {
+					every_owned_province = {
+						limit = { is_core = Y92 } #Rung Igedch
+						cede_province = Y92
+					}
+				}
+				joolgimudi_area = {
+					limit = { owned_by = Y93 } #Danggun
+					cede_province = Y92
+				}
+				jangaram_area = {
+					limit = { owned_by = Y93 }
+					cede_province = Y92
+				}
+				ondeok_area = {
+					limit = { owned_by = Y93 }
+					cede_province = Y91 #Nuugdan Tsarai
+				}
+				zunkazhad_area = {
+					limit = { owned_by = Y93 }
+					cede_province = Y91
+				}
+				zirariik_area = {
+					limit = { owned_by = Y93 }
+					cede_province = Y91
+				}
+				4910 = {
+					if = {
+						limit = { owned_by = Y93 }
+						cede_province = Y14 #Zhiqian
+					}
+				}
+				4909 = {
+					if = {
+						limit = { owned_by = Y93 }
+						cede_province = Y15 #Beikdugang
+					}
+				}
+				4908 = {
+					if = {
+						limit = { owned_by = Y93 }
+						cede_province = Y15 #Beikdugang
+					}
+				}
+				Y93 = {
+					add_treasury = -150
+				}
+				add_treasury = 100
+				Y92 = { add_treasury = 50 }
+				add_power_projection = {
+					type = mission_rewards_power_projection
+					amount = 20
+				}
+			}
+			hidden_effect = {
+				Y93 = {
+					country_event = {
+						id = shuvuush.7
+					}
+				}
+			}
+		}
+		else = {
+			Y93 = {
+				country_event = {
+					id = shuvuush.7
+				}
+			}
+		}
+	}
+
+	option = {
+		name = shuvuush.6.b
+		ai_chance = { factor = 0 }
+	}
+}
+
+country_event = { #danggun Receives treaty offer
+	id = shuvuush.7
+	title = shuvuush.7.t
+	picture = LAND_MILITARY_eventPicture
+	desc = shuvuush.7.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = shuvuush.7.a
+		ai_chance = { factor = 100 }
+		white_peace = Y91
+		every_owned_province = {
+			limit = { is_core = Y92 } #Rung Igedch
+			cede_province = Y92
+		}
+		joolgimudi_area = {
+			limit = { owned_by = ROOT }
+			cede_province = Y92
+		}
+		jangaram_area = {
+			limit = { owned_by = ROOT }
+			cede_province = Y92
+		}
+		ondeok_area = {
+			limit = { owned_by = ROOT }
+			cede_province = Y91 #Nuugdan Tsarai
+		}
+		zunkazhad_area = {
+			limit = { owned_by = ROOT }
+			cede_province = Y91
+		}
+		zirariik_area = {
+			limit = { owned_by = ROOT }
+			cede_province = Y91
+		}
+		4910 = {
+			if = {
+				limit = { owned_by = ROOT }
+				cede_province = Y14 #Zhiqian
+			}
+		}
+		4909 = {
+			if = {
+				limit = { owned_by = ROOT }
+				cede_province = Y15 #Beikdugang
+			}
+		}
+		4908 = {
+			if = {
+				limit = { owned_by = ROOT }
+				cede_province = Y15 #Beikdugang
+			}
+		}
+		add_treasury = -150
+		Y92 = { add_treasury = 50 }
+		Y91 = {
+			add_power_projection = {
+				type = mission_rewards_power_projection
+				amount = 20
+			}
+			add_treasury = 100
+		}
+	}
+
+	option = {
+		name = shuvuush.7.b
+		ai_chance = { factor = 0 }
+		Y91 = {
+			country_event = {
+				id = shuvuush.8
+			}
+		}
+	}
+}
+
+country_event = { #danggun rejects offer
+	id = shuvuush.8
+	title = shuvuush.8.t
+	picture = LAND_MILITARY_eventPicture
+	desc = shuvuush.8.d
+
+	is_triggered_only = yes
+
+	option = {
+		name = shuvuush.8.a
+		ai_chance = { factor = 100 }
+	}
+}
+
+country_event = { #Shuvuush Festival Duel Invites
+	id = shuvuush.10
+	title = shuvuush.10.t
+	picture = HORDE_ON_HORSEBACK_eventPicture
+	desc = shuvuush.10.d
+	
+	trigger = {
+		OR = {
+			primary_culture = shuvuush
+			primary_culture = kuuldaar
+			primary_culture = daxug
+		}
+		NOT = { has_country_flag = shuvuush_participating_in_festival }
+		NOT = { has_global_flag = shuvuush_do_not_start_a_festival }
+	}
+	
+	immediate = { set_country_flag = shuvuush_participating_in_festival }
+	
+	option = { #Ruler
+		name = shuvuush.10.b
+		trigger = { has_regency = no }
+		ai_chance = { factor = 100 }
+		add_years_of_income = -0.05
+		set_country_flag = shuvuush_ruler_participating
+		set_country_flag = shuvuush_picked_tournament_participants
+	}
+	
+	option = { #Heir
+		name = shuvuush.10.c
+		trigger = {
+			has_heir = yes
+			heir_age = 15
+		}
+		ai_chance = { factor = 100 }
+		add_years_of_income = -0.05
+		set_country_flag = shuvuush_heir_participating
+		set_country_flag = shuvuush_picked_tournament_participants
+	}
+	
+	option = { #Observe
+		name = shuvuush.10.e
+		ai_chance = { factor = 1 }
+		set_country_flag = shuvuush_picked_tournament_participants
+	}
+	
+	after = { country_event = { id = shuvuush.11 } }
+}
+
+country_event = { #Shuvuush festival calculation - replace with North Haless Rework when horse races are in
+	id = shuvuush.11
+	title = shuvuush.11.t
+	picture = HORDE_ON_HORSEBACK_eventPicture
+	desc = shuvuush.11.d
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	trigger = {
+		all_known_country = {
+			OR = {
+				NOT = {
+					primary_culture = shuvuush
+					primary_culture = kuuldaar
+					primary_culture = daxug
+				}
+				has_country_flag = shuvuush_picked_tournament_participants
+			}
+		}
+	}
+	
+	immediate = { set_global_flag = shuvuush_do_not_start_a_festival } #Avoids firing the event multiple times
+	
+	option = {
+		name = shuvuush.11.a
+
+		every_known_country = {
+			limit = { has_country_flag = shuvuush_picked_tournament_participants }
+			
+			set_variable = { shuvuush_win_chance = 100 } #Base used for RNG, lowest ultimate variable wins
+
+			if = { #ruler modifiers
+				limit = { has_country_flag = shuvuush_ruler_participating }
+
+				trigger_switch = { #ruler mil matters
+					on_trigger = MIL
+
+					6 = { multiply_variable = { shuvuush_win_chance = 0.7 } }
+					5 = { multiply_variable = { shuvuush_win_chance = 0.75 } }
+					4 = { multiply_variable = { shuvuush_win_chance = 0.8 } }
+					3 = { multiply_variable = { shuvuush_win_chance = 0.85 } }
+					2 = { multiply_variable = { shuvuush_win_chance = 0.9 } }
+					1 = { multiply_variable = { shuvuush_win_chance = 0.95 } }
+				}
+
+				if = { limit = { ruler_has_personality = malevolent_personality } #ruler personality matters
+					multiply_variable = { shuvuush_win_chance = 0.9 } }
+				if = { limit = { ruler_has_personality = conqueror_personality }
+					multiply_variable = { shuvuush_win_chance = 0.9 } }
+				if = { limit = { ruler_has_personality = bold_fighter_personality }
+					multiply_variable = { shuvuush_win_chance = 0.9 } }
+				if = { limit = { ruler_has_personality = martial_educator_personality }
+					multiply_variable = { shuvuush_win_chance = 0.9 } }
+				if = { limit = { ruler_has_personality = great_conqueror_personality }
+					multiply_variable = { shuvuush_win_chance = 0.75 } }
+			}
+			else_if = { #heir modifiers
+				limit = { has_country_flag = shuvuush_heir_participating }
+
+				trigger_switch = { #heir mil matters
+					on_trigger = heir_mil
+
+					6 = { multiply_variable = { shuvuush_win_chance = 0.7 } }
+					5 = { multiply_variable = { shuvuush_win_chance = 0.75 } }
+					4 = { multiply_variable = { shuvuush_win_chance = 0.8 } }
+					3 = { multiply_variable = { shuvuush_win_chance = 0.85 } }
+					2 = { multiply_variable = { shuvuush_win_chance = 0.9 } }
+					1 = { multiply_variable = { shuvuush_win_chance = 0.95 } }
+				}
+
+				trigger_switch = { #heirs can only have one personality
+					on_trigger = heir_has_personality
+
+					malevolent_personality = { multiply_variable = { shuvuush_win_chance = 0.9 } }
+					bold_fighter_personality = { multiply_variable = { shuvuush_win_chance = 0.9 } }
+					martial_educator_personality = { multiply_variable = { shuvuush_win_chance = 0.9 } }
+					great_conqueror_personality = { multiply_variable = { shuvuush_win_chance = 0.75 } }
+				}
+			}
+
+			if = { limit = { has_country_modifier = Y98_propaganda_reform_modifier } #MT content
+				multiply_variable = { shuvuush_win_chance = 0.9 } }
+
+			REB = {
+				set_variable = { shuvuush_current_winner = 100 }
+				random_variable = { which = shuvuush_win_chance which = PREV }
+				
+				if = { #lowest wins
+					limit = { check_variable = { which = shuvuush_current_winner which = shuvuush_win_chance } }
+					set_variable = { which = shuvuush_current_winner which = shuvuush_win_chance }
+					PREV = { save_event_target_as = shuvuush_tournament_winner }
+				}
+			}
+		}
+
+		every_known_country = {
+			limit = { has_country_flag = shuvuush_picked_tournament_participants }
+			country_event = { id = shuvuush.12 }
+		}
+	}
+}
+
+country_event = { #Tournament outcome
+	id = shuvuush.12
+	title = shuvuush.12.t
+	picture = HORDE_ON_HORSEBACK_eventPicture
+	desc = shuvuush.12.d
+	
+	is_triggered_only = yes
+	
+	immediate = { clr_country_flag = shuvuush_participating_in_festival }
+	
+	
+	option = { #Ruler won
+		trigger = { event_target:shuvuush_tournament_winner = { has_country_flag = shuvuush_ruler_participating } }
+		name = shuvuush.12.a
+		ai_chance = { factor = 100 }
+		if = {
+			limit = { tag = event_target:shuvuush_tournament_winner }
+			add_prestige = 20
+			add_legitimacy = 20
+			add_years_of_income = 0.5
+			add_army_tradition = 5
+			add_yearly_manpower = 0.5
+			if = {
+				limit = { NOT = { mil = 6 } }
+				change_mil = 1
+			}
+			else = {
+				add_mil_power = 50
+			}
+		}
+		if = {
+			limit = { 
+				event_target:shuvuush_tournament_winner = {
+					tag = ROOT
+					has_country_modifier = Y98_propaganda_reform_modifier 
+				} 
+			}
+			event_target:shuvuush_tournament_winner = { 
+				country_event = { id = daxugo.50 }
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = shuvuush_ruler_participating
+				NOT = { event_target:shuvuush_tournament_winner = { tag = ROOT } }
+			}
+			random = {
+				chance = 5
+				kill_ruler = yes
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = shuvuush_heir_participating
+				NOT = { event_target:shuvuush_tournament_winner = { tag = ROOT } }
+			}
+			random = {
+				chance = 5
+				kill_heir = { }
+			}
+		}
+	}
+	
+	option = { #Heir won
+		trigger = { event_target:shuvuush_tournament_winner = { has_country_flag = shuvuush_heir_participating } }
+		name = shuvuush.12.b
+		ai_chance = { factor = 100 }
+		if = {
+			limit = { event_target:shuvuush_tournament_winner = { tag = ROOT } }
+			add_prestige = 10
+			add_legitimacy = 5
+			add_heir_claim = 50
+			add_years_of_income = 0.25
+			add_army_tradition = 2.5
+			add_manpower = 1
+			if = {
+				limit = { NOT = { heir_mil = 6 } }
+				change_heir_mil = 1
+			}
+			else = {
+				add_mil_power = 50
+			}
+		}
+		if = {
+			limit = { 
+				event_target:shuvuush_tournament_winner = {
+					tag = ROOT
+					has_country_modifier = Y98_propaganda_reform_modifier 
+				} 
+			}
+			event_target:shuvuush_tournament_winner = { 
+				country_event = { id = daxugo.51 }
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = shuvuush_ruler_participating
+				NOT = { event_target:shuvuush_tournament_winner = { tag = ROOT } }
+			}
+			random = {
+				chance = 5
+				kill_ruler = yes
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = shuvuush_heir_participating
+				NOT = { event_target:shuvuush_tournament_winner = { tag = ROOT } }
+			}
+			random = {
+				chance = 5
+				kill_heir = { }
+			}
+		}
+	}
+	
+	after = {
+		hidden_effect = {
+			clr_country_flag = shuvuush_ruler_participating
+			clr_country_flag = shuvuush_heir_participating
+			clr_global_flag = shuvuush_do_not_start_a_festival
+			clr_country_flag = shuvuush_picked_tournament_participants
+
+			country_event = { id = shuvuush.13 } #Nuugdan Tsarai gets an event from Tsuista Khul
+		}
+	}
+}
+
+country_event = { #Tsuista Khul Deal
+	id = shuvuush.13
+	title = shuvuush.13.t
+	picture = GIFTS_TO_EMPEROR_eventPicture
+	desc = shuvuush.13.d
+	
+	fire_only_once = yes
+	is_triggered_only = yes
+	trigger = { tag = Y91 }
+	
+	option = {
+		name = shuvuush.13.a
+		ai_chance = { factor = 100 }
+		add_years_of_income = -0.2
+		reverse_add_opinion = {
+			who = Y90
+			modifier = wesdam_high_marriage
+		}
+		if = {
+			limit = { has_consort = yes }
+			remove_consort_effect = yes
+		}
+		define_consort = {
+			name = "Jaales Hookhoi"
+			adm = 1
+			dip = 1
+			mil = 3
+			age = 21
+		}
+		create_marriage = Y90
+	}
+	
+	option = {
+		name = shuvuush.13.b
+		ai_chance = { factor = 100 }
 	}
 }
 
