@@ -1492,15 +1492,17 @@ magic_on_heir_death = {
 		set_variable = { which = current_experience_percent value = 0 }
 	}
 	if = {
-		limit = { heir_is_powerful_mage = yes }
+		limit = { heir_is_not_powerful_mage = yes }
 		remove_country_modifier = heir_mage_personality_mod
 	}
+	clr_type_witch_king_points = { type = heir }
 }
 magic_on_consort_death = {
 	if = {
 		limit = { consort_is_not_powerful_mage = yes }
 		remove_country_modifier = consort_mage_personality_mod
 	}
+	clr_type_witch_king_points = { type = heir }
 }
 
 set_heir_mage_effect = {
@@ -1892,8 +1894,8 @@ create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 
 ### Quick explanation of how the witch-king system works:
 # Everyone can get witch-king points. Rulers. Heirs. Consorts. Estate.
-### We do this via flags. This has the benefit of carrying over between exiles, transfers of rulership, etc.
-### Downside is that it looks really icky and complicated if you don't know binary counting
+### Characters with witch-king points get a flag to tell us that they have it. The actual value is stored in a variable.
+### This lets us transfer between different infamy variables when characters change out
 
 # There are five brackets of witch-kinginess:
 ### 0-3 (Paragon), 4-7 (Respected), 8-11 (Suspicious), 12-15 (Denounced), 16-31 (Witch-King)
@@ -1924,11 +1926,11 @@ become_a_witch_king_effect = {
 		remove_country_modifier = infamy_denounced_modifier
 		remove_country_modifier = infamy_suspicious_modifier
 		remove_country_modifier = infamy_respected_modifier
+		change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
 	}
 	set_country_flag = ruled_by_witch_king
-	set_ruler_flag = 16_witch_king_points #in case they weren't there already
 
-	if = {
+	if = { #If this is a revival, we'll have kept the flag
 		limit = { has_country_flag = witch_king_thorns }
 		add_ruler_modifier = { name = witch_king_thorns_modifier duration = -1 }
 		add_ruler_modifier = { name = illusion_0_0_mod duration = -1 }
@@ -2049,176 +2051,60 @@ calculate_magical_infamy_modifier = {
 }
 increase_type_witch_king_points_small = { #1 point
 	custom_tooltip = increase_$type$_witch_king_points_small
-	if = {
-		limit = { NOT = { has_$type$_flag = 1_witch_king_point } }
-		set_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 2_witch_king_points } }
-		set_$type$_flag = 2_witch_king_points
-		clr_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
-		set_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-		clr_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
-		set_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-		clr_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
-		set_$type$_flag = 16_witch_king_points
-		clr_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-		clr_$type$_flag = 1_witch_king_point
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		change_variable = { $type$_witch_king_points = 1 }
 	}
 }
 increase_type_witch_king_points_medium = { #2 points
 	custom_tooltip = increase_$type$_witch_king_points_medium
-	if = {
-		limit = { NOT = { has_$type$_flag = 2_witch_king_points } }
-		set_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
-		set_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
-		set_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
-		set_$type$_flag = 16_witch_king_points
-		clr_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-		clr_$type$_flag = 2_witch_king_points
-	}
-	else = {
-		set_$type$_flag = 1_witch_king_point
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		change_variable = { $type$_witch_king_points = 2 }
 	}
 }
 increase_type_witch_king_points_large = { #4 points
 	custom_tooltip = increase_$type$_witch_king_points_large
-	if = {
-		limit = { NOT = { has_$type$_flag = 4_witch_king_points } }
-		set_$type$_flag = 4_witch_king_points
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 8_witch_king_points } }
-		set_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-	}
-	else_if = {
-		limit = { NOT = { has_$type$_flag = 16_witch_king_points } }
-		set_$type$_flag = 16_witch_king_points
-		clr_$type$_flag = 8_witch_king_points
-		clr_$type$_flag = 4_witch_king_points
-	}
-	else = {
-		set_$type$_flag = 1_witch_king_point
-		set_$type$_flag = 2_witch_king_points
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		change_variable = { $type$_witch_king_points = 4 }
 	}
 }
 decrease_type_witch_king_points_small = { #1 point
 	custom_tooltip = decrease_$type$_witch_king_points_small
-	if = {
-		limit = { has_$type$_flag = 1_witch_king_point }
-		clr_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { has_$type$_flag = 2_witch_king_points }
-		clr_$type$_flag = 2_witch_king_points
-		set_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { has_$type$_flag = 4_witch_king_points }
-		clr_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-		set_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { has_$type$_flag = 8_witch_king_points }
-		clr_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-		set_$type$_flag = 1_witch_king_point
-	}
-	else_if = {
-		limit = { has_$type$_flag = 16_witch_king_points }
-		clr_$type$_flag = 16_witch_king_points
-		set_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-		set_$type$_flag = 1_witch_king_point
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		subtract_variable = { $type$_witch_king_points = 1 }
 	}
 }
 decrease_type_witch_king_points_medium = { #2 points
 	custom_tooltip = decrease_$type$_witch_king_points_medium
-	if = {
-		limit = { has_$type$_flag = 2_witch_king_points }
-		clr_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { has_$type$_flag = 4_witch_king_points }
-		clr_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { has_$type$_flag = 8_witch_king_points }
-		clr_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-	}
-	else_if = {
-		limit = { has_$type$_flag = 16_witch_king_points }
-		clr_$type$_flag = 16_witch_king_points
-		set_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-		set_$type$_flag = 2_witch_king_points
-	}
-	else = {
-		clr_$type$_flag = 1_witch_king_point
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		subtract_variable = { $type$_witch_king_points = 2 }
 	}
 }
 decrease_type_witch_king_points_large = { #4 points
 	custom_tooltip = decrease_$type$_witch_king_points_large
-	if = {
-		limit = { has_$type$_flag = 4_witch_king_points }
-		clr_$type$_flag = 4_witch_king_points
-	}
-	else_if = {
-		limit = { has_$type$_flag = 8_witch_king_points }
-		clr_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-	}
-	else_if = {
-		limit = { has_$type$_flag = 16_witch_king_points }
-		clr_$type$_flag = 16_witch_king_points
-		set_$type$_flag = 8_witch_king_points
-		set_$type$_flag = 4_witch_king_points
-	}
-	else = {
-		clr_$type$_flag = 1_witch_king_point
-		clr_$type$_flag = 2_witch_king_points
+	hidden_effect = {
+		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		subtract_variable = { $type$_witch_king_points = 4 }
 	}
 }
 clr_type_witch_king_points = {
-	clr_$type$_flag = 16_witch_king_points
-	clr_$type$_flag = 8_witch_king_points
-	clr_$type$_flag = 4_witch_king_points
-	clr_$type$_flag = 2_witch_king_points
-	clr_$type$_flag = 1_witch_king_points
+	hidden_effect = {
+		clr_$type$_flag = is_infamous_$type$ #We check for this when transferring points
+		set_variable = { $type$_witch_king_points = 0 }
+	}
+}
+transfer_witch_king_points = {
+	hidden_effect = {
+		set_$to$_flag = is_infamous_$to$
+		set_variable = { which = $to$_witch_king_points which = $from$_witch_king_points }
+		clr_$to$_flag = is_infamous_$from$ #Because it's usually a ruler who was a consort/heir
+		clr_$from$_flag = is_infamous_$from$
+		set_variable = { which = $from$_witch_king_points = 0 }
+	}
 }
 
 increase_ruler_witch_king_points = {
