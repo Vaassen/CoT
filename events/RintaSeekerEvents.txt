@@ -5230,6 +5230,7 @@ country_event = {
 
 	option = {
 		name = none
+		set_global_flag = incident_rinta_light_up_the_night_sky_ongoing_flag
 		6678 = { #Qasri Maroodiqya
 			set_variable = { which = rinta_telescope_lvl_0_5_cost value = 0 }
 			
@@ -5256,6 +5257,9 @@ country_event = {
 			
 			set_variable = { which = rinta_telescope_lvl_0_25_cost which = rinta_telescope_lvl_0_5_cost }
 			divide_variable = { which = rinta_telescope_lvl_0_25_cost value = 2 }
+			
+			set_variable = { which = rinta_telescope_lvl_0_75_cost which = rinta_telescope_lvl_0_5_cost }
+			change_variable = { which = rinta_telescope_lvl_0_75_cost which = rinta_telescope_lvl_0_25_cost }
 
 			set_variable = { which = rinta_telescope_lvl_1_cost which = rinta_telescope_lvl_0_5_cost }
 			multiply_variable = { which = rinta_telescope_lvl_1_cost value = 2 } #Level 1 is 2 YoI, Lvl 2 is 5 YoI, etc.
@@ -5290,6 +5294,7 @@ country_event = {
 				limit = { is_incident_active = incident_rinta_light_up_the_night_sky }
 				set_variable = { which = rinta_telescope_lvl_0_25_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_0_5_cost which = PREV }
+				set_variable = { which = rinta_telescope_lvl_0_75_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_1_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_1_5_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_2_cost which = PREV }
@@ -5299,6 +5304,11 @@ country_event = {
 				set_variable = { which = rinta_telescope_lvl_4_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_4_5_cost which = PREV }
 				set_variable = { which = rinta_telescope_lvl_5_cost which = PREV }
+			}
+
+			set_variable = {
+				which = rinta_stole_funds_var
+				value = 0
 			}
 		}
 	}
@@ -5353,7 +5363,7 @@ country_event = {
 			name = RS_mwalim_purpose
 			duration = -1
 		}
-		custom_tooltip = rinte_incident_modifier_tt
+		custom_tooltip = rinta_incident_modifier_tt
 	}
 
 	option = {
@@ -5363,7 +5373,7 @@ country_event = {
 			name = RS_darwiiz_purpose
 			duration = -1
 		}
-		custom_tooltip = rinte_incident_modifier_tt
+		custom_tooltip = rinta_incident_modifier_tt
 	}
 
 	option = {
@@ -5372,7 +5382,7 @@ country_event = {
 			name = RS_none_purpose
 			duration = -1
 		}
-		custom_tooltip = rinte_incident_modifier_tt
+		custom_tooltip = rinta_incident_modifier_tt
 		add_estate_loyalty = {
 			estate = estate_church
 			loyalty = -5
@@ -5467,7 +5477,7 @@ country_event = {
 			name = RS_none_power
 			duration = -1
 		}
-		custom_tooltip = rinte_incident_modifier_tt
+		custom_tooltip = rinta_incident_modifier_tt
 		add_estate_loyalty = {
 			estate = estate_church
 			loyalty = -5
@@ -5749,7 +5759,7 @@ country_event = {
 			name = RS_darwiiz_foreigners
 			duration = -1
 		}
-		custom_tooltip = rinte_incident_modifier_tt
+		custom_tooltip = rinta_incident_modifier_tt
 	}
 
 	option = {
@@ -5765,21 +5775,219 @@ country_event = {
 }
 
 country_event = {
-	id = rinta_seeker_events.509 #Ending Event
-	title = rinta_seeker_events.509.t
-	desc = rinta_seeker_events.509.desc
+	id = rinta_seeker_events.509 #Hidden Ending Event
+	title = none
+	desc = none
+	picture = none
+
+	fire_only_once = yes
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = none
+		#Determine what level telescope you hit
+		6678 = { #Qasri Maroodiqya
+			if = {
+				limit = {
+					check_variable = {
+						which = rinta_telescope_amount_raised
+						which = rinta_telescope_lvl_5_cost
+					}
+				}
+				set_global_flag = rinta_telescope_hit_lvl_5_flag
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						which = rinta_telescope_amount_raised
+						which = rinta_telescope_lvl_4_cost
+					}
+				}
+				set_global_flag = rinta_telescope_hit_lvl_4_flag
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						which = rinta_telescope_amount_raised
+						which = rinta_telescope_lvl_3_cost
+					}
+				}
+				set_global_flag = rinta_telescope_hit_lvl_3_flag
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						which = rinta_telescope_amount_raised
+						which = rinta_telescope_lvl_2_cost
+					}
+				}
+				set_global_flag = rinta_telescope_hit_lvl_2_flag
+			}
+			else_if = {
+				limit = {
+					check_variable = {
+						which = rinta_telescope_amount_raised
+						which = rinta_telescope_lvl_1_cost
+					}
+				}
+				set_global_flag = rinta_telescope_hit_lvl_1_flag
+			}
+		}
+
+		#Determine who invested the most
+		save_event_target_as = rinta_top_telescope_investor
+		every_country = {
+			limit = { 
+				is_incident_active = incident_rinta_light_up_the_night_sky 
+				check_variable = {
+					which = rinta_telescope_amount_invested
+					which = event_target:rinta_top_telescope_investor
+				}
+			}
+			save_event_target_as = rinta_top_telescope_investor
+		}
+
+		#Notify everyone and end their incident
+		every_country = {
+			limit = { is_incident_active = incident_rinta_light_up_the_night_sky }
+			country_event = {
+				id = rinta_seeker_events.510 #Visible Ending Event
+			}
+		}
+		clr_global_flag = incident_rinta_light_up_the_night_sky_ongoing_flag
+		set_global_flag = incident_rinta_light_up_the_night_sky_end_flag
+	}
+}
+
+country_event = {
+	id = rinta_seeker_events.510 #Visible Ending Event
+	title = rinta_seeker_events.510.t
+	desc = rinta_seeker_events.510.desc
 	picture = BUDDHISM_GOOD_eventPicture
 
 	is_triggered_only = yes
 
 	option = {
-		name = rinta_seeker_events.509.a
+		name = rinta_seeker_events.510.a
+		trigger = { NOT = { tag = event_target:rinta_top_telescope_investor } }
+		end_incident = incident_rinta_light_up_the_night_sky
+		custom_tooltip = rinta_top_investor_tt
+		tooltip = {
+			event_target:rinta_top_telescope_investor = {
+				capital_scope = {
+					trigger_switch = {
+						on_trigger = has_global_flag
+						rinta_telescope_hit_lvl_5_flag = {
+							add_province_modifier = {
+								name = RS_telescope_lvl_5
+								duration = -1
+							}
+							custom_tooltip = desc_RS_telescope_lvl_5
+							owner = { 
+								random_list = {
+									1 = { add_adm_tech = 1 }
+									1 = { add_dip_tech = 1 }
+									1 = { add_mil_tech = 1 }
+								}
+							}
+						}
+						rinta_telescope_hit_lvl_4_flag = {
+							add_province_modifier = {
+								name = RS_telescope_lvl_4
+								duration = -1
+							}
+							custom_tooltip = desc_RS_telescope_lvl_4
+						}
+						rinta_telescope_hit_lvl_3_flag = {
+							add_province_modifier = {
+								name = RS_telescope_lvl_3
+								duration = -1
+							}
+							custom_tooltip = desc_RS_telescope_lvl_3
+						}
+						rinta_telescope_hit_lvl_2_flag = {
+							add_province_modifier = {
+								name = RS_telescope_lvl_2
+								duration = -1
+							}
+						}
+						rinta_telescope_hit_lvl_1_flag = {
+							add_province_modifier = {
+								name = RS_telescope_lvl_1
+								duration = -1
+							}
+						}
+					}
+				}
+			}
+		}
+		custom_tooltip = rinta_remove_modifiers_tt
+	}
+
+	option = {
+		name = rinta_seeker_events.510.a
+		trigger = { tag = event_target:rinta_top_telescope_investor }
+		highlight = yes
+		end_incident = incident_rinta_light_up_the_night_sky
+		custom_tooltip = rinta_top_investor_tt
+		capital_scope = {
+			trigger_switch = {
+				on_trigger = has_global_flag
+				rinta_telescope_hit_lvl_5_flag = {
+					add_province_modifier = {
+						name = RS_telescope_lvl_5
+						duration = -1
+					}
+					custom_tooltip = desc_RS_telescope_lvl_5
+					owner = { 
+						random_list = {
+							1 = { add_adm_tech = 1 }
+							1 = { add_dip_tech = 1 }
+							1 = { add_mil_tech = 1 }
+						}
+					}
+				}
+				rinta_telescope_hit_lvl_4_flag = {
+					add_province_modifier = {
+						name = RS_telescope_lvl_4
+						duration = -1
+					}
+					custom_tooltip = desc_RS_telescope_lvl_4
+				}
+				rinta_telescope_hit_lvl_3_flag = {
+					add_province_modifier = {
+						name = RS_telescope_lvl_3
+						duration = -1
+					}
+					custom_tooltip = desc_RS_telescope_lvl_3
+				}
+				rinta_telescope_hit_lvl_2_flag = {
+					add_province_modifier = {
+						name = RS_telescope_lvl_2
+						duration = -1
+					}
+				}
+				rinta_telescope_hit_lvl_1_flag = {
+					add_province_modifier = {
+						name = RS_telescope_lvl_1
+						duration = -1
+					}
+				}
+			}
+		}
+		custom_tooltip = rinta_remove_modifiers_tt
+	}
+
+	after = {
 		hidden_effect = {
 			remove_country_modifier = RS_mwalim_purpose
 			remove_country_modifier = RS_darwiiz_purpose
 			remove_country_modifier = RS_none_purpose
 			remove_country_modifier = RS_none_power
 			remove_country_modifier = RS_darwiiz_foreigners
+			remove_country_modifier = RS_left_cult_money
+			remove_country_modifier = RS_took_cult_money
 			every_owned_province = {
 				remove_province_modifier = RS_fears_put_to_rest
 				remove_province_modifier = RS_hysterical_city
@@ -5798,9 +6006,18 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { has_global_flag = rinta_disable_stealing_funds_flag }
+	}
+
 	immediate = {
 		hidden_effect = {
-			set_global_flag = rinta_astronomical_funds_stolen_fired
+			6678 = { #Qasri Maroodiqya
+				change_variable = {
+					which = rinta_stole_funds_var
+					value = 1
+				}
+			}
 		}
 	}
 
@@ -5833,6 +6050,7 @@ country_event = {
 	trigger = {
 		rinta_has_invested_level_in_telescope = { level = 0_25 }
 		has_advisor = yes
+		NOT = { has_global_flag = rinta_disable_stealing_funds_flag }
 	}
 
 	option = {
@@ -5873,12 +6091,18 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			set_global_flag = rinta_stole_astronomical_funds_fired
+			6678 = { #Qasri Maroodiqya
+				change_variable = {
+					which = rinta_stole_funds_var
+					value = 1
+				}
+			}
 		}
 	}
 
 	trigger = {
 		ai = yes
+		NOT = { has_global_flag = rinta_disable_stealing_funds_flag }
 		any_known_country = {
 			is_incident_active = incident_rinta_light_up_the_night_sky
 			NOT = {
@@ -5902,9 +6126,9 @@ country_event = {
 						value = 0
 					}
 				}
-				country_event = {
-					id = rinta_seeker_events.520 #Astronomical Funds Stolen
-				}
+			}
+			country_event = {
+				id = rinta_seeker_events.520 #Astronomical Funds Stolen
 			}
 		}
 	}
@@ -5921,18 +6145,24 @@ country_event = {
 
 	trigger = {
 		ai = no
-		OR = {
-			has_global_flag = rinta_stole_astronomical_funds_fired
-			has_global_flag = rinta_astronomical_funds_stolen_fired
+		6678 = { #Qasri Maroodiqya
+			check_variable = {
+				which = rinta_stole_funds_var
+				value = 1
+			}
 		}
 	}
 
 	option = {
 		name = rinta_seeker_events.523.a
+		custom_tooltip = rinta_disable_investment_tt
+		set_global_flag = rinta_disable_stealing_funds_flag
 	}
 
 	option = {
 		name = rinta_seeker_events.523.b
+		custom_tooltip = rinta_supercharge_investment_tt
+		set_global_flag = rinta_supercharge_stealing_funds_flag
 	}
 
 	option = {
@@ -5990,7 +6220,7 @@ country_event = {
 				name = RS_fears_put_to_rest
 				duration = -1
 			}
-			custom_tooltip = rinte_incident_modifier_tt
+			custom_tooltip = rinta_incident_modifier_tt
 		}
 		add_estate_influence_modifier = {
 			influence = 25
@@ -6010,7 +6240,7 @@ country_event = {
 				name = RS_hysterical_city
 				duration = -1
 			}
-			custom_tooltip = rinte_incident_modifier_tt
+			custom_tooltip = rinta_incident_modifier_tt
 		}
 	}
 }
@@ -6023,20 +6253,27 @@ country_event = {
 
 	is_triggered_only = yes
 
-	trigger = {
-
-	}
-
 	option = {
 		name = rinta_seeker_events.525.a
-	}
-
-	option = {
-		name = rinta_seeker_events.525.b
-	}
-
-	option = {
-		name = rinta_seeker_events.525.c
+		set_country_flag = rinta_active_cultists_flag
+		random_owned_province = {
+			spawn_rebels = {
+				size = 3
+				type = shadow_war_cultists
+			}
+		}
+		random_owned_province = {
+			spawn_rebels = {
+				size = 3
+				type = shadow_war_cultists
+			}
+		}
+		random_owned_province = {
+			spawn_rebels = {
+				size = 3
+				type = shadow_war_cultists
+			}
+		}
 	}
 }
 
@@ -6047,13 +6284,34 @@ country_event = {
 	picture = BUDDHISM_GOOD_eventPicture
 
 	is_triggered_only = yes
-
+	
 	trigger = {
-		
+		NOT = { num_of_rebel_armies = 1 }
+	}
+
+	immediate = {
+		hidden_effect = {
+			clr_country_flag = rinta_active_cultists_flag
+		}
 	}
 
 	option = {
 		name = rinta_seeker_events.526.a
+		add_country_modifier = {
+			name = RS_left_cult_money
+			duration = -1
+		}
+		custom_tooltip = rinta_incident_modifier_tt
+	}
+
+	option = {
+		name = rinta_seeker_events.527.a
+		rinta_invest_in_telescope = { level = 0_75 }
+		add_country_modifier = {
+			name = RS_took_cult_money
+			duration = -1
+		}
+		custom_tooltip = rinta_incident_modifier_tt
 	}
 }
 
@@ -6064,10 +6322,6 @@ country_event = {
 	picture = BUDDHISM_GOOD_eventPicture
 
 	is_triggered_only = yes
-
-	trigger = {
-		
-	}
 
 	option = {
 		name = rinta_seeker_events.527.a
@@ -6108,6 +6362,30 @@ country_event = {
 
 	option = {
 		name = rinta_seeker_events.528.b
+		custom_tooltip = rinta_gain_level_1_5_cash_tt
+		hidden_effect = {
+			set_variable = {
+				which = rinta_telescope_temp_var
+				which = rinta_telescope_lvl_1_5_cost
+			}
+			var_effect = {
+				var = rinta_telescope_temp_var
+				effect = add_treasury
+				sign = +
+			}
+		}
+		add_country_modifier = {
+			name = RS_impious_investment
+			duration = 1825 #5 years
+		}
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = -10
+		}
+		add_estate_loyalty = {
+			estate = estate_burghers
+			loyalty = -10
+		}
 	}
 }
 
@@ -6178,10 +6456,6 @@ country_event = {
 
 	is_triggered_only = yes
 
-	trigger = {
-		
-	}
-
 	option = {
 		name = rinta_seeker_events.531.a
 		add_estate_loyalty = {
@@ -6215,10 +6489,6 @@ country_event = {
 	picture = BUDDHISM_GOOD_eventPicture
 
 	is_triggered_only = yes
-
-	trigger = {
-		
-	}
 
 	option = {
 		name = rinta_seeker_events.532.a
@@ -6289,17 +6559,34 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			pick_best_tags = {
-				global_trigger = "
-					is_incident_active = incident_rinta_light_up_the_night_sky
-					has_spy_network_from = {
-						who = ROOT
-						value = 35
-					}
-				"
-				scale = total_development
-				10 = yes
-				event_target_name = rinta_seeker_spied
+			if = {
+				limit = { has_global_flag = rinta_supercharge_stealing_funds_flag }
+				pick_best_tags = {
+					global_trigger = "
+						is_incident_active = incident_rinta_light_up_the_night_sky
+						has_spy_network_from = {
+							who = ROOT
+							value = 20
+						}
+					"
+					scale = total_development
+					10 = yes
+					event_target_name = rinta_seeker_spied
+				}
+			}
+			else = {
+				pick_best_tags = {
+					global_trigger = "
+						is_incident_active = incident_rinta_light_up_the_night_sky
+						has_spy_network_from = {
+							who = ROOT
+							value = 35
+						}
+					"
+					scale = total_development
+					10 = yes
+					event_target_name = rinta_seeker_spied
+				}
 			}
 		}
 	}
@@ -6310,266 +6597,61 @@ country_event = {
 	option = {
 		name = rinta_seeker_events.598.b
 		trigger = { NOT = { 1 = { province_id = event_target:rinta_seeker_spied_1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_1
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_1 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_1 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.c
 		trigger = { NOT = { 1 = { province_id = event_target:rinta_seeker_spied_2 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_2
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_2 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_2 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.d
 		trigger = { NOT = { event_target:rinta_seeker_spied_3 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_3
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_3 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_3 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.e
 		trigger = { NOT = { event_target:rinta_seeker_spied_4 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_4
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_4 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_4 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.f
 		trigger = { NOT = { event_target:rinta_seeker_spied_5 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_5
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_5 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_5 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.g
 		trigger = { NOT = { event_target:rinta_seeker_spied_6 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_6
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_6 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_6 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.h
 		trigger = { NOT = { event_target:rinta_seeker_spied_7 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_7
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_7 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_7 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.i
 		trigger = { NOT = { event_target:rinta_seeker_spied_8 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_8
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_8 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_8 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.j
 		trigger = { NOT = { event_target:rinta_seeker_spied_9 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_9
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_9 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_9 }
 	}
 
 	option = {
 		name = rinta_seeker_events.598.k
 		trigger = { NOT = { event_target:rinta_seeker_spied_10 = { province_id = 1 } } }
-		add_spy_network_in = {
-			who = event_target:rinta_seeker_spied_10
-			value = -35
-		}
-		rinta_invest_in_telescope = { level = 0_5 }
-		event_target:rinta_seeker_spied_10 = {
-			tooltip = {
-				add_opinion = {
-					who = ROOT
-					modifier = rinta_stole_astronomy_funds
-				}
-				add_casus_belli = {
-					type = cb_spy_discovered
-					target = ROOT
-					months = 60 #5 years
-				}
-			}
-			country_event = {
-				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
-			}
-		}
-	}
-
-	after = {
-		clr_country_flag = stole_telescope_funds_flag
-		set_country_flag = stole_telescope_funds_flag
+		rinta_steal_funds_event_effect = { event_target = rinta_seeker_spied_10 }
 	}
 }
 

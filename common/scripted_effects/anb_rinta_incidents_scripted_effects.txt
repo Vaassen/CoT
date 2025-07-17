@@ -128,7 +128,7 @@ rinta_pay_telescope_cost = {
 #years_of_income is for investing based on your years of income
 #level is for an amount based on the different telescope levels 
 #	- MUST USE _ INSTEAD OF DECIMAL POINTS, EX. 0_5 INSTEAD OF 0.5 
-#	- Only supports 0.25 and multiples of 0.5 from 0 to 5
+#	- Only supports 0.25, 0.75, and multiples of 0.5 from 0 to 5
 #all is to invest all your money
 #half is to invest half your money
 
@@ -454,17 +454,24 @@ rinta_reduce_investment_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_lvl_$level$_cost
 			}
+			set_variable = {
+				which = rinta_telescope_temp_var
+				which = rinta_telescope_lvl_$level$_cost
+			}
 			rinta_pay_telescope_cost = { #Add amount of cash as in the level
 				pay = $refund$
 				effect = "
 					var_effect = {
-						var = rinta_telescope_lvl_$level$_cost
+						var = rinta_telescope_temp_var
 						effect = add_treasury
 						sign = +
 					}
 				"
 			}
 		}
+	]
+	[[refund]
+		custom_tooltip = rinta_refund_investment_tt
 	]
 	rinta_check_telescope_invest_level = yes
 }
@@ -481,6 +488,11 @@ rinta_check_telescope_invest_level = {
 			set_country_flag = rinta_telescope_lvl_0_5_reached_flag
 		}
 		else = { clr_country_flag = rinta_telescope_lvl_0_5_reached_flag }
+		if = { 
+			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_0_75_cost } }
+			set_country_flag = rinta_telescope_lvl_0_75_reached_flag
+		}
+		else = { clr_country_flag = rinta_telescope_lvl_0_75_reached_flag }
 		if = { 
 			limit = { check_variable = { which = rinta_telescope_amount_invested which = rinta_telescope_lvl_1_cost } }
 			set_country_flag = rinta_telescope_lvl_1_reached_flag
@@ -526,5 +538,265 @@ rinta_check_telescope_invest_level = {
 			set_country_flag = rinta_telescope_lvl_5_reached_flag
 		}
 		else = { clr_country_flag = rinta_telescope_lvl_5_reached_flag }
+	}
+}
+
+rinta_steal_funds_event_effect = {
+	if = {
+		limit = { has_global_flag = rinta_supercharge_stealing_funds_flag }
+		add_spy_network_in = {
+			who = event_target:$event_target$
+			value = -20
+		}
+	}
+	else = {
+		add_spy_network_in = {
+			who = event_target:$event_target$
+			value = -35
+		}
+	}
+	rinta_invest_in_telescope = { level = 0_5 }
+	event_target:$event_target$ = {
+		tooltip = {
+			add_opinion = {
+				who = ROOT
+				modifier = rinta_stole_astronomy_funds
+			}
+			add_casus_belli = {
+				type = cb_spy_discovered
+				target = ROOT
+				months = 60 #5 years
+			}
+		}
+		country_event = {
+			id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
+		}
+	}
+	clr_country_flag = stole_telescope_funds_flag
+	set_country_flag = stole_telescope_funds_flag
+}
+
+rinta_lutns_incident_events = {
+	random_list = {
+		100 = { 
+			country_event = { id = rinta_seeker_events.521 days = $days$ } #Embezzled Astronomical Funds
+			modifier = { factor = 2 corruption = 1 }
+			modifier = { factor = 4 corruption = 2 }
+			modifier = { factor = 10 corruption = 5 }
+			modifier = { factor = 20 corruption = 10 }
+			modifier = { factor = 0.5 ruler_has_personality = well_connected_personality }
+			modifier = { factor = 0.5 ruler_has_personality = well_advised_personality }
+			modifier = { factor = 0.5 ruler_has_personality = incorruptible_personality }
+			modifier = { factor = 2 ruler_has_personality = naive_personality }
+			modifier = { factor = 2 ruler_has_personality = embezzler_personality }
+			modifier = { factor = 3 has_global_flag = rinta_supercharge_stealing_funds_flag }
+		}
+		200 = { 
+			country_event = { id = rinta_seeker_events.522 days = $days$ } #Stole Astronomical Funds - AI Only
+			modifier = { factor = 3 has_global_flag = rinta_supercharge_stealing_funds_flag }
+		} 
+		200 = { 
+			country_event = { id = rinta_seeker_events.523 days = $days$ } #Increased Cooperation?
+			modifier = { factor = 2 6678 = { check_variable = { which = rinta_stole_funds_var value = 1 } } }
+			modifier = { factor = 3 6678 = { check_variable = { which = rinta_stole_funds_var value = 2 } } }
+			modifier = { factor = 4 6678 = { check_variable = { which = rinta_stole_funds_var value = 3 } } }
+			modifier = { factor = 5 6678 = { check_variable = { which = rinta_stole_funds_var value = 4 } } }
+			modifier = { factor = 6 6678 = { check_variable = { which = rinta_stole_funds_var value = 5 } } }
+			modifier = { factor = 0.5 ruler_has_personality = malevolent_personality }
+			modifier = { factor = 0.5 ruler_has_personality = greedy_personality }
+			modifier = { factor = 0.5 ruler_has_personality = silver_tongue_personality }
+			modifier = { factor = 0.5 ruler_has_personality = intricate_web_weaver_personality }
+			modifier = { factor = 0.5 ruler_has_personality = secretive_personality }
+			modifier = { factor = 2 ruler_has_personality = naive_personality }
+			modifier = { factor = 2 ruler_has_personality = fierce_negotiator_personality }
+			modifier = { factor = 2 ruler_has_personality = charismatic_negotiator_personality }
+			modifier = { factor = 2 ruler_has_personality = benevolent_personality }
+			modifier = { factor = 2 ruler_has_personality = free_thinker_personality }
+		} 
+		50 = { 
+			country_event = { id = rinta_seeker_events.524 days = $days$ } #The Gods Arent Dead
+			modifier = {
+				factor = 2
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					local_autonomy = 25
+				}
+			}
+			modifier = {
+				factor = 4
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					local_autonomy = 50
+				}
+			}
+			modifier = {
+				factor = 6
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					local_autonomy = 75
+				}
+			}
+			modifier = {
+				factor = 8
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					local_autonomy = 100
+				}
+			}
+			modifier = {
+				factor = 2
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					unrest = 1
+				}
+			}
+			modifier = {
+				factor = 4
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					unrest = 4
+				}
+			}
+			modifier = {
+				factor = 6
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					unrest = 8
+				}
+			}
+			modifier = {
+				factor = 8
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					unrest = 10
+				}
+			}
+			modifier = {
+				factor = 10 #Is Habab Zar or Genie Cult
+				any_owned_province = { OR = { religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city } }
+			}
+			modifier = { factor = 0.5 ruler_has_personality = zealot_personality }
+			modifier = { factor = 0.5 ruler_has_personality = pious_personality }
+			modifier = {
+				factor = 0.5
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					development = 10
+				}
+			}
+			modifier = {
+				factor = 0.5
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					development = 20
+				}
+			}
+			modifier = {
+				factor = 0.5
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					development = 30
+				}
+			}
+			modifier = {
+				factor = 0.5
+				any_owned_province = {
+					OR = { religion = rinta_seekers religion = habab_zar religion = genie_cult } NOT = { has_province_modifier = RS_fears_put_to_rest has_province_modifier = RS_hysterical_city }
+					development = 40
+				}
+			}
+		} 
+		50 = { 
+			country_event = { id = rinta_seeker_events.525 days = $days$ } #A Terror-Filled Cult Emerges
+			modifier = { factor = 2 religious_unity = 0.75 }
+			modifier = { factor = 4 religious_unity = 0.5 }
+			modifier = { factor = 8 religious_unity = 0.25 }
+			modifier = { factor = 0.5 ruler_has_personality = zealot_personality }
+			modifier = { factor = 0.5 ruler_has_personality = pious_personality }
+			modifier = { factor = 2 stability = -1 }
+			modifier = { factor = 4 stability = -2 }
+			modifier = { factor = 8 stability = -3 }
+			modifier = { factor = 0.5 stability = 1 }
+			modifier = { factor = 0.25 stability = 2 }
+			modifier = { factor = 0.1 stability = 3 }
+		} 
+		200 = { 
+			country_event = { id = rinta_seeker_events.527 days = $days$ } #Sinful Donation
+			modifier = { factor = 2 rinta_has_invested_level_in_telescope = { level = 1 } }
+			modifier = { factor = 4 rinta_has_invested_level_in_telescope = { level = 2 } }
+			modifier = { factor = 8 rinta_has_invested_level_in_telescope = { level = 3 } }
+			modifier = { factor = 2 rinta_has_telescope_level_of_cash = { level = 1 } }
+			modifier = { factor = 4 rinta_has_telescope_level_of_cash = { level = 2 } }
+			modifier = { factor = 8 rinta_has_telescope_level_of_cash = { level = 3 } }
+			modifier = {
+				factor = 2
+				OR = {
+					has_estate_privilege = estate_church_donation_right
+					has_estate_privilege = estate_church_monopoly_of_incense
+					has_estate_privilege = estate_church_monopoly_of_wool
+					has_estate_privilege = estate_church_monopoly_of_wine
+					has_estate_privilege = estate_church_monopoly_of_slaves
+				}
+			}
+			modifier = { factor = 0.75 estate_loyalty = { estate = estate_church loyalty = 30 } }
+			modifier = { factor = 0.5 estate_loyalty = { estate = estate_church loyalty = 60 } }
+		} 
+		50 = { 
+			country_event = { id = rinta_seeker_events.528 days = $days$ } #Pious Merchant Passes
+			modifier = { factor = 2 estate_loyalty = { estate = estate_burghers loyalty = 30 } }
+			modifier = { factor = 4 estate_loyalty = { estate = estate_burghers loyalty = 60 } }
+			modifier = { factor = 0.25 NOT = { estate_influence = { estate = estate_burghers influence = 30 } } }
+			modifier = { factor = 4 estate_influence = { estate = estate_burghers influence = 50 } }
+			modifier = { factor = 0.25 has_estate_loan = yes }
+		} 
+		200 = { 
+			country_event = { id = rinta_seeker_events.529 days = $days$ } #Strong Merfolk Ties Pay Off
+			modifier = { factor = 2 any_owned_province = { has_province_modifier = offcoast_merfolk_allied } }
+			modifier = { factor = 2 num_of_owned_provinces_with = { value = 2 has_province_modifier = offcoast_merfolk_allied } }
+			modifier = { factor = 2 num_of_owned_provinces_with = { value = 3 has_province_modifier = offcoast_merfolk_allied } }
+			modifier = { factor = 2 num_of_owned_provinces_with = { value = 4 has_province_modifier = offcoast_merfolk_allied } }
+			modifier = { factor = 2 num_of_owned_provinces_with = { value = 5 has_province_modifier = offcoast_merfolk_allied } }
+		} 
+		100 = { 
+			country_event = { id = rinta_seeker_events.530 days = $days$ } #Local Clergy Takes Incentive
+			modifier = { factor = 0.25 NOT = { estate_loyalty = { estate = estate_church loyalty = 30 } } }
+			modifier = { factor = 2 estate_loyalty = { estate = estate_church loyalty = 30 } }
+			modifier = { factor = 4 estate_loyalty = { estate = estate_church loyalty = 60 } }
+		} 
+		100 = { 
+			country_event = { id = rinta_seeker_events.531 days = $days$ } #Nobles Take Their Due
+			modifier = { factor = 2 NOT = { estate_loyalty = { estate = estate_nobles loyalty = 30 } } }
+			modifier = { factor = 0.5 estate_loyalty = { estate = estate_nobles loyalty = 30 } }
+			modifier = { factor = 0.5 estate_loyalty = { estate = estate_nobles loyalty = 60 } }
+			modifier = { factor = 0.25 NOT = { estate_influence = { estate = estate_nobles influence = 30 } } }
+			modifier = { factor = 4 estate_influence = { estate = estate_nobles influence = 50 } }
+		} 
+		200 = { 
+			country_event = { id = rinta_seeker_events.532 days = $days$ } #Cracks in The System
+			modifier = { factor = 2 corruption = 1 }
+			modifier = { factor = 4 corruption = 2 }
+			modifier = { factor = 10 corruption = 5 }
+			modifier = { factor = 20 corruption = 10 }
+			modifier = { factor = 2 inflation = 1 }
+			modifier = { factor = 4 inflation = 2 }
+			modifier = { factor = 6 inflation = 5 }
+			modifier = { factor = 8 inflation = 10 }
+			modifier = { factor = 2 religious_unity = 0.75 }
+			modifier = { factor = 4 religious_unity = 0.5 }
+			modifier = { factor = 10 religious_unity = 0.25 }
+			modifier = { factor = 20 religious_unity = 0.1 }
+			modifier = { 
+				factor = 2 
+				NOT = { corruption = 1 }
+				NOT = { inflation = 1 }
+				religious_unity = 0.95
+			}
+			modifier = { factor = 0.5 ruler_has_personality = obsessive_perfectionist_personality }
+			modifier = { factor = 0.5 ruler_has_personality = silver_tongue_personality }
+			modifier = { factor = 0.5 ruler_has_personality = entrepreneur_personality }
+			modifier = { factor = 2 ruler_has_personality = drunkard_personality } #Indulgent
+			modifier = { factor = 2 ruler_has_personality = zealot_personality }
+			modifier = { factor = 2 ruler_has_personality = babbling_buffoon_personality }
+		} 
 	}
 }
