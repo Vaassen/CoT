@@ -55,128 +55,90 @@ change_patron_approval = {
 ### EXAMPLE (abjuration_2_0_effect) and (abjuration_2_1_effect). BOTH ABJURATION, BOTH LEVEL 2, DIFFERENT ID'S
 
 make_spell_free = {
-	if = { limit = { always = no } }
 	[[ruler]
-	else_if = {
-		limit = { always = $ruler$ }
 		custom_tooltip = $school$_$level$_$id$_spell_free
 		custom_tooltip = while_ruler_alive_tt
 		set_ruler_flag = $school$_$level$_$id$_spell_free
-	}
 	]
 	[[heir]
-	else_if = {
-		limit = { always = $heir$ }
 		custom_tooltip = $school$_$level$_$id$_spell_free
 		custom_tooltip = while_heir_alive_tt
 		set_heir_flag = $school$_$level$_$id$_spell_free
-	}
 	]
 	[[next_cast]
-	else_if = {
-		limit = { always = $next_cast$ }
 		custom_tooltip = $school$_$level$_$id$_spell_free
 		custom_tooltip = for_next_cast_only_tt
 		set_country_flag = $school$_$level$_$id$_spell_free_next_cast
-	}
 	]
-	[[duration] #Can't do the always = $argument$ trick
-	else = { add_country_modifier = { name = $school$_$level$_$id$_spell_free duration = $duration$ } }
+	[[duration]
+		add_country_modifier = { name = $school$_$level$_$id$_spell_free duration = $duration$ }
 	]
 }
 make_spell_school_free = {
-	if = { limit = { always = no } }
 	[[ruler]
-	else_if = {
-		limit = { always = $ruler$ }
 		custom_tooltip = $school$_spell_free
 		custom_tooltip = while_ruler_alive_tt
 		set_ruler_flag = $school$_spell_free
-	}
 	]
 	[[heir]
-	else_if = {
-		limit = { always = $heir$ }
 		custom_tooltip = $school$_spell_free
 		custom_tooltip = while_heir_alive_tt
 		set_heir_flag = $school$_spell_free
-	}
 	]
 	[[next_cast]
-	else_if = {
-		limit = { always = $next_cast$ }
 		custom_tooltip = $school$_spell_free
 		custom_tooltip = for_next_cast_only_tt
 		set_country_flag = $school$_spell_free_next_cast
-	}
 	]
-	[[duration] #Can't do the always = $argument$ trick
-	else = { add_country_modifier = { name = $school$_spell_free duration = $duration$ } }
+	[[duration]
+		add_country_modifier = { name = $school$_spell_free duration = $duration$ }
 	]
 }
 make_spell_half_off = {
-	if = { limit = { always = no } }
 	[[ruler]
-	else_if = {
-		limit = { always = $ruler$ }
 		custom_tooltip = $school$_$level$_$id$_spell_half
 		custom_tooltip = while_ruler_alive_tt
 		set_ruler_flag = $school$_$level$_$id$_spell_half
-	}
 	]
 	[[heir]
-	else_if = {
-		limit = { always = $heir$ }
 		custom_tooltip = $school$_$level$_$id$_spell_half
 		custom_tooltip = while_heir_alive_tt
 		set_heir_flag = $school$_$level$_$id$_spell_half
-	}
 	]
 	[[next_cast]
-	else_if = {
-		limit = { always = $next_cast$ }
 		custom_tooltip = $school$_$level$_$id$_spell_half
 		custom_tooltip = for_next_cast_only_tt
 		set_country_flag = $school$_$level$_$id$_spell_half_next_cast
-	}
 	]
-	[[duration] #Can't do the always = $argument$ trick
-	else = { add_country_modifier = { name = $school$_$level$_$id$_spell_half duration = $duration$ } }
+	[[duration]
+		add_country_modifier = { name = $school$_$level$_$id$_spell_half duration = $duration$ }
 	]
 }
 make_spell_school_half_off = {
-	if = { limit = { always = no } }
 	[[ruler]
-	else_if = {
-		limit = { always = $ruler$ }
 		custom_tooltip = $school$_spell_half
 		custom_tooltip = while_ruler_alive_tt
 		set_ruler_flag = $school$_spell_half
-	}
 	]
 	[[heir]
-	else_if = {
-		limit = { always = $heir$ }
 		custom_tooltip = $school$_spell_half
 		custom_tooltip = while_heir_alive_tt
 		set_heir_flag = $school$_spell_half
-	}
 	]
 	[[next_cast]
-	else_if = {
-		limit = { always = $next_cast$ }
 		custom_tooltip = $school$_spell_half
 		custom_tooltip = for_next_cast_only_tt
 		set_country_flag = $school$_spell_half_next_cast
-	}
 	]
-	[[duration] #Can't do the always = $argument$ trick
-	else = { add_country_modifier = { name = $school$_spell_half duration = $duration$ } }
+	[[duration]
+		add_country_modifier = { name = $school$_spell_half duration = $duration$ }
 	]
 }
 generic_cast_spell = {
+
+	# Handles paying mana, given a limited number of ways to alter mana cost
 	if = {
-		limit = {
+		limit = { #Free spell!
 			OR = {
 				has_country_modifier = all_spell_free
 				has_country_flag = all_spell_free_next_cast
@@ -192,41 +154,44 @@ generic_cast_spell = {
 			}
 		}
 		custom_tooltip = spell_is_free_tt
-	}
-	else = {
-		pay_mana_for_level_$level$_spell = { school = $school$ id = $id$ }
-	}
 
-	if = {
-		limit = { has_country_flag = all_spell_free_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = all_spell_free_next_cast
+		trigger_switch = { #Next cast free spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_free_next_cast }
+			$school$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_free_next_cast }
+			all_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_half_next_cast }
+		}
 	}
-	else_if = {
-		limit = { has_country_flag = all_spell_half_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = all_spell_half_next_cast
+	else_if = { #Half-cost spell
+		limit = {
+			OR = {
+				has_country_modifier = all_spell_half
+				has_country_flag = all_spell_half_next_cast
+				has_ruler_flag = all_spell_half
+
+				has_country_modifier = $school$_$level$_$id$_spell_half
+				has_country_flag = $school$_$level$_$id$_spell_half_next_cast
+				has_ruler_flag = $school$_$level$_$id$_spell_half
+
+				has_country_modifier = $school$_spell_half
+				has_country_flag = $school$_spell_half_next_cast
+				has_ruler_flag = $school$_spell_half
+			}
+		}
+		custom_tooltip = spell_is_half_tt
+
+		trigger_switch = { #Next cast half-cost spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_half_next_cast }
+			$school$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_half_next_cast }
+			all_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_half_next_cast }
+		}
+
+		pay_half_mana_for_level_$level$_spell = yes
 	}
-	else_if = {
-		limit = { has_country_flag = $school$_$level$_$id$_spell_free_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = $school$_$level$_$id$_spell_free_next_cast
-	}
-	else_if = {
-		limit = { has_country_flag = $school$_$level$_$id$_spell_half_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = $school$_$level$_$id$_spell_half_next_cast
-	}
-	else_if = {
-		limit = { has_country_flag = $school$_spell_free_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = $school$_spell_free_next_cast
-	}
-	else_if = {
-		limit = { has_country_flag = $school$_spell_half_next_cast }
-		custom_tooltip = for_next_cast_only_tt
-		clr_country_flag = $school$_spell_half_next_cast
-	}
+	else = { pay_mana_for_level_$level$_spell = yes }
 
 	[[war]
 	custom_tooltip = only_one_war_magic_tt
@@ -235,94 +200,15 @@ generic_cast_spell = {
 
 	$school$_$level$_$id$_effect = yes
 }
-pay_mana_for_level_0_spell = {
-	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
+pay_half_mana_for_level_0_spell = { change_mana = { amount = -12.5 } }
+pay_mana_for_level_0_spell = { change_mana = { amount = -25 } }
+pay_half_mana_for_level_1_spell = { change_mana = { amount = -25 } }
+pay_mana_for_level_1_spell = { change_mana = { amount = -50 } }
+pay_half_mana_for_level_2_spell = { change_mana = { amount = -50 } }
+pay_mana_for_level_2_spell = { change_mana = { amount = -100 } }
+pay_half_mana_for_level_3_spell = { change_mana = { amount = -100 } }
+pay_mana_for_level_3_spell = { change_mana = { amount = -200 } }
 
-				has_country_modifier = $school$_0_$id$_spell_half
-				has_country_flag = $school$_0_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_0_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
-		custom_tooltip = spell_is_half_tt
-		change_mana = { amount = -12.5 }
-	}
-	else = { change_mana = { amount = -25 } }
-}
-pay_mana_for_level_1_spell = {
-	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				has_country_modifier = $school$_1_$id$_spell_half
-				has_country_flag = $school$_1_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_1_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
-		custom_tooltip = spell_is_half_tt
-		change_mana = { amount = -25 }
-	}
-	else = { change_mana = { amount = -50 } }
-}
-pay_mana_for_level_2_spell = {
-	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				has_country_modifier = $school$_2_$id$_spell_half
-				has_country_flag = $school$_2_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_2_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
-		custom_tooltip = spell_is_half_tt
-		change_mana = { amount = -50 }
-	}
-	else = { change_mana = { amount = -100 } }
-}
-pay_mana_for_level_3_spell = {
-	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				has_country_modifier = $school$_3_$id$_spell_half
-				has_country_flag = $school$_3_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_3_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
-		custom_tooltip = spell_is_half_tt
-		change_mana = { amount = -100 }
-	}
-	else = { change_mana = { amount = -200 } }
-}
 clear_active_war_magic = {
 	trigger_switch = {
 		on_trigger = has_country_modifier
@@ -411,10 +297,7 @@ abjuration_3_0_effect = { # Field of Forbiddance
 					type = azmeras_wezinmesig
 					tier = 3
 				}
-			}
-			OR = { #Can use
-				culture_group = mengi
-				primary_culture = naleni_harpy
+				can_use_azmeras_wezinmesig = yes
 			}
 		}
 		abjuration_3_0_sub_effect = { duration = 7300 }
@@ -569,62 +452,78 @@ conjuration_3_0_effect = { # Extraplanar Contact
 		hidden_effect = {
 			set_variable = { which = max_var value = 0 }
 			if = { limit = { NOT = { is_ruler_abjuration_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_conjuration_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_divination_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_enchantment_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_evocation_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_illusion_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_necromancy_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 			if = { limit = { NOT = { is_ruler_transmutation_level_3 = yes } }
-				change_variable = { max_var = 1 } }
+				change_variable = { max_var = 1 }
+			}
 
-			randnum = { max_var = max_var }
+			randnum_effect = { max_var = max_var }
 			if = { limit = { NOT = { is_ruler_abjuration_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = abjuration } }
+					magic_school_level_up = { type = ruler school = abjuration }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_conjuration_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = conjuration } }
+					magic_school_level_up = { type = ruler school = conjuration }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_divination_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = divination } }
+					magic_school_level_up = { type = ruler school = divination }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_enchantment_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = enchantment } }
+					magic_school_level_up = { type = ruler school = enchantment }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_evocation_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = evocation } }
+					magic_school_level_up = { type = ruler school = evocation }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_illusion_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = illusion } }
+					magic_school_level_up = { type = ruler school = illusion }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_necromancy_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = necromancy } }
+					magic_school_level_up = { type = ruler school = necromancy }
+				}
 			}
 			if = { limit = { NOT = { is_ruler_transmutation_level_3 = yes } }
 				subtract_variable = { which = randnum value = 1 }
 				if = { limit = { is_variable_equal = { which = randnum value = 0 } }
-					magic_school_level_up = { type = ruler school = transmutation } }
+					magic_school_level_up = { type = ruler school = transmutation }
+				}
 			}
 		}
 	}
@@ -684,7 +583,7 @@ divination_0_0_effect = {  # Guidance
 		}
 		custom_tooltip = divination_0_0_upgrade_yes
 		hidden_effect = {
-			randnum = {
+			randnum_effect = {
 				max = 3
 				case3 = " add_mil_power = 25 "
 				case2 = " add_dip_power = 25 "
@@ -702,7 +601,7 @@ divination_0_0_effect = {  # Guidance
 		}
 		custom_tooltip = divination_0_0_upgrade_no
 		hidden_effect = {
-			randnum = {
+			randnum_effect = {
 				max = 3
 				case3 = " add_mil_power = 20 "
 				case2 = " add_dip_power = 20 "
@@ -1259,7 +1158,7 @@ evocation_2_0_effect = { # Meteor Swarm
 		add_devastation = 50
 		tooltip = { remove_random_development = yes }
 		hidden_effect = {
-			randnum = {
+			randnum_effect = {
 				max = 6
 				case6 = "
 					if = { limit = { base_tax = 2 } add_base_tax = -1 }
@@ -1517,7 +1416,7 @@ necromancy_1_0_effect = { # Steal Vitality
 			tooltip = { remove_random_development = yes }
 			custom_tooltip = magic_booster_by_patron_tt
 			hidden_effect = {
-				randnum = {
+				randnum_effect = {
 					max = 6
 					case6 = "
 						if = { limit = { base_tax = 2 } add_base_tax = -1 }
@@ -1582,7 +1481,7 @@ necromancy_2_0_effect = { # Speak With Dead
 	tooltip = { add_random_ruler_skill = yes }
 	
 	hidden_effect = {
-		randnum = {
+		randnum_effect = {
 			max = 6
 			case6 = "
 				if = { limit = { NOT = { adm = 6 } } change_adm = 1 }
@@ -1718,7 +1617,7 @@ transmutation_2_0_effect = { # Transmute to Gold
 				limit = { trade_goods = copper }
 				PREV = { change_variable = { max_var = 1 } }
 			}
-			randnum = { max_var = max_var }
+			randnum_effect = { max_var = max_var }
 			every_owned_province = {
 				limit = { trade_goods = copper }
 				if = {
@@ -1737,7 +1636,7 @@ transmutation_2_0_effect = { # Transmute to Gold
 				limit = { trade_goods = iron }
 				PREV = { change_variable = { max_var = 1 } }
 			}
-			randnum = { max_var = max_var }
+			randnum_effect = { max_var = max_var }
 			every_owned_province = {
 				limit = { trade_goods = iron }
 				if = {
@@ -1759,7 +1658,7 @@ transmutation_2_0_effect = { # Transmute to Gold
 				limit = { trade_goods = mithril }
 				PREV = { change_variable = { max_var = 1 } }
 			}
-			randnum = { max_var = max_var }
+			randnum_effect = { max_var = max_var }
 			every_owned_province = {
 				limit = { trade_goods = mithril }
 				if = {
