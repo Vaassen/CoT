@@ -117,13 +117,6 @@ rinta_get_telescope_multiplier = {
 	]
 }
 
-#Needs a seperate scripted effect because pdx doesn't like me putting [] inside of other [] ig
-rinta_pay_telescope_cost = {
-	[[pay]
-		$effect$
-	]
-}
-
 #amount is for flat amounts
 #years_of_income is for investing based on your years of income
 #level is for an amount based on the different telescope levels 
@@ -158,10 +151,8 @@ rinta_invest_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_amount_raised_multiplier
 			}
-			rinta_pay_telescope_cost = { #Remove the amount invested
-				pay = $pay$
-				effect = "add_treasury = -$amount$"
-			}
+			
+			set_country_flag = rinta_telescope_triggered_amount #To remove the right cash
 		}
 	]
 	[[years_of_income] #Invest a certain number of years of income
@@ -204,16 +195,6 @@ rinta_invest_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_amount_raised_multiplier
 			}
-			rinta_pay_telescope_cost = { #Remove your cash
-				pay = $pay$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = -
-					}
-				"
-			}
 		}
 	]
 	[[all] #Invest all of your country's money
@@ -247,16 +228,6 @@ rinta_invest_in_telescope = {
 			change_variable = { #Update your total amount raised
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_amount_raised_multiplier
-			}
-			rinta_pay_telescope_cost = { #Remove your cash
-				pay = $pay$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = -
-					}
-				"
 			}
 		}
 	]
@@ -300,16 +271,6 @@ rinta_invest_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_amount_raised_multiplier
 			}
-			rinta_pay_telescope_cost = { #Remove half your cash
-				pay = $pay$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = -
-					}
-				"
-			}
 		}
 	]
 	[[level] #Invest based on level of telescope
@@ -335,16 +296,28 @@ rinta_invest_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = rinta_telescope_amount_raised_multiplier
 			}
-			rinta_pay_telescope_cost = { #Remove amount of cash as in the level
-				pay = $pay$
-				effect = "
-					var_effect = {
-						var = rinta_telescope_lvl_$level$_cost
-						effect = add_treasury
-						sign = -
-					}
-				"
+			set_variable = { #So if cash is removed with the var_effect it doesn't change the level cost itself
+				which = sky_incident_treasury_country_temp
+				which = rinta_telescope_lvl_$level$_cost
 			}
+		}
+	]
+
+	[[pay] #Remove amount of cash as needed
+		custom_tooltip = rinta_pay_investment_tt
+		hidden_effect = {
+			if = {
+				limit = { has_country_flag = rinta_telescope_triggered_amount }
+				add_treasury = -$amount$
+			}
+			else = {
+				var_effect = {
+					var = sky_incident_treasury_country_temp
+					effect = add_treasury
+					sign = -
+				}
+			}
+			clr_country_flag = rinta_telescope_triggered_amount
 		}
 	]
 	rinta_check_telescope_invest_level = yes
@@ -364,10 +337,8 @@ rinta_reduce_investment_in_telescope = {
 				which = rinta_telescope_amount_invested
 				value = $amount$
 			}
-			rinta_pay_telescope_cost = { #Remove the amount invested
-				pay = $refund$
-				effect = "add_treasury = $amount$"
-			}
+
+			set_country_flag = rinta_telescope_triggered_amount #To remove the right cash
 		}
 	]
 	[[years_of_income] #Invest a certain number of years of income
@@ -385,16 +356,6 @@ rinta_reduce_investment_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = sky_incident_treasury_country_temp
 			}
-			rinta_pay_telescope_cost = { #Remove your cash
-				pay = $refund$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = +
-					}
-				"
-			}
 		}
 	]
 	[[all] #Invest all of your country's money
@@ -407,16 +368,6 @@ rinta_reduce_investment_in_telescope = {
 			subtract_variable = { #Update your total amount raised
 				which = rinta_telescope_amount_invested
 				which = sky_incident_treasury_country_temp
-			}
-			rinta_pay_telescope_cost = { #Double your cash
-				pay = $refund$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = +
-					}
-				"
 			}
 		}
 	]
@@ -435,16 +386,6 @@ rinta_reduce_investment_in_telescope = {
 				which = rinta_telescope_amount_invested
 				which = sky_incident_treasury_country_temp
 			}
-			rinta_pay_telescope_cost = { #1.5x half your cash
-				pay = $refund$
-				effect = "
-					var_effect = {
-						var = sky_incident_treasury_country_temp
-						effect = add_treasury
-						sign = +
-					}
-				"
-			}
 		}
 	]
 	[[level] #Invest based on level of telescope
@@ -455,23 +396,28 @@ rinta_reduce_investment_in_telescope = {
 				which = rinta_telescope_lvl_$level$_cost
 			}
 			set_variable = {
-				which = rinta_telescope_temp_var
+				which = sky_incident_treasury_country_temp
 				which = rinta_telescope_lvl_$level$_cost
-			}
-			rinta_pay_telescope_cost = { #Add amount of cash as in the level
-				pay = $refund$
-				effect = "
-					var_effect = {
-						var = rinta_telescope_temp_var
-						effect = add_treasury
-						sign = +
-					}
-				"
 			}
 		}
 	]
-	[[refund]
+
+	[[refund] #To refund the cash if desired
 		custom_tooltip = rinta_refund_investment_tt
+		hidden_effect = {
+			if = {
+				limit = { has_country_flag = rinta_telescope_triggered_amount }
+				add_treasury = $amount$
+			}
+			else = {
+				var_effect = {
+					var = sky_incident_treasury_country_temp
+					effect = add_treasury
+					sign = +
+				}
+			}
+			clr_country_flag = rinta_telescope_triggered_amount
+		}
 	]
 	rinta_check_telescope_invest_level = yes
 }
