@@ -1471,7 +1471,6 @@ wex_slot_4 = {
 					}
 				}
 				AND = {
-					adm_power = 100
 					mission_completed = A30_edict_on_magic
 					NOT = { alliance_with = A32 }
 					A77 = {
@@ -1528,11 +1527,7 @@ wex_slot_4 = {
 					add_historical_rival = ROOT
 					add_historical_rival = A77
 				}
-				add_adm_power = -100
-				forlorn_vale_region = {
-					limit = { country_or_non_sovereign_subject_holds = A32 }
-					add_permanent_claim = A77
-				}
+				add_imperial_influence = 5
 			}
 		}
 	}
@@ -1947,18 +1942,19 @@ wex_slot_5 = {
 		position = 1
 		
 		trigger = {
-			is_emperor = yes
 			is_year = 1445
 			OR = {
 				alliance_with = A85
-				is_rival = A85
-				NOT = { exists = A85 }
-				AND = {
-					imperial_influence = 20
-					A77 = {
-						is_subject_of = ROOT
-						NOT = { liberty_desire = 50 }
+				A85 = {
+					has_opinion_modifier = {
+						who = ROOT
+						modifier = scornfully_insulted
 					}
+				}
+				NOT = { exists = A85 }
+				A77 = {
+					is_subject_of = ROOT
+					NOT = { liberty_desire = 50 }
 				}
 			}
 		}
@@ -1986,10 +1982,9 @@ wex_slot_5 = {
 						NOT = { liberty_desire = 50 }
 					}
 				}
-				add_imperial_influence = -10
 				add_historical_friend = A77
 				remove_estate_privilege = estate_mages_organization_magisterium
-				set_estate_privilege = estate_mages_organization_state
+				set_estate_privilege = estate_mages_organization_guilds
 				add_country_modifier = {
 					name = wex_cot_aligned_with_order # mage estate loyalty 10%, influence -10%, fl -5%, mp -10%, shock damage 5%, shock received -10%
 					duration = -1
@@ -2001,12 +1996,6 @@ wex_slot_5 = {
 			}
 
 			else = {
-				limit = {
-					OR = {
-						is_rival = A85
-						NOT = { exists = A85 }
-					}
-				}
 				add_historical_rival = A85
 				A85 = { add_historical_rival = A30 }
 				remove_estate_privilege = estate_mages_organization_magisterium
@@ -2021,32 +2010,31 @@ wex_slot_5 = {
 		position = 2
 		
 		trigger = {
-			is_emperor = yes
 			OR = {
 				AND = {
 					is_at_war = no
-					AND = {
-						A85 = {
-							exists = yes
-							is_elector = yes
-							NOT = { alliance_with = A30 }
-						}
-						ROOT = {
-							NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+					A85 = {
+						exists = yes
+						NOT = { alliance_with = A30 }
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = scornfully_insulted
 						}
 					}
 				}
-				AND = {
-					alliance_with = A85
-					prestige = 50
-				}
+				alliance_with = A85
+				NOT = { exists = A85 }
 			}
 		}
 		
 		effect = {
-			add_imperial_influence = -5
 			if = {
-				limit = { NOT = { alliance_with = A85 } }
+				limit = {
+					NOT = { alliance_with = A85 }
+					A85 = { is_elector = yes }
+					has_estate_privilege = estate_mages_organization_magisterium
+				}
+				add_stability = -2
 				A30 = {
 					set_country_flag = wex_magi_r_elector_war
 					declare_war_with_cb = {
@@ -2055,11 +2043,58 @@ wex_slot_5 = {
 					}
 				}
 			}
+			else_if = {
+				limit = {
+					NOT = { alliance_with = A85 }
+					A85 = { is_elector = yes }
+					NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+				}
+				A30 = {
+					set_country_flag = wex_magi_r_elector_war
+					declare_war_with_cb = {
+						who = A85
+						casus_belli = cb_steal_electorate
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					alliance_with = A85
+					A77 = { is_subject_of = ROOT }
+				}
+				add_stability = -1
+				898 = {
+					limit = { country_or_non_sovereign_subject_holds = A85 }
+					cede_province = ROOT
+					remove_core = A85
+				}
+				A85 = { inherit = A77 }
+			}
+			else_if = {
+				limit = {
+					alliance_with = A85
+				}
+				add_years_of_income = -2
+				898 = {
+					limit = { country_or_non_sovereign_subject_holds = A85 }
+					cede_province = ROOT
+					remove_core = A85
+				}
+			}
+			else_if = {
+				limit = {
+					A77 = { is_subject_of = ROOT }
+				}
+				add_favors = {
+					who = A77
+					value = 20
+				}
+			}
 			else = {
-				add_adm_power = 100
-				add_dip_power = 100
-				add_mil_power = 100
-				add_prestige = -100
+				add_power_projection = { 
+					type = 10_permanent_power_projection
+					amount = 10 
+				}
 			}
 		}
 	}
@@ -2090,7 +2125,6 @@ wex_slot_5 = {
 		}
 		
 		effect = {
-			add_imperial_influence = -10
 			country_event = {
 				id = flavor_wex.16 # wex asks for us to open the vault -> leads to choice of an artifact. Long life absolutism control, diplomatic acumen, ancestral power, administrative skill.
 			}
@@ -2105,7 +2139,12 @@ wex_slot_5 = {
 		trigger = {
 			OR = {
 				NOT = { exists = A59 }
-				is_rival = A59
+				A59 = {
+					has_opinion_modifier = {
+						who = ROOT
+						modifier = scornfully_insulted
+					}
+				}
 				any_ally = {
 					owns_core_province = 433
 					owns_core_province = 424
@@ -2145,7 +2184,7 @@ wex_slot_5 = {
 						duration = -1
 					}
 				}
-				add_imperial_influence = 20
+				add_imperial_influence = 5
 			}
 			else = {
 				add_casus_belli = {
@@ -2221,28 +2260,64 @@ wex_slot_5 = {
 			OR = {
 				calc_true_if = {
 					all_country = {
-						limit = { 
-							is_part_of_hre = yes
-							religion = corinite
-						}
-						amount = 1
+						is_part_of_hre = yes
+						religion = corinite
 					}
+					amount = 1
 				}
 				religion = corinite
 				hre_leagues_enabled = yes
-				hre_religion_locked = yes
-				hre_religion_treaty = yes
+				is_year = 1600
 			}
+			treasury = 1000
+			mil_power = 100
+			dip_power = 100
 		}
 		
 		effect = {
+			add_treasury = -1000
+			add_mil_power = -100
+			add_dip_power = -100
 			if = {
-				limit = {
-					is_emperor = yes
-				}
-				
+				limit = { religion = corinite }
+				set_karma = 0
+				add_army_tradition = 20
 			}
-			
+			else_if = {
+				limit = { religion = infernal_court }
+				add_country_modifier = {
+					name = wex_cot_infernals # morale_damage = 0.1 reinforcement reinforce_cost_modifier = -0.25  reinforce_speed = 0.25 regiment_manpower_usage = -0.25 is_streltsy_modifier = yes #infernal blood makes your troops regenerate.
+					duration = 36500 #100 years
+				}
+				add_prestige = 10
+			}
+			else_if = {
+				limit = {
+					religion = regent_court
+					A77 = { is_subject_of = ROOT }
+				}
+				define_general = {
+					name = "Ibenion VI ta'Lunatein"
+					fire = 4
+					shock = 10
+					manuever = 4 
+					siege = 4
+					trait = war_wizard_personality
+				}
+			}
+			else_if = {
+				limit = {
+					religion = regent_court
+				}
+				add_country_modifier = {
+					name = wex_cot_regent_revanchism #global_religious_conversion_resistance = 1 global_defender_dice_roll_bonus = 1 enforce_religion_cost = -0.5 relation_with_same_religion = 25
+					duration = 5300 #20 years
+				}
+			}
+			else = {
+				add_yearly_manpower = 2
+				add_army_tradition = 10
+			}
 		}
 	}
 	
@@ -2252,10 +2327,22 @@ wex_slot_5 = {
 		position = 8
 		
 		trigger = {
-			
+			OR = {
+				hre_religion_locked = yes
+				AND = {
+					is_year = 1600
+					hre_religion_treaty = yes
+				}
+			}
 		}
 		
 		effect = {
+			if = {
+				limit = {
+					is_emperor = yes
+				}
+				add_imperial_influence = 10
+			}
 			
 		}
 	}
