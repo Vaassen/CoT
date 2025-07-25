@@ -1382,6 +1382,10 @@ federation_cohesion_form_formable = {
 			custom_tooltip = J52_stay_enuuk_tt
 		}
 		else = { change_religion = enuuk_followers }
+		if = {
+			limit = { NOT = { government = republic } }
+			change_government = republic
+		}
 		hidden_effect = { restore_country_name = yes }
 		set_country_flag = cohesion_J52_former 
 	}
@@ -1915,6 +1919,16 @@ sedentarization_apply_min_autonomy_negating_modifier = {
 				remove_province_modifier = sed_min_autonomy_from_territory_negation
 				remove_province_modifier = sed_min_autonomy_from_half_state_negation
 			}
+
+			if = { #Ikogshaantus
+				limit = { has_province_modifier = J52_consecrated_industry }
+				add_province_modifier = {
+					name = sed_min_autonomy_from_ikog_consecration_negation
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = { remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation }
 		}
 	}
 }
@@ -2314,7 +2328,10 @@ sedentarization_outpost_try_phase_change = {
 		limit = {
 			area_for_scope_province = {
 				type = all
-				owned_by = event_target:sed_outpost_owner
+				OR = {
+					owned_by = event_target:sed_outpost_owner
+					NOT = { has_province_modifier = sed_forbidden }
+				}
 			}
 		}
 		# Phase One, progressing to Phase Two. Phase One is the only phase with an RNG event requirement; check if it has happened.
@@ -2493,11 +2510,13 @@ sedentarization_outpost_completion_generic_propagation = {
 	area = {
 		limit = {
 			NOT = { province_id = ROOT }
+			has_province_modifier = sed_forbidden
 		}
 		sedentarization_outpost_completion_$completion_effect$ = { culture_source = event_target:sed_outpost }
 		remove_province_modifier = sed_outpost_areal_influence_phase_iii
 		remove_province_modifier = sed_min_autonomy_from_territory_negation
 		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+		remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
 	}
 }
 
@@ -2554,11 +2573,23 @@ sedentarization_outpost_completion_heavy_settlement_effect = {
 sedentarization_remove_system_from_province = {
 	custom_tooltip = sed_remove_system_from_province
 	hidden_effect = {
+		if = {
+			limit = { sedentarization_province_has_outpost = yes }
+			sedentarization_reset_province_outpost = yes
+			# There's a nonzero want for MT makers to be able to bypass the system, even if it's only part of an area.
+			# Partial removal from an area would be more problematic than the whole area, so clause is for that case.
+			# (Currently, does not seem very problematic, so there's not much code here.)
+			area = {
+				remove_province_modifier = sed_min_autonomy_from_territory_negation
+				remove_province_modifier = sed_min_autonomy_from_half_state_negation
+				remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
+			}
+		}
 		remove_province_modifier = sed_forbidden
 		remove_province_modifier = sed_entrenched_centaur_nomadism
-		sedentarization_reset_province_outpost = yes
 		remove_province_modifier = sed_min_autonomy_from_territory_negation
 		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+		remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
 		sedentarization_clear_phase_one_flags = yes
 		sedentarization_clear_phase_two_flags = yes
 		sedentarization_clear_phase_three_flags = yes
