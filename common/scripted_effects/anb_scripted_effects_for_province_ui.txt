@@ -1,0 +1,53 @@
+####################
+# Scripted effects #
+####################
+
+# Add additional aPUIE flags here
+clear_all_aPUIE_flags = {
+	clr_province_flag = aPUIE_parent_container_flag
+	clr_province_flag = aPUIE_template_flag
+}
+
+change_aPUIE_template_var = {
+	# To change the 'currency' use  'change_aPUIE_template_var = { amount = 10 }' to increase it by 10.
+	# You can also specify the name of a variable if you wish to calculate the quantity instead of using a static value
+	[[amount] change_variable = { aPUIE_template_var = $amount$ } ]
+	[[var_amount] change_variable = { which = aPUIE_template_var which = $var_amount$ } ]
+	hidden_effect = {
+		if = {
+			limit = { ai = no }
+			cap_aPUIE_template_var = yes
+			update_aPUIE_template_var_bar = yes
+		}
+	}
+	# Check for provinces in which the aPUIE is opened
+	# Copy the framevariable to the province for the progress bar
+	every_owned_province = {
+		limit = {
+			#This should be the flag specific to each aPUIE system
+			has_province_flag = aPUIE_template_flag
+		}
+		set_variable = {
+			which = aPUIE_template_framevar
+			which = FROM
+		}
+	}
+}
+update_aPUIE_template_var_bar = { # This prevents the framevar going negative and then showing 100%
+	if = { limit = { check_variable = { aPUIE_template_var = 0 } }
+		set_variable = { which = aPUIE_template_framevar which = aPUIE_template_var }
+		divide_variable = { which = aPUIE_template_framevar which = aPUIE_template_var_capacity }
+		multiply_variable = { aPUIE_template_framevar = 100 }
+	}
+	else = { set_variable = { aPUIE_template_framevar = 0 } }
+}
+cap_aPUIE_template_var = { # When the 'currency' goes above your capacity, or drops into negatives
+	if = {
+		limit = { NOT = { check_variable = { aPUIE_template_var = 0 } } }
+		set_variable = { aPUIE_template_var = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { which = aPUIE_template_var which = aPUIE_template_var_capacity } }
+		set_variable = { which = aPUIE_template_var which = aPUIE_template_var_capacity }
+	}
+}
