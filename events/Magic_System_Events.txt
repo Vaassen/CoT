@@ -50,6 +50,31 @@ country_event = { #Monthly magic upkeep
 	}
 }
 
+
+country_event = { #Reduces the file size load of updating the magic menu
+	id = magic_system.1
+	title = magic_system.1.t
+	desc = magic_system.1.d
+	picture = COURT_eventPicture
+
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		update_magic_ui_experience_modifiers = yes ##Jothell temp?
+		update_mana_regen_vars = yes
+		generic_calc_spell_levels = { type = ruler }
+		generic_calc_spell_levels = { type = heir }
+		generic_calc_spell_levels = { type = country }
+		update_spell_tooltips = yes #For Conjuration mercs rn
+	}
+
+	option = {
+		name = magic_system.1.a
+		ai_chance = { factor = 1 }
+	}
+}
+
 country_event = { #Load order issue involving personalities? use these events instead!
 	id = magic_system.10
 	title = magic_system.10.t
@@ -154,14 +179,15 @@ country_event = { #make ruler into war wizard
 	is_triggered_only = yes
 	after = { clr_country_flag = in_ruler_mage_general_confirmation_event }
 
-	option = {
+	option = { #Do not do it
 		name = flavor_castanor_go_back
 		ai_chance = { factor = 1 }
 	}
 
-	option = {
+	option = { #Do it
 		name = magic_system.14.a
 		ai_chance = { factor = 100 }
+		trigger = { NOT = { has_country_modifier = magic_ruler_exile_checker } }
 		
 		if = {
 			limit = {
@@ -170,7 +196,11 @@ country_event = { #make ruler into war wizard
 				has_regency = no
 				has_government_attribute = rulers_can_be_generals
 				OR = {
-					is_monarch_leader = no
+					is_monarch_leader = no #returns false for exiled/unexiled rulers
+					AND = {
+						NOT = { has_ruler_flag = allow_war_wizard_after_exile } #We accounted for your edge case involving exiling/unexiling rulers
+						NOT = { has_leader_with = { is_monarch_leader = yes } } #We did not do that yet
+					}
 					had_ruler_flag = { flag = allow_war_wizard_after_exile days = 1 }
 				}
 
@@ -185,7 +215,16 @@ country_event = { #make ruler into war wizard
 			}
 			define_type_to_war_wizard_effect = { type = ruler }
 			clr_ruler_flag = allow_war_wizard_after_exile
+			hidden_effect = { add_ruler_modifier = { name = magic_ruler_exile_checker duration = 1 hidden = yes } }
 		}
+	}
+
+	option = { #Sorry man just wait a day: you've clicked this button multiple times on the same day with the same ruler
+		name = magic_system.14.a
+		ai_chance = { factor = 100 }
+		trigger = { has_country_modifier = magic_ruler_exile_checker }
+
+		custom_tooltip = pdx_exile_bug_hint
 	}
 }
 country_event = { #add mage personality to new heirs in always-mage governments
