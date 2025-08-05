@@ -387,7 +387,7 @@ country_event = { #The on_new_monarch catch-all event for powerful mages
 	trigger = { #Your ruler is a mage or is supposed to/going to be a mage
 		OR = {
 			ruler_is_powerful_mage = yes
-			has_ruler_flag = is_powerful_mage
+			has_ruler_flag = is_powerful_mage #Heir powerful mage
 			has_government_attribute = always_mage
 			has_country_flag = always_mage
 
@@ -405,47 +405,51 @@ country_event = { #The on_new_monarch catch-all event for powerful mages
 
 		#Heir powerful mages don't get the personality trait until now.
 		#Also dying w/o an heir but always_mage
-		if = {
-			limit = { ruler_is_not_powerful_mage = yes }
-			define_powerful_mage = { type = ruler }
-		}
 
-		#If ruler was studying as the heir, transfer progress
-		if = {
-			limit = { ai = no } # TODO Jothell Does ai use these flags? not sure rn #Bonbon - no they don't
-			if = {
-				limit = { has_ruler_flag = magic_advancement }
-				set_variable = { which = ruler_magic_experience which = heir_magic_experience }
-				set_variable = { which = heir_magic_experience which = 0 }
-				# update_advancement_progress_bar = { type = ruler }
-			}
-			else = {
-				set_variable = { which = ruler_magic_experience which = 0 }
+		if = { #You were previously an heir/consort powerful mage
+			limit = { has_ruler_flag = initialized_magic_flags }
+
+			set_ruler_mage_effect = yes #Get your personality
+
+			if = { #If ruler was studying as the heir, transfer progress
+				limit = { ai = no } #AI doesn't use these flags
 				if = {
-					limit = { is_overall_not_advancing_magic = yes }
-					set_variable = { current_experience_percent = 0 }
+					limit = { has_ruler_flag = magic_advancement } #only possible via heir study
+					set_variable = { which = ruler_magic_experience which = heir_magic_experience }
+					set_variable = { which = heir_magic_experience which = 0 }
+					# update_advancement_progress_bar = { type = ruler }
+				}
+				else = {
+					set_variable = { which = ruler_magic_experience which = 0 }
+					if = {
+						limit = { is_overall_not_advancing_magic = yes }
+						set_variable = { current_experience_percent = 0 }
+					}
 				}
 			}
-		}
 
-		#If you already have your levels, we have to do this here.
-		generic_calc_spell_levels = { type = ruler }
-		recalculate_ruler_mana_regen = yes #basically just for rulers
-		update_mana_regen_vars = yes
-		calc_schools_total_level = yes
+			#Since you already have your levels, we have to do this here.
+			generic_calc_spell_levels = { type = ruler }
+			recalculate_ruler_mana_regen = yes
+			update_mana_regen_vars = yes
+			calc_schools_total_level = yes
 
-		#If you have witch-king points (such as from choices made while an heir), get the appropriate modifier
-		if = {
-			limit = { has_ruler_flag = is_infamous_heir }
-			transfer_witch_king_points = { from = heir to = ruler }
+			#If you have witch-king points (such as from choices made while an heir), get the appropriate modifier
+			if = {
+				limit = { has_ruler_flag = is_infamous_heir }
+				transfer_witch_king_points = { from = heir to = ruler }
+			}
+			else_if = {
+				limit = { has_ruler_flag = is_infamous_consort }
+				transfer_witch_king_points = { from = consort to = ruler }
+			}
+			else = { clr_type_witch_king_points = { type = ruler } }
+			
+			calculate_magical_infamy_modifier = yes
 		}
-		else_if = {
-			limit = { has_ruler_flag = is_infamous_consort }
-			transfer_witch_king_points = { from = consort to = ruler }
+		else = { #You are supposed to be a powerful mage but are not one yet (have no baggage)
+			define_powerful_mage = { type = ruler }
 		}
-		else = { clr_type_witch_king_points = { type = ruler } }
-		
-		calculate_magical_infamy_modifier = yes
 
 		if = {
 			limit = { ai = no }
