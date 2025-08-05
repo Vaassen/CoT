@@ -84,6 +84,7 @@ country_event = {
 
 	option = {
 		name = ahati_events.1.a
+		trigger = { NOT = { tag = F66 } } #konol should always use 35
 		add_country_modifier = { name = ahati_disaster_timer duration = 9125 hidden = yes } #25 years
 		ai_chance = { factor = 50 }
 	}
@@ -187,7 +188,7 @@ country_event = {
 	option = {
 		name = ahati_events.31.a
 		add_dip_power = -100
-		add_mandate = 2
+		add_mandate = 4
 	}
 
 	#idc
@@ -195,7 +196,7 @@ country_event = {
 		name = ahati_events.31.b
 		event_target:event_province = {
 			add_unrest = 5
-			add_local_autonomy = 35
+			add_local_autonomy = 25
 		}
 		add_mandate = -2
 	}
@@ -569,6 +570,7 @@ country_event = {
 			government = theocracy
 		}
 		NOT = { tag = U04 }
+		NOT = { has_country_flag = horutep_arrived }
 	}
 
 	#oh shit
@@ -921,12 +923,23 @@ country_event = {
 country_event = {
 	id = ahati_events.100
 	title = ahati_events.100.t
-	desc = ahati_events.100.d
+	desc = {
+		trigger = { NOT = { AND = { tag = F66 mission_completed = konolkhatep_seal_pact } } }
+		desc = ahati_events.100.d
+	}
+	desc = {
+		trigger = { tag = F66 mission_completed = konolkhatep_seal_pact }
+		desc = ahati_events.100.d2
+	}
 	picture = ASSASSINATION_eventPicture
 
 	fire_only_once = yes
 	mean_time_to_happen = {
 		years = 30
+		modifier = {
+			factor = 1.25
+			tag = F66
+		}
 		modifier = {
 			factor = 0.9
 			NOT = { imperial_mandate = 80 }
@@ -936,11 +949,11 @@ country_event = {
 			NOT = { imperial_mandate = 60 }
 		}
 		modifier = {
-			factor = 0.8
+			factor = 0.9
 			NOT = { estate_loyalty = { estate = estate_ahati loyalty = 30 } }
 		}
 		modifier = {
-			factor = 0.8
+			factor = 0.9
 			OR = {
 				ruler_has_personality = embezzler_personality
 				ruler_has_personality = drunkard_personality
@@ -955,17 +968,18 @@ country_event = {
 		modifier = {
 			factor = 0.8
 			culture_group = gnollish
+			NOT = { tag = F66 }
 		}
 		modifier = {
-			factor = 0.8
-			total_development = 500
+			factor = 0.9
+			total_development = 600
 		}
 		modifier = {
-			factor = 0.8
+			factor = 0.9
 			estate_influence = { estate = estate_ahati influence = 50 }
 		}
 		modifier = {
-			factor = 0.8
+			factor = 0.9
 			estate_influence = { estate = estate_ahati influence = 70 }
 		}
 	}
@@ -973,12 +987,14 @@ country_event = {
 	trigger = {
 		is_emperor_of_china = yes
 		has_estate = estate_ahati
-		NOT = { has_country_modifier = ahati_disaster_timer }
-		is_year = 1500 #at least
-		total_development = 400
 		OR = {
-			estate_influence = { estate = estate_ahati influence = 40 }
-			has_country_modifier = duwarkani_disgruntled_ahati #duwarkani MT 
+			has_country_flag = ahati_disaster_start_bypass
+			AND = {
+				NOT = { has_country_modifier = ahati_disaster_timer }
+				is_year = 1500 #at least
+				total_development = 400
+				estate_influence = { estate = estate_ahati influence = 40 }
+			}
 		}
 	}
 
@@ -989,7 +1005,20 @@ country_event = {
 	#oh shit
 	option = {
 		name = ahati_events.100.a
+		trigger = { NOT = { AND = { tag = F66 mission_completed = konolkhatep_seal_pact } } }
 		kill_ruler = yes
+		add_mandate = -20
+
+		custom_tooltip = ahati_events.100.tooltip
+		set_country_flag = ahati_disaster_start
+		set_global_flag = ahati_disaster_began
+	}
+
+
+	#konol
+	option = {
+		name = ahati_events.100.a #yes same loc
+		trigger = { tag = F66 mission_completed = konolkhatep_seal_pact }
 		add_mandate = -20
 
 		custom_tooltip = ahati_events.100.tooltip
@@ -1011,14 +1040,28 @@ country_event = {
 		is_emperor_of_china = yes
 		has_estate = estate_ahati
 	}
+	
+	immediate = {
+		hidden_effect = {
+			save_global_event_target_as = ahati_disaster_target
+		}
+	}
 
 	#oh shit
 	option = {
 		name = ahati_events.101.a
-		add_disaster_modifier = { name = ahati_disaster_regiments duration = -1 disaster = ahati_disaster }
+		if = {
+			limit = { tag = F66 mission_completed = konolkhatep_watchful_eyes }
+			custom_tooltip = konolkhatep_watchful_eyes_disaster_tooltip
+		}
+		else = { add_disaster_modifier = { name = ahati_disaster_regiments duration = -1 disaster = ahati_disaster } }
+		if = {
+			limit = { tag = F66 mission_completed = konolkhatep_seal_pact }
+			custom_tooltip = konolkhatep_seal_pact_disaster_tooltip
+		}
+
 
 		custom_tooltip = ahati_events.101.tooltip
-
 		if = {
 			limit = { has_estate_privilege = estate_ahati_khetist_recruitment }
 			remove_estate_privilege = estate_ahati_khetist_recruitment
@@ -1065,7 +1108,7 @@ province_event = {
 		name = ahati_events.102.a
 		if = {
 			limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
-			add_latest_building = { builder = ROOT fort = yes }
+			add_latest_building = { builder = owner fort = yes }
 		}
 		if = {
 			limit = { NOT = { has_building = ramparts } }
@@ -1435,8 +1478,15 @@ province_event = {
 
 	option = {
 		name = ahati_events.132.a
-		add_core = U04
-		set_province_flag = ahati_cot
+		if = {
+			custom_tooltip = konolkhatep_compromise_dragons_no_core_tooltip
+			limit = { owner = { tag = F66 mission_completed = konolkhatep_compromise_dragons } }
+			remove_province_modifier = ahati_cot
+		}
+		else = {
+			add_core = U04
+			set_province_flag = ahati_cot
+		}
 		ai_chance = { factor = 33 }
 	}
 }
@@ -1558,6 +1608,7 @@ country_event = {
 			}
 		}
 		NOT = { has_global_flag = aakheta_released }
+		NOT = { tag = F66 mission_completed = konolkhatep_watchful_eyes }
 	}
 
 	immediate = {
@@ -1713,6 +1764,7 @@ country_event = {
 			superregion = north_salahad_superregion
 			is_potential_aakheta_core = no
 		}
+		NOT = { tag = F66 mission_completed = konolkhatep_seal_pact }
 	}
 	immediate = {
 		hidden_effect = {
@@ -1933,6 +1985,7 @@ country_event = {
 		coast_of_tears_area = { type = all country_or_subject_holds = ROOT }
 		NOT = { has_global_flag = aakheta_released }
 		ai = no
+		NOT = { tag = F66 mission_completed = konolkhatep_seal_pact }
 	}
 	goto = 466
 
@@ -2089,6 +2142,7 @@ country_event = {
 			culture_group = gnollish
 		}
 		NOT = { has_global_flag = aakheta_released }
+		NOT = { tag = F66 mission_completed = konolkhatep_seal_pact }
 	}
 	immediate = {
 		hidden_effect = {
@@ -2384,6 +2438,17 @@ country_event = {
         name = ahati_events.170.a
         ai_chance = { factor = 100 }
 		custom_tooltip = ahati_events.170.tooltip
+		hidden_effect = {
+			if = {
+				limit = { 
+					ai = yes 
+				}
+				create_unit_forcelimit_percentage = {
+					type = infantry
+					force_limit_percentage = 0.25
+				}
+			}
+		}
 	}
 	#Play as them
 	option = {
@@ -2491,7 +2556,7 @@ country_event = {
 
 	immediate = {
 		hidden_effect = { 
-			event_target:EmperorOfChina = { 
+			event_target:ahati_disaster_target = { 
 				disband_all_units = yes 
 				save_event_target_as = event_country 
 			}
@@ -2504,7 +2569,10 @@ country_event = {
 	option = {
         name = ahati_events.172.a
 		add_government_reform = aakheta_ahati_reform
-		set_emperor_of_china = ROOT
+		if = {
+			limit = { event_target:event_country = { is_emperor_of_china = yes } }
+			set_emperor_of_china = ROOT
+		}
 		if = {
 			limit = { event_target:event_country = { government_rank = 3 } }
 			set_government_rank = 3
@@ -2521,7 +2589,10 @@ country_event = {
 	option = {
         name = ahati_events.172.b
 		add_government_reform = aakheta_ahati_reform
-		set_emperor_of_china = ROOT
+		if = {
+			limit = { event_target:event_country = { is_emperor_of_china = yes } }
+			set_emperor_of_china = ROOT
+		}
 		if = {
 			limit = { event_target:event_country = { government_rank = 3 } }
 			set_government_rank = 3
