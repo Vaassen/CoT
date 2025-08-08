@@ -936,26 +936,37 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 
 	hidden_effect = {
 		if = { limit = { ai = no } #AI has their own thing
+
+			# The below are calculated both here and in update_magic_ui_experience_modifiers
+			# It needs to be here so that players who don't open the menu still have updated estimates
+			export_to_variable = { which = last_months_xp_gain value = modifier:mages_monthly_experience } #estimate monthly xp
+			set_variable = { which = months_till_advancement_done which = magic_experience_target } #estimate time to completion
+
 			if = { limit = { has_ruler_flag = magic_advancement }
 				export_to_variable = {
 					variable_name = ruler_experience_modifier
 					value = modifier:mages_ruler_experience_mod
 				}
-
 				calc_school_experience_modifiers = { type = ruler }
 				change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-
 				change_variable = { ruler_experience_modifier = 1 }
 				multiply_variable = { which = experienceGain which = ruler_experience_modifier }
 
-				change_variable = { which = experienceGain which = unmodifiedExperience }
+				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
+				if = {
+					limit = { is_long_lived_ruler = yes }
+					divide_variable = { last_months_xp_gain = 2 }
+				}
+				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
+				change_variable = { which = experienceGain which = unmodifiedExperience }
 				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = ruler_magic_experience
 					which = experienceGain
 				}
+				subtract_variable = { which = months_till_advancement_done which = ruler_magic_experience }
 				update_advancement_progress_bar = { type = ruler }
 			}
 			
@@ -964,21 +975,26 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 					variable_name = ruler_experience_modifier
 					value = modifier:mages_ruler_experience_mod
 				}
-
 				calc_school_experience_modifiers = { type = heir }
 				change_variable = { which = ruler_experience_modifier which = school_experience_modifier }
-
 				change_variable = { ruler_experience_modifier = 1 }
 				multiply_variable = { which = experienceGain which = ruler_experience_modifier }
 
-				change_variable = { which = experienceGain which = unmodifiedExperience }
+				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
+				if = {
+					limit = { is_long_lived_heir = yes }
+					divide_variable = { last_months_xp_gain = 2 }
+				}
+				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
+				change_variable = { which = experienceGain which = unmodifiedExperience }
 				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = heir_magic_experience
 					which = experienceGain
 				}
+				subtract_variable = { which = months_till_advancement_done which = heir_magic_experience }
 				update_advancement_progress_bar = { type = heir }
 			}
 			else_if = { limit = { has_country_flag = magic_advancement }
@@ -986,23 +1002,29 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 					variable_name = country_experience_modifier
 					value = modifier:mages_estate_experience_mod
 				}
-
 				calc_school_experience_modifiers = { type = country }
 				change_variable = { which = country_experience_modifier which = school_experience_modifier }
-				
 				change_variable = { country_experience_modifier = 1 }
 				multiply_variable = { which = experienceGain which = country_experience_modifier }
 
-				change_variable = { which = experienceGain which = unmodifiedExperience }
+				multiply_variable = { which = last_months_xp_gain which = country_experience_modifier }
+				divide_variable = { last_months_xp_gain = 3 }
+				truncate_variable_3 = { which = last_months_xp_gain } #Estimate of monthly xp
 
+				change_variable = { which = experienceGain which = unmodifiedExperience }
 				truncate_variable_3 = { which = experienceGain }
 
 				change_variable = {
 					which = country_magic_experience
 					which = experienceGain
 				}
+
+				subtract_variable = { which = months_till_advancement_done which = country_magic_experience } #country xp estimate
 				update_advancement_progress_bar = { type = country }
 			}
+
+			divide_variable = { which = months_till_advancement_done which = last_months_xp_gain } #Tooltip bits
+			round_variable = { which = months_till_advancement_done value = 1 } #round up
 		}
 
 		country_event = { id = magic_system.100 } #XP Advancement pulse
@@ -1141,6 +1163,51 @@ calc_ai_school_xp_modifier = {
 		value = modifier:$school$_experience_mod
 	}
 	change_variable = { which = ai_magic_modifier which = school_experience_modifier }
+}
+
+monthly_magic_upkeep_pulse = {
+	if = {
+		limit = {
+			ai = no #AI has their own thing
+			has_country_flag = magic_system_initialized
+		}
+
+		update_mana_regen_vars = yes #Monthly mana regen
+		change_mana = { var_amount = mages_mana_regen_val }
+
+		export_to_variable = {
+			which = monthly_xp_tick
+			value = modifier:mages_monthly_experience
+		}
+
+		if = { limit = { has_ruler_flag = magic_advancement }
+			if = { limit = { is_long_lived_ruler = yes }
+				divide_variable = { monthly_xp_tick = 2 }
+			}
+		}
+		else_if = { limit = { has_heir_flag = magic_advancement }
+			if = { limit = { is_long_lived_heir = yes }
+				divide_variable = { monthly_xp_tick = 2 }
+			}
+		}
+		else_if = { limit = { has_country_flag = magic_advancement }
+			divide_variable = { which = monthly_xp_tick value = 3 }
+		}
+
+		increase_magic_experience = { var_amount = monthly_xp_tick }
+
+		if = {
+			limit = {
+				OR = { #The magic menu is being held open
+					has_country_flag = magic_menu_main_flag
+					has_country_flag = magic_menu_advancement_flag
+					has_country_flag = magic_menu_spellbook_flag
+					has_country_flag = magic_menu_patron_flag
+				}
+			}
+			update_magic_ui_experience_modifiers = yes
+		}
+	}
 }
 
 #####################
