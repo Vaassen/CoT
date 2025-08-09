@@ -166,7 +166,7 @@ konolkhatep_disaster_counter_effect = {
 		}
 		if = {
 			limit = { is_variable_equal = { which = gnoll_disaster_counter value = 8 } }
-			remove_country_modifier = ahati_disaster_timer
+			set_country_flag = ahati_disaster_start_bypass
 			country_event = { id = ahati_events.100 days = 60 random = 365 }
 		}
 		if = {
@@ -1236,4 +1236,193 @@ konolkhatep_neighbor_khetist_cultures_random = {
 			}
 		}
 	}
+}
+
+konolkhatep_select_satrapy_target = {
+	every_subject_country = {
+		limit = {
+			is_subject_of_type = tributary_state
+			NOT = { primary_culture = ROOT }
+			total_development = 100
+			capital_scope = {
+				OR = {
+					has_province_modifier = konol_enslavement_mod
+					has_province_modifier = konol_assimilation_mod
+					has_province_modifier = konol_integration_mod
+					has_province_modifier = konol_service_mod
+				}
+			}
+			if = {
+				limit = { has_saved_event_target = konol_satrapy_target_1 }
+				NOT = { tag =  event_target:konol_satrapy_target_1 }
+				if = {
+					limit = { has_saved_event_target = konol_satrapy_target_2 }
+					NOT = { tag =  event_target:konol_satrapy_target_2 }
+					if = {
+						limit = { has_saved_event_target = konol_satrapy_target_3 }
+						NOT = { tag =  event_target:konol_satrapy_target_3 }
+						if = {
+							limit = { has_saved_event_target = konol_satrapy_target_4 }
+							NOT = { tag =  event_target:konol_satrapy_target_4 }
+							if = {
+								limit = { has_saved_event_target = konol_satrapy_target_5 }
+								NOT = { tag =  event_target:konol_satrapy_target_5 }
+								if = {
+									limit = { has_saved_event_target = konol_satrapy_target_6 }
+									NOT = { tag =  event_target:konol_satrapy_target_6 }
+									if = {
+										limit = { has_saved_event_target = konol_satrapy_target_7 }
+										NOT = { tag =  event_target:konol_satrapy_target_7 }
+										if = {
+											limit = { has_saved_event_target = konol_satrapy_target_8 }
+											NOT = { tag =  event_target:konol_satrapy_target_8 }
+											if = {
+												limit = { has_saved_event_target = konol_satrapy_target_9 }
+												NOT = { tag =  event_target:konol_satrapy_target_9 }
+											}
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_saved_event_target = konol_satrapy_target_$target$ }
+					event_target:konol_satrapy_target_$target$ = { NOT = { total_development = PREV } }
+				}
+			}
+			save_event_target_as = konol_satrapy_target_$target$
+		}
+	}
+}
+
+konolkhatep_satrapy_setup_effect = {
+	if = {
+		limit = { has_saved_event_target = konol_satrapy_target_$target$ }
+		event_target:konol_satrapy_target_$target$ = {
+			capital_scope = { save_event_target_as = konol_satrapy_capital_target_$target$ } #For the goto buttons
+			every_owned_province = {
+				limit = {
+					culture = event_target:konol_satrapy_target_$target$
+					NOT = { is_capital = yes }
+				}
+				random = {
+					chance = 25
+					set_province_flag = konol_satrapy_save_rebel_prov
+				}
+			}
+		}
+		if = {
+			limit = { event_target:konol_satrapy_target_$target$ = { total_development = 750 } }
+			set_variable = { which = konol_satrapy_variable_$target$ value = 900 }
+		}
+		else = {
+			export_to_variable = {
+				which = konol_satrapy_variable_$target$
+				value = total_development
+				who = event_target:konol_satrapy_target_$target$
+			}
+			multiply_variable = {
+				which = konol_satrapy_variable_$target$
+				value = 1.2
+			}
+			round_variable = {
+				which = konol_satrapy_variable_$target$
+				value = -1
+			}
+		}
+	}
+}
+
+konol_convert_satrapy_effect_yes = {
+	custom_tooltip = konol_convert_satrapy_pay_dip_tt_$target$
+	hidden_effect = {
+		event_target:konol_satrapy_target_$target$ = {
+			clr_country_flag = locked_racial_administration
+		}
+	}
+	event_target:konol_satrapy_target_$target$ = {
+		change_primary_culture = ROOT
+	}
+	hidden_effect = {
+		var_effect = { effect = add_dip_power var = konol_satrapy_variable_$target$ sign = - }
+		event_target:konol_satrapy_target_$target$ = {
+			remove_opinion = {
+				who = ROOT
+				modifier = khet_forced_culture
+			}
+		}
+	}
+	custom_tooltip = konol_convert_satrapy_rebels_$target$
+	event_target:konol_satrapy_target_$target$ = {
+		random_owned_province = { #capital_scope makes the tooltip ugly due to hardcoded indentation
+			limit = { is_capital = yes }
+			spawn_rebels = {
+				size = 2
+				type = particularist_rebels
+			}
+		}
+		if = { #if they don't have any, the tooltip breaks
+			limit = { any_owned_province = { has_province_flag = konol_satrapy_save_rebel_prov } }
+			every_owned_province = {
+				limit = { has_province_flag = konol_satrapy_save_rebel_prov }
+				spawn_rebels = {
+					size = 2
+					type = particularist_rebels
+				}
+			}
+		}
+	}
+}
+
+konol_convert_satrapy_effect_no = {
+	if = {
+		limit = {
+			NOT = {
+				check_variable = {
+					which = konol_available_dip
+					which = konol_satrapy_variable_$target$
+				}
+			}
+		}
+		custom_tooltip = konol_satrapy_not_enough_dip_$target$
+	}
+	if = {
+		limit = {
+			event_target:konol_satrapy_target_$target$ = { total_development = 500 }
+			NOT = {
+				has_government_power = {
+					mechanic_type = konolkhatep_mechanic
+					power_type = konolkhatep_slaves
+					value = 360
+				}
+			}
+		}
+		custom_tooltip = konol_satrapy_need_360_slaves
+	}
+	if = {
+		limit = {
+			event_target:konol_satrapy_target_$target$ = { total_development = 250 NOT = { total_development = 500 } }
+			NOT = {
+				has_government_power = {
+					mechanic_type = konolkhatep_mechanic
+					power_type = konolkhatep_slaves
+					value = 180
+				}
+			}
+		}
+		custom_tooltip = konol_satrapy_need_180_slaves
+	}
+	custom_tooltip = konol_convert_satrapy_pay_dip_tt_$target$
+	tooltip = {
+		event_target:konol_satrapy_target_$target$ = {
+			change_primary_culture = ROOT
+		}
+	}
+	custom_tooltip = konol_convert_satrapy_rebels_$target$
 }
