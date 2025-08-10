@@ -26,6 +26,16 @@ harpy_roost_st_terrain_is_valid = {
         # else = {
         #     hidden_trigger = { always = no }
         # }
+		if = {
+			limit = {
+				has_province_flag = roost_allowed
+			}
+			custom_trigger_tooltip = {
+				tooltip = roost_mt_trigger_tt
+				always = yes
+			}
+		}
+		else = { hidden_trigger = { always = no } }
     }
 }
 
@@ -34,7 +44,7 @@ harpy_roost_st_terrain_is_valid = {
 # forming Harpylen after accessing their T3 roosts, then it must be accounted for.
 # Instructions for allowing a country to build tier 3 roosts:
 # 1. In your MT, set the country flag harpy_roost_tier_3_unlocked when the player should be able to build tier 3 roosts, and
-#    create the provinde modifier that will replace the tier 2 roost modifier.
+#    create the province modifier that will replace the tier 2 roost modifier.
 # 2. In harpy_roost_st_can_build_tier_3_roost_potential in this file, add a new statement to the OR block that checks for the 
 #    new method.
 # 3. In harpy_roost_st_can_build_tier_3_roost_allow in this file, add a new if statement that checks for the relevant costs 
@@ -46,7 +56,7 @@ harpy_roost_st_can_build_tier_3_roost_potential = {
     FROM = { has_country_flag = harpy_roost_tier_3_unlocked }
     has_province_modifier = harpy_roost_mod_roost_flourishing_active
     OR = {
-        AND = {
+        AND = { #mulen
             FROM = {
                 has_country_flag = mulen_can_build_foundations
                 OR = {
@@ -58,6 +68,19 @@ harpy_roost_st_can_build_tier_3_roost_potential = {
             NOT = { has_province_modifier = mulen_hanging_city_foundation }
             NOT = { is_a_hanging_city = yes }
         }
+        AND = { #vaengheim
+            FROM = {
+                OR = {
+                    has_country_flag = Z88_hero_halls_1
+                    has_country_flag = Z88_hero_halls_2
+                }
+                has_country_modifier = harpy_administration
+            }
+            NOT = { 
+                has_province_modifier = Z88_t3_roost
+                has_province_modifier = Z88_t3_roost_upgraded
+            }
+        }
     }
 }
 # Province scope, what must be fulfilled for the player to upgrade the roost?
@@ -66,6 +89,30 @@ harpy_roost_st_can_build_tier_3_roost_allow = {
     if = { limit = { FROM = { has_country_flag = mulen_can_build_foundations } }
         FROM = {
             treasury = 500
+        }
+    }
+    else_if = { #vaengheim
+        limit = {
+            FROM = {
+                OR = {
+                    has_country_flag = Z88_hero_halls_1
+                    has_country_flag = Z88_hero_halls_2
+                }
+            }
+        }
+        FROM = {
+            mil_power = 50
+            years_of_income = 0.25
+            years_of_manpower = 0.25
+            custom_trigger_tooltip = {
+                tooltip = Z88_roost_count_tt
+                NOT = {
+                    check_variable = {
+                        which = Vaengheim_t3_roost_count
+                        which = Vaengheim_land_units_num_roosts_allowed
+                    }
+                }
+            }
         }
     }
     else = {
