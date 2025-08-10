@@ -5,22 +5,25 @@
 #Saves the Location of each $holohana$
 holohana_province_save_effect = {
 	#TODO check that you have a target before clearing them to avoid spamming error log
-	clear_global_event_target = holohana_target_$holohana$
-	clear_global_event_target = holohana_province_owner_$holohana$
-	random_province = {
-		limit = {
-			has_province_modifier = holohana_modifier_$holohana$
-		}
-		save_global_event_target_as = holohana_target_$holohana$
-		if = {
+	# clear_global_event_target = holohana_target_$holohana$
+	# clear_global_event_target = holohana_province_owner_$holohana$
+	# if = { 
+	# 	limit = { NOT = { has_global_flag = holohana_$holohana$_dead } }
+		random_province = {
 			limit = {
-				NOT = { is_empty = yes }
+				has_province_modifier = holohana_modifier_$holohana$
 			}
-			owner = {
-				save_global_event_target_as = holohana_province_owner_$holohana$
+			save_global_event_target_as = holohana_target_$holohana$
+			if = {
+				limit = {
+					NOT = { is_empty = yes }
+				}
+				owner = {
+					save_global_event_target_as = holohana_province_owner_$holohana$
+				}
 			}
 		}
-	}
+	# }
 }
 
 #Applies all modifiers needed for the Holohana to work
@@ -162,17 +165,23 @@ holohana_rebel_spawn_effect = {
 #Migrates each Holohana to a new Province.
 holohana_migrate_effect = {
 	event_target:holohana_target_$holohana$ = {
+		if = {
+			limit = { not = { has_two_holohana = yes } }
+			clear_rebels = yes
+		}
 		remove_province_modifier = holohana_modifier_$holohana$
-		clear_rebels = yes
 		random_list = {
 			50 = {
 				random_empty_neighbor_province = {
 					limit = {
 						is_valid_holohana_move_target = yes
 					}
-					add_permanent_province_modifier = {
-						name = holohana_modifier_$holohana$
-						duration = -1
+					if = { 
+						limit = { NOT = { has_global_flag = holohana_$holohana$_dead } }
+						add_permanent_province_modifier = {
+							name = holohana_modifier_$holohana$
+							duration = -1
+						}
 					}
 					remove_province_modifier = holohana_rumbling
 				}
@@ -189,9 +198,12 @@ holohana_migrate_effect = {
 					limit = {
 						is_valid_holohana_move_target = yes
 					}
-					add_permanent_province_modifier = {
-						name = holohana_modifier_$holohana$
-						duration = -1
+					if = {
+						limit = { NOT = { has_global_flag = holohana_$holohana$_dead } }
+						add_permanent_province_modifier = {
+							name = holohana_modifier_$holohana$
+							duration = -1
+						}
 					}
 					remove_province_modifier = holohana_rumbling
 				}
@@ -360,4 +372,31 @@ holohana_end_individual_rampage = {
 		holohana_set_migrate_timer = { holohana = $holohana$ amount = 5 }
 		holohana_migrate_timer_effect = { holohana = $holohana$ }
 	}
+}
+
+#Injure the losing Holohana when two battle
+holohana_injury_effect = {
+	if = { 
+		limit = { has_global_flag = holohana_$holohana$_injured }
+		clr_global_flag = holohana_$holohana$_injured
+		set_global_flag = holohana_$holohana$_dead
+		random_province = {
+			limit = {
+				has_province_modifier = holohana_modifier_$holohana$
+			}
+			remove_province_modifier = holohana_modifier_$holohana$
+		}
+	}
+	else = {
+		set_global_flag = holohana_$holohana$_injured 
+		holohana_migrate_effect = { holohana = $holohana$ }
+	}
+	# event_target:holohana_$holohana$_rebels = {
+	# 	3675 = {
+	# 		spawn_rebels = {
+	# 			size = 100
+	# 			type = holohana_$holohana$_rebels
+	# 		}
+	# 	}
+	# }
 }
