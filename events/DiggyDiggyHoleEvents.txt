@@ -172,7 +172,7 @@ province_event = {
 		NOT = { has_province_modifier = infested_hold }
 		NOT = { has_province_modifier = fallen_great_excavation }
 		NOT = { ROOT = { owned_by = FROM } }
-		NOT = { has_province_modifier = siege_no_hold_damage }
+		NOT = { has_province_modifier = enchantment_3_0_siege_mod }
 	}
 
 	immediate = {
@@ -407,6 +407,7 @@ province_event = {
 			has_province_flag = specialized_hold 
 			has_province_modifier = incomplete_hold
 			has_province_modifier = incomplete_hold_0
+			has_province_modifier = blorc_plunder_camp
 		}
 		NOT = { trade_goods = unknown }
 		is_city = yes
@@ -653,6 +654,7 @@ province_event = {
 		NOT = {
 			has_province_modifier = incomplete_hold
 			has_province_modifier = incomplete_hold_0
+			has_province_modifier = blorc_plunder_camp
 		}
 	}
 	
@@ -3543,6 +3545,20 @@ province_event = {
 				}
 			}
 		}
+
+		modifier = { #Ovdal-az-An Granite Isolation bonus
+			factor = 0.9
+			owner = {
+				has_country_modifier = az_an_granite_isolation_1
+			}
+		}
+
+		modifier = { #Ovdal-az-An Granite Isolation bonus
+			factor = 0.75
+			owner = {
+				has_country_modifier = az_an_granite_isolation_0
+			}
+		}
 	}
 	
 	hidden = yes
@@ -3563,6 +3579,7 @@ province_event = {
 		NOT = { 
 			has_province_modifier = incomplete_hold
 			has_province_modifier = incomplete_hold_0
+			has_province_modifier = blorc_plunder_camp
 		}
 	}
 	
@@ -7821,10 +7838,8 @@ country_event = {
 			any_neighbor_province = { has_terrain = cavern }
 		}
 	}
-	
-	option = {
-        name = diggy.551.a
-        ai_chance = { factor = 100 }
+
+	immediate = {
 		hidden_effect = {
 			random_owned_province = {
 				limit = {
@@ -7839,6 +7854,17 @@ country_event = {
 					}
 					any_neighbor_province = { has_terrain = cavern }
 				}
+				save_event_target_as = yipyip
+			}
+		}
+	}
+	
+	option = {
+        name = diggy.551.a
+        ai_chance = { factor = 100 }
+		goto = yipyip
+		hidden_effect = {
+			event_target:yipyip = {
 				spawn_dwarovar_orc_rebels = { size = 3 }
 			}
 		}
@@ -11041,11 +11067,7 @@ country_event = {
 		name = diggy.598.e
 		highlight = yes
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = dwarovar_ruler_skilled_necromancer_tt
-				ruler_has_personality = mage_personality
-				has_ruler_flag = necromancy_2
-			}
+			is_ruler_necromancy_level_2_minimum = yes
 		}
 		ai_chance = { factor = 1 }
 		add_dip_power = -25
@@ -11057,7 +11079,7 @@ country_event = {
 			add_base_production = 2
 			add_base_manpower = 2
 		}
-		increase_witch_king_points_medium = yes
+		increase_ruler_witch_king_points = { size = medium }
 		if = {
 			limit = { culture_group = dwarven }
 			add_estate_loyalty = {
@@ -12667,6 +12689,9 @@ country_event = { #Lava flood
 				id = diggy.764
 				days = 3650
 			}
+			hidden_effect = {
+				set_country_flag = dwarovar_exploited_rich_soils_flag
+			}
 		}
 	}
 
@@ -12689,6 +12714,9 @@ country_event = { #Lava flood
 			country_event = {
 				id = diggy.764
 				days = 3650
+			}
+			hidden_effect = {
+				set_country_flag = dwarovar_exploited_rich_soils_flag
 			}
 		}
 	}
@@ -12731,10 +12759,13 @@ country_event = { #Not again!
 			add_base_production = -2
 			add_base_manpower = -2
 			add_colonysize = -200
-			random = {
-				chance = 50
-				remove_province_modifier = dwarovar_volcanic_farming_industry
-				remove_province_modifier = dwarovar_volcanic_farming_villages
+			if = {
+				limit = { has_country_flag = dwarovar_exploited_rich_soils_flag }
+				random = {
+					chance = 50
+					remove_province_modifier = dwarovar_volcanic_farming_industry
+					remove_province_modifier = dwarovar_volcanic_farming_villages
+				}
 			}
 		}
 	}
@@ -12770,6 +12801,10 @@ country_event = { #Great city
 			continent = serpentspine
 			has_terrain = cavern
 			development = 15
+			NOT = {
+				has_province_modifier = dwarovar_room_for_expansion
+				has_province_modifier = dwarovar_soldiers_households
+			}
 		}
 	}
 	immediate = {
@@ -12779,6 +12814,10 @@ country_event = { #Great city
 					continent = serpentspine
 					has_terrain = cavern
 					development = 15
+					NOT = {
+						has_province_modifier = dwarovar_room_for_expansion
+						has_province_modifier = dwarovar_soldiers_households
+					}
 				}
 				save_event_target_as = event_province
 			}
@@ -12893,6 +12932,60 @@ country_event = { #Buried ruins
 		add_country_modifier = {
 			name = dwarovar_bunker_trinkets
 			duration = 5475
+		}
+	}
+}
+
+#Dwarven settlers events
+country_event = { #Idiot New Colonizers
+	id = diggy.767
+	title = diggy.767.t
+	desc = diggy.767.d
+	picture = DARK_EXPEDITION_eventPicture
+
+	is_triggered_only = yes
+	trigger = {
+		capital_scope = { continent = serpentspine }
+		culture_group = dwarven
+		any_owned_province = {
+			continent = serpentspine
+			has_terrain = dwarven_road
+		}
+		is_year = 1500
+		NOT = { is_year = 1550 }
+	}
+	
+	immediate = {
+		hidden_effect = {
+			capital_scope = { save_event_target_as = event_province }
+		}
+	}
+	goto = event_province
+
+
+	option = { #Ban leaving
+		name = diggy.767.a
+		ai_chance = { factor = 100 }
+		event_target:event_province = {
+			add_permanent_province_modifier = {
+				name = dwarovar_newcomer_ban
+				duration = 1825 #5 years
+			}
+		}
+		add_country_modifier = {
+			name = dwarovar_attrition_settlers
+			duration = 1825 #5 years
+		}
+	}
+	
+	option = { #Let them come
+		name = diggy.767.b
+		ai_chance = { factor = 100 }
+		add_years_of_income = -0.1
+		add_yearly_manpower = -0.1
+		add_country_modifier = {
+			name = dwarovar_attrition_settlers
+			duration = 1825 #5 years
 		}
 	}
 }
