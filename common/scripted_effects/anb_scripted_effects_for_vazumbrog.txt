@@ -615,6 +615,15 @@ gor_vazumbrog_give_cb_for_hold = {
 						exists = $tag$
 						NOT = { $province_id$ = { owned_by = $tag$ } }
 					}
+					AND = {
+						 # only monarchies are supported for cb_restore_personal_union, so others should get cb_reclaim_hold instead
+						exists = $tag$
+						$province_id$ = { owned_by = $tag$ }
+						$tag$ = {
+							is_subject = no
+							NOT = { government = monarchy }
+						}
+					}
 				}
 			}
 
@@ -663,19 +672,80 @@ gor_vazumbrog_give_cb_for_hold = {
 				months = 1200
 			}
 		}
-		else = {
+		if = {
+			limit = {
+				OR = {
+					$province_id$ = { is_city = no }
+					$tag$ = { is_subject = yes } # someone elses subject
+				}
+			}
 			$province_id$ = { add_permanent_claim = ROOT }
 		}
 	}
 }
 
-#scope is country losing the war and releasing the hold
+#THIS and FROM scope is country losing the war and releasing the hold
+#ROOT scope is the country winning the war
 gor_vazumbrog_restore_hold = {
 	if = {
 		limit = {
-			#NOT = { exists = $released_tag$ }
+			# special case for non-monarchies
+			tag = $released_tag$
 			owns = $hold_province$
 		}
+		if = {
+			limit = { NOT = { capital = $hold_province$ } }
+			set_capital = $hold_province$
+		}
+
+		if = {
+			limit = { NOT = { government = monarchy } }
+			change_government = monarchy
+		}
+		add_government_reform = dwarovar_dwarven_clan_reform
+
+		change_primary_culture = $culture$
+		change_religion = ROOT
+
+		if = {
+			limit = {
+				any_owned_province = {
+					fast_has_pop_of_race { race = goblin }
+				}
+			}
+			generic_start_purge = { race = goblin free = yes }
+		}
+
+		if = {
+			limit = {
+				any_owned_province = {
+					fast_has_pop_of_race { race = orcish }
+				}
+			}
+			generic_start_purge = { race = orcish free = yes }
+		}
+
+		$hold_province$ = {
+			area = {
+				limit = { owned_by = $released_tag$ }
+				change_culture = $culture$
+				change_religion = ROOT
+			}
+			clr_province_flag = reclaim_hold_target_province
+		}
+		ROOT = {
+			create_subject = {
+				subject_type = personal_union
+				subject = $released_tag$
+			}
+		}
+	}
+	if = {
+		limit = {
+			NOT = { tag = $released_tag$ }
+			owns = $hold_province$
+		}
+
 
 		$hold_province$ = {
 			area = {
@@ -690,8 +760,6 @@ gor_vazumbrog_restore_hold = {
 			}
 		}
 
-		#TODO: could potentially do only roads towards GV, but it would have to be handpicked areas per tag
-		#TODO: or roads 2 areas away from main area?
 		every_owned_province = {
 			limit = { has_terrain = dwarven_road }
 			cede_province = $released_tag$
@@ -726,8 +794,7 @@ gor_vazumbrog_restore_hold = {
 							fast_has_pop_of_race { race = goblin }
 						}
 					}
-					increase_free_state_action = { action = genocide }
-					generic_start_purge = { race = goblin }
+					generic_start_purge = { race = goblin free = yes }
 				}
 
 				if = {
@@ -736,8 +803,7 @@ gor_vazumbrog_restore_hold = {
 							fast_has_pop_of_race { race = orcish }
 						}
 					}
-					increase_free_state_action = { action = genocide }
-					generic_start_purge = { race = orcish }
+					generic_start_purge = { race = orcish free = yes }
 				}
 				#set_variable = { which = goblin_race_tolerance_ai value = -100 }
 
