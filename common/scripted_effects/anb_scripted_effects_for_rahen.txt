@@ -3325,6 +3325,7 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		set_variable = 			{ which = raj_var_cohesion value = 0 } # Total cohesion value
 		set_variable = 			{ which = raj_var_cohesion_impact_num_senaptia value = 0 } # Senaptia impact on cohesion
 		set_variable = 			{ which = raj_var_vizier_ld value = 0 } # Vizier liberty desire
+		set_variable = 			{ which = raj_var_vizier_influence value = 0 } # Vizier influence
 		set_variable = 			{ which = raj_var_subject_weighed_ld value = 0 } # Weighted average of subject liberty desire
 		set_variable = 			{ which = raj_var_subject_development_total value = 0 } # Total subject development
 
@@ -3361,14 +3362,20 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_power_projection }
 
 		# Cohesion - Vizier Liberty Desire
-		export_to_variable = 	{ which = raj_var_vizier_ld value = trigger_value:liberty_desire who = event_target:raj_vizier_global_target}
-		subtract_variable = 	{ which = raj_var_vizier_ld value = 25 } # - Only values above 25% modify cohesion
-		if = { limit = { NOT = { check_variable = { raj_var_vizier_ld = 0 } } } 
-			set_variable =  	{ which = raj_var_vizier_ld value = 0 }
+		if = {
+			limit = { 
+				has_saved_global_event_target = raj_vizier_global_target # If no vizier is present, it stays at 0
+				NOT = { has_country_flag = pause_vizier_influence_calc } 
+			}
+			export_to_variable = 	{ which = raj_var_vizier_ld value = trigger_value:liberty_desire who = event_target:raj_vizier_global_target}
+			subtract_variable = 	{ which = raj_var_vizier_ld value = 25 } # - Only values above 25% modify cohesion
+			if = { limit = { NOT = { check_variable = { raj_var_vizier_ld = 0 } } } 
+				set_variable =  	{ which = raj_var_vizier_ld value = 0 }
+			}
+			divide_variable = 		{ which = raj_var_vizier_ld value = -5 }
+			change_variable = 		{ which = raj_var_cohesion which = raj_var_vizier_ld }
+			round_variable = 		{ which = raj_var_vizier_ld value = 0 }
 		}
-		divide_variable = 		{ which = raj_var_vizier_ld value = -5 }
-		change_variable = 		{ which = raj_var_cohesion which = raj_var_vizier_ld }
-		round_variable = 		{ which = raj_var_vizier_ld value = 0 }
 
 		# Cohesion - Subject Loyalty
 		PREV = {
@@ -3580,19 +3587,19 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 			if = {
 				limit = { had_country_flag = { flag = high_vizier_malus days = 3650 } }
 				clr_country_flag = high_vizier_malus
-				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
 			}
 			# - - Medium Influence
 			if = {
 				limit = { had_country_flag = { flag = med_vizier_malus days = 3650 } }
 				clr_country_flag = med_vizier_malus
-				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
 			}
 			# - - Low Influence
 			if = {
 				limit = { had_country_flag = { flag = low_vizier_malus days = 3650 } }
 				clr_country_flag = low_vizier_malus
-				change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+				4411 = { change_variable = { which = raj_var_cohesion_impact_bonus value = 25 } }
 			}
 			
 		}
@@ -3612,9 +3619,12 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		# Vizier - If Not Paused, Calculate Vizier Influence
 		PREV = { 
 			if = {
-				limit = { NOT = { has_country_flag = pause_vizier_influence_calc } }
+				limit = { 
+					has_saved_global_event_target = raj_vizier_global_target # If no vizier is present, it stays at 0
+					NOT = { has_country_flag = pause_vizier_influence_calc } 
+				}
 				event_target:raj_vizier_global_target = {
-					event_target:raj_raja_global_target = {
+					4411 = {
 						# - Turn Vizier dev fraction into Influence
 						export_to_variable = { 
 							which = raj_var_vizier_influence 
@@ -3632,7 +3642,7 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 
 						# - Update Influence tooltip variables
 						export_to_variable = { which = raj_var_tt_viz_dev value = trigger_value:total_development who = PREV }
-						export_to_variable = { which = raj_var_tt_raja_dev value = trigger_value:total_development }
+						export_to_variable = { which = raj_var_tt_raja_dev value = trigger_value:total_development who = ROOT }
 
 						# - Turn the Vizier Influence into a frame value that the influence bar can display
 						# - Value must be multiple of 4% to split the bar into x25 4% chunks. Since the bar is 300px, thats x25 12px chunks that the indicator can be displayed in
@@ -3641,14 +3651,18 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 						round_variable = 	{ which = raj_vizier_influence_frame_var value = 0 } #  | Round value to the nearest multiple of 4 for the indicator
 						multiply_variable = { which = raj_vizier_influence_frame_var value = 4 } # /
 
-						# - Propagate the frame value to all player raj subjects so non-raja players can view the bar
-						every_subject_country = {
-							if = { limit = { ai = no }
-								set_variable = { which = raj_vizier_influence_frame_var which = event_target:raj_raja_global_target }
+						# - Propagate the frame value to the raja and all player raj subjects so non-raja players can view the bar
+						ROOT = {
+							set_variable = { which = raj_vizier_influence_frame_var which = PREV }
+							every_subject_country = {
+								limit = { ai = no }
+								4411 = {
+									PREV = {
+										set_variable = { which = raj_vizier_influence_frame_var which = PREV }
+									}
+								}
 							}
 						}
-
-						
 					} 
 				} 
 			}
@@ -3674,7 +3688,7 @@ raj_cohesion_change_bonus = {
 # Assigns a cohesion malus based on previous vizier influence
 # Made to cut down on the length of the vizier nomination event since this would happen per event option
 raj_vizier_influence_malus = {
-	event_target:raj_raja_global_target = {
+	4411 = {
 		# - High Influence: > 66%
 		if = { 
 			limit = { 
@@ -3682,39 +3696,48 @@ raj_vizier_influence_malus = {
 			}
 			
 			hidden_effect = {
-
 				# If higher flag is already present, refresh it
 				# N/A
-
-				# Otherwise
-				# If current effect exists already, clear it to be refreshed
+				
+				# If current effect exists already, clear it for refresh
 				if = { limit = { has_province_flag = high_vizier_malus }
 					clr_province_flag = high_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
-				}
 
-				# If a lower tier malus exists already, clear it
-				if = { limit = { has_province_flag = med_vizier_malus }
+					# Set the HIGH malus flag and lower Cohesion
+					set_province_flag = high_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
+				} 
+
+				# If a lower tier malus exists already, clear it to apply higher version
+				else_if = { limit = { has_province_flag = med_vizier_malus }
 					clr_province_flag = med_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 15 }
+
+					# Set the HIGH malus flag and lower Cohesion
+					set_province_flag = high_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
 				}
-				if = { limit = { has_province_flag = low_vizier_malus }
+				else_if = { limit = { has_province_flag = low_vizier_malus }
 					clr_province_flag = low_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
+
+					# Set the HIGH malus flag and lower Cohesion
+					set_province_flag = high_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
 				}
 
-				# Set the malus flag and lower Cohesion
-				set_province_flag = high_vizier_malus
-				change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
-
-				# Recalc Cohesion
-				rahen_raj_calc_cohesion = yes
-				
+				# If no prior modifier exists, set the malus flag and lower cohesion
+				else = {
+					# Set the HIGH malus flag and lower Cohesion
+					set_province_flag = high_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
+				}
 			}
 		}
 
 		# - Medium Influence: 33% - 66%
-		if = { 
+		else_if = { 
 			limit = { 
 				check_variable = { which = raj_var_vizier_influence value = 0.3301 } 
 				NOT = { check_variable = { which = raj_var_vizier_influence value = 0.66 } }
@@ -3722,81 +3745,88 @@ raj_vizier_influence_malus = {
 			
 			hidden_effect = {
 				# If higher flag is already present, refresh it
-				# - High
 				if = { limit = { has_province_flag = high_vizier_malus }
 					clr_province_flag = high_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+
+					# Set the HIGH malus flag and lower Cohesion
 					set_province_flag = high_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
 				} 
 				
-				# Otherwise
-				else = {
-					# If current effect exists already, clear it to be refreshed
-					if = { limit = { has_province_flag = med_vizier_malus }
-						clr_province_flag = med_vizier_malus
-						change_variable = { which = raj_var_cohesion_impact_bonus value = 15 }
-					}
+				# If current effect exists already, clear it for refresh
+				else_if = { limit = { has_province_flag = med_vizier_malus }
+					clr_province_flag = med_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = 15 }
 
-					# If a lower tier malus exists already, clear it
-					if = { limit = { has_province_flag = low_vizier_malus }
-						clr_province_flag = low_vizier_malus
-						change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
-					}
-
-					# Set the malus flag and lower Cohesion
+					# Set the MED malus flag and lower Cohesion
 					set_province_flag = med_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = -15 }
 				}
 
-				# Recalc Cohesion
-				rahen_raj_calc_cohesion = yes
-				
+				# If a lower tier malus exists already, clear it to apply higher version
+				else_if = { limit = { has_province_flag = low_vizier_malus }
+					clr_province_flag = low_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
+
+					# Set the MED malus flag and lower Cohesion
+					set_province_flag = med_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -15 }
+				}
+
+				# If no prior modifier exists, set the malus flag and lower cohesion
+				else = {
+					# Set the MED malus flag and lower Cohesion
+					set_province_flag = med_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -15 }
+				}
 			}
 		}
 
 		# - Low Influence: < 33%
-		if = { 
+		else_if = { 
 			limit = { 
 				NOT = { check_variable = { which = raj_var_vizier_influence value = 0.33 } }
 			}
 			
 			hidden_effect = {
 				# If higher flag is already present, refresh it
-				# - High
 				if = { limit = { has_province_flag = high_vizier_malus }
 					clr_province_flag = high_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 25 }
+
+					# Set the HIGH malus flag and lower Cohesion
 					set_province_flag = high_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = -25 }
-				}
-				# - Medium
+				} 
 				else_if = { limit = { has_province_flag = med_vizier_malus }
 					clr_province_flag = med_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = 15 }
+
+					# Set the MED malus flag and lower Cohesion
 					set_province_flag = med_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = -15 }
 				}
+				
+				# If current effect exists already, clear it for refresh
+				else_if = { limit = { has_province_flag = low_vizier_malus }
+					clr_province_flag = low_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
 
-				# Otherwise
-				else = {
-					# If current effect exists already, clear it to be refreshed
-					if = { limit = { has_province_flag = low_vizier_malus }
-						clr_province_flag = low_vizier_malus
-						change_variable = { which = raj_var_cohesion_impact_bonus value = 5 }
-					}
-
-					# If a lower tier malus exists already, clear it
-					# N/A
-
-					# Set the malus flag and lower Cohesion
-					set_province_flag = low_vizier_malus
+					# Set the LOW malus flag and lower Cohesion
+					set_province_flag = med_vizier_malus
 					change_variable = { which = raj_var_cohesion_impact_bonus value = -5 }
 				}
 
-				# Recalc Cohesion
-				rahen_raj_calc_cohesion = yes
+				# If a lower tier malus exists already, clear it to apply higher version
+				# N/A
 				
+				# If no prior modifier exists, set the malus flag and lower cohesion
+				else = {
+					# Set the LOW malus flag and lower Cohesion
+					set_province_flag = low_vizier_malus
+					change_variable = { which = raj_var_cohesion_impact_bonus value = -5 }
+				}
 			}
 		}
 	}
