@@ -364,8 +364,8 @@ historical_magic_advancements = {
 	[[transmutation] set_country_flag = transmutation_$transmutation$]
 
 	[[infrastructure]
-		add_country_modifier = { name = magical_infrastructure_$infrastructure$ }
-		set_variable = { mana_regen_infra = 0.2 }
+		add_country_modifier = { name = magical_infrastructure_$infrastructure$ duration = -1 }
+		set_variable = { mana_regen_infra = 0.25 }
 		multiply_variable = { mana_regen_infra = $infrastructure$ }
 	]
 
@@ -399,6 +399,8 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		### Infrastructure Modifiers and Flags
 		remove_country_modifier = advancing_magical_infrastructure_mod
+		remove_country_modifier = magical_infrastructure_institution_penalty
+		remove_country_modifier = magical_infrastructure_2_institution_penalty
 		clr_country_flag = magical_infrastructure_hurt_tower
 		clr_country_flag = magical_infrastructure_help_tower
 		clr_country_flag = magical_infrastructure_help_ward
@@ -637,7 +639,7 @@ magical_infrastructure_level_up = {
 		add_country_modifier = { name = magical_infrastructure_1 duration = -1 }
 	}
 	hidden_effect = {
-		change_variable = { mana_regen_infra = 0.2 }
+		change_variable = { mana_regen_infra = 0.25 }
 		clr_country_flag = MI_temporary_bypass_flag
 
 		if = {
@@ -687,56 +689,56 @@ calc_completed_magic_projects = { #Non-unique
 
 ai_random_study = {
 	random_list = {
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = abjuration_3 } }
 			modifier = { factor = 2 has_$type$_flag = abjuration_1 }
 			modifier = { factor = 4 has_$type$_flag = abjuration_2 }
 			ai_pay_for_xp = { study = abjuration type = $type$ }
 			magic_school_level_up = { type = $type$ school = abjuration }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = conjuration_3 } }
 			modifier = { factor = 2 has_$type$_flag = conjuration_1 }
 			modifier = { factor = 4 has_$type$_flag = conjuration_2 }
 			ai_pay_for_xp = { study = conjuration type = $type$ }
 			magic_school_level_up = { type = $type$ school = conjuration }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = divination_3 } }
 			modifier = { factor = 2 has_$type$_flag = divination_1 }
 			modifier = { factor = 4 has_$type$_flag = divination_2 }
 			ai_pay_for_xp = { study = divination type = $type$ }
 			magic_school_level_up = { type = $type$ school = divination }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = enchantment_3 } }
 			modifier = { factor = 2 has_$type$_flag = enchantment_1 }
 			modifier = { factor = 4 has_$type$_flag = enchantment_2 }
 			ai_pay_for_xp = { study = enchantment type = $type$ }
 			magic_school_level_up = { type = $type$ school = enchantment }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = evocation_3 } }
 			modifier = { factor = 2 has_$type$_flag = evocation_1 }
 			modifier = { factor = 4 has_$type$_flag = evocation_2 }
 			ai_pay_for_xp = { study = evocation type = $type$ }
 			magic_school_level_up = { type = $type$ school = evocation }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = illusion_3 } }
 			modifier = { factor = 2 has_$type$_flag = illusion_1 }
 			modifier = { factor = 4 has_$type$_flag = illusion_2 }
 			ai_pay_for_xp = { study = illusion type = $type$ }
 			magic_school_level_up = { type = $type$ school = illusion }
 		}
-		1 = {
+		1 = { #Necromancy is a high-impact school and we'd prefer it appear less often
 			trigger = { NOT = { has_$type$_flag = necromancy_3 } }
-			modifier = { factor = 2 has_$type$_flag = necromancy_1 }
+			modifier = { factor = 6 has_$type$_flag = necromancy_1 }
 			modifier = { factor = 4 has_$type$_flag = necromancy_2 }
 			ai_pay_for_xp = { study = necromancy type = $type$ }
 			magic_school_level_up = { type = $type$ school = necromancy }
 		}
-		1 = {
+		3 = {
 			trigger = { NOT = { has_$type$_flag = transmutation_3 } }
 			modifier = { factor = 2 has_$type$_flag = transmutation_1 }
 			modifier = { factor = 4 has_$type$_flag = transmutation_2 }
@@ -781,17 +783,12 @@ clr_flag_based_on_advancement = {
 ##################
 
 set_magic_experience_target = {
-	[[infrastructure] set_country_flag = infra_temp_flag ]
 	[[xptarget] set_country_flag = xptarget_temp_flag ]
 	
-	# [[!infrastructure]] [[!xptarget]]
+	# [[!xptarget]]
 	if = {
-		limit = {
-			NOT = {
-				has_country_flag = infra_temp_flag
-				has_country_flag = xptarget_temp_flag
-			}
-		}
+		limit = { NOT = { has_country_flag = xptarget_temp_flag } }
+
 		set_variable = { magic_experience_target = 100 } #Base experience
 		set_variable = { expFoo = 250 } 				#Increase per level
 		## Maybe target level will be set elsewhere as a variable
@@ -813,24 +810,22 @@ set_magic_experience_target = {
 				multiply_variable = { expFoo = 2 }
 			}
 		]
+		[[infrastructure]
+			if = {
+				limit = { exactly_magical_infrastructure_level = { level = 3 } }
+				multiply_variable = { expFoo = 5 } #Max 1350 xp
+			}
+			else_if = {
+				limit = { exactly_magical_infrastructure_level = { level = 2 } }
+				multiply_variable = { expFoo = 4 } #1100 xp
+			}
+			else_if = {
+				limit = { exactly_magical_infrastructure_level = { level = 1 } }
+				multiply_variable = { expFoo = 3 } #850 xp
+			}
+			else = { multiply_variable = { expFoo = 2 } } #Base 600 xp
+		]
 		change_variable = { which = magic_experience_target which = expFoo }
-	}
-	# [[infrastructure]]
-	else_if = {
-		limit = { has_country_flag = infra_temp_flag }
-		set_variable = { magic_experience_target = 400 } #Base experience
-		if = { limit = { has_country_modifier = magical_infrastructure_3 }
-			multiply_variable = { magic_experience_target = 4 } # Lvl 3 to 4
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
-			multiply_variable = { magic_experience_target = 3 } # Lvl 2 to 3
-		}
-		else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
-			multiply_variable = { magic_experience_target = 2 } # Lvl 1 to 2
-		}
-		else = {
-			multiply_variable = { magic_experience_target = 1 } # Lvl 0 to 1
-		}
 	}
 	#[[xptarget]]
 	else_if = {
@@ -1057,6 +1052,15 @@ calc_school_experience_modifier_effect = {
 		variable_name = school_experience_modifier
 		value = modifier:$school$_experience_mod
 	}
+}
+
+reduce_infrastructure_institution_penalty = {
+	if = {
+		limit = { has_country_modifier = magical_infrastructure_2_institution_penalty }
+		remove_country_modifier = magical_infrastructure_2_institution_penalty
+		add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+	}
+	else = { remove_country_modifier = magical_infrastructure_institution_penalty }
 }
 
 ai_magic_xp_pulse = {
@@ -1441,8 +1445,6 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 				1 = { set_$type$_flag = transmutation_3 }
 			}
 		}
-
-		magic_setup_give_random_level = { type = $type$ } #Everyone gets one
 		
 		random_list = { #The vagaries of talent
 			1 = {}
@@ -1498,7 +1500,7 @@ give_magic_starting_schools = { #Types are ruler, heir, and consort in this cont
 			magic_setup_give_random_level = { type = $type$ }
 		}
 
-		export_to_variable = { #mission modifier rewards
+		export_to_variable = { #mission modifier + age rewards
 			which = monarch_spell_levels_val
 			value = modifier:monarch_spell_levels
 		}
@@ -1754,24 +1756,24 @@ define_type_to_war_wizard_effect = { #works on heir and ruler, else statements i
 	}
 	else = {
 		if = { limit = { $type$_has_stat = { mil = 6 } }
-			define_$type$_to_general = { fire = 3 shock = 10 manuever = 7 siege = 4 }
+			define_$type$_to_general = { fire = 4 shock = 8 manuever = 7 siege = 4 }
 		}
 		else_if = { limit = { $type$_has_stat = { mil = 5 } }
-			define_$type$_to_general = { fire = 3 shock = 9 manuever = 6 siege = 3 }
+			define_$type$_to_general = { fire = 3 shock = 8 manuever = 6 siege = 4 }
 		}
 		else_if = { limit = { $type$_has_stat = { mil = 4 } }
-			define_$type$_to_general = { fire = 2 shock = 9 manuever = 5 siege = 3 }
+			define_$type$_to_general = { fire = 3 shock = 8 manuever = 5 siege = 3 }
 		}
 		else_if = { limit = { $type$_has_stat = { mil = 3 } }
-			define_$type$_to_general = { fire = 2 shock = 8 manuever = 4 siege = 2 }
+			define_$type$_to_general = { fire = 3 shock = 8 manuever = 4 siege = 2 }
 		}
 		else_if = { limit = { $type$_has_stat = { mil = 2 } }
-			define_$type$_to_general = { fire = 1 shock = 8 manuever = 3 siege = 2 }
+			define_$type$_to_general = { fire = 2 shock = 7 manuever = 3 siege = 2 }
 		}
 		else_if = { limit = { $type$_has_stat = { mil = 1 } }
 			define_$type$_to_general = { fire = 1 shock = 7 manuever = 3 siege = 1 }
 		}
-		else = { define_$type$_to_general = { fire = 1 shock = 7 manuever = 2 siege = 0 } }
+		else = { define_$type$_to_general = { fire = 0 shock = 7 manuever = 2 siege = 0 } }
 	}
 }
 define_type_to_war_wizard_wyvernheart_effect = {
@@ -1782,7 +1784,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 5 } }
 			}
 		}
-		define_$type$_to_general = { fire = 3 shock = 10 manuever = 8 siege = 4 }
+		define_$type$_to_general = { fire = 4 shock = 8 manuever = 8 siege = 4 }
 	}
 	else_if = {
 		limit = {
@@ -1791,7 +1793,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 4 } }
 			}
 		}
-		define_$type$_to_general = { fire = 3 shock = 9 manuever = 7 siege = 3 }
+		define_$type$_to_general = { fire = 3 shock = 8 manuever = 7 siege = 4 }
 	}
 	else_if = {
 		limit = {
@@ -1800,7 +1802,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 3 } }
 			}
 		}
-		define_$type$_to_general = { fire = 2 shock = 9 manuever = 6 siege = 3 }
+		define_$type$_to_general = { fire = 3 shock = 8 manuever = 6 siege = 3 }
 	}
 	else_if = {
 		limit = {
@@ -1809,7 +1811,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 2 } }
 			}
 		}
-		define_$type$_to_general = { fire = 2 shock = 8 manuever = 5 siege = 2 }
+		define_$type$_to_general = { fire = 3 shock = 8 manuever = 5 siege = 2 }
 	}
 	else_if = {
 		limit = {
@@ -1818,7 +1820,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 1 } }
 			}
 		}
-		define_$type$_to_general = { fire = 1 shock = 8 manuever = 4 siege = 2 }
+		define_$type$_to_general = { fire = 2 shock = 7 manuever = 4 siege = 2 }
 	}
 	else_if = {
 		limit = {
@@ -1829,7 +1831,7 @@ define_type_to_war_wizard_wyvernheart_effect = {
 		}
 		define_$type$_to_general = { fire = 1 shock = 7 manuever = 4 siege = 1 }
 	}
-	else = { define_$type$_to_general = { fire = 1 shock = 7 manuever = 3 siege = 0 } }
+	else = { define_$type$_to_general = { fire = 0 shock = 7 manuever = 3 siege = 0 } }
 }
 
 define_ruler_to_war_wizard = { define_type_to_war_wizard_effect = { type = ruler } }
@@ -1856,18 +1858,18 @@ magic_level_up_all_ruler_schools = {
 estate_action_RECRUIT_WAR_WIZARD = {
 	if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
-		add_mil_power = -50
+		add_mil_power = -40
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
-		add_mil_power = -100
+		add_mil_power = -60
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
-		add_mil_power = -150
+		add_mil_power = -80
 	}
 	else = {
-		add_mil_power = -200
+		add_mil_power = -100
 	}
 	create_war_wizard = yes
 }
@@ -1894,10 +1896,10 @@ define_war_wizard = {
 define_war_wizard_sub_effect = {
 	define_general = {
 		[[name] name = "$name$" ]
-		[[3] fire = 2 shock = 9 manuever = 7 siege = 3 ]
-		[[2] fire = 2 shock = 8 manuever = 6 siege = 2 ]
-		[[1] fire = 1 shock = 8 manuever = 5 siege = 1 ]
-		[[0] fire = 1 shock = 7 manuever = 4 siege = 1 ]
+		[[3] fire = 3 shock = 8 manuever = 7 siege = 4 ]
+		[[2] fire = 2 shock = 8 manuever = 5 siege = 3 ]
+		[[1] fire = 1 shock = 7 manuever = 4 siege = 2 ]
+		[[0] fire = 0 shock = 7 manuever = 2 siege = 1 ]
 
 		[[female] female = $female$ ]
 	}
@@ -1995,40 +1997,40 @@ create_war_wizard = {
 create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 	if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
-		tooltip = { define_general = { fire = 2 shock = 9 manuever = 8 siege = 3 } }
+		tooltip = { define_general = { fire = 3 shock = 8 manuever = 8 siege = 4 } }
 		hidden_effect = {
 			random_list = {
-				50 = { define_general = { name = male_name fire = 2 shock = 9 manuever = 8 siege = 3 } }
-				50 = { define_general = { name = female_name fire = 2 shock = 9 manuever = 8 siege = 3 female = yes } }
+				50 = { define_general = { name = male_name fire = 3 shock = 8 manuever = 8 siege = 4 } }
+				50 = { define_general = { name = female_name fire = 3 shock = 8 manuever = 8 siege = 4 female = yes } }
 			}
 		}
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
-		tooltip = { define_general = { fire = 2 shock = 8 manuever = 7 siege = 2 } }
+		tooltip = { define_general = { fire = 2 shock = 8 manuever = 6 siege = 3 } }
 		hidden_effect = {
 			random_list = {
-				50 = { define_general = { name = male_name fire = 2 shock = 8 manuever = 7 siege = 2 } }
-				50 = { define_general = { name = female_name fire = 2 shock = 8 manuever = 7 siege = 2 female = yes } }
+				50 = { define_general = { name = male_name fire = 2 shock = 8 manuever = 6 siege = 3 } }
+				50 = { define_general = { name = female_name fire = 2 shock = 8 manuever = 6 siege = 3 female = yes } }
 			}
 		}
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
-		tooltip = { define_general = { fire = 1 shock = 8 manuever = 6 siege = 1 } }
+		tooltip = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 2 } }
 		hidden_effect = {
 			random_list = {
-				50 = { define_general = { name = male_name fire = 1 shock = 8 manuever = 6 siege = 1 } }
-				50 = { define_general = { name = female_name fire = 1 shock = 8 manuever = 6 siege = 1 female = yes } }
+				50 = { define_general = { name = male_name fire = 1 shock = 7 manuever = 5 siege = 2 } }
+				50 = { define_general = { name = female_name fire = 1 shock = 7 manuever = 5 siege = 2 female = yes } }
 			}
 		}
 	}
 	else = {
-		tooltip = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 1 } }
+		tooltip = { define_general = { fire = 0 shock = 7 manuever = 3 siege = 1 } }
 		hidden_effect = {
 			random_list = {
-				50 = { define_general = { name = male_name fire = 1 shock = 7 manuever = 5 siege = 1 } }
-				50 = { define_general = { name = female_name fire = 1 shock = 7 manuever = 5 siege = 1 female = yes } }
+				50 = { define_general = { name = male_name fire = 0 shock = 7 manuever = 3 siege = 1 } }
+				50 = { define_general = { name = female_name fire = 0 shock = 7 manuever = 3 siege = 1 female = yes } }
 			}
 		}
 	}
@@ -2044,22 +2046,21 @@ create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 ### This lets us transfer between different infamy variables when characters change out
 
 # There are five brackets of witch-kinginess:
-### 0-3 (Paragon), 4-7 (Respected), 8-11 (Suspicious), 12-15 (Denounced), 16-31 (Witch-King)
-### You always become a witch-king at 32 ruler witch-king points
+### 0-3 (Paragon), 4-7 (Respected), 8-11 (Suspicious), 12-15 (Denounced), 16+ (Witch-King)
+### You always become a witch-king at 16 ruler witch-king points
 ### Technically this can result in non-powerful mages becoming witch-kings
 ### But in practice that only happens if someone is misusing the mechanics.
 ### Similar to how you can have non-powerful mage liches, in theory.
 
 # The impacts of witch-kinginess are:
-### Ruler: scaling diplo reputation malus
-### Estate: scaling estate influence
+### Ruler: scaling diplo reputation malus (-1 dip rep, +5% AE impact per bracket increase)
+### Estate: scaling estate influence (-5% loyalty equilibrium, +5% influence per bracket increase)
 ### Consort/Heir: nothing, but will become ruler witch-kinginess if they take the throne
 
 # The scale of increases are:
 ### Small: +1 point
 ### Medium: +2 points
-### Large: +4 points
-### Massive: +8 points (goes up a level, basically)
+### Large: +4 points (goes up a level, basically)
 
 # The default effect to use is increase_witch_king_points
 ### This will give witch-king points to the ruler if you have a powerful mage, or to the estate otherwise.
@@ -2073,53 +2074,54 @@ become_a_witch_king_effect = {
 		remove_country_modifier = infamy_suspicious_modifier
 		remove_country_modifier = infamy_respected_modifier
 		change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
+		change_variable = { mana_regen_ruler = 0.28 } #All witch-king modifiers give 0.28
 	}
 	set_country_flag = ruled_by_witch_king
 
 	if = { #If this is a revival, we'll have kept the flag
 		limit = { has_country_flag = witch_king_thorns }
 		add_ruler_modifier = { name = witch_king_thorns_modifier duration = -1 }
-		add_ruler_modifier = { name = illusion_0_0_mod duration = -1 }
+		add_ruler_modifier = { name = illusion_0_invisibility_mod duration = -1 }
 	}
 	if = {
 		limit = { has_country_flag = witch_king_armies }
 		add_ruler_modifier = { name = witch_king_armies_modifier duration = -1 }
-		add_ruler_modifier = { name = necromancy_1_0_mod duration = -1 }
+		add_ruler_modifier = { name = necromancy_1_steal_vitality_mod duration = -1 }
 	}
 	if = {
 		limit = { has_country_flag = witch_king_will }
 		add_ruler_modifier = { name = witch_king_will_modifier duration = -1 }
-		add_ruler_modifier = { name = enchantment_2_0_mod duration = -1 }
+		add_ruler_modifier = { name = enchantment_2_mass_charm_2_mod duration = -1 }
 		set_ruler_flag = witch_king_war_magic
-		make_spell_half_off = { school = enchantment level = 3 id = 0 ruler = yes }
+		make_spell_half_off = { school = enchantment level = 3 id = dominate_to_surrender ruler = yes }
 	}
 	if = {
 		limit = { has_country_flag = witch_king_skill }
 		add_ruler_modifier = { name = witch_king_skill_modifier duration = -1 }
-		add_ruler_modifier = { name = divination_2_1_mod_buffed duration = -1 }
+		add_ruler_modifier = { name = divination_2_manipulated_fortune_mod_buffed duration = -1 }
 		set_ruler_flag = witch_king_war_magic
 	}
 	if = {
 		limit = { has_country_flag = witch_king_build }
 		add_ruler_modifier = { name = witch_king_build_modifier duration = -1 }
-		add_ruler_modifier = { name = transmutation_2_1_mod duration = -1 }
-		make_spell_half_off = { school = evocation level = 2 id = 0 ruler = yes }
+		add_ruler_modifier = { name = transmutation_2_reshape_terrain_mod duration = -1 }
+		make_spell_half_off = { school = evocation level = 2 id = meteor_swarm ruler = yes }
 	}
 	if = {
 		limit = { has_country_flag = witch_king_rise }
 		add_ruler_modifier = { name = witch_king_rise_modifier duration = -1 }
-		add_ruler_modifier = { name = abjuration_2_1_mod duration = -1 }
+		add_ruler_modifier = { name = abjuration_2_mage_armor_mod duration = -1 }
 		set_ruler_flag = witch_king_war_magic
 	}
 	if = {
 		limit = { has_country_flag = witch_king_annihilate }
 		add_ruler_modifier = { name = witch_king_annihilate_modifier duration = -1 }
-		add_ruler_modifier = { name = evocation_1_0_mod duration = -1 }
+		add_ruler_modifier = { name = evocation_1_shock_and_awe_mod duration = -1 }
 	}
 	if = {
 		limit = { has_country_flag = witch_king_command }
 		add_ruler_modifier = { name = witch_king_command_modifier duration = -1 }
-		add_ruler_modifier = { name = conjuration_2_1_mod duration = -1 }
+		add_ruler_modifier = { name = conjuration_2_aid_construction_mod duration = -1 }
 	}
 	if = {
 		limit = {
