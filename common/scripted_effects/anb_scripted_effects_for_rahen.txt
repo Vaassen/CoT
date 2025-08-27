@@ -3617,54 +3617,53 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		}
 	
 		# Vizier - If Not Paused, Calculate Vizier Influence
-		PREV = { 
-			if = {
-				limit = { 
-					has_saved_global_event_target = raj_vizier_global_target # If no vizier is present, it stays at 0
-					NOT = { has_country_flag = pause_vizier_influence_calc } 
+		if = {
+			limit = { 
+				has_saved_global_event_target = raj_vizier_global_target # If no vizier is present, it stays at 0
+				NOT = { has_province_flag = pause_vizier_influence_calc }
+			}
+			
+			event_target:raj_vizier_global_target = {
+				4411 = {
+					# - Turn Vizier dev fraction into Influence
+					export_to_variable = { 
+						which = raj_var_vizier_influence 
+						value = trigger_value:development_of_overlord_fraction
+						who = PREV
+					}
+
+					# - Turn Influence into a percentage
+					set_variable = 		{ which = raj_var_vizier_influence_percentage which = raj_var_vizier_influence }
+					multiply_variable = { which = raj_var_vizier_influence_percentage value = 100 }
+					if = {
+						limit = { check_variable = { which = raj_var_vizier_influence_percentage value = 100 } } # Cap influence to 100%
+						set_variable = 	{ which = raj_var_vizier_influence_percentage value = 100 }
+					}
+
+					# - Update Influence tooltip variables
+					export_to_variable = { which = raj_var_tt_viz_dev value = trigger_value:total_development who = PREV }
+					export_to_variable = { which = raj_var_tt_raja_dev value = trigger_value:total_development who = ROOT }
+
+					# - Turn the Vizier Influence into a frame value that the influence bar can display
+					# - Value must be multiple of 4% to split the bar into x25 4% chunks. Since the bar is 300px, thats x25 12px chunks that the indicator can be displayed in
+					set_variable = 		{ which = raj_vizier_influence_frame_var which = raj_var_vizier_influence_percentage }
+					divide_variable = 	{ which = raj_vizier_influence_frame_var value = 4 } # \
+					round_variable = 	{ which = raj_vizier_influence_frame_var value = 0 } #  | Round value to the nearest multiple of 4 for the indicator
+					multiply_variable = { which = raj_vizier_influence_frame_var value = 4 } # /
 				}
-				event_target:raj_vizier_global_target = {
+			}
+
+			# - Propagate the frame value to the raja and all player raj subjects so non-raja players can view the bar
+			PREV = {
+				set_variable = { which = raj_vizier_influence_frame_var which = PREV }
+				every_subject_country = {
+					limit = { ai = no }
 					4411 = {
-						# - Turn Vizier dev fraction into Influence
-						export_to_variable = { 
-							which = raj_var_vizier_influence 
-							value = trigger_value:development_of_overlord_fraction
-							who = PREV
-						}
-
-						# - Turn Influence into a percentage
-						set_variable = 		{ which = raj_var_vizier_influence_percentage which = raj_var_vizier_influence }
-						multiply_variable = { which = raj_var_vizier_influence_percentage value = 100 }
-						if = {
-							limit = { check_variable = { which = raj_var_vizier_influence_percentage value = 100 } } # Cap influence to 100%
-							set_variable = 	{ which = raj_var_vizier_influence_percentage value = 100 }
-						}
-
-						# - Update Influence tooltip variables
-						export_to_variable = { which = raj_var_tt_viz_dev value = trigger_value:total_development who = PREV }
-						export_to_variable = { which = raj_var_tt_raja_dev value = trigger_value:total_development who = ROOT }
-
-						# - Turn the Vizier Influence into a frame value that the influence bar can display
-						# - Value must be multiple of 4% to split the bar into x25 4% chunks. Since the bar is 300px, thats x25 12px chunks that the indicator can be displayed in
-						set_variable = 		{ which = raj_vizier_influence_frame_var which = raj_var_vizier_influence_percentage }
-						divide_variable = 	{ which = raj_vizier_influence_frame_var value = 4 } # \
-						round_variable = 	{ which = raj_vizier_influence_frame_var value = 0 } #  | Round value to the nearest multiple of 4 for the indicator
-						multiply_variable = { which = raj_vizier_influence_frame_var value = 4 } # /
-
-						# - Propagate the frame value to the raja and all player raj subjects so non-raja players can view the bar
-						ROOT = {
+						PREV = {
 							set_variable = { which = raj_vizier_influence_frame_var which = PREV }
-							every_subject_country = {
-								limit = { ai = no }
-								4411 = {
-									PREV = {
-										set_variable = { which = raj_vizier_influence_frame_var which = PREV }
-									}
-								}
-							}
 						}
-					} 
-				} 
+					}
+				}
 			}
 		}
 	}
