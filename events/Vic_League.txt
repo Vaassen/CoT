@@ -282,14 +282,6 @@ country_event = { #declare war
 	immediate = {
 		hidden_effect = {
 			overlord = {
-				every_subject_country = {
-					limit = {
-						is_subject_of_type = vic_league_member
-						liberty_desire = 50
-						ai = yes
-					}
-					set_country_flag = vic_supremacy_flag
-				}
 				save_event_target_as = vic_leader_target
 			}
 		}
@@ -298,17 +290,22 @@ country_event = { #declare war
 	option = {
 		name = flavour_vic_league.6.a
 		grant_independence = yes
-		every_known_country = {
-			limit = { has_country_flag = vic_supremacy_flag }
-			grant_independence = yes
-			ROOT = {
-				create_subject = {
-					subject_type = vic_league_member
-					subject = PREV
+		event_target:vic_leader_target = {
+			every_subject_country = {
+				limit = {
+					is_subject_of_type = vic_league_member
+					liberty_desire = 50
+					NOT = { has_country_flag = vic_supremacy_refuse_flag }
 				}
+				grant_independence = yes
+				ROOT = {
+					create_subject = {
+						subject_type = vic_league_member
+						subject = PREV
+					}
+				}
+				add_stability = -1
 			}
-			add_stability = -1
-			clr_country_flag = vic_supremacy_flag
 		}
 		declare_war_with_cb = {
 			casus_belli = cb_vic_league_fight_for_supremacy
@@ -318,6 +315,11 @@ country_event = { #declare war
 		every_subject_country = {
 			limit = { is_subject_of_type = vic_league_member }
 			join_all_offensive_wars_of = ROOT #event needs to do these steps in that order, else the join all offensive wars will not work
+		}
+	}
+	after = {
+		event_target:vic_leader_target = {
+			every_subject_country = { clr_country_flag = vic_supremacy_refuse_flag }
 		}
 	}
 }
@@ -331,22 +333,9 @@ country_event = { #Resolve war
 	is_triggered_only = yes
 	hidden = yes
 	
-	immediate = {
-		hidden_effect = {
-			random_known_country = {
-				limit = {
-					has_country_flag = vic_supremacy_war_loser
-				}
-				clr_country_flag = vic_supremacy_war_loser
-				save_event_target_as = vic_supremacy_war_loser_target
-			}
-		}
-	}
-	
 	option = {
 		name = flavour_vic_league.7.a
-
-		event_target:vic_supremacy_war_loser_target = {
+		FROM = {
 			every_owned_province = {
 				limit = { NOT = { is_capital = yes } region = alenic_reach_region }
 				cede_province = ROOT
@@ -375,7 +364,7 @@ country_event = { #Resolve war
 					}
 					create_subject = {
 						subject_type = vic_league_member
-						subject = event_target:vic_supremacy_war_loser_target
+						subject = FROM
 					}
 				}
 			}
@@ -383,7 +372,7 @@ country_event = { #Resolve war
 				ROOT = {
 					create_subject = {
 						subject_type = vic_league_member
-						subject = event_target:vic_supremacy_war_loser_target
+						subject = FROM
 					}
 				}
 			}
@@ -402,12 +391,12 @@ country_event = { #Supremacy war - Player only event
 	option = { #Join war
 		name = flavour_vic_league.8.a
 		custom_tooltip = vic_league_fight_for_supremacy_multiplayer_yes_tt
-		hidden_effect = { set_country_flag = vic_supremacy_flag }
 	}
 	
 	option = { #Refuse to join
 		name = flavour_vic_league.8.b
 		custom_tooltip = vic_league_fight_for_supremacy_multiplayer_no_tt
+		hidden_effect = { set_country_flag = vic_supremacy_refuse_flag }
 	}
 	
 	after = {
