@@ -1,21 +1,3 @@
-# TODO POLKTECH: 
-# original doc: https://docs.google.com/document/d/1ZBlCODVWOz8f7iBpF0w4TXk-RdZWvKgAdJD0PPSKjJI
-# region and writing reviewed
-# my/current version https://docs.google.com/document/d/1pVQsm0Cs_E6KTBOND8FVG21NxeRYWa64th_hERSzMPo/
-# not reviewed yet
-
-# redo ai_chance factors
-# test in game 
-
-# check with balance for effects/ compare to other toleracne events
-
-# add these kind of checks
-#
-#	any_owned_province = {
-#			has_elven_minority_trigger = yes
-#		NOT = { has_province_modifier = elven_guerillas }
-#	}
-
 namespace = centaur_tolerance_events
 
 # Event organizer for the centaur tolerance events - should be a huge improvement to performance - having 1 overall check for having the minority instead of one for EACH new event that gets added
@@ -123,12 +105,35 @@ country_event = {
 					factor = 0.5
 					medium_tolerance_centaur_race_trigger = yes
 				}
-
-				random_owned_province = { # TODO POLKTECH weight this towards fields maybe
-					limit = { has_centaur_minority_trigger = yes }
-					province_event = { id = centaur_tolerance_events.5 }
+				if = { # prefers fields if possible
+					limit = {
+						any_owned_province = {
+							OR = {
+								has_terrain = farmlands
+								has_terrain = steppe
+								has_terrain = grasslands
+							}
+							has_centaur_minority_trigger = yes
+						}
+					}
+					random_owned_province = {
+						limit = {
+							OR = {
+								has_terrain = farmlands
+								has_terrain = steppe
+								has_terrain = grasslands
+							}
+							has_centaur_minority_trigger = yes
+						}
+						province_event = { id = centaur_tolerance_events.5 }
+					}
 				}
-				
+				else = {
+					random_owned_province = {
+						limit = { has_centaur_minority_trigger = yes }
+						province_event = { id = centaur_tolerance_events.5 }
+					}
+				}
 			}
 			# centaur haulers outperform beasts of burden
 			10 = {
@@ -169,6 +174,7 @@ country_event = {
 			10 = {
 				trigger = {
 					has_estate = estate_burghers
+				}
 				modifier = {
 					factor = 1.5
 					medium_tolerance_centaur_race_trigger = yes
@@ -236,8 +242,8 @@ country_event = {
 					stability = 2
 				}
 
-				random_owned_province = { # TODO POLK maybe make this prefer provinces with bandits (the adventurer needed thingy)?
-				limit = { has_centaur_minority_trigger = yes }
+				random_owned_province = {
+					limit = { has_centaur_minority_trigger = yes }
 					province_event = { id = centaur_tolerance_events.9 }
 				}
 				
@@ -808,14 +814,13 @@ province_event = {
 				}
 			}
 		}
-
-		owner = {
-			add_adm_power = 50
-			large_decrease_of_centaur_tolerance_effect = yes
-		}
 		add_province_modifier = {
 			name = centaur_landlords_thankyou_tax_raise #+30% local tax province modifier
 			duration = 1825
+		}
+		owner = {
+			add_adm_power = 50
+			large_decrease_of_centaur_tolerance_effect = yes
 		}
 	}
 }
@@ -865,7 +870,9 @@ province_event = {
 			name = centaur_centaur_laborers
 			duration = 3650
 		}
-		large_increase_of_centaur_tolerance_effect = yes
+		owner = {
+			large_increase_of_centaur_tolerance_effect = yes
+		}
 	}
 
 	# Force these centaurs to work without recompense
@@ -946,8 +953,8 @@ province_event = {
 			}
 		}
 		owner = {
-			add_country_modifier = { # TODO POLKTECH this should probably be in the third option? And perhaps be here in a weaker version?
-			name = centaur_centaur_couriers #(-50% envoy_travel_time and -10% trade eff)
+			add_country_modifier = {
+			name = centaur_centaur_couriers # -50% envoy_travel_time and -10% trade eff
 			duration = 1825
 			}
 		}
@@ -978,12 +985,15 @@ province_event = {
 				estate = estate_burghers
 				loyalty = 10
 			}
-			if = { # capped at 300 (well not really, an exact cap would be complicated, this is good enough, it might jump a bit, but you'd need 0.83 trade_income_percentage for this to be lower) TODO maybe
+			if = { # capped at 300 (well not really, an exact cap would be complicated, this is good enough, it might jump a bit, but you'd need 0.83 trade_income_percentage for this to be lower)
 				limit = { monthly_income = 30 }
 				add_treasury = 300
 			}
 			else = {
-				add_years_of_trade_income = { years = 1 }
+				add_years_of_trade_income = { 
+					years = 1
+					custom_tooltip =  gainOneYearsTradeIncome
+				}
 			}
 			add_estate_influence_modifier = {
 				estate = estate_burghers
@@ -1032,7 +1042,7 @@ province_event = {
 
 
 # Urbanizing Centaurs
-province_event = { # TODO POLKTECH good idea, but i hate the writing on this one, redo it
+province_event = {
 	id = centaur_tolerance_events.8
 	title = centaur_tolerance_events.8.t
 	desc = centaur_tolerance_events.8.d
@@ -1060,6 +1070,10 @@ province_event = { # TODO POLKTECH good idea, but i hate the writing on this one
 				}
 			}
 		}
+		add_province_modifier = {
+			name = centaur_urban_reconstruction #-20% local construction cost.
+			duration = 3650
+		}
 		owner = {
 			if = {
 				limit = { monthly_income = 125 }
@@ -1069,10 +1083,6 @@ province_event = { # TODO POLKTECH good idea, but i hate the writing on this one
 				add_years_of_income = -0.2
 			}
 			small_increase_of_centaur_tolerance_effect = yes
-		}
-		add_province_modifier = {
-			name = centaur_urban_reconstruction #-20% local construction cost.
-			duration = 3650
 		}
 	}
 
@@ -1099,12 +1109,13 @@ province_event = { # TODO POLKTECH good idea, but i hate the writing on this one
 		name = centaur_tolerance_events.8.c
 		highlight = yes
 		trigger = {
-			OR = {
-				owner = {
+			owner = {
+				OR = {
 					ruler_has_personality = industrious_personality
 					ruler_has_personality = architectural_visionary_personality	
 				}
-			}	
+			}
+				
 		}
 		ai_chance = {
 			factor = 100
@@ -1192,12 +1203,11 @@ province_event = {
 			}
 		}
 
+		add_local_autonomy = 25
 		owner = {
 			add_dip_power = -50
 			medium_increase_of_centaur_tolerance_effect = yes
 		}
-		add_local_autonomy = 25
-		
 	}
 
 	# Organize Local Militias
@@ -1210,12 +1220,12 @@ province_event = {
 				wants_to_decrease_tolerance_centaur = yes
 			}
 		}
-		owner = {
-			small_decrease_of_centaur_tolerance_effect = yes
-		}
 		add_province_modifier = {
 			name = centaur_anti_centaur_militia # -0.25 devastation and -20% local hostile movespeed
 			duration = 1825
+		}
+		owner = {
+			small_decrease_of_centaur_tolerance_effect = yes
 		}
 	}
 
@@ -1235,14 +1245,14 @@ province_event = {
 				}
 			}
 		}
-
+		add_devastation = 40
 		owner = {
 			add_yearly_manpower = -0.2
 			add_years_of_income = -0.2
 			add_army_tradition = 10
 			large_decrease_of_centaur_tolerance_effect = yes
 		}
-		add_devastation = 40
+		
 	}
 }
 
@@ -1322,12 +1332,15 @@ country_event = {
 			}
 		}
 		
-		if = { # capped at 500 (well not really, an exact cap would be complicated, this is good enough, it might jump a bit, but you'd need 0.83 trade_income_percentage for this to be lower) TODO maybe
+		if = { # capped at 500 (well not really, an exact cap would be complicated, this is good enough, it might jump a bit, but you'd need 0.83 trade_income_percentage for this to be lower)
 			limit = { monthly_income = 50 } 
 			add_treasury = 500
 		}
 		else = {
-			add_years_of_trade_income = { years = 1 }
+			add_years_of_trade_income = { 
+				years = 1
+				custom_tooltip =  gainOneYearsTradeIncome
+			}
 		}
 		add_mercantilism = -1
 		small_increase_of_centaur_tolerance_effect = yes
@@ -1376,7 +1389,6 @@ country_event = {
 		add_country_modifier = {
 			name = centaur_shamed_upper_class #-1 yearly prestige
 			duration = 1825
-			#desc = centaur_shamed_aristocracy_for_centaur_abuse # TODO POLKTECH don't think these need a desc? check in game
 		}
 		small_increase_of_centaur_tolerance_effect = yes
 	}
