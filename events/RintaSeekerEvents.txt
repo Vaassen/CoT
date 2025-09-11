@@ -1563,6 +1563,7 @@ country_event = {
 	
 	is_triggered_only = yes
 	fire_only_once = yes
+	hidden = yes
 
 	immediate = {
 		hidden_effect = {
@@ -1586,6 +1587,7 @@ country_event = {
 					limit = {
 						religion = rinta_seekers
 						has_disaster = darkmagicks
+						NOT = { is_subject = yes }
 					}
 					save_event_target_as = coalition_vs_alefisol_leader
 					every_war_enemy_country = {
@@ -1666,6 +1668,9 @@ country_event = {
 					is_in_war = {
 						casus_belli = cb_alefisol_war
 					}
+					any_owned_province = {
+						has_province_modifier = rinta_infernal_resonance
+					}
 				}
 				every_owned_province = {
 					add_core = S93
@@ -1675,6 +1680,7 @@ country_event = {
 			S93 = {
 				remove_country_modifier = alefisol_modifier
 			}
+
 		}
 	}
 
@@ -1707,6 +1713,14 @@ country_event = {
 		hidden_effect = {
 			every_province = {
 				remove_province_modifier = rinta_infernal_resonance
+			}
+			every_war_enemy_country = {
+				limit = {
+					is_in_war = {
+						casus_belli = cb_alefisol_war
+					}
+				}
+				white_peace = ROOT
 			}
 		}
 	}
@@ -1927,7 +1941,7 @@ country_event = { #Spawn of Alefisol
 			create_general = {
 				tradition = 10
 			}
-			create_war_wizard_effect = yes
+			create_war_wizard = yes
 			define_ruler_to_general = {
 				fire = 3
 				shock = 10
@@ -2050,6 +2064,7 @@ country_event = { #Spawn of Alefisol
 			}
 			update_unit_sprites_for_racial_mil = yes
 			set_country_flag = is_just_evil
+			set_country_flag = ardimya_cult_disabled
 			remove_country_modifier = restructuring_military
 			remove_country_modifier = restructuring_administration
 		}
@@ -2158,6 +2173,7 @@ country_event = {
 			every_owned_province = {
 				remove_core = ROOT
 				cede_province = previous_owner
+				add_territorial_core = owner #Territorial cores vanish when ceded for some reason
 			}
 			remove_country = yes
 		}
@@ -3171,7 +3187,7 @@ country_event = {
 					decrease_ruler_adm_effect = yes
 				}
 				else = {
-					force_add_ruler_personality = { personality = infertile_personality }
+					force_add_normal_ruler_personality = { personality = infertile_personality }
 				}
 			}
 			5 = {
@@ -3180,7 +3196,7 @@ country_event = {
 					decrease_ruler_dip_effect = yes
 				}
 				else = {
-					force_add_ruler_personality = { personality = cruel_personality }
+					force_add_normal_ruler_personality = { personality = cruel_personality }
 				}
 			}
 			5 = {
@@ -3189,7 +3205,7 @@ country_event = {
 					decrease_ruler_mil_effect = yes
 				}
 				else = {
-					force_add_ruler_personality = { personality = craven_personality }
+					force_add_normal_ruler_personality = { personality = craven_personality }
 				}
 			}
 			5 = {
@@ -3209,7 +3225,7 @@ country_event = {
 					female = yes
 					age = 20
 				}
-				set_heir_mage_effect = yes
+				define_powerful_mage = { type = heir }
 			}
 			5 = {
 				trigger = {
@@ -3585,7 +3601,58 @@ country_event = { #After 10 years
 		name = rinta_seeker_events.304.a
 		6040 = {
 			owner = {
-				country_event = { id = rinta_seeker_events.310 }
+				if = {
+					limit = { NOT = { num_of_cities = 2 } }
+					change_tag = S78
+					change_government = republic
+					define_ruler = {
+						adm = 4
+						dip = 5
+						mil = 6
+						age = 18
+						claim = 100
+						male = yes
+						culture = suhratbi
+						religion = rinta_seekers
+						name = "Isha"
+						dynasty = ""
+					}
+					define_powerful_mage = {
+						type = ruler
+						evocation = 3
+						abjuration = 3
+						transmutation = 2
+					}
+					define_admiral = {
+						shock = 3
+						fire = 1
+						manuever = 3
+						siege = 1
+						name = "Axmed"
+					}
+					every_country = {
+						limit = {
+							is_incident_active = incident_rinta_rise_of_the_adeen
+						}
+						country_event = {
+							id = rinta_seeker_events.312
+						}
+					}
+				}
+				else_if = {
+					limit = { capital = 6040 }
+					random_owned_province = {
+						limit = {
+							NOT = { province_id = 6040 }
+						}
+						move_capital_effect = yes
+					}
+					country_event = { id = rinta_seeker_events.310 }
+				}
+				else = {
+					country_event = { id = rinta_seeker_events.310 }
+				}
+				
 			}
 		}
 		ai_chance = { factor = 1 }
@@ -4228,6 +4295,8 @@ country_event = { #Start of ending
 	immediate = {
 		hidden_effect = {
 			set_country_flag = rinta_adeen_overlord
+			set_country_flag = no_callaction
+			set_country_flag = allow_subjects_war
 			6040 = {
 				add_core = S78
 				save_event_target_as = rinta_adeen_capital
@@ -4238,14 +4307,25 @@ country_event = { #Start of ending
 				change_government = republic
 				add_army_tradition = 64
 				add_army_professionalism = 0.23
+				remove_country_modifier = restructuring_administration
 			}
 			random_owned_province = {
+				limit = {
+					NOT = {
+						province_id = 6043
+						province_id = 6041
+						province_id = 6037
+					}
+				}
 				save_event_target_as = adeeni_target_1
 			}
 			random_owned_province = {
 				limit = {
-					NOT = { 
+					NOT = {
 						province_has_current_tech_fort_trigger = yes
+						province_id = 6043
+						province_id = 6041
+						province_id = 6037
 						province_id = event_target:adeeni_target_1
 					}
 				}
@@ -4254,7 +4334,10 @@ country_event = { #Start of ending
 			random_owned_province = {
 				limit = {
 					NOT = { 
-						province_has_current_tech_fort_trigger = yes 
+						province_has_current_tech_fort_trigger = yes
+						province_id = 6043
+						province_id = 6041
+						province_id = 6037
 						province_id = event_target:adeeni_target_1
 						province_id = event_target:adeeni_target_2
 					}
@@ -4266,43 +4349,8 @@ country_event = { #Start of ending
 
 	option = {
 		name = rinta_seeker_events.310.a
+		rinta_seeker_adeen_revolt = yes
 		S78 = {
-			declare_war_with_cb = {
-				casus_belli = cb_independence_war
-				who = ROOT
-			}
-			hidden_effect = {
-				capital_scope = {
-					if = {
-						limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
-						add_latest_building = { builder = ROOT fort = yes }
-					}
-					if = {
-						limit = {
-							NOT = {
-								OR = {
-									has_building = coastal_defence
-									has_building = naval_battery
-								}
-							}
-						}
-						add_latest_building = { builder = ROOT coastal = yes }
-					}
-				}
-				create_unit_forcelimit_percentage = {
-					type = infantry
-					special_unit_category = marines
-					force_limit_percentage = 1
-				}
-				create_unit_forcelimit_percentage = {
-					type = galley
-					force_limit_percentage = 1
-				}
-				add_years_of_income = 10
-				add_yearly_manpower = 10
-				add_yearly_sailors = 10
-				set_country_flag = rinta_adeen_rise_war
-			}
 			country_event = {
 				id = rinta_seeker_events.315
 				days = 2
@@ -4311,42 +4359,6 @@ country_event = { #Start of ending
 		custom_tooltip = rinta_seeker_events.310_tt
 		hidden_effect = {
 			set_country_flag = disables_estate_adeen_flag
-		}
-		if = {
-			limit = { has_saved_event_target = adeeni_target_1 }
-			event_target:adeeni_target_1 = {
-				spawn_rebels = {
-					type = adeen_rebels
-					female = yes
-					size = 2
-					friend = S78
-					separatists_target = S78
-				}
-			}
-			if = {
-				limit = { has_saved_event_target = adeeni_target_2 }
-				event_target:adeeni_target_2 = {
-					spawn_rebels = {
-						type = adeen_rebels
-						size = 2
-						friend = S78
-						separatists_target = S78
-						win = yes
-					}
-				}
-				if = {
-					limit = { has_saved_event_target = adeeni_target_3 }
-					event_target:adeeni_target_3 = {
-						spawn_rebels = {
-							type = adeen_rebels
-							size = 2
-							friend = S78
-							separatists_target = S78
-							win = yes
-						}
-					}
-				}
-			}
 		}
 		every_known_country = {
 			limit = {
@@ -4377,90 +4389,16 @@ country_event = { #Start of ending
 	}
 	option = {
 		name = rinta_seeker_events.310.c
+		
 		hidden_effect = {
-			set_country_flag = no_allies_war
+			rinta_seeker_adeen_revolt = yes
 			S78 = {
 				country_event = {
 					id = rinta_seeker_events.315
 					days = 2
 				}
-				declare_war_with_cb = {
-					casus_belli = cb_independence_war
-					who = ROOT
-				}
-				hidden_effect = {
-					capital_scope = {
-						if = {
-							limit = { NOT = { province_has_current_tech_fort_trigger = yes } }
-							add_latest_building = { builder = ROOT fort = yes }
-						}
-						if = {
-							limit = {
-								NOT = {
-									OR = {
-										has_building = coastal_defence
-										has_building = naval_battery
-									}
-								}
-							}
-							add_latest_building = { builder = ROOT coastal = yes }
-						}
-					}
-					create_unit_forcelimit_percentage = {
-						type = infantry
-						special_unit_category = marines
-						force_limit_percentage = 1
-					}
-					create_unit_forcelimit_percentage = {
-						type = galley
-						force_limit_percentage = 1
-					}
-					add_years_of_income = 10
-					add_yearly_manpower = 10
-					add_yearly_sailors = 10
-					set_country_flag = rinta_adeen_rise_war
-				}
 			}
-			custom_tooltip = rinta_seeker_events.310_tt
-			hidden_effect = {
-				set_country_flag = disables_estate_adeen_flag
-			}
-			if = {
-				limit = { has_saved_event_target = adeeni_target_1 }
-				event_target:adeeni_target_1 = {
-					spawn_rebels = {
-						type = adeen_rebels
-						female = yes
-						size = 2
-						friend = S78
-						separatists_target = S78
-					}
-				}
-				if = {
-					limit = { has_saved_event_target = adeeni_target_2 }
-					event_target:adeeni_target_2 = {
-						spawn_rebels = {
-							type = adeen_rebels
-							size = 2
-							friend = S78
-							separatists_target = S78
-							win = yes
-						}
-					}
-					if = {
-						limit = { has_saved_event_target = adeeni_target_3 }
-						event_target:adeeni_target_3 = {
-							spawn_rebels = {
-								type = adeen_rebels
-								size = 2
-								friend = S78
-								separatists_target = S78
-								win = yes
-							}
-						}
-					}
-				}
-			}
+			set_country_flag = disables_estate_adeen_flag
 			every_known_country = {
 				limit = {
 					is_incident_active = incident_rinta_rise_of_the_adeen
@@ -4471,7 +4409,6 @@ country_event = { #Start of ending
 				}
 			}
 		}
-		
 		switch_tag = S78
 	}
 }
@@ -4496,13 +4433,14 @@ country_event = { #for other countries
 
 	option = {
 		name = rinta_seeker_events.311.a
+		hidden_effect = {
+			set_country_flag = rinta_adeen_side_of_war
+			set_country_flag = allow_to_join_war_nonetheless
+		}
 		join_all_offensive_wars_of = S78
 		add_estate_loyalty = {
 			estate = estate_adeen
 			loyalty = 10
-		}
-		hidden_effect = {
-			set_country_flag = rinta_adeen_side_of_war
 		}
 		disband_rebels = adeen_coupists
 		disband_rebels = adeen_rebels
@@ -4552,10 +4490,11 @@ country_event = { #for other countries
 	}
 	option = {
 		name = rinta_seeker_events.311.c
-		join_all_defensive_wars_of = event_target:rinta_adeen_overlord_target
 		hidden_effect = {
 			set_country_flag = rinta_overlord_side_of_war
+			set_country_flag = allow_to_join_war_nonetheless
 		}
+		join_all_defensive_wars_of = event_target:rinta_adeen_overlord_target
 		ai_chance = { 
 			factor = 1
 			modifier = {
@@ -4581,6 +4520,7 @@ country_event = { #The end Adeen victory
 			tag = S78
 		}
 		end_incident = incident_rinta_rise_of_the_adeen
+		custom_tooltip = rinta_seeker_events.312.tt
 		hidden_effect = {
 			set_country_flag = rinta_adeen_hardliners_unlocked
 		}
@@ -4591,10 +4531,12 @@ country_event = { #The end Adeen victory
 		trigger = { #Adeen Allies
 			has_country_flag = rinta_adeen_side_of_war
 		}
+		custom_tooltip = rinta_seeker_events.312.tt
 		set_estate_privilege = estate_adeen_relations_with_adeen
 		hidden_effect = {
 			set_country_flag = rinta_adeen_hardliners_unlocked
 			clr_country_flag = rinta_adeen_side_of_war	
+			clr_country_flag = allow_to_join_war_nonetheless
 		}
 		end_incident = incident_rinta_rise_of_the_adeen
 		ai_chance = { factor = 1 }
@@ -4610,10 +4552,12 @@ country_event = { #The end Adeen victory
 		end_incident = incident_rinta_rise_of_the_adeen
 		hidden_effect = {
 			clr_country_flag = rinta_overlord_side_of_war
+			clr_country_flag = allow_to_join_war_nonetheless
 			if = {
 				limit = { has_country_flag = rinta_adeen_overlord }
 				clr_country_flag = rinta_adeen_overlord
-				clr_country_flag = no_allies_war
+				clr_country_flag = no_callaction
+				clr_country_flag = allow_subjects_war
 			}
 		}
 		ai_chance = { factor = 1 }
@@ -4655,7 +4599,8 @@ country_event = { #The end Overlord victory
 		}
 		end_incident = incident_rinta_rise_of_the_adeen
 		hidden_effect = {
-			clr_country_flag = rinta_adeen_side_of_war	
+			clr_country_flag = rinta_adeen_side_of_war
+			clr_country_flag = allow_to_join_war_nonetheless
 		}
 		ai_chance = { factor = 1 }
 	}
@@ -4675,7 +4620,11 @@ country_event = { #The end Overlord victory
 		end_incident = incident_rinta_rise_of_the_adeen
 		hidden_effect = {
 			clr_country_flag = rinta_adeen_overlord
-			clr_country_flag = no_allies_war
+			clr_country_flag = no_callaction
+			clr_country_flag = allow_subjects_war
+			every_owned_province = {
+				remove_core = S78
+			}
 		}
 		ai_chance = { factor = 1 }
 	}
@@ -4691,6 +4640,7 @@ country_event = { #The end Overlord victory
 		end_incident = incident_rinta_rise_of_the_adeen
 		hidden_effect = {
 			clr_country_flag = rinta_overlord_side_of_war
+			clr_country_flag = allow_to_join_war_nonetheless
 		}
 		ai_chance = { factor = 1 }
 	}
@@ -4747,7 +4697,36 @@ country_event = { #Heavenly spiral eye
 			add_treasury = 200
 		}
 		else = {
-			add_treasury = 500
+			add_treasury = 1000
+			add_manpower = 10
+			add_adm_power = 400
+			add_mil_power = 400
+			add_dip_power = 400
+			add_army_professionalism = 0.2
+			6043 = {
+				spawn_rebels = {
+					type = nationalist_rebels
+					size = 2
+					friend = S78
+					separatists_target = S78
+					win = yes
+				}
+				hidden_effect = {
+					add_core = S78
+				}
+			}
+			6037 = {
+				spawn_rebels = {
+					type = nationalist_rebels
+					size = 2
+					friend = S78
+					separatists_target = S78
+					win = yes
+				}
+				hidden_effect = {
+					add_core = S78
+				}
+			}
 		}
 		custom_tooltip = rinta_adeen_spawn_army
 		hidden_effect = {
@@ -4817,16 +4796,12 @@ country_event = { #Heavenly spiral eye
 			name = "Isha"
 			dynasty = ""
 		}
-		add_ruler_personality = mage_personality
-		set_ruler_flag = evocation_1
-		set_ruler_flag = evocation_2
-		set_ruler_flag = evocation_3
-		set_ruler_flag = abjuration_1
-		set_ruler_flag = abjuration_2
-		set_ruler_flag = abjuration_3
-		set_ruler_flag = transmutation_1
-		set_ruler_flag = transmutation_2
-		set_ruler_flag = initialized_magic_flags
+		define_powerful_mage = {
+			type = ruler
+			evocation = 3
+			abjuration = 3
+			transmutation = 2
+		}
 		define_admiral = {
 			shock = 3
 			fire = 1
@@ -4834,7 +4809,6 @@ country_event = { #Heavenly spiral eye
 			siege = 1
 			name = "Axmed"
 		}
-		
 		ai_chance = { factor = 1 }
 	}
 }
@@ -5467,8 +5441,10 @@ country_event = {
 	option = {
 		name = rinta_seeker_events.504.b
 		decrease_rinta_seekers_isolation_level = yes
-		custom_tooltip = RS_darwiiz_power_tt
-		update_magic_study_experience_modifier = { value = 10 } #MAGICREWORK
+		add_country_modifier = {
+			name = RS_darwiiz_power
+			duration = -1
+		}
 	}
 
 	option = {
@@ -5543,7 +5519,7 @@ country_event = {
 					scope = every_province
 					scale = higher_development_than
 					global_trigger = "
-						owned_by = event_target:strongest_sarhaly_ally
+						owned_by = event_target:strongest_sarhaly_ally_1
 						NOT = { is_capital = yes }
 						NOT = { religion = rinta_seekers }
 					"
