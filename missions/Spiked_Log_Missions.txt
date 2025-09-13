@@ -20,6 +20,7 @@ spiked_log_1 = {
 						who = I35
 						value = 150
 					}
+					is_at_war = no
 				}
 				I35 = { 
 					is_enemy = ROOT
@@ -84,18 +85,20 @@ spiked_log_1 = {
 		position = 2
 		required_missions = { spiked_log_the_prickly_alliance }
 		provinces_to_highlight = {
-			AND = {
-				is_core = U12
-				NOT = { owned_by = I35 }
-				I36 = { alliance_with = ROOT }
-			}
-			AND = {
-				OR = {
+			OR = {
+				AND = {
 					is_core = U12
-					is_core = I35
+					NOT = { owned_by = I35 }
+					I36 = { alliance_with = ROOT }
 				}
-				NOT = { owned_by = ROOT }
-				NOT = { I36 = { alliance_with = ROOT } }
+				AND = {
+					OR = {
+						is_core = U12
+						is_core = I35
+					}
+					NOT = { owned_by = ROOT }
+					NOT = { I36 = { alliance_with = ROOT } }
+				}
 			}
 		}
 
@@ -157,7 +160,7 @@ spiked_log_1 = {
 				first_limit = "alliance_with = I35"
 				first_effect = "
 					custom_tooltip = spiked_log_punish_the_traitor_effect_tt_1
-					I35 = { country_event = flavor_spiked_log.3 }
+					I35 = { country_event = { id =  flavor_spiked_log.3 } }
 				"
 				second_limit = "NOT = { alliance_with = I35 }"
 				second_effect = "
@@ -196,12 +199,11 @@ spiked_log_1 = {
 			OR = {
 				I35 = {
 					is_subject_of = ROOT
-					every_owned_province = { NOT = { religion_group = fey_religion } }
-					NOT = { liberty_desire = 10 }
+					all_owned_province = { NOT = { religion_group = fey_religion } }
 				}
 				AND = {
-					I35 = { exists = no }
-					every_owned_province = { NOT = { religion_group = fey_religion } }
+					NOT = { exists = I35 }
+					all_owned_province = { NOT = { religion_group = fey_religion } }
 				}
 			}
 		}
@@ -210,10 +212,10 @@ spiked_log_1 = {
 			country_event = { id = flavor_spiked_log.6 }
 			custom_tooltip = spiked_log_end_oubbligs_legacy_insight_tt
 			simple_dynamic_effect = {
-				first_custom_tooltip = spiked_log_brambled_log_trigger_tt
+				first_custom_tooltip = spiked_log_end_oubbligs_legacy_trigger_tt
 				first_limit = "I35 = { is_subject_of = ROOT }"
 				first_effect = "tooltip = { I35 = { add_country_modifier = { name = spiked_log_loyal_subject_clan duration = -1 } } }"
-				second_limit = "I35 = { exists = no }"
+				second_limit = "NOT = { exists = I35 }"
 				second_effect = "tooltip = { add_country_modifier = { name = spiked_log_brambleskinner_vassals duration = 7300 } }"
 			}
 			complex_dynamic_effect_without_alternative = {
@@ -242,7 +244,7 @@ spiked_log_1 = {
 			trade_goods = ivory
 		}
 
-		trigger = { #CHECK THIS prov ID of the ivory provs (since it's supposed to be the Deepwoods provs)
+		trigger = {
 			7003 = {
 				country_or_non_sovereign_subject_holds = ROOT
 				base_production = 6
@@ -368,7 +370,7 @@ spiked_log_1 = {
 				}
 				num_of_estate_agendas_completed = {
 					estate = estate_mages
-					value = 3
+					value = 1
 				}
 				is_estate_abjuration_level_1_minimum = yes
 				is_estate_conjuration_level_1_minimum = yes
@@ -392,7 +394,7 @@ spiked_log_1 = {
 			mission_reward_artifice_points_3 = yes
 			if = {
 				limit = { has_country_modifier = spiked_log_unchecked_cartel_spending } #hidden before it's relevant
-				simple_dynamic_effect_without_alternative = {
+				complex_dynamic_effect = {
 					first_custom_tooltip = spiked_log_cartel_collaboration_bonus_trigger_tt
 					first_limit = "mission_completed = spiked_log_expand_log_production"
 					first_effect = "remove_country_modifier = spiked_log_unchecked_cartel_spending"
@@ -496,10 +498,8 @@ spiked_log_2 = {
 				}
 			}
 			OR = { 
-				AND = {
-					custom_trigger_tooltip = {
-						tooltip = spiked_log_the_matter_with_orcs_reconciliation_trigger_tt
-					}
+				custom_trigger_tooltip = {
+					tooltip = spiked_log_the_matter_with_orcs_reconciliation_trigger_tt
 					NOT = { has_country_modifier = racial_pop_orcish_purge }
 					NOT = { has_country_modifier = racial_pop_orcish_expulsion }
 					has_orcish_accepted_culture = yes
@@ -509,15 +509,13 @@ spiked_log_2 = {
 					}
 					has_orcish_advisor = yes
 				}
-				AND = {
-					custom_trigger_tooltip = {
-						tooltip = spiked_log_the_matter_with_orcs_retribution_trigger_tt
-					}
+				custom_trigger_tooltip = {
+					tooltip = spiked_log_the_matter_with_orcs_retribution_trigger_tt
 					OR = {
 						has_country_modifier = racial_pop_orcish_purge
 						has_country_modifier = racial_pop_orcish_expulsion
 					}
-					every_known_country = {
+					all_known_country = {
 						OR = {
 							capital_scope = { NOT = { superregion = deepwoods_superregion } }
 							NOT = { culture_group = orcish }
@@ -540,6 +538,7 @@ spiked_log_2 = {
 					custom_tooltip = spiked_log_the_matter_with_orcs_reconciliation_effect_tt
 					set_country_flag = spiked_log_orc_reconciliation_flag
 				"
+				second_custom_tooltip = spiked_log_the_matter_with_orcs_retribution_tt
 				second_limit = "
 					OR = {
 						has_country_modifier = racial_pop_orcish_purge
@@ -552,49 +551,51 @@ spiked_log_2 = {
 				"
 			}
 			
-			if = { #Moving the actual effect bellow because it was too long for the simple dynamic effect
-				limit = { has_country_flag = spiked_log_orc_reconciliation_flag }
-				deepwoods_arrow_grove = {
-					limit = {
-						owned_by = ROOT
-						has_any_orcish_pop_trigger = yes
+			hidden_effect = {
+				if = { #Moving the actual effect bellow because it was too long for the simple dynamic effect
+					limit = { has_country_flag = spiked_log_orc_reconciliation_flag }
+					deepwoods_arrow_grove = {
+						limit = {
+							owned_by = ROOT
+							has_any_orcish_pop_trigger = yes
+						}
+						add_nationalism = -10
 					}
-					add_nationalism = -10
+					add_country_modifier = { name = spiked_log_uneasy_reconciliation duration = 7300 }
+					medium_increase_of_orcish_tolerance_effect = yes
 				}
-				add_country_modifier = { name = spiked_log_uneasy_reconciliation duration = 7300 }
-				medium_increase_of_orcish_tolerance_effect = yes
-			}
-			else = {
-				deepwoods_arrow_grove = {
-					limit = {
-						owned_by = ROOT
-						culture_group = orcish
+				else = {
+					deepwoods_arrow_grove = {
+						limit = {
+							owned_by = ROOT
+							culture_group = orcish
+						}
+						change_culture = ROOT
+						change_religion = ROOT
 					}
-					change_culture = ROOT
-					change_religion = ROOT
+					deepwoods_arrow_grove = {
+						limit = {
+							owned_by = ROOT
+							has_any_orcish_pop_trigger = yes
+						}
+						remove_random_development = yes
+						remove_orcish_minority_size_effect = yes
+						remove_orcish_minority_size_effect = yes
+					}
+					every_known_country = {
+						limit = {
+							culture_group = orcish
+							capital_scope = { superregion = deepwoods_superregion }
+						}
+						add_aggressive_expansion = {
+							who = ROOT
+							value = 20
+							apply_calc = no
+						}
+					}
+					add_country_modifier = { name = spiked_log_bloody_revenge duration = 7300 }
+					medium_decrease_of_orcish_tolerance_effect = yes
 				}
-				deepwoods_arrow_grove = {
-					limit = {
-						owned_by = ROOT
-						has_any_orcish_pop_trigger = yes
-					}
-					remove_random_development = yes
-					remove_orcish_minority_size_effect = yes
-					remove_orcish_minority_size_effect = yes
-				}
-				every_known_country = {
-					limit = {
-						culture_group = orcish
-						capital_scope = { superregion = deepwoods_superregion }
-					}
-					add_aggressive_expansion = {
-						who = ROOT
-						value = 20
-						apply_calc = no
-					}
-				}
-				add_country_modifier = { name = spiked_log_bloody_revenge duration = 7300 }
-				medium_decrease_of_orcish_tolerance_effect = yes
 			}
 		}
 	}
@@ -609,20 +610,22 @@ spiked_log_2 = {
 			spiked_log_sharpen_the_spikes
 		}
 		provinces_to_highlight = {
-			owner = { tag = I44 }
-			AND = {
-				province_group = deepwoods_river_grove
-				culture_group = orcish
-				NOT = { owned_by = ROOT }
-			}
-			AND = {
-				province_id = 3042
-				NOT = { owned_by = ROOT }
+			OR = {
+				owner = { tag = I44 }
+				AND = {
+					province_group = deepwoods_river_grove
+					culture_group = orcish
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					province_id = 3042
+					NOT = { owned_by = ROOT }
+				}
 			}
 		}
 
 		trigger = {
-			I44 = { exists = no }
+			NOT = { exists = I44 }
 			deepwoods_river_grove = {
 				type = all
 				OR = {
@@ -649,11 +652,13 @@ spiked_log_2 = {
 		position = 6
 		required_missions = { spiked_log_silver_lining }
 		provinces_to_highlight = {
-			spiked_log_silver_tusk_highlight = { grove = arrow }
-			spiked_log_silver_tusk_highlight = { grove = shadow }
-			spiked_log_silver_tusk_highlight = { grove = bone }
-			spiked_log_silver_tusk_highlight = { grove = lake }
-			spiked_log_silver_tusk_highlight = { grove = thorn }
+			OR = {
+				spiked_log_silver_tusk_highlight = { grove = arrow }
+				spiked_log_silver_tusk_highlight = { grove = shadow }
+				spiked_log_silver_tusk_highlight = { grove = bone }
+				spiked_log_silver_tusk_highlight = { grove = lake }
+				spiked_log_silver_tusk_highlight = { grove = thorn }
+			}
 		}
 
 		trigger = {
@@ -805,7 +810,7 @@ spiked_log_3 = {
 
 		trigger = {
 			army_size_percentage = 0.95
-			capital_scope = { has_state_edict = defensive_edict }
+			capital_scope = { has_state_edict = edict_defensive_edict }
 			custom_trigger_tooltip = {
 				tooltip = spiked_log_exploited_capital
 				capital_scope = { has_province_flag = I36_exploited_dev }
@@ -848,9 +853,13 @@ spiked_log_3 = {
 		}
 
 		trigger = {
-			I42 = {
-				exists = no
-				every_core_province = { owned_by = ROOT is_core = ROOT }
+			NOT = { exists = I42 }
+			deepwoods_arrow_grove = {
+				type = all
+				OR = {
+					owned_by = ROOT
+					province_id = 3033
+				}
 			}
 			I43 = {
 				OR = {
@@ -910,6 +919,7 @@ spiked_log_3 = {
 				kill_units = {
 					type = cavalry
 					amount = 2
+					who = ROOT
 				}
 				custom_tooltip = spiked_log_add_or_upgrade_production_building_tt
 				hidden_effect = {
@@ -924,6 +934,7 @@ spiked_log_3 = {
 				kill_units = {
 					type = cavalry
 					amount = 2
+					who = ROOT
 				}
 				custom_tooltip = spiked_log_add_or_upgrade_production_building_tt
 				hidden_effect = {
@@ -938,6 +949,7 @@ spiked_log_3 = {
 				kill_units = {
 					type = cavalry
 					amount = 2
+					who = ROOT
 				}
 				custom_tooltip = spiked_log_add_or_upgrade_production_building_tt
 				hidden_effect = {
@@ -973,7 +985,7 @@ spiked_log_3 = {
 			else = {
 				NOT = { num_of_rebel_armies = 1 }
 				NOT = { num_of_rebel_controlled_provinces = 1 }
-				every_subject_country = {
+				all_subject_country = {
 					NOT = { num_of_rebel_armies = 1 }
 					NOT = { num_of_rebel_controlled_provinces = 1 }
 				}
@@ -982,7 +994,13 @@ spiked_log_3 = {
 
 		effect = {
 			country_event = { id = flavor_spiked_log.11 }
-			custom_tooltip = spiked_log_feystomper_overcrowding_insight
+			if = {
+				limit = { NOT = { has_country_flag = spiked_log_stampede_happened } }
+				custom_tooltip = spiked_log_feystomper_overcrowding_insight1
+			}
+			else = {
+				custom_tooltip = spiked_log_feystomper_overcrowding_insight2
+			}
 		}
 	}
 
@@ -995,14 +1013,31 @@ spiked_log_3 = {
 		}
 		provinces_to_highlight = {
 			superregion = deepwoods_superregion
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
+			OR = {
+				AND = {
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+					culture = forest_goblin
+				}
+				owner = {
+					culture = forest_goblin
+					NOT = { is_subject_of = ROOT }
+				}
+			}
 		}
 
 		trigger = {
 			deepwoods_superregion = {
+				type = all
 				OR = {
-					NOT = { culture_group = goblin }
+					NOT = { culture = forest_goblin }
 					country_or_non_sovereign_subject_holds = ROOT
+				}
+			}
+			all_known_country = {
+				OR = {
+					NOT = { culture = forest_goblin }
+					NOT = { capital_scope = { superregion = deepwoods_superregion } }
+					is_subject_of = ROOT
 				}
 			}
 			employed_advisor = { category = ADM }
@@ -1106,6 +1141,8 @@ spiked_log_4 = {
 			OR = {
 				province_group = deepwoods_shadow_grove
 				province_id = 3064
+				province_id = 3065
+				province_id = 3070
 			}
 			NOT = { owned_by = ROOT }
 		}
@@ -1230,7 +1267,7 @@ spiked_log_4 = {
 						}
 					}
 				}
-				7003 = { has_no_ongoing_construction = yes }
+				3037 = { has_no_ongoing_construction = yes }
 			}
 		}
 
@@ -1285,7 +1322,7 @@ spiked_log_4 = {
 					}
 				}
 				remove_country_modifier = spiked_log_makeshift_fortifications
-				add_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
+				add_permanent_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
 			}
 			if = {
 				limit = {
@@ -1304,7 +1341,7 @@ spiked_log_4 = {
 						speed = 1
 						cost = 0
 					}
-					add_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
+					add_permanent_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
 				}
 			}
 			else = {
@@ -1314,7 +1351,7 @@ spiked_log_4 = {
 						NOT = { is_capital_of = ROOT }
 						has_fort_building_trigger = yes
 					}
-					add_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
+					add_permanent_province_modifier = { name = spiked_log_spiky_traps duration = -1 }
 				}
 			}
 			custom_tooltip = spiked_log_spiky_trap_removal_conditions_tt
@@ -1366,8 +1403,8 @@ spiked_log_4 = {
 			}
 			if = {
 				limit = { has_country_modifier = spiked_log_unchecked_cartel_spending } #hidden before it's relevant
-				simple_dynamic_effect_without_alternative = {
-					first_custom_tooltip = spiked_log_cartel_collaboration_bonus_trigger_tt
+				complex_dynamic_effect = {
+					first_custom_tooltip = spiked_log_expand_log_production_bonus_trigger_tt
 					first_limit = "mission_completed = spiked_log_cartel_collaboration"
 					first_effect = "remove_country_modifier = spiked_log_unchecked_cartel_spending"
 				}
@@ -1417,6 +1454,7 @@ spiked_log_5 = {
 					has_20_opinion_sent_gift = { target = ROOT }
 				}
 			}
+			has_country_modifier = racial_focus_harpy
 			OR = {
 				capital_scope = { has_trade_building_trigger = yes }
 				AND = {
@@ -1431,6 +1469,7 @@ spiked_log_5 = {
 				add_harpy_minority_size_effect = yes
 				center_of_trade = 1
 			}
+			medium_increase_of_harpy_tolerance_effect = yes
 			if = {
 				limit = { capital_scope = { NOT = { has_trade_building_trigger = yes } } }
 				capital_scope = {
@@ -1469,15 +1508,15 @@ spiked_log_5 = {
 		}
 
 		trigger = {
-			spiked_log_accomodate_cult_trigger = { grove = arrow building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = shadow building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = river building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = hunter building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = thorn building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = lake building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = bone building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = mountain building = tax }
-			spiked_log_accomodate_cult_trigger = { grove = flower building = tax }
+			spiked_log_accomodate_cult_trigger = { grove = arrow }
+			spiked_log_accomodate_cult_trigger = { grove = shadow }
+			spiked_log_accomodate_cult_trigger = { grove = river }
+			spiked_log_accomodate_cult_trigger = { grove = hunter }
+			spiked_log_accomodate_cult_trigger = { grove = thorn }
+			spiked_log_accomodate_cult_trigger = { grove = lake }
+			spiked_log_accomodate_cult_trigger = { grove = bone }
+			spiked_log_accomodate_cult_trigger = { grove = mountain }
+			spiked_log_accomodate_cult_trigger = { grove = flower }
 			custom_trigger_tooltip = {
 				tooltip = spiked_log_advisor_adm_tt
 				OR = {
@@ -1514,7 +1553,7 @@ spiked_log_5 = {
 				second_limit = "religion = the_jadd"
 				second_effect = "
 					capital_scope = { add_permanent_province_modifier = { name = spiked_log_lesa_eduz_sunka duration = -1 } }
-					custom_tooltip = spiked_log_accomodate_the_cults_jadd_effect_tt
+					custom_tooltip = spiked_log_accomodate_the_cults_the_jadd_effect_tt
 					set_country_flag = spiked_log_jadd_holy_order_refund
 				"
 				third_custom_tooltip = spiked_log_accomodate_the_cults_others
