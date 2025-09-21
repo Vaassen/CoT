@@ -23,7 +23,7 @@ spiked_log_1 = {
 					is_at_war = no
 				}
 				I35 = { 
-					is_enemy = ROOT
+					is_rival = ROOT
 					has_spy_network_from = {
 						who = ROOT
 						value = 20
@@ -45,7 +45,7 @@ spiked_log_1 = {
 				second_limit = "
 					OR = {
 						NOT = { exists = I35 }
-						I35 = { is_enemy = ROOT }
+						I35 = { is_rival = ROOT }
 					}
 				"
 				second_effect = "
@@ -742,7 +742,12 @@ spiked_log_3 = {
 			OR = {
 				AND = {
 					is_capital_of = ROOT
-					NOT = { has_province_flag = I36_exploited_dev }
+					NOT = {
+						AND = {
+							has_province_flag = I36_exploited_dev
+							has_state_edict = edict_defensive_edict
+						}
+					}
 				}
 				AND = {
 					owned_by = ROOT
@@ -756,31 +761,44 @@ spiked_log_3 = {
 						}
 					}
 				}
-				owned_by = I42
+				AND = {
+					owned_by = I42
+					NOT = {
+						ROOT = { is_rival = I42 }
+						I42 = {
+							has_opinion_modifier = {
+								who = ROOT
+								modifier = scornfully_insulted
+							}
+						}
+					}
+				}
 			}
 		}
 
 		trigger = {
 			army_size_percentage = 0.95
-			capital_scope = { has_state_edict = edict_defensive_edict }
-			custom_trigger_tooltip = {
-				tooltip = spiked_log_exploited_capital
-				capital_scope = { has_province_flag = I36_exploited_dev }
+			capital_scope = {
+				has_state_edict = edict_defensive_edict
+				custom_trigger_tooltip = {
+					tooltip = spiked_log_exploited_capital
+					has_province_flag = I36_exploited_dev
+				}
 			}
 			custom_trigger_tooltip = {
 				tooltip = spiked_log_exploited_wood
 				any_owned_province = { trade_goods = tropical_wood has_province_flag = I36_exploited_dev }
 			}
-			I42 = {
-				OR = {
-					is_rival = ROOT
+			OR = {
+				is_rival = I42
+				I42 = {
 					has_opinion_modifier = {
 						who = ROOT
 						modifier = scornfully_insulted
 					}
-					exists = no
 				}
-			}	
+				NOT = { exists = I42 }
+			}
 		}
 
 		effect = {
@@ -800,7 +818,24 @@ spiked_log_3 = {
 		provinces_to_highlight = {
 			OR = {
 				owned_by = I42
-				owned_by = I43
+				AND = {
+					owned_by = I43
+					I43 = {
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 20
+							}
+						}
+					}
+				}
+				AND = {
+					province_group = deepwoods_arrow_grove
+					NOT = {
+						owned_by = ROOT
+						province_id = 3033
+					}
+				}
 			}
 		}
 
@@ -841,6 +876,7 @@ spiked_log_3 = {
 			}
 			OR = {
 				NOT = { cavalry_in_province = 2 }
+				NOT = { num_of_times_improved_by_owner = 2 }
 				has_any_ongoing_construction = yes
 			}
 		}
@@ -877,9 +913,19 @@ spiked_log_3 = {
 				hidden_effect = {
 					if = {
 						limit = { has_building = workshop }
-						add_building = counting_house
+						add_building_construction = {
+							building = counting_house
+							speed = 1
+							cost = 0
+						}
 					}
-					else = { add_building = workshop }
+					else = {
+						add_building_construction = {
+							building = counting_house
+							speed = 1
+							cost = 0
+						}
+					}
 				}
 			}
 			7015 = {
@@ -971,7 +1017,8 @@ spiked_log_3 = {
 					culture = forest_goblin
 				}
 				owner = {
-					culture = forest_goblin
+					primary_culture = forest_goblin
+					NOT = { tag = ROOT }
 					NOT = { is_subject_of = ROOT }
 				}
 			}
@@ -985,11 +1032,14 @@ spiked_log_3 = {
 					country_or_non_sovereign_subject_holds = ROOT
 				}
 			}
-			all_known_country = {
-				OR = {
-					NOT = { culture = forest_goblin }
-					NOT = { capital_scope = { superregion = deepwoods_superregion } }
-					is_subject_of = ROOT
+			custom_trigger_tooltip = {
+				tooltip = spiked_log_no_indep_goblin_clan_tt
+				all_known_country = {
+					OR = {
+						NOT = { primary_culture = forest_goblin }
+						NOT = { capital_scope = { superregion = deepwoods_superregion } }
+						is_subject_of = ROOT
+					}
 				}
 			}
 			employed_advisor = { category = ADM }
@@ -1342,11 +1392,26 @@ spiked_log_4 = {
 		effect = {
 			custom_tooltip = spiked_log_spikes_log_supply_tt
 			hidden_effect = {
-				spiked_log_give_spikes_log_supply = yes
-				spiked_log_give_spikes_log_supply = yes
-				spiked_log_give_spikes_log_supply = yes
-				spiked_log_give_spikes_log_supply = yes
-				spiked_log_give_spikes_log_supply = yes
+				for = {
+					amount = 5
+					effect = "
+						deepwoods_superregion = {
+							type = random
+							amount = 1
+							limit = {
+								country_or_non_sovereign_subject_holds = ROOT
+								trade_goods = tropical_wood
+								has_production_building_trigger = yes
+								base_production = 6
+								NOT = { has_province_modifier = spiked_log_spikes_and_logs_supply }
+							}
+							add_permanent_province_modifier = { 
+								name = spiked_log_spikes_and_logs_supply
+								duration = -1
+							}
+						}
+					"
+				}
 			}
 			if = {
 				limit = { has_country_modifier = spiked_log_unchecked_cartel_spending } #hidden before it's relevant
@@ -1443,15 +1508,17 @@ spiked_log_5 = {
 			spiked_log_expand_log_production
 		}
 		provinces_to_highlight = {
-			brambleskinner_building_grove_highlight = { grove = arrow building = tax }
-			brambleskinner_building_grove_highlight = { grove = shadow building = tax }
-			brambleskinner_building_grove_highlight = { grove = river building = tax }
-			brambleskinner_building_grove_highlight = { grove = hunter building = tax }
-			brambleskinner_building_grove_highlight = { grove = thorn building = tax }
-			brambleskinner_building_grove_highlight = { grove = lake building = tax }
-			brambleskinner_building_grove_highlight = { grove = bone building = tax }
-			brambleskinner_building_grove_highlight = { grove = mountain building = tax }
-			brambleskinner_building_grove_highlight = { grove = flower building = tax }
+			OR = {
+				brambleskinner_building_grove_highlight = { grove = arrow building = tax }
+				brambleskinner_building_grove_highlight = { grove = shadow building = tax }
+				brambleskinner_building_grove_highlight = { grove = river building = tax }
+				brambleskinner_building_grove_highlight = { grove = hunter building = tax }
+				brambleskinner_building_grove_highlight = { grove = thorn building = tax }
+				brambleskinner_building_grove_highlight = { grove = lake building = tax }
+				brambleskinner_building_grove_highlight = { grove = bone building = tax }
+				brambleskinner_building_grove_highlight = { grove = mountain building = tax }
+				brambleskinner_building_grove_highlight = { grove = flower building = tax }
+			}
 		}
 
 		trigger = {
@@ -1517,21 +1584,33 @@ spiked_log_5 = {
 		position = 8
 		required_missions = { spiked_log_accomodate_the_cults }
 		provinces_to_highlight = {
-			owner = {
-				primary_culture = wood_elf
-			}
+			owner = { primary_culture = wood_elf }
 			superregion = deepwoods_superregion
+			OR = {
+				owner = { war_with = ROOT }
+				ROOT = {
+					NOT = {
+						any_war_enemy_country = {
+							primary_culture = wood_elf
+							capital_scope = { superregion = deepwoods_superregion }
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
 			OR = {
-				any_war_enemy_country = {
-					primary_culture = wood_elf
-					capital_scope = { superregion = deepwoods_superregion }
-					NOT = {
-						war_score_against = {
-							who = ROOT
-							value = -99
+				custom_trigger_tooltip = {
+					tooltip = spiked_log_war_with_elves_tt
+					any_war_enemy_country = {
+						primary_culture = wood_elf
+						capital_scope = { superregion = deepwoods_superregion }
+						NOT = {
+							war_score_against = {
+								who = ROOT
+								value = -99
+							}
 						}
 					}
 				}
