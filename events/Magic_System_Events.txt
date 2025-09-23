@@ -669,7 +669,7 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 	
 	hidden = yes
 	is_triggered_only = yes
-	trigger = { NOT = { has_country_flag = magic_project_completed_flag } } #Prevents multiple ticks of XP at once from borking projects
+	#trigger = { NOT = { has_country_flag = magic_project_completed_flag } } #This does not work in the trigger due to how events are queued. Moved to option limit.
 
 	option = { #Catch-all, in case.
 		name = magic_study_radiant_event
@@ -704,8 +704,12 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 		ai_chance = { factor = 1 }
 		trigger = { is_advancing_project = yes }
 
+		# when magic_advancement_done = yes, magic_project_level_up will call each projects event handler
+		#	after completing level up effects, they will end up in the same place
+		# This means that your completion events are racing against magic_project_completed_flag being cleared by magic_project.1
+
 		if = { #Ending events -- separate effect to accommodate usage outside of the regular gameplay loop
-			limit = { magic_advancement_done = yes } #lichdom so not just country
+			limit = { magic_advancement_done = yes NOT = { has_country_flag = magic_project_completed_flag } } #lichdom so not just country + prevents multiple ticks of XP at once from borking projects
 			trigger_switch = {
 				on_trigger = has_country_flag
 				magical_fortress_project			= { magic_project_level_up = { project = magical_fortress } }
@@ -716,6 +720,11 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 				theatre_of_simulacra_project		= { magic_project_level_up = { project = theatre_of_simulacra } }
 				lichdom_project						= { magic_project_level_up = { project = lichdom } }
 				homunculus_project					= { magic_project_level_up = { project = homunculus } }
+				
+				#unique projects
+				drennen_project_1_project			= { magic_project_level_up = { project = drennen_project_1 } }	
+
+				#debug - this has to be at the bottom!
 				magic_project						= { country_event = { id = magic_project.404 } } #Missing entry!
 			}
 		}
@@ -730,11 +739,22 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 				theatre_of_simulacra_project		= { country_event = { id = magic_project_theatre_of_simulacra.0 } }
 				lichdom_project						= { country_event = { id = magic_project_lichdom.0 } }
 				homunculus_project					= { country_event = { id = magic_project_homunculus.0 } }
+
+				#unique projects
+				drennen_project_1_project			= { country_event = { id = magic_project_drennen_project_1.0 } }
+
+				#debug - this has to be at the bottom!
 				magic_project						= { country_event = { id = magic_project.404 } } #Missing entry!
+
 			}
 		}
+		#rizvambrethar magical project research speed effect
+		if = {
+			limit = { rizvambrethar_magical_project_can_get_boost_and_doesnt_have_it = yes	}
+			rizvambrethar_add_appropiate_experience_boost = yes
+		}
 	} 
-	option = { #For events that happen while you're improving infrastructure
+	option = { #For events that happen while you're improving infrastructure..?
 		name = magical_infrastructure_sorter
 		ai_chance = { factor = 1 }
 		trigger = { is_advancing_infrastructure = yes }
@@ -745,15 +765,6 @@ country_event = { #Magic Advancement Events Handler (Scripted effects are borked
 			country_event = { id = magic_project_infrastructure.1 }
 		}
 		else = { country_event = { id = magic_project_infrastructure.0 } } #Radiant events
-	}
-	option = { #Catch-all, in case.
-		name = magic_study_radiant_event
-		ai_chance = { factor = 1 }
-		trigger = {
-			is_advancing_infrastructure = no
-			is_advancing_project = no
-			is_overall_studying_magic = no
-		}
 	}
 }
 
@@ -920,7 +931,7 @@ country_event = { #Generic Spells handler
 
 	option = { #Tearfall
 		name = evocation_2_tearfall_spell
-		ai_chance = { factor = 4 } #low chance otherwise the AI spams it
+		ai_chance = { factor = 3 } #low chance otherwise the AI spams it
 		trigger = { evocation_2_tearfall_trigger = yes }
 		generic_cast_spell = { school = evocation level = 2 id = tearfall }
 		#log = "[Root.GetName] just cast Evocation 2 1 (mana [Root.currentMana.GetValue])"
@@ -962,11 +973,19 @@ country_event = { #Generic Spells handler
 		#log = "[Root.GetName] just cast Illusion 3 0 (mana [Root.currentMana.GetValue])"
 	}
 
-	option = { #Steal Vitality
-		name = necromancy_1_steal_vitality_spell
+	option = { #Ghoulish Grandeur
+		name = necromancy_1_ghoulish_grandeur_spell
 		ai_chance = { factor = 10 }
-		trigger = { necromancy_1_steal_vitality_trigger = yes }
-		generic_cast_spell = { school = necromancy level = 1 id = steal_vitality }
+		trigger = {
+			necromancy_1_ghoulish_grandeur_trigger = yes
+
+			treasury = 1500
+			any_owned_province = {
+				has_great_project = { type = any tier = 0 }
+				NOT = { has_great_project = { type = any tier = 3 } }
+			}
+		}
+		generic_cast_spell = { school = necromancy level = 1 id = ghoulish_grandeur }
 		#log = "[Root.GetName] just cast Necromancy 1 0 (mana [Root.currentMana.GetValue])"
 	}
 
@@ -978,19 +997,11 @@ country_event = { #Generic Spells handler
 		#log = "[Root.GetName] just cast Necromancy 2 0 (mana [Root.currentMana.GetValue])"
 	}
 
-	option = { #Ghoulish Grandeur
-		name = necromancy_2_ghoulish_grandeur_spell
+	option = { #Steal Vitality
+		name = necromancy_2_steal_vitality_spell
 		ai_chance = { factor = 20 }
-		trigger = {
-			necromancy_2_ghoulish_grandeur_trigger = yes
-
-			treasury = 1500
-			any_owned_province = {
-				has_great_project = { type = any tier = 0 }
-				NOT = { has_great_project = { type = any tier = 3 } }
-			}
-		}
-		generic_cast_spell = { school = necromancy level = 2 id = ghoulish_grandeur }
+		trigger = { necromancy_2_steal_vitality_trigger = yes }
+		generic_cast_spell = { school = necromancy level = 2 id = steal_vitality }
 		#log = "[Root.GetName] just cast Necromancy 2 1 (mana [Root.currentMana.GetValue])"
 	}
 
