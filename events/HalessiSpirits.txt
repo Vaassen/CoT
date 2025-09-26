@@ -604,7 +604,7 @@ province_event = {	#Hidden event to determine if temple is damaged by siege
 						mil_tech = 32
 					}
 				}
-				ROOT = { province_event = { id = spirits.003 } }
+				ROOT = { owner = { country_event = { id = spirits.003 } } }
 			}
 		}
 	}
@@ -655,52 +655,68 @@ province_event = {	#Hidden event to determine if temple is damaged by siege
 						mil_tech = 32
 					}
 				}
-				ROOT = { province_event = { id = spirits.003 } }
+				ROOT = { owner = { country_event = { id = spirits.003 } } }
 			}
 		}
 	}
 }
 
-province_event = {	#Temple damaged by siege
+country_event = {	#Temple damaged by siege
 	id = spirits.003
 	title = spirits.003.t
 	desc = spirits.003.d
 	picture = SIEGE_eventPicture
-	goto = ROOT
+	goto = FROM
 	
 	is_triggered_only = yes
 	
 	option = {
 		name = spirits.003.a
-		goto = ROOT
-		add_devastation = 15
-		if = {
-			limit = { has_province_modifier = temple_complex }
-			remove_province_modifier = temple_complex
-			add_permanent_province_modifier = {
-				name = damaged_temple_complex
-				duration = -1
+		goto = FROM
+		FROM = {
+			add_devastation = 15
+			if = {
+				limit = { has_province_modifier = temple_complex }
+				remove_province_modifier = temple_complex
+				add_permanent_province_modifier = {
+					name = damaged_temple_complex
+					duration = -1
+				}
+				downgrade_temple_wards = yes
 			}
-			downgrade_temple_wards = yes
-		}
-		else_if = {
-			limit = { has_province_modifier = damaged_temple_complex }
-			remove_province_modifier = damaged_temple_complex
-			add_permanent_province_modifier = {
-				name = derelict_temple_complex
-				duration = -1
+			else_if = {
+				limit = { has_province_modifier = damaged_temple_complex }
+				remove_province_modifier = damaged_temple_complex
+				add_permanent_province_modifier = {
+					name = derelict_temple_complex
+					duration = -1
+				}
+				downgrade_temple_wards = yes
 			}
-			downgrade_temple_wards = yes
-		}
-		if = {
-			limit = {
-				province_id = 4925
-			}
-			add_great_project_tier = {
-			    type = temple_of_undying_flame
-			    tier = -1
+			if = { # this must be a country event and call a country event to do add_great_project_tier, as the effect expects FROM to be the country
+				limit = { FROM  = { province_id = 4925 } }
+				tooltip = { add_great_project_tier = { type = temple_of_undying_flame tier = -1 } }
+				hidden_effect = { owner = { country_event = { id = spirits.0031 } } }
 			}
 		}
+	}
+}
+
+country_event = {	#Temple damaged by siege Undying Flame
+	id = spirits.0031
+	title = spirits.003.t
+	desc = spirits.003.d
+	picture = SIEGE_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		4925 = { add_great_project_tier = { type = temple_of_undying_flame tier = -1 } }
+	}
+
+	option = {
+		name = spirits.003.a
 	}
 }
 
