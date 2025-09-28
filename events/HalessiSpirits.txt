@@ -2668,6 +2668,47 @@ country_event = {	#Hidden event to determine if temple is damaged by siege
 		name = spirits.019.b
         ai_chance = { factor = 0 }
 	}
+	option = { #Endhuvi special option
+		name = spirits.019.c
+		highlight = yes
+		trigger = {
+			custom_trigger_tooltip = {
+				tooltip = R36_allow_temple_inundation_tt
+				has_country_flag = R36_allow_temple_inundation
+			}
+			hidden_trigger = {
+				FROM = {
+					if = {
+						limit = { NOT = { ROOT = { has_country_flag = R36_fish_buff_flag } } }
+						province_group = kharunyana_main_river
+					}
+					has_non_corrupted_temple_complex = yes
+					NOT = {
+						has_province_flag = temple_being_plundered
+						has_province_modifier = temple_restoration_efforts
+						has_province_modifier = temple_inundation_efforts
+					}
+				}
+			}	
+		}
+        ai_chance = { factor = 1000 }
+		ROOT = {
+			add_adm_power = -15
+			add_adm_power = -15
+			add_adm_power = -15
+			add_treasury = -250
+		}
+		FROM = {
+			add_devastation = 25
+			add_province_modifier = { 
+				name = temple_inundation_efforts 
+				duration = 1825 
+			} 
+			hidden_effect = { 
+				province_event = { id = flavour_endhuvi.71 days = 1825 } 
+			}	
+		}
+	}
 }
 
 country_event = { #Evaluate if you still have temple provinces
@@ -12232,7 +12273,10 @@ country_event = {
 				#some setup only needs to happen once, globally
 				limit = { NOT = { has_global_flag = rending_startup_complete } }
 				temple_province_group = {
-					spirit_swarms = 2
+					if = {
+						limit = { is_inundated_temple_area = no }
+						spirit_swarms = 2
+					}
 					if = {
 						limit = { has_province_modifier = temple_complex }
 						random_list = {
@@ -12273,6 +12317,7 @@ country_event = {
 				asia = {
 					limit = {
 						NOT = { superregion = forbidden_lands_superregion }
+						is_inundated_temple_area = no
 						is_wasteland = no
 					}
 					random = {
@@ -12296,7 +12341,9 @@ country_event = {
 							superregion = forbidden_lands_superregion
 							superregion = gozengun_superregion
 							has_province_flag = pristine_wards
+							has_province_modifier = inundated_temple_complex
 						}
+						is_inundated_temple_area = no
 						is_wasteland = no
 					}
 					add_permanent_province_modifier = {
@@ -14538,6 +14585,8 @@ country_event = {
 		clr_country_flag = rending_appease_flag
 		clr_country_flag = rending_corrupt_flag
 		set_global_flag = rending_over
+		#Endhuvi
+		remove_country_modifier = R36_once_a_prison_now_a_home_mod
 	}
 }
 
@@ -16407,7 +16456,10 @@ country_event = { #Kharunyana destroys the Godswall
 	immediate = {
 		hidden_effect = {
 			every_owned_province = {
-				limit = { province_group = kharunyana_spirit_area }
+				limit = { 
+					province_group = kharunyana_spirit_area 
+					is_inundated_temple_area = no
+				}
 				add_devastation = 30
 				add_base_tax = -1
 				add_base_production = -2
@@ -16538,6 +16590,18 @@ country_event = { #Kharunyana destroys the Godswall
 						type = godswall_tunnel
 						instant = yes
 					}
+				}
+			}
+			if = {
+				limit = { has_country_flag = R36_enjoy_fish_life }
+				country_event = {
+					id = flavour_endhuvi.60
+					days = 10
+				}
+				country_event = {
+					id = flavour_endhuvi.61
+					days = 30
+					random = 60
 				}
 			}
 		}
