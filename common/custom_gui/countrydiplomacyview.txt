@@ -554,27 +554,28 @@ custom_window = {
 custom_button = { # make_autonomous_vassal
 	name = make_autonomous_vassal
 	tooltip = dipui_make_autonomous_vassal_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		FROM = {
-			is_subject = no
-			reverse_has_opinion = {
-				who = ROOT
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = vassal
+			}
+			has_opinion = {
+				who = FROM
 				value = 0
 			}
 		}
-		ROOT = {
-			is_subject_of_type = vassal
-			is_subject_of = FROM
-		}
-		if = {
-			limit = { FROM = { tag = H78 } } #seghdihr
-			ROOT = { NOT = { culture_is_dwarven = yes } }
-		}
-		else_if = {
-			limit = { FROM = { tag = H73 } } #skewered drake
-			ROOT = { NOT = { tag = M01 } } #grizehud
+		FROM = {
+			is_subject = no
+			if = {
+				limit = { tag = H78 } #seghdihr
+				ROOT = { NOT = { culture_is_dwarven = yes } }
+			}
+			else_if = {
+				limit = { tag = H73 } #skewered drake
+				ROOT = { NOT = { tag = M01 } } #grizehud
+			}
 		}
 	}
 	effect = {
@@ -595,44 +596,69 @@ custom_button = { # cancel_autonomous_vassal
 	name = cancel_autonomous_vassal
 	#may need abandon_autonomoust_vassal_tt tooltip converted
 	tooltip = dipui_cancel_autonomous_vassal_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		FROM = {
-			reverse_has_opinion = {
-				who = ROOT
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = autonomous_vassal
+			}
+			has_opinion = {
+				who = FROM
 				value = 0
 			}
-			stability = 0
-		}
-		ROOT = {
-			is_subject_of = FROM
-			is_subject_of_type = autonomous_vassal
 			NOT = { liberty_desire = 50 }
-			NOT = {
-				AND = {
-					tag = Z44 ##Aelnar can't make Silblaidd a normal vassal
-					FROM = { tag = Z43 } #aelnar
-				}
-				AND = {
-					tag = R81 ##Jade March can't be made into a regular vassal
-					FROM = { tag = R62 } #the command
-				}
-				AND = {
-					OR = {
-						tag = G55
-						tag = U27
-					}
-					has_country_modifier = G55_degakheioni_funding
-					FROM = {
-						OR = {
-							tag = G46
-							tag = H22
-						}
-						has_country_modifier = G55_for_degakheion_funding_eneion
-					}
-				}
+		}
+		
+		FROM = {
+			stability = 0
+			if = {
+				limit = { tag = Z43 } #aelnar
+				NOT = { ROOT = { tag = Z44 } } ##Aelnar can't make Silblaidd a normal vassal
 			}
+			else_if = {
+				limit = { tag = R62 } #the command
+				NOT = { ROOT = { tag = R81 } } ##Jade March can't be made into a regular vassal
+			}
+			else_if = {
+				limit = { tag = Z43 }
+				NOT = { ROOT = { tag = Z44 } }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						tag = G46
+						tag = H22
+					}
+					ROOT = {
+						OR = {
+							tag = G55
+							tag = U27
+						}
+					}
+				}
+				NOT = { has_country_modifier = G55_for_degakheion_funding_eneion }
+				ROOT = { NOT = { tag = G55 } }
+				ROOT = { NOT = { tag = U27 } }
+				NOT = { has_country_modifier = G55_degakheioni_funding }
+			}
+			#Need to convert this for the above
+			# NOT = {
+			# 	AND = {
+			# 		ROOT = {
+			# 			OR = {
+			# 				tag = G55
+			# 				tag = U27
+			# 			}
+			# 			has_country_modifier = G55_degakheioni_funding
+			# 		}
+			# 		OR = {
+			# 			tag = G46
+			# 			tag = H22
+			# 		}
+			# 		has_country_modifier = G55_for_degakheion_funding_eneion
+			# 	}
+			# }
 		}
 	}
 	effect = {
@@ -646,9 +672,6 @@ custom_button = { # cancel_autonomous_vassal
 				subject_type = vassal
 				subject = ROOT  # dk check
 			}
-			ROOT = {
-				add_liberty_desire = 65
-			}
 			if = {
 				limit = {
 					NOT = { full_idea_group = diplomatic_ideas has_reform = goblin_shadow_chancellor } #reduced_stab_impacts = yes
@@ -656,25 +679,31 @@ custom_button = { # cancel_autonomous_vassal
 				add_stability = -1
 			}
 		}
+		ROOT = {
+			add_liberty_desire = 65
+		}
 	}
 }
 custom_button = { #dipui_cancel_centaur_dominion
 	name = dipui_cancel_centaur_dominion
 	tooltip = dipui_cancel_centaur_dominion_tooltip
 	tooltip = cancel_centaur_dominion_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = centaur_dominion
+			}
+			NOT = { liberty_desire = 50 }
+		}
 		FROM = {
-			overlord_of = ROOT
 			stability = 0
 		}
-		is_subject_of_type = centaur_dominion
-		NOT = { liberty_desire = 50 }
 	}
 	effect = {
+		ROOT = { grant_independence = yes }
 		FROM = {
-			ROOT = { grant_independence = yes }
 			add_truce_with = ROOT
 			if = {
 				limit = {
@@ -771,20 +800,30 @@ custom_button = { #vampire_spread_action
 	potential = { }
 	trigger = {
 		FROM = {
-			NOT = { has_country_modifier = vamp_spread_cooldown }
+			if = {
+				limit = { has_country_modifier = vamp_spread_cooldown }
+				NOT = { has_country_modifier = vamp_spread_cooldown }
+			}
 			has_spy_network_in = {
 				who = ROOT
 				value = 50
 			}
-			has_estate = estate_vampires
-			has_estate_privilege = estate_vampires_law_state_collusion_masquerade
-			estate_influence = {
-				estate = estate_vampires
-				influence = 60
+			if = {
+				limit = {
+					has_estate = estate_vampires
+				}
+				has_estate_privilege = estate_vampires_law_state_collusion_masquerade
+				estate_influence = {
+					estate = estate_vampires
+					influence = 60
+				}
+				estate_territory = {
+					estate = estate_vampires
+					territory = 2
+				}
 			}
-			estate_territory = {
-				estate = estate_vampires
-				territory = 2
+			else = {
+				has_estate = estate_vampires
 			}
 		}
 		ROOT = {
@@ -868,6 +907,8 @@ custom_button = { #vampire_blood_coersion
 				}
 			}
 			has_country_flag = has_vampires_estate
+			#has_estate = estate_vampires
+
 			#only allowed for nations that have Bloody Aristocracy or Vampire Lord
 			NOT = { has_estate_privilege = estate_vampires_organization_the_blood_court }
 			NOT = { has_estate_privilege = estate_vampires_organization_vampiric_emigres }
@@ -915,6 +956,8 @@ custom_button = { #vampire_blood_invitation
 				}
 			}
 			has_country_flag = has_vampires_estate
+			# has_estate = estate_vampires
+
 			#only allowed for nations that have Bloody Aristocracy or Vampire Lord
             NOT = { has_estate_privilege = estate_vampires_organization_the_blood_court }
 			NOT = { has_estate_privilege = estate_vampires_organization_vampiric_emigres }
@@ -1045,18 +1088,17 @@ custom_window = {
 custom_button = { # nsc_incense_itar_hasis_action
 	name = nsc_incense_itar_hasis_action
 	tooltip = nsc_incense_itar_hasis_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = { has_country_modifier = nsc_incense_itar_hasis }
 		ROOT = { has_opinion_modifier = { modifier = aggressive_expansion who = FROM } }
 	}
 	effect = {
+		ROOT = {
+			remove_opinion = { modifier = aggressive_expansion who = FROM }
+			country_event = { id = new_sun_cult.289 }
+		}
 		FROM = {
-			ROOT = {
-				remove_opinion = { modifier = aggressive_expansion who = FROM }
-				country_event = { id = new_sun_cult.289 }
-			}
 			remove_country_modifier = nsc_incense_itar_hasis
 		}
 	}
@@ -1064,22 +1106,31 @@ custom_button = { # nsc_incense_itar_hasis_action
 custom_button = { # nsc_dagger_derumasil_action
 	name = nsc_dagger_derumasil_action
 	tooltip = nsc_dagger_derumasil_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
 			has_country_modifier = nsc_dagger_derumasil
-			NOT = { has_country_flag = nsc_dagger_derumasil_menu }
-			has_regency = no
+			if = {
+				limit = {
+					has_country_flag = nsc_dagger_derumasil_menu
+				}
+				NOT = { has_country_flag = nsc_dagger_derumasil_menu }
+			}
 			OR = {
 				has_heir = yes
 				has_consort = yes
 			}
+			if = {
+				limit = {
+					has_regency = yes
+				}
+				has_regency = no
+			}
 		}
 	}
 	effect = {
+		ROOT = { save_event_target_as = nsc_dagger_target }
 		FROM = {
-			ROOT = { save_event_target_as = nsc_dagger_target }
 			set_country_flag = nsc_dagger_derumasil_menu
 			country_event = { id = new_sun_cult.291 }
 		}
@@ -1096,42 +1147,44 @@ custom_button = { # nsc_dagger_derumasil_action
 # negeal_dip_action - commented, ai will not do
 
 # custom_window = {
-# 	name = custom_diplomacy_centaur_horde
-# 	potential = {
-# 		FROM = { #may need more
-# 			OR = {
-# 				has_reform =  centaur_settled
-# 				has_reform =  great_centaur_horde
-# 			}
-# 		}
-# 	}
+# 	# name = custom_diplomacy_centaur_horde
+# 	# potential = {
+# 	# 	FROM = { #may need more
+# 	# 		OR = {
+# 	# 			has_reform =  centaur_settled
+# 	# 			has_reform =  great_centaur_horde
+# 	# 		}
+# 	# 	}
+# 	# }
 # }
 # custom_button = { #dipui_absorb_centaur_follower
-# 	name = dipui_absorb_centaur_follower
-# 	tooltip = absorb_centaur_follower_tooltip
-# 	potential = {
-# 		FROM = {
-# 			overlord_of = ROOT
-# 			num_of_subjects = 1
-# 			OR = {
-# 				has_reform =  centaur_settled
-# 				has_reform =  great_centaur_horde
-# 			}
-# 			ROOT = {
-# 				is_subject_of_type = centaur_follower
-# 			}
-# 		}
-# 	}
-# 	trigger = {
-# 		FROM = {
-# 			ROOT = { NOT = { num_of_cities = 2 } }
-# 			NOT = { has_country_modifier = recently_integrated_horde }
-# 			adm_power = 75
-# 			is_at_war = no
-# 			NOT = { is_year = 1530 }
-# 		}
-# 	}
-# 	effect = { }
+# 	# name = dipui_absorb_centaur_follower
+# 	# tooltip = absorb_centaur_follower_tooltip
+# 	# potential = {
+# 	# 	ROOT = {
+# 	# 		is_subject_of_type_with_overlord = {
+# 	# 			who = FROM
+# 	# 			type = centaur_follower
+# 	# 		}
+# 	# 	}
+# 	# 	FROM = {
+# 	# 		num_of_subjects = 1
+# 	# 		OR = {
+# 	# 			has_reform =  centaur_settled
+# 	# 			has_reform =  great_centaur_horde
+# 	# 		}
+# 	# 	}
+# 	# }
+# 	# trigger = {
+# 	# 	FROM = {
+# 	# 		ROOT = { NOT = { num_of_cities = 2 } }
+# 	# 		# NOT = { has_country_modifier = recently_integrated_horde }
+# 	# 		adm_power = 75
+# 	# 		is_at_war = no
+# 	# 		NOT = { is_year = 1530 }
+# 	# 	}
+# 	# }
+# 	# effect = { }
 # }
 
 
@@ -1164,10 +1217,14 @@ custom_window = {
 custom_button = { # Z99_acolytes_interaction
 	name = Z99_acolytes_interaction
 	tooltip = acolytes_interaction_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		ROOT = { is_subject_of_type = acolyte_dominion }
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = acolyte_dominion
+			}
+		}
 		FROM = {
 			adm_power = 100
 			mil_power = 100
@@ -1180,61 +1237,66 @@ custom_button = { # Z99_acolytes_interaction
 	}
 }
 custom_button = { # Z99_magic_duel_blackpurgis
-	# name = Z99_magic_duel_blackpurgis
-	# tooltip = magic_duel_blackpurgis_tooltip
-	# potential = {
-	# }
-	# trigger = {
-	# 	FROM = {
-	# 		has_country_flag = blackpurgis_happening
-	# 		NOT = { has_ruler_flag = in_magic_duel }
-	# 	}
-	# 	ROOT = {
-	# 		is_subject_of_type = acolyte_dominion
-	# 	}
-		
-
-	# 	FROM = {
-	# 		is_at_war = no
-	# 		if = {
-	# 			limit = { has_country_flag = short_blackpurgis }
-	# 			custom_trigger_tooltip = {
-	# 				tooltip = short_blackpurgis_max_fight
-	# 				ROOT = { NOT = { has_country_flag = black_1_fight_@FROM } }
-	# 			}
-	# 		}
-	# 		else = {
-	# 			custom_trigger_tooltip = {
-	# 				tooltip = long_blackpurgis_max_fight
-	# 				ROOT = { NOT = { has_country_flag = black_2_fight_@FROM } }
-	# 			}
-	# 		}
-	# 		custom_trigger_tooltip = {
-	# 			tooltip = recent_blackpurgis_duel_tooltip
-	# 			NOT = { has_ruler_modifier = recent_blackpurgis_duel }
-	# 		}
-	# 		custom_trigger_tooltip = {
-	# 			tooltip = not_in_magic_duel_tooltip
-	# 			ROOT = { NOT = { has_ruler_flag = in_magic_duel } }
-	# 		}
-	# 	}
-	# }
-	# effect = {
-	# 	ROOT = { set_ruler_flag = in_magic_duel }
-	# 	FROM = { set_ruler_flag = in_magic_duel }
-		
-	# 	ROOT = { set_country_flag = duel_@FROM }
-	# 	ROOT = {
-	# 		if = {
-	# 			limit = { has_country_flag = black_1_fight_@FROM }
-	# 			set_country_flag = black_2_fight_@FROM
-	# 		}
-	# 		else = {
-	# 			set_country_flag = black_1_fight_@FROM
-	# 		}
-	# 	}
-	# 	FROM = { country_event = { id = magic_duel.0 } }
-	# }
+	name = Z99_magic_duel_blackpurgis
+	tooltip = magic_duel_blackpurgis_tooltip
+	potential = { }
+	trigger = {
+		FROM = { has_country_flag = blackpurgis_happening } #customtooltipme
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = acolyte_dominion
+			}
+			# custom_trigger_tooltip = {
+			# 	tooltip = not_in_magic_duel_tooltip
+			# 	NOT = { has_ruler_flag = in_magic_duel }
+			# }
+		}
+		FROM = {
+			custom_trigger_tooltip = {
+				tooltip = not_in_magic_duel_tooltip
+				NOT = { has_ruler_flag = in_magic_duel }
+			}
+			if = {
+				limit = { has_country_flag = short_blackpurgis }
+				custom_trigger_tooltip = {
+					tooltip = short_blackpurgis_max_fight
+					ROOT = { NOT = { has_country_flag = black_1_fight_@FROM } }
+				}
+			}
+			else = {
+				custom_trigger_tooltip = {
+					tooltip = long_blackpurgis_max_fight
+					ROOT = { NOT = { has_country_flag = black_2_fight_@FROM } }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = recent_blackpurgis_duel_tooltip
+				NOT = { has_ruler_modifier = recent_blackpurgis_duel }
+			}
+			if = {
+				limit = { is_at_war = yes }
+				is_at_war = no
+			}
+		}
+	}
+	effect = {
+		hidden_effect = {
+			FROM = { set_ruler_flag = in_magic_duel }
+			ROOT = {
+				set_ruler_flag = in_magic_duel
+				set_country_flag = duel_@FROM
+				if = {
+					limit = { has_country_flag = black_1_fight_@FROM }
+					set_country_flag = black_2_fight_@FROM
+				}
+				else = {
+					set_country_flag = black_1_fight_@FROM
+				}
+			}
+		}
+		FROM = { country_event = { id = magic_duel.0 } }
+	}
 }
 #B58 Adenica
 custom_window = {
@@ -1248,28 +1310,28 @@ custom_window = {
 custom_button = { # B58_adenica_convert_action
 	name = B58_adenica_convert_action
 	tooltip = adenica_convert_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
 			mission_completed = adenica_dutiful_servent
 			religion = regent_court
-			ROOT = {
-				capital_scope = {
-					continent = europe
-				}
-				OR = {
-					religion = corinite
-					religion = ravelian
-				}
-			}
 			prestige = 0
 			reverse_has_opinion = {
 				who = ROOT
 				value = 50
 			}
 		}
-		ROOT = { NOT = { tag = Z97 } }
+		ROOT = {
+			capital_scope = { continent = europe }
+			OR = {
+				religion = corinite
+				religion = ravelian
+			}
+			if = {
+				limit = { tag = Z97 }
+				NOT = { tag = Z97 }
+			}
+		}
 	}
 	effect = {
 		ROOT = {
@@ -1294,11 +1356,10 @@ custom_window = {
 custom_button = { # F35_azkabar_cult_minor_action
 	name = F35_azkabar_cult_minor_action
 	tooltip = azkabar_cult_minor_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
-			has_country_flag = F35_minor_eclipse_1_enabled
+			has_country_flag = F35_minor_eclipse_1_enabled #customtooltipme
 			has_spy_network_in = {
 				who = ROOT
 				value = 40
@@ -1332,21 +1393,12 @@ custom_button = { # F35_azkabar_cult_minor_action
 			country_event = { id = flavour_azkabar.101 }
 			if = {
 				limit = {
-					check_variable = {
-						which = minor_eclipse_operation_count
-						value = 1
-					}
+					check_variable = { which = minor_eclipse_operation_count value = 1 }
 				}
-				change_variable = {
-					which = minor_eclipse_operation_count
-					value = 1
-				}
+				change_variable = { which = minor_eclipse_operation_count value = 1 }
 			}
 			else = {
-				set_variable = {
-					which = minor_eclipse_operation_count
-					value = 1
-				}
+				set_variable = { which = minor_eclipse_operation_count value = 1 }
 			}
 		}
 	}
@@ -1354,11 +1406,10 @@ custom_button = { # F35_azkabar_cult_minor_action
 custom_button = { # F35_azkabar_cult_major_action
 	name = F35_azkabar_cult_major_action
 	tooltip = azkabar_cult_major_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
-			has_country_flag = azkabar_major_eclipse_1
+			has_country_flag = azkabar_major_eclipse_1 #customtooltipme
 			has_spy_network_in = {
 				who = ROOT
 				value = 75
@@ -1376,21 +1427,12 @@ custom_button = { # F35_azkabar_cult_major_action
 			country_event = { id = flavour_azkabar.102 }
 			if = {
 				limit = {
-					check_variable = {
-						which = major_eclipse_operation_count
-						value = 1
-					}
+					check_variable = { which = major_eclipse_operation_count value = 1 }
 				}
-				change_variable = {
-					which = major_eclipse_operation_count
-					value = 1
-				}
+				change_variable = { which = major_eclipse_operation_count value = 1 }
 			}
 			else = {
-				set_variable = {
-					which = major_eclipse_operation_count
-					value = 1
-				}
+				set_variable = { which = major_eclipse_operation_count value = 1 }
 			}
 		}
 	}
@@ -1407,219 +1449,107 @@ custom_window = {
 custom_button = { # B32_make_castanorian_dominion_vassal
 	name = B32_make_castanorian_dominion_vassal
 	tooltip = make_castanorian_dominion_vassal_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
+			is_subject_of = FROM
+			culture_is_human = yes
 			OR = {
 				is_subject_of_type = vassal
 				is_subject_of_type = march
 				is_client_nation_of = FROM
 			}
-			is_subject_of = FROM
-			culture_is_human = yes
 		}
 		FROM = {
-			OR = {
-				has_country_flag = castanor_can_make_dominions
-				ROOT = { tag = Z45 } # Vrorenmarch
-				ROOT = { tag = Z07 } # Dostanor
+			if = {
+				limit = {
+					NOT = { has_country_flag = castanor_can_make_dominions }
+				}
+				ROOT = {
+					OR = {
+						tag = Z45 # Vrorenmarch
+						tag = Z07 # Dostanor
+					}
+				}
 			}
-			is_subject = no
+			else = {
+				has_country_flag = castanor_can_make_dominions
+			}
+			if = {
+				limit = { is_subject = yes }
+				is_subject = no
+			}
 			reverse_has_opinion = {
 				who = ROOT
 				value = 0
 			}
-			if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 16
+			custom_trigger_tooltip = {
+				tooltip = castanor_current_max_allowed_dominions #Change custom loc scope
+				OR = {
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 1 }
+						NOT = { castanor_dominion = 1 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 16 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 15
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 2 }
+						NOT = { castanor_dominion = 2 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 15 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 14
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 3 }
+						NOT = { castanor_dominion = 3 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 14 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 13
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 4 }
+						NOT = { castanor_dominion = 4 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 13 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 12
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 5 }
+						NOT = { castanor_dominion = 5 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 12 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 11
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 6 }
+						NOT = { castanor_dominion = 6 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 11 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 10
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 7 }
+						NOT = { castanor_dominion = 7 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 10 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 9
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 8 }
+						NOT = { castanor_dominion = 8 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 9 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 8
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 9 }
+						NOT = { castanor_dominion = 9 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 8 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 7
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 10 }
+						NOT = { castanor_dominion = 10 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 7 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 6
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 11 }
+						NOT = { castanor_dominion = 11 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 6 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 5
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 12 }
+						NOT = { castanor_dominion = 12 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 5 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 4
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 13 }
+						NOT = { castanor_dominion = 13 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 4 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 3
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 14 }
+						NOT = { castanor_dominion = 14 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 3 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 2
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 15 }
+						NOT = { castanor_dominion = 15 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 2 }
-				}
-			}
-			else_if = {
-				limit = {
-					check_variable = {
-						which = maxAllowedDominions
-						value = 1
+					AND = {
+						check_variable = { which = maxAllowedDominions value = 16 }
+						NOT = { castanor_dominion = 16 }
 					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = castanor_current_max_allowed_dominions
-					NOT = { castanor_dominion = 1 }
 				}
 			}
 		}
@@ -1641,23 +1571,20 @@ custom_button = { # B32_make_castanorian_dominion_vassal
 custom_button = { # B32_cancel_castanorian_dominion
 	name = B32_cancel_castanorian_dominion
 	tooltip = cancel_castanorian_dominion_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 			NOT = { liberty_desire = 50 }
-		}
-		FROM = {
-			overlord_of = ROOT
-			reverse_has_opinion = {
-				who = ROOT
+			has_opinion = {
+				who = FROM
 				value = 0
 			}
-			ROOT = {
-				is_subject_of_type = castanor_dominion
-				is_subject_of = FROM
-			}
+		}
+		FROM = {
 			stability = 0
 		}
 	}
@@ -1672,29 +1599,30 @@ custom_button = { # B32_cancel_castanorian_dominion
 				subject_type = vassal
 				subject = ROOT  # dk check
 			}
-			ROOT = {
-				add_liberty_desire = 65
-			}
 			add_stability = -1
+		}
+		ROOT = {
+			add_liberty_desire = 65
 		}
 	}
 }
 custom_button = { #B32_castanor_give_capital_claims
 	name = B32_castanor_give_capital_claims
 	tooltip = castanor_give_capital_claims_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 		}
 	}
 	effect = {
 		ROOT = {
 			capital_scope = {
 				region = {
-					if = {
+					if = { #watch for errors
 						limit = {
 							is_claim = FROM
 							NOT = { is_permanent_claim = FROM }
@@ -1715,12 +1643,13 @@ custom_button = { #B32_castanor_give_capital_claims
 custom_button = { #B32_castanor_encourage_assimilation
 	name = B32_castanor_encourage_assimilation
 	tooltip = castanor_encourage_assimilation_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 			NOT = { has_country_modifier = castanor_encourage_assimilation_mod_dominion }
 		}
 		FROM = {
@@ -1729,13 +1658,13 @@ custom_button = { #B32_castanor_encourage_assimilation
 		}
 	}
 	effect = {
-		FROM = {
-			ROOT = {
-				add_country_modifier = {
-					name = castanor_encourage_assimilation_mod_dominion
-					duration = 7300
-				}
+		ROOT = {
+			add_country_modifier = {
+				name = castanor_encourage_assimilation_mod_dominion
+				duration = 7300
 			}
+		}
+		FROM = {
 			add_splendor = -400
 			add_country_modifier = {
 				name = castanor_encourage_assimilation_mod_castanor
@@ -1747,12 +1676,13 @@ custom_button = { #B32_castanor_encourage_assimilation
 custom_button = { #B32_castanor_auxilaries
 	name = B32_castanor_auxilaries
 	tooltip = castanor_auxilaries_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 			NOT = { has_country_modifier = castanor_auxilaries_mod_dominion }
 			manpower = 10
 		}
@@ -1761,14 +1691,14 @@ custom_button = { #B32_castanor_auxilaries
 		}
 	}
 	effect = {
-		FROM = {
-			ROOT = {
-				add_country_modifier = {
-					name = castanor_auxilaries_mod_dominion
-					duration = 730
-				}
-				add_manpower = -10
+		ROOT = {
+			add_country_modifier = {
+				name = castanor_auxilaries_mod_dominion
+				duration = 730
 			}
+			add_manpower = -10
+		}
+		FROM = {
 			add_splendor = -100
 			add_manpower = 10
 			if = {
@@ -1776,16 +1706,16 @@ custom_button = { #B32_castanor_auxilaries
 				random_province = {
 					limit = { has_province_modifier = castanor_auxilaries_mod_castanor }
 					add_or_extend_province_modifier_effect = {
-						MODIFIER = castanor_auxilaries_mod_castanor
-						DURATION = 730
+						modifier = castanor_auxilaries_mod_castanor
+						duration = 730
 					}
 				}
 			}
 			else = {
 				capital_scope = {
 					add_or_extend_province_modifier_effect = {
-						MODIFIER = castanor_auxilaries_mod_castanor
-						DURATION = 730
+						modifier = castanor_auxilaries_mod_castanor
+						duration = 730
 					}
 				}
 			}
@@ -1795,12 +1725,13 @@ custom_button = { #B32_castanor_auxilaries
 custom_button = { #B32_castanor_integrate_dominion
 	name = B32_castanor_integrate_dominion
 	tooltip = castanor_integrate_dominion_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 			custom_trigger_tooltip = {
 				tooltip = castanor_integrate_dominion_allowed_tt #Change tt scope
 				all_owned_province = {
@@ -1845,13 +1776,15 @@ custom_button = { #B32_castanor_integrate_dominion
 custom_button = { #B32_castanor_press_ships
 	name = B32_castanor_press_ships
 	tooltip = castanor_press_ships_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = castanor_dominion
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = castanor_dominion
+			}
 			sailors = 1000
+			num_of_ports = 1
 			NOT = { has_country_modifier = castanor_press_ships_mod }
 		}
 		FROM = {
@@ -1859,25 +1792,27 @@ custom_button = { #B32_castanor_press_ships
 		}
 	}
 	effect = {
-		FROM = {
-			ROOT = {
-				add_sailors = -1000
-				hidden_effect = {
+		ROOT = {
+			add_sailors = -1000
+			hidden_effect = { ############# check event target is passed to the event
+				if = {
+					limit = { capital_scope = { has_port = yes } }
+					capital_scope = { save_event_target_as = prov_to_build_ships }
+				}
+				else = {
 					random_owned_province = {
 						limit = { has_port = yes }
 						save_event_target_as = prov_to_build_ships
 					}
-					random_owned_province = {
-						limit = { has_port = yes is_capital = yes }
-						save_event_target_as = prov_to_build_ships
-					}
-				}
-				add_liberty_desire = 10
-				add_country_modifier = {
-					name = castanor_press_ships_mod
-					duration = 1825
 				}
 			}
+			add_liberty_desire = 10
+			add_country_modifier = {
+				name = castanor_press_ships_mod
+				duration = 1825
+			}
+		}
+		FROM = {
 			add_splendor = -100
 			country_event = { id = flavor_castanor.151 }
 		}
@@ -1897,8 +1832,7 @@ custom_window = {
 custom_button = { #Y20_feiten_buy_skyport_rights
 	name = Y20_feiten_buy_skyport_rights
 	tooltip = feiten_buy_skyport_rights_tooltip
-	potential = {
-	}
+	potential = { }
 	# trigger = {
 		# FROM = {
 		# 	4879 = {
@@ -2101,8 +2035,7 @@ custom_window = {
 custom_button = {
 	name = J33_invite_into_democratic_sphere
 	tooltip = invite_into_democratic_sphere_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
 			OR = {
@@ -2155,7 +2088,10 @@ custom_button = {
 			}
 		}
 		FROM = {
-			is_subject = no
+			if = {
+				limit = { is_subject = yes }
+				is_subject = no
+			}
 			if = {
 				limit = { is_at_war = yes }
 				custom_trigger_tooltip = {
@@ -2206,15 +2142,9 @@ custom_button = {
 				}
 			}
 			hidden_effect = {
-				if = {
-					limit = { has_country_modifier = discontent_sowed }
-					remove_country_modifier = discontent_sowed
-				}
 				FROM = {
-					set_variable = {
-						which = kalsyto_influence_counter
-						value = 0
-					}
+					remove_country_modifier = discontent_sowed
+					set_variable = { which = kalsyto_influence_counter value = 0 }
 					if = {
 						limit = { has_country_flag = J33_kalyins_monsters }
 						if = {
@@ -2322,26 +2252,39 @@ custom_button = {
 custom_button = {
 	name = J33_call_democratic_state_to_arms
 	tooltip = call_democratic_state_to_arms_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		ROOT = {
-			is_subject_of = FROM
-			is_subject_of_type = democratic_sphere_of_influence_subject
+		if = {
+			limit = { NOT = { has_government_mechanic = kalsyto_influence_mechanic } }
+			has_government_mechanic = kalsyto_influence_mechanic
+		}
+		if = {
+			limit = {
+				FROM = {
+					NOT = { is_at_war = yes }
+				}
+			}
+			FROM = { is_at_war = yes }
 		}
 		FROM = {
-			is_at_war = yes
-			any_known_country = {
-				war_with = FROM
+			any_war_enemy_country = {
 				NOT = { war_with = ROOT }
 			}
-			if = {
-				limit = { is_in_war = { attackers = FROM } }
-				ROOT = { owes_favors = { who = FROM value = 10 } }
+		}
+		ROOT = {
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = democratic_sphere_of_influence_subject
 			}
 			if = {
+				limit = { FROM = { is_in_war = { attackers = FROM } } }
+				owes_favors = { who = FROM value = 10 }
+			}
+		}
+		FROM = {
+			if = {
 				limit = {
-					any_known_country = {
+					any_war_enemy_country = {
 						defensive_war_with = FROM
 						truce_with = ROOT
 					}
@@ -2379,10 +2322,10 @@ custom_button = {
 					amount = -10
 				}
 			}
-			ROOT = {
-				join_all_offensive_wars_of = FROM
-				join_all_defensive_wars_of = FROM
-			}
+		}
+		ROOT = {
+			join_all_offensive_wars_of = FROM
+			join_all_defensive_wars_of = FROM
 		}
 	}
 }
@@ -2398,8 +2341,7 @@ custom_window = {
 custom_button = { # Z97_build_up_aelantir_relics
 	name = Z97_build_up_aelantir_relics
 	tooltip = Z97_build_up_aelantir_relics_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = { # ravstate needs to finish their mission
 			mission_completed = Z97_foothold_in_aelantir
@@ -2434,8 +2376,7 @@ custom_button = { # Z97_build_up_aelantir_relics
 custom_button = { #Z97_spread_ravelian_faith
 	name = Z97_spread_ravelian_faith
 	tooltip = spread_ravelian_faith_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
 			has_reform = verdical_parliament
@@ -2507,8 +2448,7 @@ custom_button = { #Z97_spread_ravelian_faith_ai_accept
 custom_button = { #Z97_spread_ravelian_estates
 	name = Z97_spread_ravelian_estates
 	tooltip = spread_ravelian_estates_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = { # ravstate needs gov reform first
 			has_reform = ravelian_state_technocracy
@@ -2538,9 +2478,17 @@ custom_button = { #Z97_spread_ravelian_estates
 	}
 	effect = {
 		ROOT = {
-			set_estate_privilege = estate_mages_organization_religious
-			set_estate_privilege = estate_artificers_organization_ravelian_control
-			set_country_flag = estates_overseen_by_ravelians
+			if = {
+				limit = { has_estate = estate_mages }
+				set_estate_privilege = estate_mages_organization_religious
+			}
+			if = {
+				limit = { has_estate = estate_artificers }
+				set_estate_privilege = estate_artificers_organization_ravelian_control
+			}
+			hidden_effect = {
+				set_country_flag = estates_overseen_by_ravelians
+			}
 		}
 	}
 }
@@ -2586,12 +2534,13 @@ custom_window = {
 custom_button = { #raja_make_senapti
 	name = raja_make_senapti
 	tooltip = make_senapti_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		ROOT = {
-			is_subject_of_type = daimyo_vassal
-			is_subject_of = FROM
+			is_subject_of_type_with_overlord = {
+				who = FROM
+				type = daimyo_vassal
+			}
 			num_of_cities = 2
 			raj_below_allowed_senaptia = yes
 			if = {
@@ -2600,16 +2549,12 @@ custom_button = { #raja_make_senapti
 					tooltip = make_senapti_trigger_tooltip
 					OR = {
 						AND = {
-							FROM = {
-								culture_group = harimari
-							}
-							ruler_is_harimari = yes
+							FROM = { culture_group = harimari }
+							ROOT = { ruler_is_harimari = yes }
 						}
 						AND = {
-							FROM = {
-								culture_is_human = yes
-							}
-							ruler_is_human = yes
+							FROM = { culture_is_human = yes }
+							ROOT = { ruler_is_human = yes }
 						}
 					}
 				}
@@ -2628,7 +2573,10 @@ custom_button = { #raja_make_senapti
 				mutual = yes
 			}
 			every_subject_country = {
-				limit = { has_reform = senapti_reform NOT = { has_country_modifier = prabhi_recently_promoted } }
+				limit = {
+					has_reform = senapti_reform
+					NOT = { has_country_modifier = prabhi_recently_promoted }
+				}
 				add_liberty_desire = 5
 			}
 		}
@@ -2647,14 +2595,29 @@ custom_window = {
 custom_button = { #B02_spiritual_guidance
 	name = B02_spiritual_guidance
 	tooltip = spiritual_guidance_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		has_dlc = "Common Sense"
-		FROM = {
-			has_country_flag = corintar_guidance
-			religion = corinite
+		if = {
+			limit = { NOT = { has_dlc = "Common Sense" } }
+			has_dlc = "Common Sense"
+		}
+		if = {
+			limit = {
+				ROOT = { NOT = { religion = corinite } }
+			}
 			ROOT = { religion = corinite }
+		}
+		if = {
+			limit = {
+				FROM = { NOT = { religion = corinite } }
+			}
+			FROM = { religion = corinite }
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = corintar_guidance } #customtooltipme
+			}
+			has_country_flag = corintar_guidance
 		}
 		FROM = {
 			NOT = { has_country_modifier = corintar_offering_guidance }
@@ -2715,12 +2678,9 @@ custom_window = {
 custom_button = { #H85_assassination_attempt_action
 	name = H85_assassination_attempt_action
 	tooltip = assassination_attempt_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		FROM = {
-			has_country_flag = flag_truedagger_can_do_assassination
-		}
+		FROM = { has_country_flag = flag_truedagger_can_do_assassination } #customtooltipme
 		ROOT = {
 			ai = yes
 			has_spy_network_from = {
@@ -2756,12 +2716,19 @@ custom_window = {
 custom_button = { #Y10_yingzhen_contract_killing_action
 	name = Y10_yingzhen_contract_killing_action
 	tooltip = yingzhen_contract_killing_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		FROM = {
-			mission_completed = yingzhen_everything_permitted
-			NOT = { has_country_modifier = yingzhen_best_things_cd }
+		if = {
+			limit = {
+				NOT = { FROM = { mission_completed = yingzhen_everything_permitted } }
+			}
+			FROM = { mission_completed = yingzhen_everything_permitted }
+		}
+		if = {
+			limit = {
+				FROM = { has_country_modifier = yingzhen_best_things_cd }
+			}
+			NOT = { FROM = { has_country_modifier = yingzhen_best_things_cd } }
 		}
 		ROOT = {
 			has_spy_network_from = {
@@ -2783,8 +2750,7 @@ custom_button = { #Y10_yingzhen_contract_killing_action
 custom_button = { #Y10_yingzhen_attempt_assassination
 	name = Y10_yingzhen_attempt_assassination
 	tooltip = yingzhen_attempt_assassination_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
 			mission_completed = yingzhen_nobody_safe
@@ -2820,24 +2786,32 @@ custom_window = {
 custom_button = { #B37_invite_shadowmoon_conspiracy
 	name = B37_invite_shadowmoon_conspiracy
 	tooltip = dipui_invite_shadowmoon_conspiracy_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
-		FROM = {
-			has_country_flag = in_shadowmoon_conspiracy
-			hre_size = 1
-			is_emperor = no
-			NOT = { mission_completed = rogieria_return_king }
-			reverse_has_opinion = {
-				who = ROOT
-				value = 150
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = in_shadowmoon_conspiracy
+					hre_size = 1
+					is_emperor = no
+					NOT = { mission_completed = rogieria_return_king }
+				}
+				ROOT = {
+					is_emperor = no
+					is_part_of_hre = yes
+					NOT  = { has_country_modifier = rejected_shadowmoon }
+					NOT = { has_country_flag = in_shadowmoon_conspiracy }
+				}
+			}
+			FROM = {
+				reverse_has_opinion = {
+					who = ROOT
+					value = 150
+				}
 			}
 		}
-		ROOT = {
-			is_emperor = no
-			is_part_of_hre = yes
-			NOT  = { has_country_modifier = rejected_shadowmoon }
-			NOT = { has_country_flag = in_shadowmoon_conspiracy }
+		else = {
+			always = no #####################################################don't think this is good
 		}
 	}
 	effect = {
@@ -2856,8 +2830,7 @@ custom_window = {
 custom_button = { #Y25_zongji_fealty_action
 	name = Y25_zongji_fealty_action
 	tooltip = zongji_fealty_action_tooltip
-	potential = {
-	}
+	potential = { }
 	trigger = {
 		FROM = {
 			custom_trigger_tooltip = {
@@ -2870,7 +2843,7 @@ custom_button = { #Y25_zongji_fealty_action
 		ROOT = {
 			is_subject = no
 			OR = {
-				hidden_trigger = { has_country_flag = zongji_fealty_valid }
+				hidden_trigger = { has_country_flag = zongji_fealty_valid } #customtooltipme
 				has_reform = eunuch_republic
 				has_reform = eunuch_dynasty_reform
 			}
