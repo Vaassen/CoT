@@ -177,6 +177,25 @@ transfer_trade_power = {
 				FROM = { set_country_flag = transfers_trade_to_feiten }
 			}
 		}
+		if = {
+			limit = {
+				has_global_flag = z22_can_have_giesadh
+			}
+			if = {
+				limit = {
+					FROM = { is_or_was_tag = { tag = Z22 } }
+					alliance_with = FROM
+				}
+				z22_giesadh_check_effect = yes
+			}
+			else_if = {
+				limit = {
+					is_or_was_tag = { tag = Z22 }
+					FROM = { alliance_with = ROOT }
+				}
+				FROM = { z22_giesadh_check_effect = yes }
+			}
+		}
 	}
 }
 
@@ -611,6 +630,38 @@ declarewar = {
 			always = no
 		}
 	}
+
+	condition = { #Loyal Tributaries/Satrapies of the same overlord with the "The Weak Serve the Strong" privilege can't declare war on each other.
+		tooltip = gnolls_too_strong
+		potential = {
+			is_right_subject_type_xhazobkult = yes
+			overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+			NOT = { liberty_desire = 50 }
+			FROM = {
+				overlord = { overlord_of = ROOT } # if their overlord is your overlord you have the same overlord
+				is_right_subject_type_xhazobkult = yes
+			}
+			ai = yes
+		}
+		allow = {
+			always = no
+		}
+	}
+	
+	condition = {
+		tooltip = konol_shadowflame_block_war
+		potential = { 
+			F66 = { has_disaster = konolkhatep_xhaz_disaster }
+			OR = {
+				FROM = { tag = F67 }
+				FROM = { tag = F66 }
+				tag = F67
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 	
 	effect = {
 		on_war_declaration_effect = yes #1.35
@@ -899,8 +950,6 @@ declarewar = {
 			}
 		}
 
-		accretive_path_beikling_chi_stacking_effect = { amount = 20 }
-
 		# Empkeios Independence War - and adaptation from Keyolion's
 		if = {
 			limit = {
@@ -1140,6 +1189,23 @@ declarewar = {
 			}
 			country_event = {
 				id = flavour_velsfadhecai.12
+			}
+		}
+
+		#Oberon Fealgarn Spawn
+		if = {
+			limit = {
+				has_estate_privilege = estate_nobles_oberons_watchful_eye
+				NOT = { has_ruler_flag = oberon_is_ruling }
+				NOT = { has_leader = "Oberon Fealgarn" }
+			}
+			define_general = {
+				name = "Oberon Fealgarn"
+				fire = 2
+				shock = 5
+				manuever = 5
+				siege = 0
+				trait = born_to_the_saddle_personality
 			}
 		}
 
@@ -1384,6 +1450,69 @@ declarewar = {
 					country_event = { id = lupulan_events.1001 days = 1 } 
 				}
 			}
+		}
+		#Salla Ayeth
+		if = {
+			limit = {
+				ai = no
+				has_ruler_flag = is_elaria_ayeth
+				FROM = {
+					ai = yes
+					OR = {
+						culture_is_orcish = yes
+						culture_is_goblin = yes
+					}
+				}
+			}
+			FROM = { country_event = { id = flavour_ayeth.22 } }
+		}
+		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
+
+		#Accretive Path - Rusted Blades
+		if = {
+			limit = {
+				has_country_flag = ap_rustedblades_happened
+			}
+			remove_country_modifier = ap_rustedblades_quietmarch
+			remove_country_modifier = ap_rustedblades_sharpenedchi
+			remove_country_modifier = ap_rustedblades_productivemarch
+			remove_country_modifier = ap_rustedblades_recruitmentmarch
+			remove_country_modifier = ap_rustedblades_caravanmarch
+			remove_country_modifier = ap_rustedblades_religiousmarch
+			remove_country_modifier = ap_rustedblades_surveillancemarch
+			clr_country_flag = ap_rustedblades_happened
+		}
+		FROM = {
+			if = {
+				limit = {
+					has_country_flag = ap_rustedblades_happened
+				}
+				remove_country_modifier = ap_rustedblades_quietmarch
+				remove_country_modifier = ap_rustedblades_sharpenedchi
+				remove_country_modifier = ap_rustedblades_productivemarch
+				remove_country_modifier = ap_rustedblades_recruitmentmarch
+				remove_country_modifier = ap_rustedblades_caravanmarch
+				remove_country_modifier = ap_rustedblades_religiousmarch
+				remove_country_modifier = ap_rustedblades_surveillancemarch
+				clr_country_flag = ap_rustedblades_happened
+			}
+		}
+		
+		if = { #Vic League
+			limit = {
+				OR = {
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+				is_subject = no
+				is_in_war = {
+					attacker_leader = THIS
+					defender_leader = FROM
+					casus_belli = cb_humiliate_rotw
+				}
+			}
+			set_country_flag = vic_league_humiliate_cb_@FROM
 		}
 	}
 }
@@ -1838,6 +1967,58 @@ allianceaction = {
 			always = no
 		}
 	}
+	condition = { #Loyal Tributaries/Satrapies of overlord with the "The Weak Serve the Strong" privilege can only ally other Tributaries/Satrapies of the same overlord
+		tooltip = gnolls_too_strong
+		potential = {
+			OR = {
+				AND = {
+					is_right_subject_type_xhazobkult = yes
+					overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+					NOT = { liberty_desire = 50 }
+					NOT = {
+						FROM = {
+							overlord = { overlord_of = ROOT } # if their overlord is your overlord you have the same overlord
+							is_right_subject_type_xhazobkult = yes
+						}
+					}
+					ai = yes
+				}
+				FROM = { 
+					is_right_subject_type_xhazobkult = yes
+					overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+					NOT = { liberty_desire = 50 }
+					ROOT = {
+						NOT = {
+							AND = {
+								overlord = { overlord_of = FROM } # if their overlord is your overlord you have the same overlord
+								is_right_subject_type_xhazobkult = yes
+							}
+						}
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
+
+	condition = {
+		tooltip = L53_tiboktsamo_no_allies_tooltip
+		potential = {
+			OR = {
+				AND = { #ROOT
+					tag = L53
+					has_country_modifier = L53_the_tower_stands_alone
+				}
+				FROM = {
+					tag = L53
+					has_country_modifier = L53_the_tower_stands_alone
+				}
+			}
+		}
+		allow = { always = no }
+	}
 }
 
 enforce_peace = {
@@ -1867,6 +2048,28 @@ enforce_peace = {
 		#	}
 		#	add_papal_influence = 25
 		#}
+	}
+	effect = {
+		if = {
+			limit = {
+				is_emperor = yes
+				hre_reform_passed = anbennar_reinforce_imperial_frontiers
+				FROM = {
+					is_part_of_hre = no
+					any_war_enemy_country = {
+						is_part_of_hre = yes
+					}
+				}
+			}
+			add_imperial_influence = 2
+		}
+		if = {
+			limit = {
+				has_estate_privilege = estate_church_vir_forbearance 
+				is_at_war = no
+			}
+			set_country_flag = vir_forb_peace_enforced
+		}
 	}
 }
 
@@ -2419,6 +2622,109 @@ royal_marriage = {
 			}
 		}
 	}
+
+	pre_effect = {
+		if = { #Parahechend - Para sends offer to vassal
+			limit = { 
+				mission_completed = J81_3_1_cunning_trick_crushing_maul 
+				FROM = { 
+					is_subject_of = ROOT 
+					NOT = {
+						dynasty = "Rakulacan"
+						heir_dynasty = "Rakulacan"
+					}
+				}
+			}
+			FROM = {
+				define_ruler = {
+					dynasty = "Rakulacan"
+				}
+				capital_scope = {
+					spawn_rebels = {
+						size = 3
+						type = pretender_rebels
+					}
+				}
+			}
+			if = {
+				limit = { mission_completed = J81_3_5_the_empire_of_blood }
+				FROM = {
+					add_ruler_modifier = {
+						name = J81_rakulacan_tyranny
+						duration = -1
+					}
+				}
+			}
+			else_if = {
+				limit = { mission_completed = J81_2_2_keeping_it_in_the_family }
+				FROM = {
+					add_ruler_modifier = {
+						name = J81_rakulacan_rule
+						duration = -1
+					}
+				}
+			}
+			if = {
+				limit = { has_country_flag = J81_rakulacan_vampire_subjects_flag }
+				FROM = {
+					set_country_flag = J81_rakulacan_vampires_flag
+					set_country_flag = has_vampires_estate
+					ruler_become_vampire = yes
+					clear_vampire_law = yes
+					clear_vampire_organization = yes
+					country_event = {
+						id = taychendi_empire_events.3003
+						days = 2
+					}
+				}
+			}
+		}
+		if = { #Parahechend - Vassal sends offer to Para
+			limit = { 
+				FROM = { mission_completed = J81_3_1_cunning_trick_crushing_maul }
+				is_subject_of = FROM 
+				NOT = {
+					dynasty = "Rakulacan"
+					heir_dynasty = "Rakulacan"
+				}
+			}
+			define_ruler = {
+				dynasty = "Rakulacan"
+			}
+			capital_scope = {
+				spawn_rebels = {
+					size = 3
+					type = pretender_rebels
+				}
+			}
+			if = {
+				limit = { FROM = { mission_completed = J81_3_5_the_empire_of_blood } }
+				add_ruler_modifier = {
+					name = J81_rakulacan_tyranny
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { FROM = { mission_completed = J81_2_2_keeping_it_in_the_family } }
+				add_ruler_modifier = {
+					name = J81_rakulacan_rule
+					duration = -1
+				}
+			}
+			if = {
+				limit = { FROM = { has_country_flag = J81_rakulacan_vampire_subjects_flag } }
+				set_country_flag = J81_rakulacan_vampires_flag
+				set_country_flag = has_vampires_estate
+				ruler_become_vampire = yes
+				clear_vampire_law = yes
+				clear_vampire_organization = yes
+				country_event = {
+					id = taychendi_empire_events.3003
+					days = 2
+				}
+			}
+		}
+	}
 }
 
 annexationaction = {
@@ -2432,8 +2738,7 @@ annexationaction = {
 						is_subject_of = ROOT
 						is_subject_of_type = medasi_subject
 					}
-				}
-				NOT = { is_subject_of_type = daimyo_vassal }
+				}				
 			}
 		}
 		allow = {
@@ -2455,7 +2760,7 @@ annexationaction = {
 			4411 = {
 				check_variable = {
 					which = raj_var_cohesion
-					value = 70
+					value = 75
 				}
 			}
 		}
@@ -2732,6 +3037,22 @@ annexationaction = {
         }
     }	
 	
+	condition = {
+		tooltip = vic_league_annex_conditions
+		potential = {
+			FROM = { is_subject_of_type = vic_league_member }
+		}
+		allow = {
+			FROM = {
+				had_country_flag = { flag = vic_league_duration_tracker days = 9125 }
+				NOT = { liberty_desire = 10 }
+				has_opinion = {
+					who = ROOT
+					value = 190
+				}
+			}
+		}
+	}
 }
 
 integrationaction = {
@@ -3038,6 +3359,40 @@ request_to_join_federation = {
 }
 
 callaction = {
+### condition
+	#General Callaction
+	condition = { 
+		tooltip = call_action_defined_text
+		potential = {
+			OR = {
+				ROOT = { has_country_flag = no_callaction } #General flag for not calling anyone (If you want attacker to call his allies give it to attacker if defender give it to defender)
+				FROM = { has_country_flag = no_callaction } 
+				AND = { #Specific flag when you are planning 1 vs 1 fight but you are unsure when it will start
+					ROOT = { has_country_flag = no_callaction_target } #Both countries needs to have this flag
+					any_war_enemy_country = {
+						has_country_flag = no_callaction_target
+					}
+				}
+			}
+		}
+		allow = {
+			OR = {
+				NOT = { ROOT = { has_country_flag = no_countries_with_truce } }  #Flag for not calling countries that you have truce with
+				NOT = { truce_with = FROM }  #(important when you want subject to fight their previous overlord)
+			}
+			OR = {
+				has_country_flag = allow_to_join_war_nonetheless #Use this flag on countries you want to join fight
+				AND = {
+					ROOT = { has_country_flag = allow_subjects_war } #Flag for allowing subjects/overlords to join
+					OR = {
+						overlord_of = FROM
+						is_subject_of = FROM
+					}
+				}
+			}
+		}
+	}
+
 	condition = { #Can't call to arms while the Samartal incident is active
 		tooltip = NSC_SAMARTAL_TRAGEDY_CALL
 		potential = {
@@ -3047,36 +3402,6 @@ callaction = {
 			OR = {
 				overlord_of = FROM 		#allows vassals to join
 				is_subject_of = FROM	#subject can't be war dec by non NSC countries
-			}
-		}
-	}
-	condition = { #Kinstrife is an internal affair, and relies on allclan.9999 instead of peace deals
-		tooltip = KINSTRIFE_NO_CALL
-		potential = {
-			OR = {
-				FROM = { has_country_flag = kinstrife_funtime_flag }
-				has_country_flag = kinstrife_funtime_flag
-			}
-		}
-		allow = {
-			always = no
-		}
-	}
-	condition = { #Can't call to arms during Ovdal Lodhum's scripted war
-		tooltip = LODHUM_NO_CALL_WAR
-		potential = {
-			has_global_flag = lodhum_elf_war_begin
-			OR = {
-				tag = H77
-				has_country_flag = denied_lodhum_friendship #so they can't call in either
-			}
-		}
-		allow = {
-			FROM = {
-				OR = {
-					tag = F26 #gelkalis
-					tag = F27 #ayarallen
-				}
 			}
 		}
 	}
@@ -3110,90 +3435,6 @@ callaction = {
 			always = no
 		}
 	}
-		
-	condition = { # Zansap-Tluukt Duel
-		tooltip = zansap_tluukt_war
-		potential = {
-			OR = {
-				ROOT = {
-					tag = F28
-					is_in_war = {
-						attacker_leader = F43
-					}
-				}
-				ROOT = {
-					tag = F43
-					is_in_war = {
-						defender_leader = F28
-					}
-				}
-			}
-			F43 = { has_country_flag = zansap_first_crusade }
-		}
-		allow = {
-			OR = {
-				overlord_of = FROM         #allows vassals to join
-				is_subject_of = FROM    #subject can't be war dec by non NSC countries
-			}
-		}
-	}
-
-	condition = {
-		tooltip = NO_ALLIES_WAR
-		potential = {
-			ROOT = { has_country_flag = no_allies_war }
-		}
-		allow = {
-			OR = {
-				overlord_of = FROM
-				is_subject_of = FROM
-			}
-		}
-	}
-	
-	effect = {
-		if = {	#achievement against the Command
-			limit = {
-				ai = no
-				war_with = R62
-				FROM = { NOT = { is_subject_of = ROOT } }
-			}
-			set_country_flag = ach_called_allies_againt_the_command
-		}
-	}
-	
-	effect = {
-		if = {
-			limit = {
-				FROM = { religion = ashentree_pact }
-			}
-			country_event = { id = ashtreepact.1 }
-			FROM = { country_event = { id = ashtreepact.1 } }
-		}
-	}
-
-	effect = {
-		if = {
-			limit = {
-				OR = {
-					AND = {
-						ROOT = { tag = J72 }
-						FROM = { tag = G74 }
-					}
-					AND = {
-						ROOT = { tag = G74 }
-						FROM = { tag = J72 }
-					}
-				}
-			}
-			G74 = {
-				change_variable = {
-					which = gophira_war_fought_with_dark
-					value = 1
-				}
-			}
-		}
-	}
 
 	condition = {	#Bosancovac can't call allies against the Boats' revolt
 		potential = {
@@ -3205,27 +3446,6 @@ callaction = {
 					casus_belli = cb_support_rebels
 				}
 			}
-		}
-		allow = {
-			always = no
-		}
-	}
-
-	#ahati disaster
-	condition = { 
-		tooltip = mandate_no_disaster_help
-		potential = {
-			is_in_war = { casus_belli = cb_aakheta_uprising }
-		}
-		allow = {
-			always = no
-		}
-	}
-
-	condition = { #Besolaki Independence War
-		tooltip = G54_NO_ALLIES_TT
-		potential = {
-			has_country_flag = G54_in_independence_war_flag
 		}
 		allow = {
 			always = no
@@ -3271,6 +3491,50 @@ callaction = {
 		}
 	}
 
+### effect
+	effect = {
+		if = {	#achievement against the Command
+			limit = {
+				ai = no
+				war_with = R62
+				FROM = { NOT = { is_subject_of = ROOT } }
+			}
+			set_country_flag = ach_called_allies_againt_the_command
+		}
+	}
+	
+	effect = {
+		if = {
+			limit = {
+				FROM = { religion = ashentree_pact }
+			}
+			country_event = { id = ashtreepact.1 }
+			FROM = { country_event = { id = ashtreepact.1 } }
+		}
+	}
+
+	effect = {
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						ROOT = { tag = J72 }
+						FROM = { tag = G74 }
+					}
+					AND = {
+						ROOT = { tag = G74 }
+						FROM = { tag = J72 }
+					}
+				}
+			}
+			G74 = {
+				change_variable = {
+					which = gophira_war_fought_with_dark
+					value = 1
+				}
+			}
+		}
+	}
 	effect = {		#make ai use some raj mandates. might need better control in the future (i.e. only if the enemy is strong?)
 		if = {
 			limit = {
@@ -3297,6 +3561,13 @@ callaction = {
 				add_adm_power = -100
 				rahen_raj_mandate_raja_imperial_tribute = yes
 			}			
+		}
+	}
+
+	effect = {
+		if = {
+			limit = { FROM = { alliance_with = ROOT } }
+			accretive_path_gain_chi = { aspect = fill_the_begging_bowls category = dip amount = 20 }
 		}
 	}
 }
@@ -3430,6 +3701,23 @@ insultaction = {
 						NOT = { num_of_subjects = 1 }
 					}
 					reverse_add_casus_belli = { type = cb_vassalize_mission target = ROOT months = 120 }
+				}
+			}
+		}
+		if = {
+			limit = {
+				has_reform = elaborate_court_ceremonies
+				FROM = { is_rival = ROOT }
+				NOT = {
+					has_country_modifier = elaborate_court_ceremonies_insult_mod
+				}
+			}
+			ROOT = {
+				add_splendor = 50
+				add_country_modifier = {
+					name = elaborate_court_ceremonies_insult_mod
+					duration = 1825
+					hidden = yes
 				}
 			}
 		}
@@ -3577,8 +3865,8 @@ requestpeace = {
         }
 	}
 	condition = {
-		tooltip = kamrayakvals_war_no_seperate_peace
-		potential = { #Blocks seperate peace in the Kamrayakval's War
+		tooltip = kamrayakvals_war_no_separate_peace
+		potential = { #Blocks separate peace in the Kamrayakval's War
 			is_in_war = { casus_belli = cb_kamrayakvals_war }
 			FROM = { is_in_war = { casus_belli = cb_kamrayakvals_war } }
 			NOT = {
@@ -3638,6 +3926,27 @@ requestpeace = {
 			}
 		}
 	}
+	condition = { #Yuanszi ending war
+		tooltip = YUANSZI_FAKE_COALITION_WAR
+		potential = {
+			OR = {
+				tag = Y89
+				FROM = { tag = Y89 }
+			}
+		}
+		allow = {
+			OR = {
+				NOT = { #Unrelated War
+					AND = {
+						is_in_war = { casus_belli = cb_yuanszi_crusade }
+						FROM = { is_in_war = { casus_belli = cb_yuanszi_crusade } }
+					}
+				}
+				is_in_war = { casus_belli = cb_yuanszi_crusade attacker_leader = FROM }
+				is_in_war = { casus_belli = cb_yuanszi_crusade defender_leader = FROM }
+			}
+		}
+	}
 	condition = { #Besolaki Independence War
 		tooltip = G54_NO_PEACE_OUT_TT
 		potential = {
@@ -3677,6 +3986,23 @@ requestpeace = {
 			}
 		}
 	}
+	condition = { #Khatalashya Space War
+		tooltip = HIVEMIND_INVASION_WAR_NAME_tt
+		potential = {
+			OR = {
+				tag = S81
+				has_reform = space_colony_government
+			}
+		}
+		allow = {
+			NOT = {
+				AND = {
+					is_in_war = { casus_belli = cb_hivemind_war }
+					FROM = { is_in_war = { casus_belli = cb_hivemind_war } }
+				}
+			}
+		}
+	}
 }
 
 support_heir = {
@@ -3692,6 +4018,19 @@ support_heir = {
 }
 
 break_alliance = {
+	condition = {
+		tooltip = z22_new_world_giesadh_TT
+		potential = {
+			has_country_flag = z22_is_permanent_giesadh
+		}
+		allow = {
+			NOT = {
+				FROM = {
+					is_or_was_tag = { tag = Z22 }
+				}
+			}
+		}
+	}
 	effect = {
 		on_alliance_broken_effect = yes
 	}
@@ -3763,6 +4102,18 @@ guaranteeaction = {
 			}
 		}
 	}
+	condition = { #Loyal Tributaries/Satrapies of overlord with the "The Weak Serve the Strong" can't proclaim guarantees
+		tooltip = gnolls_too_strong
+		potential = {
+			is_right_subject_type_xhazobkult = yes
+			overlord = { OR = { has_estate_privilege = gnoll_the_weak_serve_the_strong has_estate_privilege = gnoll_the_weak_serve_the_strong_burghers } }
+			NOT = { liberty_desire = 50 }
+			ai = yes
+		}
+		allow = {
+			always = no
+		}
+	}
 }
 
 improve_relation = {
@@ -3770,6 +4121,15 @@ improve_relation = {
 		tooltip = escann_restricted_diplo_trigger_tt
 		potential = { escann_restricted_greentide_diplo_trigger = yes }
 		allow = { always = no }
+	}
+}
+
+knowledge_sharing = {
+	effect = {
+		if = {
+			limit = { has_estate_privilege = estate_church_vir_honesty }
+			set_country_flag = vir_honest_sharing
+		}
 	}
 }
 
@@ -3786,6 +4146,19 @@ giftaction = {
 		tooltip = escann_restricted_diplo_trigger_tt
 		potential = { escann_restricted_greentide_diplo_trigger = yes }
 		allow = { always = no }
+	}
+	effect = {
+		if = {
+			limit = {
+				has_country_flag = rinta_mwalim_funding_flag
+				is_incident_active = incident_rinta_light_up_the_night_sky
+				FROM = { capital_scope = { NOT = { continent = africa } } }
+			}
+			add_country_modifier = {
+				name = RS_sent_gift_investment
+				duration = 365 #1 years
+			}
+		}
 	}
 }
 
@@ -3849,6 +4222,15 @@ trade_favors_for_sailors = {
 	}
 }
 
+support_independence_action = {
+	condition = {
+		tooltip = vic_league_no_external_support
+		potential = {
+			FROM = { is_subject_of_type = vic_league_member }
+		}
+		allow = { always = no }
+	}
+}
 grant_electorate = {
     effect = {
         if = {
@@ -3887,4 +4269,47 @@ remove_electorate = {
     }
 }
 
+intervene_in_war = {
+	effect = {
+		if = {
+			limit = {
+				has_country_flag = pashaine_intervene_in_war_bonus
+			}
+			add_power_projection = {
+				type = pashaine_intervene_in_war_bonus
+				amount = 15
+			}
+		}
+	}
+}
 
+religious_unity_action = {
+	condition = {
+		tooltip = NO_SUBJECT_EOA_CONVERSION
+		potential = {
+			FROM = {
+				is_subject = yes
+				NOT = { is_subject_of = ROOT }
+			}
+		}
+		allow = { always = no }
+	}
+}
+takeondebt = {
+	effect = {
+		if = { 
+			limit = {
+				has_country_flag = take_on_debt_for_trust_and_favors
+			}
+			add_trust = {
+				who = FROM
+				value = 10
+				mutual = yes
+			}
+			add_favors = {
+				who = FROM
+				amount = 20
+			}
+		}
+	}
+}
