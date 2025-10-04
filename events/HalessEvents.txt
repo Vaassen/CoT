@@ -2651,6 +2651,17 @@ country_event = { #Land of White Gold
 
 	is_triggered_only = yes
 
+	trigger = {
+		owns = 4896 #Sising
+		4896 = {
+			is_prosperous = yes
+			NOT = { has_province_modifier = haless_white_gold }
+		}
+		culture_is_yan = yes
+		NOT = { current_age = age_of_discovery }
+	}
+
+
 	option = { #This is not salt, but white gold.
 		name = haless.737.a
 		4896 = { add_province_modifier = { name = haless_white_gold duration = -1 } } #Intentionally lost when the province is lost
@@ -2665,6 +2676,16 @@ country_event = { #Shadows Beneath the Tower
 	goto = 4849 #Yingzhen
 
 	is_triggered_only = yes
+
+	trigger = {
+		owns = 4849 #Yingzhen
+		4849 = {
+			is_prosperous = yes
+			NOT = { has_province_modifier = haless_yingzhen_happened }
+		}
+		culture_is_yan = yes
+	}
+	
 	immediate = { hidden_effect = { 4849 = { add_province_modifier = { name = haless_yingzhen_happened duration = -1 hidden = yes } } } }
 
 	option = { #Restore the Order to its rightful purpose.
@@ -2716,6 +2737,31 @@ country_event = { #Carved and Filigreed
 	goto = 4890 #Ongdou
 
 	is_triggered_only = yes
+
+	trigger = {
+		owns = 4890 #Ongdou
+		4890 = {
+			OR = {
+				has_owner_culture = yes
+				has_owner_accepted_culture = yes
+			}
+		}
+		adm_tech = 6
+		any_owned_province = {
+			trade_goods = gems
+			base_production = 10
+		}
+		NOT = { has_country_modifier = haless_carved_cooldown }
+	}
+	modifier = {
+		factor = 2
+		has_global_flag = faceting_happened
+	}
+	modifier = {
+		factor = 2
+		owns_or_subject_of = 5424 #Verkal Ozovar
+	}
+
 	immediate = {
 		hidden_effect = {
 			random_owned_province = {
@@ -2723,14 +2769,14 @@ country_event = { #Carved and Filigreed
 				save_event_target_as = grain_province
 			}
 			random_owned_province = {
-				limit = { has_province_modifier = diamond_district }
+				limit = { has_province_modifier = diamond_district } # xxx double check this is the Faceting modifier the doc talks about
 				save_event_target_as = faceting_province
 			}
-			random_owned_province = {
+			random_owned_or_subject_province = { # xxx check this works
 				limit = { trade_goods = gems }
 				save_event_target_as = first_gems_province
 			}
-			random_owned_province = {
+			random_owned_or_subject_province = { # xxx check this works
 				limit = {
 					trade_goods = gems
 					NOT = { province_id = event_target:first_gems_province }
@@ -2753,7 +2799,7 @@ country_event = { #Carved and Filigreed
 			}
 		}
 		hidden_effect = {
-			random_owned_province = {
+			every_owned_province = {
 				limit = { trade_goods = gems }
 				add_province_modifier = { name = haless_filigree_finework duration = 5475 }
 			}
@@ -2783,7 +2829,7 @@ country_event = { #Carved and Filigreed
 			}
 		}
 		hidden_effect = {
-			random_owned_province = {
+			every_owned_province = {
 				limit = { trade_goods = gems }
 				add_province_modifier = { name = haless_filigree_finework duration = 5475 }
 			}
@@ -2825,6 +2871,20 @@ country_event = { #Ancient Scrolls Resurface
 	goto = 4869 #Sziangnu
 
 	is_triggered_only = yes
+
+	trigger = {
+		owns_core_province = 4869 #Sziangnu
+		4869 = {
+			is_prosperous = yes
+			NOT = { has_province_modifier = haless_ruins_lizicheng }
+		}
+		is_primary_or_accepted_culture_trigger = { culture = jiangyang } # xxx North Yanshen culture?
+		OR = {
+			has_estate = estate_mages
+			has_estate = estate_artificers
+		}
+	}
+	
 
 	option = { #Store them as references in the library.
 		name = haless.740.a
@@ -2874,6 +2934,37 @@ country_event = { #Blade in the Shadows
 	goto = assassination_target_capital
 
 	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			owns = 4849 #Yingzhen
+			tag = Y10 #Yingzhen
+		}
+		is_at_war = yes
+		any_war_enemy_country = {
+			NOT = { culture_is_yan = yes }
+			OR = { #War leader
+				is_in_war = { attacker_leader = PREV participants = ROOT }
+				is_in_war = { defender_leader = PREV participants = ROOT }
+			}
+			OR = {
+				NOT = {
+					reverse_has_opinion_modifier = {
+						who = ROOT
+						modifier = aggressive_expansion
+						value = -100
+					}
+				}
+				is_evil = yes
+				tag = R62 #The Command
+				tag = Y01 #Azjakuma
+			}
+			NOT = { has_country_flag = yingzhen_assassinated_once }
+		}
+		culture_is_yan = yes
+		treasury = 1000
+	}
+	
 	immediate = {
 		hidden_effect = {
 			random_war_enemy_country = {
@@ -2913,9 +3004,9 @@ country_event = { #Blade in the Shadows
 		event_target:assassination_target = {
 			if = {
 				limit = { ai = yes }
-				country_event = { id = haless.742 }
+				country_event = { id = haless.742 days = 31 }
 			}
-			else = { country_event = { id = haless.743 } }
+			else = { country_event = { id = haless.743 days = 31 } }
 		}
 	}
 
@@ -2977,6 +3068,13 @@ country_event = { #The New Claims Its Place, the Old Stands Firm
 	goto = 4559 #Xiadao
 
 	is_triggered_only = yes
+
+	trigger = {
+		owns = 4559 #Xiadao xxx this should be Own at least 10 provinces with the Xianjie tag, including Hero Isle
+		is_primary_or_accepted_culture_trigger = { culture = szitu }
+		NOT = { has_country_flag = haless_xiadao_happened }
+	}
+	
 	immediate = { set_country_flag = haless_xiadao_happened }
 
 	option = { #Defeat is fleeting; their position stands.
@@ -3023,6 +3121,16 @@ country_event = { #Beyond the Sect Walls, Within Human Rule?
 	goto = xia_province
 
 	is_triggered_only = yes
+
+	trigger = {
+		is_primary_or_accepted_culture_trigger = { culture = szitu } # Western Lands group?
+		num_of_owned_provinces_with = {
+			value = 10
+			has_province_modifier = rightful_xia_territory # xxx Own at least 10 provinces with the Immortal Realm tag?
+		}
+		NOT = { has_country_modifier = haless_xia_cooldown }
+	}
+	
 	immediate = {
 		hidden_effect = {
 			random_owned_province = {
