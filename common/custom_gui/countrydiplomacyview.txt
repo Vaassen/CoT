@@ -390,6 +390,7 @@ custom_button = {
 	tooltip = custdip_general_button_tt
 	# trigger = { custdip_general_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_general_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_general = yes
@@ -403,6 +404,7 @@ custom_button = {
 	tooltip = custdip_government_button_tt
 	# trigger = { custdip_government_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_government_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_government = yes
@@ -416,6 +418,7 @@ custom_button = {
 	tooltip = custdip_religion_button_tt
 	# trigger = { custdip_religion_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_religion_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_religion = yes
@@ -429,6 +432,7 @@ custom_button = {
 	tooltip = custdip_cultural_button_tt
 	# trigger = { custdip_cultural_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_cultural_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_cultural = yes
@@ -442,6 +446,7 @@ custom_button = {
 	tooltip = custdip_estates_button_tt
 	# trigger = { custdip_estates_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_estates_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_estates = yes
@@ -455,6 +460,7 @@ custom_button = {
 	tooltip = custdip_unique_button_tt
 	# trigger = { custdip_unique_button_trigger = yes }
 	effect = {
+		custom_tooltip = custdip_unique_button_desc
 		hidden_effect = {
 			FROM = {
 				custdip_category_open_unique = yes
@@ -465,7 +471,7 @@ custom_button = {
 }
 
 #####
-#Generic Actions
+#General Actions
 #####
 
 ## Overlord Actions
@@ -477,7 +483,7 @@ custom_window = {
 }
 custom_button = { # make_autonomous_vassal
 	name = make_autonomous_vassal
-	tooltip = dipui_make_autonomous_vassal_tooltip
+	tooltip = make_autonomous_vassal_tooltip
 	potential = { }
 	trigger = {
 		ROOT = {
@@ -514,22 +520,17 @@ custom_button = { # make_autonomous_vassal
 		}
 	}
 }
+#ai_will_do this, but made this so they're next to each other in the UI
 custom_button = { # cancel_autonomous_vassal
 	name = cancel_autonomous_vassal
 	#may need abandon_autonomoust_vassal_tt tooltip converted
-	tooltip = dipui_cancel_autonomous_vassal_tooltip
+	tooltip = cancel_autonomous_vassal_tt
 	potential = { }
 	trigger = {
 		ROOT = {
 			is_subject_of = FROM
 			is_subject_of_type = autonomous_vassal
-			has_opinion = {
-				who = FROM
-				value = 0
-			}
-			NOT = { liberty_desire = 50 }
 		}
-		
 		FROM = {
 			stability = 0
 			if = {
@@ -571,10 +572,6 @@ custom_button = { # cancel_autonomous_vassal
 				value = -20
 				mutual = yes
 			}
-			create_subject = {
-				subject_type = vassal
-				subject = ROOT  # dk check
-			}
 			if = {
 				limit = {
 					NOT = { full_idea_group = diplomatic_ideas has_reform = goblin_shadow_chancellor } #reduced_stab_impacts = yes
@@ -582,8 +579,29 @@ custom_button = { # cancel_autonomous_vassal
 				add_stability = -1
 			}
 		}
-		ROOT = {
-			add_liberty_desire = 65
+		if = { #Loyal gets turned into vassal
+			limit = {
+				ROOT = {
+					has_opinion = {
+						who = FROM
+						value = 0
+					}
+					NOT = { liberty_desire = 50 }
+				}
+			}
+			FROM = {
+				create_subject = {
+					subject_type = vassal
+					subject = ROOT  # dk check
+				}
+			}
+			ROOT = {
+				add_liberty_desire = 65
+			}
+		}
+		else = { #Disloyal is released
+			ROOT = { grant_independence = yes }
+			FROM = { add_truce_with = ROOT }
 		}
 	}
 }
@@ -630,8 +648,8 @@ custom_window = {
 	}
 }
 custom_button = { #raja_make_senapti
-	name = raja_make_senapti
-	tooltip = make_senapti_tooltip
+	name = raja_make_senapti_button
+	tooltip = raja_make_senapti_tooltip
 	potential = { }
 	trigger = {
 		ROOT = {
@@ -853,10 +871,11 @@ custom_button = { # nsc_incense_itar_hasis_action
 	}
 	effect = {
 		FROM = {
-			save_event_target_as = nsc_incense_user
+			hidden_effect = { save_event_target_as = nsc_incense_user }
 			remove_country_modifier = nsc_incense_itar_hasis
 		}
 		ROOT = {
+			hidden_effect = { save_event_target_as = nsc_incense_target }
 			remove_opinion = { modifier = aggressive_expansion who = FROM }
 			country_event = { id = new_sun_cult.289 }
 		}
@@ -870,9 +889,7 @@ custom_button = { # nsc_dagger_derumasil_action
 		FROM = {
 			has_country_modifier = nsc_dagger_derumasil
 			if = {
-				limit = {
-					has_country_flag = nsc_dagger_derumasil_menu
-				}
+				limit = { has_country_flag = nsc_dagger_derumasil_menu }
 				NOT = { has_country_flag = nsc_dagger_derumasil_menu }
 			}
 			OR = {
@@ -888,8 +905,10 @@ custom_button = { # nsc_dagger_derumasil_action
 		}
 	}
 	effect = {
-		ROOT = { save_event_target_as = nsc_dagger_target }
+		ROOT = {
+			hidden_effect = { save_event_target_as = nsc_dagger_target } }
 		FROM = {
+			hidden_effect = { save_event_target_as = nsc_dagger_user }
 			set_country_flag = nsc_dagger_derumasil_menu
 			country_event = { id = new_sun_cult.291 }
 		}
@@ -939,55 +958,9 @@ custom_window = {
 }
 #The events for these seem like they are to emulate AI acceptance?
 #Blood coersion/blood invitation seem like the same thing for different tags
-custom_button = { #vampire_pop_buff_action
-	name = vampire_pop_buff_action
-	tooltip = vampire_pop_buff_action_tooltip
-	potential = {
-		# FROM = {
-		# 	has_country_flag = founded_blood_court
-		# }
-	}
-	trigger = {
-		FROM = {
-			has_country_flag = founded_blood_court
-			reverse_has_opinion = {
-				who = ROOT
-				value = 80
-			}
-			has_spy_network_in = {
-				who = ROOT
-				value = 25
-			}
-		}
-		ROOT = {
-			capital_scope = {
-				OR = {
-					continent = europe
-					range = FROM
-				}
-			}
-			has_country_flag = has_vampires_estate
-            has_estate_privilege = estate_vampires_organization_vampiric_emigres
-			#only usable once, on a nation with emigres.
-			NOT = { has_country_flag = population_boom_buff }
-		}
-	}
-	effect = {
-		ROOT = {
-			set_country_flag = population_boom_buff
-			#reduces MTTH of influence increasing events
-		}
-		FROM = {
-			add_spy_network_in = {
-				who = ROOT
-				value = -25
-			}
-		}
-	}
-}
 custom_button = { #vampire_spread_action
 	name = vampire_spread_action
-	tooltip = dipui_vampire_spread_action_tooltip
+	tooltip = vampire_spread_action_tooltip
 	potential = { }
 	trigger = {
 		FROM = {
@@ -1008,7 +981,7 @@ custom_button = { #vampire_spread_action
 					estate = estate_vampires
 					influence = 60
 				}
-				estate_territory = {
+				estate_territory = { #TODO I suspect this became 'crown_land_share', but kept for legacy compatibility?
 					estate = estate_vampires
 					territory = 2
 				}
@@ -1018,39 +991,28 @@ custom_button = { #vampire_spread_action
 			}
 		}
 		ROOT = {
+			if = {
+				limit = { ai = yes }
+				culture_is_human = yes #Can only spread to humans as everyone else says no
+				NOT = { has_estate = estate_vampires }
+			}
+			else = {
+				NOT = { has_estate = estate_vampires }
+			}
 			capital_scope = {
 				OR = {
 					continent = europe
 					range = FROM
 				}
 			}
-			if = {
-				limit = { ai = yes }
-				culture_is_human = yes #Can only spread to humans as everyone else says no
-				NOT = { has_country_flag = has_vampires_estate }
-			}
-			else = {
-				NOT = { has_country_flag = has_vampires_estate }
-			}
 		}
 	}
 	effect = {
-		ROOT = {
-			capital_scope = {
-				add_province_triggered_modifier = custom_diplo_ui_vampire_spread_action_ptm
-			}
-		}
-		FROM = {
-			add_spy_network_in = {
-				who = ROOT
-				value = -20
-			}
-		}
-	}
-	effect = {
-		ROOT = { set_country_flag = spread_vamps_@FROM }
+		ROOT = { hidden_effect = { set_country_flag = spread_vamps_@FROM } }
 		FROM = {
 			capital_scope = {
+				#Event uses random_owned_province
+				#It has a bounce event in it, but it's connected to vampire spread mechanics, and the disaster, so don't want to change that..
 				add_province_triggered_modifier = custom_diplo_ui_vampire_spread_action_ptm
 			}
 			change_estate_land_share = {
@@ -1061,8 +1023,8 @@ custom_button = { #vampire_spread_action
 				who = ROOT
 				value = -50
 			}
-			#UNUSED limits spreading to 1 at a time
 
+			#UNUSED limits spreading to 1 at a time
 			#set_country_flag = {
 			#	name = currently_spreading_vampires
 			#	duration = -1
@@ -1074,7 +1036,57 @@ custom_button = { #vampire_spread_action
 		}
 	}
 }
-custom_button = { #vampire_blood_coersion
+custom_button = { #vampire_pop_buff_action
+	name = vampire_pop_buff_action
+	tooltip = vampire_pop_buff_action_tooltip
+	potential = {
+		# FROM = {
+		# 	has_country_flag = founded_blood_court
+		# }
+	}
+	trigger = {
+		FROM = {
+			country_has_founded_blood_court_trigger = yes
+			reverse_has_opinion = {
+				who = ROOT
+				value = 80
+			}
+			has_spy_network_in = {
+				who = ROOT
+				value = 25
+			}
+		}
+		ROOT = {
+			if = { #only usable once, on a nation with emigres.
+				limit = { has_supported_emigrees_trigger = yes }
+				NOT = { has_supported_emigrees_trigger = yes }
+			}
+			has_estate = estate_vampires
+            has_estate_privilege = estate_vampires_organization_vampiric_emigres
+			capital_scope = {
+				OR = {
+					continent = europe
+					range = FROM
+				}
+			}
+		}
+	}
+	effect = {
+		hidden_effect = {
+			ROOT = {
+				custom_tooltip = supported_emigrees_tt
+				set_country_flag = population_boom_buff #reduces MTTH of influence increasing events
+			}
+		}
+		FROM = {
+			add_spy_network_in = {
+				who = ROOT
+				value = -25
+			}
+		}
+	}
+}
+custom_button = { #vampire_blood_coersion #Hostile version
 	name = vampire_blood_coersion
 	tooltip = dipui_vampire_blood_coersion_tooltip
 	potential = {
@@ -1084,7 +1096,7 @@ custom_button = { #vampire_blood_coersion
 	}
 	trigger = {
 		FROM = {
-			has_country_flag = founded_blood_court
+			country_has_founded_blood_court_trigger = yes
 			has_spy_network_in = {
 				who = ROOT
 				value = 60
@@ -1097,9 +1109,8 @@ custom_button = { #vampire_blood_coersion
 					range = FROM
 				}
 			}
-			has_country_flag = has_vampires_estate
-			#has_estate = estate_vampires
-
+			# has_country_flag = has_vampires_estate
+			has_estate = estate_vampires
 			#only allowed for nations that have Bloody Aristocracy or Vampire Lord
 			NOT = { has_estate_privilege = estate_vampires_organization_the_blood_court }
 			NOT = { has_estate_privilege = estate_vampires_organization_vampiric_emigres }
@@ -1107,9 +1118,7 @@ custom_button = { #vampire_blood_coersion
 	}
 	effect = {
 		ROOT = {
-			capital_scope = {
-				add_province_triggered_modifier = custom_diplo_ui_vampire_blood_coersion_ptm
-			}
+			country_event = { id = flavor_asheniande.5 }
 		}
 		FROM = {
 			add_spy_network_in = {
@@ -1119,7 +1128,7 @@ custom_button = { #vampire_blood_coersion
 		}
 	}
 }
-custom_button = { #vampire_blood_invitation
+custom_button = { #vampire_blood_invitation #Friendly version
 	name = vampire_blood_invitation
 	tooltip = dipui_vampire_blood_invitation_tooltip
 	potential = {
@@ -1129,7 +1138,7 @@ custom_button = { #vampire_blood_invitation
 	}
 	trigger = {
 		FROM = {
-			has_country_flag = founded_blood_court
+			country_has_founded_blood_court_trigger = yes
 			reverse_has_opinion = {
 				who = ROOT
 				value = 40
@@ -1140,15 +1149,14 @@ custom_button = { #vampire_blood_invitation
 			}
 		}
 		ROOT = {
+			has_estate = estate_vampires
+			# has_country_flag = has_vampires_estate
 			capital_scope = {
 				OR = {
 					continent = europe
 					range = FROM
 				}
 			}
-			has_country_flag = has_vampires_estate
-			# has_estate = estate_vampires
-
 			#only allowed for nations that have Bloody Aristocracy or Vampire Lord
             NOT = { has_estate_privilege = estate_vampires_organization_the_blood_court }
 			NOT = { has_estate_privilege = estate_vampires_organization_vampiric_emigres }
@@ -1156,9 +1164,7 @@ custom_button = { #vampire_blood_invitation
 	}
 	effect = {
 		ROOT = {
-			capital_scope = {
-				add_province_triggered_modifier = custom_diplo_ui_vampire_blood_invitation_ptm
-			}
+			country_event = { id = corvuria.4 days = 5 random = 5 }
 		}
 		FROM = {
 			add_spy_network_in = {
@@ -1659,9 +1665,7 @@ custom_button = { # B32_make_castanorian_dominion_vassal
 		}
 		FROM = {
 			if = {
-				limit = {
-					NOT = { has_country_flag = castanor_can_make_dominions }
-				}
+				limit = { NOT = { has_country_flag = castanor_can_make_dominions } }
 				ROOT = {
 					OR = {
 						tag = Z45 # Vrorenmarch
@@ -1763,6 +1767,7 @@ custom_button = { # B32_make_castanorian_dominion_vassal
 				subject = ROOT
 			}
 		}
+		ROOT = { anb_add_accepted_culture_or_dip_power = { culture = castanorian free = yes } }
 	}
 }
 custom_button = { # B32_cancel_castanorian_dominion
@@ -1798,6 +1803,7 @@ custom_button = { # B32_cancel_castanorian_dominion
 		}
 		ROOT = {
 			add_liberty_desire = 65
+			remove_accepted_culture = castanorian
 		}
 	}
 }
