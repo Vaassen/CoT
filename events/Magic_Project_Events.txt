@@ -50,11 +50,14 @@ namespace = magic_project
 ### Furthermore, each project should have a handler event magic_project_<project_key>.0 which sorts players into the right event
 ### There are also a number of conventions you should follow:
 ###### Since the variable is ticked up before an event is completed, and you cannot count on most flags to stay around, use the presence of magic_project_completed_flag in the handler to tell you when a project has been completed
+###### magic_completed_flag (and all other progress flags/modifiers) is cleared after magic_project_<project_key>.0 selects the completion event
+###### If your final event depends on the state of the project at completion you must check and clear it in your completion event instead
 ###### Add and clear in_magic_progress_event flag with your events (this prevents cheesing via abort button)
 ###### All your event titles should be prefaced with the name of the project, so that players know why they're receiving the event
 ### Remember to modify magic_system.100 so that players actually receive advancement events
 ### If you want your project to count for magical infrastructure requirements, change calc_completed_magic_projects
 ### Remember to clear your progress flags/modifiers in magic_advancement_abort_all_effect
+
 
 country_event = { #clears the completion flag so that you can use it in the event handler
 	id = magic_project.1
@@ -346,7 +349,7 @@ country_event = { #Magical Infrastructure
 		name = magic_project_infrastructure.110.t
 		trigger = {
 			has_estate = estate_mages
-			has_estate = estate_clergy
+			has_estate = estate_church
 			estate_influence = { estate = estate_mages influence = 40 }
 			NOT = { has_estate_privilege = estate_mages_organization_religious }
 			NOT = { has_country_flag = magical_infrastructure_help_clergy }
@@ -403,7 +406,7 @@ country_event = { #Magical Infrastructure
 			factor = 0.8
 			modifier = {
 				factor = 1.5
-				average_home_autonomy = 0.2
+				average_home_autonomy = 20
 			}
 		}
 		country_event = { id = magic_project_infrastructure.113 }
@@ -827,7 +830,7 @@ country_event = { #Mages and the Clergy
 	option = { #Empower the Mages
 		name = magic_project_infrastructure.110.b
 
-		add_estate_loyalty = { estate = estate_clergy loyalty = -20 }
+		add_estate_loyalty = { estate = estate_church loyalty = -20 }
 		increase_magic_experience = { amount = 25 }
 	}
 }
@@ -1130,7 +1133,23 @@ country_event = { #Magical Fortress 4 - Complete Foundation
 		custom_tooltip = magical_fortress_project_effect_1
 		capital_scope = {
 			add_province_modifier = { name = magical_fortress_mod_1 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_1 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_1 duration = -1 }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_1
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				add_province_modifier = {
+					name = magical_fortress_province_mod_1
+					duration = -1
+				}
+			}
 		}
 		magical_fortress_grant_bonus = { mod = prestige }
 		add_prestige = 10
@@ -1212,10 +1231,27 @@ country_event = { #Magical Fortress 8 - Complete Castle
 		custom_tooltip = magical_fortress_project_effect_2
 		capital_scope = {
 			remove_province_modifier = magical_fortress_mod_1
-			remove_province_modifier = abjuration_1_0_mod_1
+			remove_province_modifier = abjuration_1_ward_mod_1
 			add_province_modifier = { name = magical_fortress_mod_2 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_2 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_2 duration = -1 }
 			hidden_effect = { province_event = { id = kheionai.2 } }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_2
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				remove_province_modifier = magical_fortress_province_mod_1
+				add_province_modifier = {
+					name = magical_fortress_province_mod_2
+					duration = -1
+				}
+			}
 		}
 		
 		magical_fortress_grant_bonus = { mod = splendor }
@@ -1299,9 +1335,26 @@ country_event = { #Magical Fortress 12 - Complete Palace
 		custom_tooltip = magical_fortress_project_effect_3
 		capital_scope = {
 			remove_province_modifier = magical_fortress_mod_2
-			remove_province_modifier = abjuration_1_0_mod_2
+			remove_province_modifier = abjuration_1_ward_mod_2
 			add_province_modifier = { name = magical_fortress_mod_3 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_3 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_3 duration = -1 }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_3
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				remove_province_modifier = magical_fortress_province_mod_2
+				add_province_modifier = {
+					name = magical_fortress_province_mod_3
+					duration = -1
+				}
+			}
 		}
 		magical_fortress_grant_bonus = { mod = mana_regen }
 		change_mana = { amount = 50 }
@@ -2028,7 +2081,8 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 				case1 = "set_country_flag = ooo_line2_1"
 			}
 			randnum_effect = {
-				max = 5
+				max = 6
+				case6 = "set_country_flag = ooo_line3_6"
 				case5 = "set_country_flag = ooo_line3_5"
 				case4 = "set_country_flag = ooo_line3_4"
 				case3 = "set_country_flag = ooo_line3_3"
@@ -2036,20 +2090,13 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 				case1 = "set_country_flag = ooo_line3_1"
 			}
 			randnum_effect = {
-				max = 5
+				max = 6
+				case6 = "set_country_flag = ooo_line4_6"
 				case5 = "set_country_flag = ooo_line4_5"
 				case4 = "set_country_flag = ooo_line4_4"
 				case3 = "set_country_flag = ooo_line4_3"
 				case2 = "set_country_flag = ooo_line4_2"
 				case1 = "set_country_flag = ooo_line4_1"
-			}
-			randnum_effect = {
-				max = 5
-				case5 = "set_country_flag = ooo_line5_5"
-				case4 = "set_country_flag = ooo_line5_4"
-				case3 = "set_country_flag = ooo_line5_3"
-				case2 = "set_country_flag = ooo_line5_2"
-				case1 = "set_country_flag = ooo_line5_1"
 			}
 		}
 	}
@@ -2068,23 +2115,19 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 		clr_country_flag = ooo_line2_2
 		clr_country_flag = ooo_line2_1
 
+		clr_country_flag = ooo_line3_6
 		clr_country_flag = ooo_line3_5
 		clr_country_flag = ooo_line3_4
 		clr_country_flag = ooo_line3_3
 		clr_country_flag = ooo_line3_2
 		clr_country_flag = ooo_line3_1
 
+		clr_country_flag = ooo_line4_6
 		clr_country_flag = ooo_line4_5
 		clr_country_flag = ooo_line4_4
 		clr_country_flag = ooo_line4_3
 		clr_country_flag = ooo_line4_2
 		clr_country_flag = ooo_line4_1
-
-		clr_country_flag = ooo_line5_5
-		clr_country_flag = ooo_line5_4
-		clr_country_flag = ooo_line5_3
-		clr_country_flag = ooo_line5_2
-		clr_country_flag = ooo_line5_1
 
 		clr_country_flag = in_magic_progress_event
 	}
@@ -2339,9 +2382,9 @@ country_event = { # 4 - Ending event (Level 3)
 		name = magic_project_orb_of_omniscience.6.a
 		ai_chance = { factor = 1 }
 		custom_tooltip = orb_of_omniscience_project_effect_3
-		tooltip = { divination_2_1_effect = yes }
+		tooltip = { divination_2_manipulated_fortune_effect = yes }
 		custom_tooltip = orb_of_omniscience_project_effect_3_2
-		tooltip = { divination_3_0_effect = yes }
+		tooltip = { divination_3_foresight_effect = yes }
 		custom_tooltip = tooltip_magic_project_complete
 	}
 }
@@ -2439,7 +2482,7 @@ country_event = { #Artifact of Enthrallment 0 - Prologue
 	is_triggered_only = yes
 	immediate = { set_country_flag = in_magic_progress_event }
 
-	option = { # "Hwæt!"
+	option = { # "Hwï¿½t!"
 		name = magic_project_artifact_of_enthrallment.1.a
 		trigger = {
 			OR = {
@@ -3850,7 +3893,7 @@ country_event = { #Theatre of Simulacra menu
 		clr_country_flag = in_theatre_of_simulacra
 
 		if = { #You can do multiple at a time
-			limit = { has_country_flag = new_theatre_bonus }
+			limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
 			clr_country_flag = new_theatre_bonus
 			if = {
 				limit = { exactly_magic_project_level = { project = theatre_of_simulacra level = 3 } }
@@ -4578,6 +4621,7 @@ country_event = { #Theatre of Simulacra sub-menu
 		name = magic_project_theatre_of_simulacra.15.go_back
 		ai_chance = { factor = 1 }
 		clr_country_flag = in_powerful_mage_theatre
+		country_event = { id = magic_project_theatre_of_simulacra.13 }
 	}
 
 	option = {
@@ -4711,10 +4755,9 @@ country_event = { #Theatre of Simulacra sub-menu
 	after = {
 		hidden_effect = {
 			if = {
-				limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
+				limit = { has_country_flag = in_powerful_mage_theatre }
 				country_event = { id = magic_project_theatre_of_simulacra.16 }
 			}
-			else = { country_event = { id = magic_project_theatre_of_simulacra.13 } }
 		}
 	}
 }
@@ -4741,9 +4784,10 @@ country_event = { #Theatre of Simulacra sub-menu bounceback
 			}
 
 			clr_country_flag = in_theatre_of_simulacra
+			clr_country_flag = in_powerful_mage_theatre
 
 			if = { #You can do multiple at a time
-				limit = { has_country_flag = new_theatre_bonus }
+				limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
 				clr_country_flag = new_theatre_bonus
 				if = {
 					limit = { exactly_magic_project_level = { project = theatre_of_simulacra level = 3 } }
@@ -4883,7 +4927,7 @@ country_event = { #Lichdom 1 - Finding out how to do it
 		ai_chance = { factor = 1 }
 		add_treasury = -100
 		increase_estate_witch_king_points = { size = small }
-		start_magic_project = { project = lichdom school = necromancy }
+		start_magic_project = { project = lichdom school = necromancy warning = yes }
 	}
 
 	option = { #I'll find it myself!
@@ -4892,6 +4936,7 @@ country_event = { #Lichdom 1 - Finding out how to do it
 		add_adm_power = -50
 		add_dip_power = -50
 
+		show_magic_project_lichdom_warning = yes
 		increase_ruler_witch_king_points = { size = small }
 		set_ruler_flag = magic_advancement
 		set_ruler_flag = necromancy_advancement
@@ -5320,7 +5365,11 @@ country_event = { #Lich - Gov change to Magocracy
 	trigger = {
 		ruler_is_lich = yes
 		NOT = { has_government_attribute = is_magocracy }
-		NOT = { has_government_attribute = locked_T1_reform }
+		OR = {
+			NOT = { has_government_attribute = locked_T1_reform }
+			has_government_attribute = is_raja # Allows you to swap to Mahyaraja reform
+		}
+		
 		has_estate = estate_mages
 
 		NOT = { government = tribal }
@@ -5384,7 +5433,7 @@ country_event = { #Lich - Gov change to Magocracy
 		
 		if = {
 			limit = { has_government_attribute = is_raja }
-			change_government = theocracy
+			change_government = monarchy
 			add_government_reform = raja_magocracy_reform
 		}
 		else = {
@@ -6279,16 +6328,10 @@ country_event = { #Homunculus, Vivum
 	immediate = {
 		hidden_effect = {
 			randnum_effect = {
-				max = 7
-				case7 = " #Humane - Rarest since you can't get it via recalc
+				max = 6
+				case6 = " #Humane - Rarest since you can't get it via recalc
 					if = {
 						limit = { NOT = { is_emperor_of_china = yes } }
-						randnum_recalc = { max = 6 }
-					}
-				"
-				case6 = " #Papal Puppetmaster
-					if = {
-						limit = { NOT = { religion = ravelian } }
 						randnum_recalc = { max = 5 }
 					}
 				"
@@ -6312,15 +6355,16 @@ country_event = { #Homunculus, Vivum
 			NOT = { has_government_attribute = is_magocracy }
 			NOT = { has_ruler_flag = xhazob_patron }
 			NOT = { has_global_modifier_value = { which = female_advisor_chance value = 1 } }
+			is_lesser_in_union = no
 		}
 		custom_tooltip = homunculi_no_mage_hint_tt
 		remove_heir = {  }
 		define_heir = {
 			dynasty = ROOT
 			age = 20
-			adm = 6
-			dip = 6
-			mil = 6
+			adm = 4
+			dip = 4
+			mil = 4
 			claim = 25
 			no_consort_with_heir = yes
 			male = yes
@@ -6328,6 +6372,29 @@ country_event = { #Homunculus, Vivum
 		set_heir_flag = long_lived_ruler
 		set_heir_flag = is_a_homunculus #Keeps them immortal
 		custom_tooltip = homunculus_is_male_tt
+		if = {
+			limit = { check_variable = { randnum = 6 } }
+			force_add_heir_personality = { personality = humane_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 5 } }
+			force_add_heir_personality = { personality = legendary_pirate_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 4 } }
+			force_add_heir_personality = { personality = legendary_conqueror_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 3 } }
+			force_add_heir_personality = { personality = great_engineer_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 2 } }
+			force_add_heir_personality = { personality = iron_crowned_personality }
+		}
+		else = {
+			force_add_heir_personality = { personality = peasant_revolt_leader_personality }
+		}
 		custom_tooltip = tooltip_magic_project_advance
 	}
 	option = { #Heir, female
@@ -6338,15 +6405,16 @@ country_event = { #Homunculus, Vivum
 			NOT = { has_government_attribute = is_magocracy }
 			NOT = { has_ruler_flag = xhazob_patron }
 			has_global_modifier_value = { which = female_advisor_chance value = 0.01 }
+			is_lesser_in_union = no
 		}
 		custom_tooltip = homunculi_no_mage_hint_tt
 		remove_heir = {  }
 		define_heir = {
 			dynasty = ROOT
 			age = 20
-			adm = 6
-			dip = 6
-			mil = 6
+			adm = 4
+			dip = 4
+			mil = 4
 			claim = 25
 			no_consort_with_heir = yes
 			female = yes
@@ -6354,6 +6422,29 @@ country_event = { #Homunculus, Vivum
 		set_heir_flag = long_lived_ruler
 		set_heir_flag = is_a_homunculus #Keeps them immortal
 		custom_tooltip = homunculus_is_female_tt
+		if = {
+			limit = { check_variable = { randnum = 6 } }
+			force_add_heir_personality = { personality = humane_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 5 } }
+			force_add_heir_personality = { personality = legendary_pirate_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 4 } }
+			force_add_heir_personality = { personality = legendary_conqueror_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 3 } }
+			force_add_heir_personality = { personality = great_engineer_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 2 } }
+			force_add_heir_personality = { personality = iron_crowned_personality }
+		}
+		else = {
+			force_add_heir_personality = { personality = peasant_revolt_leader_personality }
+		}
 		custom_tooltip = tooltip_magic_project_advance
 	}
 	option = {
@@ -6361,13 +6452,18 @@ country_event = { #Homunculus, Vivum
 		ai_chance = { factor = 1 }
 
 		add_country_modifier = { name = homunculus_eminence_grise duration = -1 }
-		add_power_projection = { type = mam_new_caliphate_pp amount = 10 }
+		add_power_projection = { type = homonculus_eminence_grise_pp amount = 15 }
 		custom_tooltip = tooltip_magic_project_advance
+
+		show_magic_project_homunculus_warning = yes
 	}
 	option = {
 		name = magic_project_homunculus.6.c
 		ai_chance = { factor = 1 }
-		trigger = { has_government_attribute = queen }
+		trigger = {
+			has_government_attribute = queen
+			is_lesser_in_union = no
+		}
 
 		if = { 
 			limit = { has_consort = yes }
@@ -6383,9 +6479,9 @@ country_event = { #Homunculus, Vivum
 			define_consort = {
 				dynasty = ROOT
 				age = 20
-				adm = 6
-				dip = 6
-				mil = 6
+				adm = 4
+				dip = 4
+				mil = 4
 				male = yes	
 			}
 		}
@@ -6399,9 +6495,9 @@ country_event = { #Homunculus, Vivum
 			define_consort = {
 				dynasty = ROOT
 				age = 20
-				adm = 6
-				dip = 6
-				mil = 6
+				adm = 4
+				dip = 4
+				mil = 4
 				female = yes
 			}
 		}
@@ -6411,32 +6507,43 @@ country_event = { #Homunculus, Vivum
 		add_country_modifier = { name = homunculus_consort duration = -1 }
 		if = {
 			limit = { check_variable = { randnum = 7 } }
-			add_queen_personality = humane_personality
+			force_add_consort_personality = { personality = humane_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 6 } }
-			add_queen_personality = fu_papal_puppetmaster_personality
+			force_add_consort_personality = { personality = fu_papal_puppetmaster_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 5 } }
-			add_queen_personality = legendary_pirate_personality
+			force_add_consort_personality = { personality = legendary_pirate_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 4 } }
-			add_queen_personality = legendary_conqueror_personality
+			force_add_consort_personality = { personality = legendary_conqueror_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 3 } }
-			add_queen_personality = great_engineer_personality
+			force_add_consort_personality = { personality = great_engineer_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 2 } }
-			add_queen_personality = iron_crowned_personality
+			force_add_consort_personality = { personality = iron_crowned_personality }
 		}
 		else = {
-			add_queen_personality = peasant_revolt_leader_personality
+			force_add_consort_personality = { personality = peasant_revolt_leader_personality }
 		}
 		custom_tooltip = tooltip_magic_project_advance
+	}
+	
+	option = {
+		name = magic_project_homunculus.6.e
+		ai_chance = { factor = 1 }
+		trigger = {
+			has_government_attribute = is_magocracy
+			NOT = { has_government_attribute = queen }
+		}
+		
+		add_country_modifier = { name = homunculus_attendant duration = -1 }
 	}
 }
 country_event = { #Homunculus Genius Loci
@@ -6824,7 +6931,7 @@ country_event = { #Homunculus, Hide or Reveal?
 	}
 }
 
-country_event = { #Homunculus reveal event sorter — these are the worst outcomes
+country_event = { #Homunculus reveal event sorter ï¿½ these are the worst outcomes
 	id = magic_project_homunculus.9
 	title = magic_project_homunculus.9.t
 	desc = magic_project_homunculus.9.d
@@ -7060,3 +7167,90 @@ country_event = { #Homunculus Getting Old...
 #Assassination Attempt on Homunculus Heir
 
 #Assassination Attempt on Homunculus Consort (not as likely only happens if no heir)
+
+
+#SALLA DRENNEN PROJECT
+
+namespace = magic_project_drennen_project_1
+
+country_event = { 
+	id = magic_project_drennen_project_1.0
+	title = magic_project_drennen_project_1.0.t
+	desc = magic_project_drennen_project_1.0.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+		
+	}
+	
+	option = {
+		name = magic_project_drennen_project_1.0.a
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			country_event = {
+				id = magic_project_drennen_project_1.1
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 20 }
+				NOT = { has_country_flag = magic_project_first_event_happened }
+			}
+			set_country_flag = magic_project_first_event_happened
+			country_event = {
+				id = salla_drennen.24
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 40 }
+				NOT = { has_country_flag = magic_project_second_event_happened }
+			}
+			set_country_flag = magic_project_second_event_happened
+			country_event = {
+				id = salla_drennen.25
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 60 }
+				NOT = { has_country_flag = magic_project_third_event_happened }
+			}
+			set_country_flag = magic_project_third_event_happened
+			country_event = {
+				id = salla_drennen.26
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 80 }
+				NOT = { has_country_flag = magic_project_fourth_event_happened }
+			}
+			set_country_flag = magic_project_fourth_event_happened
+			country_event = {
+				id = salla_drennen.27
+			}
+		}
+	}
+}
+
+country_event = {
+	id = magic_project_drennen_project_1.1
+	title = magic_project_drennen_project_1.1.t
+	desc = magic_project_drennen_project_1.1.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	
+	option = {
+		name = magic_project_drennen_project_1.1.a
+		if = {
+			limit = { at_least_magic_project_level = { project = drennen_project_1 level = 3 } }
+			country_event = { id = salla_drennen.20 }
+		}
+		else = {
+			country_event = { id = salla_drennen.19 }
+		}
+	}
+}
