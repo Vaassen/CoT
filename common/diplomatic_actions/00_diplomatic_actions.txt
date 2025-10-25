@@ -177,25 +177,6 @@ transfer_trade_power = {
 				FROM = { set_country_flag = transfers_trade_to_feiten }
 			}
 		}
-		if = {
-			limit = {
-				has_global_flag = z22_can_have_giesadh
-			}
-			if = {
-				limit = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					alliance_with = FROM
-				}
-				z22_giesadh_check_effect = yes
-			}
-			else_if = {
-				limit = {
-					is_or_was_tag = { tag = Z22 }
-					FROM = { alliance_with = ROOT }
-				}
-				FROM = { z22_giesadh_check_effect = yes }
-			}
-		}
 	}
 }
 
@@ -663,6 +644,18 @@ declarewar = {
 			always = no
 		}
 	}
+
+	pre_effect = {
+		if = { #Caergaraen
+			limit = {
+				has_country_modifier = J74_saerasyar_sword_base_mod
+				truce_with = FROM 
+			}
+			country_event = {
+				id = caergaraen.2 #Judging The Guilty
+			}
+		}
+	}
 	
 	effect = {
 		on_war_declaration_effect = yes #1.35
@@ -695,24 +688,6 @@ declarewar = {
 				FROM = { has_country_modifier = lake_federation_member }
 			}
 			remove_country_modifier = federation_war_mandat
-		}
-		
-		if = {
-			limit = { 
-				OR = {
-					tag = G93
-					FROM = { tag = G93 }
-				}
-				G93 = {
-					has_country_flag = mykx_hellfire_cannons_unlocked
-				}
-				NOT = { 
-					G93 = {
-						has_country_flag = mykx_hellfire_cannons_flag
-					}
-				}
-			}
-			G93 = { country_event = { id = mykx.33 } }
 		}
 		
 		if = {
@@ -3082,6 +3057,25 @@ annexationaction = {
 			}
 		}
 	}
+	
+	condition = {
+		tooltip = z22_no_annex_aelantiri_vic_league_members_tt
+		potential = {
+			mission_completed = z22_emancipate_aelantir
+			FROM = {
+				is_subject_of_type = vic_league_member
+				capital_scope = {
+					OR = {
+						continent = north_america
+						continent = south_america
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 }
 
 integrationaction = {
@@ -3159,6 +3153,17 @@ vassalaction = {
 				country_event = {
 					id = diggy.122
 				}
+			}
+		}
+		#Molten Eternity
+		if = {
+			limit = {
+				religion = molten_eternity
+				has_personal_deity = infinite_self_generosity
+			}
+			change_variable = {
+				which = moltenEternityObligationVar
+				value = 500
 			}
 		}
 	}
@@ -3564,6 +3569,60 @@ callaction = {
 			}
 		}
 	}
+	effect = {
+		if = {
+			limit = {
+				tag = J74 #Caergaraen
+				FROM = { 
+					OR = {
+						tag = H23 #Kaeorg
+						tag = H28 #Durasyar
+						tag = H29 #Tsidarok
+					}
+				}
+			}
+			change_variable = {
+				which = caergaraen_jolly_cooperation
+				value = 1
+			}
+			if = {
+				limit = { FROM = { tag = H23 } } #Kaeorg
+				set_country_flag = J74_joined_kaeorg_war_flag
+			}
+			if = {
+				limit = { FROM = { tag = H28 } } #Durasyar
+				set_country_flag = J74_joined_durasyar_war_flag
+			}
+			if = {
+				limit = { FROM = { tag = H29 } } #Tsidarok
+				set_country_flag = J74_joined_tsidarok_war_flag
+			}
+		}
+		if = {
+			limit = {
+				FROM = { tag = J74 } #Caergaraen
+				OR = {
+					tag = H23 #Kaeorg
+					tag = H28 #Durasyar
+					tag = H29 #Tsidarok
+				}
+			}
+			FROM = { set_country_flag = J74_join_tribal_war_flag }
+			if = {
+				limit = { tag = H23 } #Kaeorg
+				FROM = { set_country_flag = J74_joined_kaeorg_war_flag }
+			}
+			if = {
+				limit = { tag = H28 } #Durasyar
+				FROM = { set_country_flag = J74_joined_durasyar_war_flag }
+			}
+			if = {
+				limit = { tag = H29 } #Tsidarok
+				FROM = { set_country_flag = J74_joined_tsidarok_war_flag }
+			}
+		}
+	}
+
 	effect = {		#make ai use some raj mandates. might need better control in the future (i.e. only if the enemy is strong?)
 		if = {
 			limit = {
@@ -3748,6 +3807,28 @@ insultaction = {
 					duration = 1825
 					hidden = yes
 				}
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+				is_subject_of_type = vic_league_member
+				FROM = {
+					has_opinion_modifier = { who = ROOT modifier = scornfully_insulted }
+					OR = {
+						overlord_of = ROOT
+						any_ally = { overlord_of = ROOT }
+					}
+				}
+			}
+			add_government_power = {
+				mechanic_type = vic_league_mechanic
+				power_type = vic_league_mil_power
+				value = 2
 			}
 		}
 	}
@@ -4047,19 +4128,6 @@ support_heir = {
 }
 
 break_alliance = {
-	condition = {
-		tooltip = z22_new_world_giesadh_TT
-		potential = {
-			has_country_flag = z22_is_permanent_giesadh
-		}
-		allow = {
-			NOT = {
-				FROM = {
-					is_or_was_tag = { tag = Z22 }
-				}
-			}
-		}
-	}
 	effect = {
 		on_alliance_broken_effect = yes
 	}
@@ -4188,6 +4256,17 @@ giftaction = {
 				duration = 365 #1 years
 			}
 		}
+		#Molten Eternity
+		if = {
+			limit = {
+				religion = molten_eternity
+				has_personal_deity = infinite_self_generosity
+			}
+			change_variable = {
+				which = moltenEternityObligationVar
+				value = 10
+			}
+		}
 	}
 }
 
@@ -4255,7 +4334,14 @@ support_independence_action = {
 	condition = {
 		tooltip = vic_league_no_external_support
 		potential = {
-			FROM = { is_subject_of_type = vic_league_member }
+			FROM = {
+				is_subject_of_type = vic_league_member
+				NOT = {
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+			}
 		}
 		allow = { always = no }
 	}
