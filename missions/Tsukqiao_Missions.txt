@@ -2,15 +2,14 @@
 
 ### Tsukqiao Mission Tree by TheForsaken
 
-Z60_branch_1_3 = {
+Z60_branch_1_3_fake = {
 	slot = 3
 	generic = no
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60 
-		always = NO
-		#NOT = { has_country_flag = tsukqiao_dead_of_a_dreamer }
+		tag = Z60
+		NOT = { has_country_flag = tsukqiao_dead_of_a_dreamer }
 	} 
 
 	Z60_if_only = { #Fake mission, gets removed almost immediately
@@ -36,40 +35,132 @@ Z60_branch_1_1 = {
 	has_country_shield = yes
 	potential = { 
 		tag = Z60 
-		#has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_independent_missions
 	} 
 
 	Z60_repay_the_oni = {
 		icon = mission_female_throne
 		position = 4
-		required_missions = { Z60_her_dream } 
-		provinces_to_highlight = {  } 
+		required_missions = { Z60_her_dream }
 
-		trigger = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					owned_by = Y01 #Azjakuma
+					owner = {
+						NOT = {
+							has_opinion = {
+								who = ROOT
+								value = 80
+							}
+							has_80_opinion_improved_relation = yes
+						}
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
+							}
+						}
+					}
+				}
+				AND = {
+					province_id = 4844 #Emgolu
+					NOT = { infantry_in_province = 3 }
+				}
+			}
+		} 
 
-		effect = {  } 
+		trigger = {
+			treasury = 50
+			4844 = { infantry_in_province = 3 } #Emgolu
+			OR = {
+				reverse_has_opinion = {
+					who = Y01
+					value = 80
+				}
+				Y01 = { has_80_opinion_improved_relation = yes }
+			}
+			has_spy_network_in = {
+				who = Y01
+				value = 30
+			}
+		} 
+
+		effect = {  
+			add_treasury = -50
+			Y01 = { #Azjakuma
+				add_treasury = 50 
+				add_spy_network_from = {
+					who = ROOT
+					value = -30
+				}
+			}
+			4844 = { #Emgolu
+				kill_units = {
+					who = ROOT
+					type = infantry
+					amount = 3
+				}
+			}
+			moryokang_area = {
+				type = ALL
+				NOT = { province_id 4901 }
+				add_core = ROOT
+			}
+			remove_country_modifier = tsukqiao_indebt_to_the_oni
+		}
 	}
 
 	Z60_assist_the_council = {
 		icon = mission_warrior_gold
 		position = 5
 		required_missions = { Z60_repay_the_oni } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			owned_by = Y01 #Azjakuma
+			Y01 = { NOT = { has_been_insulted_by_root = yes } }
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			Y01 = { has_been_insulted_by_root = yes }
+			OR = {
+				advisor = grand_captain
+				has_mil_advisor_2 = yes
+			}
+			army_size = Y01
+		} 
 
-		effect = {  } 
+		effect = {  
+			custom_tooltip = tsukqiao_break_the_tagharoghi.tt
+			set_country_flag = tsukqiao_azjakuma_flag
+		}
 	}
 
 	Z60_of_wealth = {
 		icon = mission_zambezi_gold
 		position = 6
 		required_missions = { Z60_assist_the_council } 
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		provinces_to_highlight = {
+			OR = {
+				province_id = 4828 #Kabiourgarko
+				province_id = 4972 #Motijishi
+				province_id = 4902 #Mansorudo
+			}
+			NOT = { owned_by = ROOT }
+		} 
 
-		effect = {  } 
+		trigger = {
+			is_at_war = no
+			manpower = 3
+			4828 = { owned_by = ROOT } #Kabiourgarko
+			4972 = { owned_by = ROOT } #Motijishi
+			4902 = { owned_by = ROOT } #Mansorudo
+		} 
+
+		effect = {
+			country_event = { id = tsukqiao.2 }
+		} 
 	}
 }
 
@@ -80,43 +171,180 @@ Z60_branch_1_2 = {
 	has_country_shield = yes
 	potential = { 
 		tag = Z60 
-		#has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_dead_of_a_dreamer
 	} 
 
 	Z60_the_demons = {
 		icon = mission_oni
 		position = 2
 		required_missions = { Z60_his_sorrow } 
-		provinces_to_highlight = {  } 
-
-		trigger = {
-			has_estate_privilege = estate_church_religious_diplomats
-			has_estate_privilege = estate_church_religious_diplomats
+		provinces_to_highlight = {  
+			owned_by = Y01 #Azjakuma
+			NOT = {
+				OR = {
+					reverse_has_opinion = {
+						who = Y01 #Azjakuma
+						value = 80
+					}
+					Y01 = { has_80_opinion_improved_relation = yes } #Azjakuma
+				}
+			}
 		} 
 
-		effect = {  } 
-	}
+		trigger = {
+			OR = {
+				dip_power = 50
+				has_dip_advisor = yes
+			}
+			OR = {
+				reverse_has_opinion = {
+					who = Y01 #Azjakuma
+					value = 50
+				}
+				Y01 = { has_50_opinion_improved_relation = yes } #Azjakuma
+			}
+		} 
 
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_dip_advisor = yes }
+				}
+				add_dip_power = -50
+			}
+			add_treasury = 50
+			add_manpower = 5
+			add_country_modifier = {
+				name = tsukqiao_indebt_to_the_oni
+				duration = -1
+			}
+		} 
+	}
+}
+
+Z60_branch_1_2_independent = {
+	slot = 2
+	generic = no
+	ai = yes
+	has_country_shield = yes
+	potential = { 
+		tag = Z60 
+		has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_independent_missions
+	} 
 	Z60_repay_the_league = {
 		icon = mission_dominate_home_trade_node
 		position = 4
 		required_missions = { Z60_her_dream } 
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					owned_by = Z61 #Xiongxiap
+					NOT = {
+						reverse_has_opinion = {
+							who = Z61 #Xiongxiap
+							value = 150
+						}
+					}
+				}
+				AND = {
+					province_id = 4843 #Chashangyik
+					NOT = { num_of_times_improved = 3 }
+				}
+				AND = {
+					province_id = 4826 #Bianfang Node
+					NOT = {
+						trade_share = {
+							country = ROOT
+							share = 20
+						}
+					}
+				}
+			}
+		}
 
-		effect = {  } 
+		trigger = {  
+			reverse_has_opinion = {
+				who = Z61 #Xiongxiap
+				value = 150
+			}
+			4843 = { num_of_times_improved = 3 } #Chashangyik
+			4826 = { #Bianfang Node
+				trade_share = {
+					country = ROOT
+					share = 20
+				}
+			}
+		} 
+
+		effect = {
+			add_country_modifier = {
+				name = tsukqiao_administrative_integration
+				duration = 9125
+			}
+			create_subject = {
+				subject_type = vassal
+				subject = Z61 #Xiongxiap
+			}
+			add_opinion = {
+				who = Z61 #Xiongxiap
+				modifier = Z60_integrate_xiongxiap
+			}
+			Z61 = { #Xiongxiap
+				reverse_add_opinion = {
+					who = ROOT
+					modifier = Z60_integrate_xiongxiap
+				}
+			}
+		} 
 	}
 
 	Z60_of_control = {
 		icon = mission_dark_book
 		position = 6
 		required_missions = { Z60_repay_the_league } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			OR = {
+				owned_by = Z61 #Xiongxiap
+				AND = {
+					is_core = Z61 #Xiongxiap
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					province_id = 4843 #Chashangyik
+					NOT = { has_trade_building_trigger = yes }
+				}
+				AND = {
+					owned_by = ROOT
+					NOT = { has_trade_building_trigger = yes }
+					NOT = { num_of_owned_provinces_with = { value = 2 has_trade_building_trigger = yes } }
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			Z61 = { #Xiongxiap
+				exists = no 
+				all_core_province = {
+					owned_by = ROOT
+				}
+			}
+			4843 = { has_trade_building_trigger = yes } #Chashangyik
+			num_of_owned_provinces_with = { value = 2 has_trade_building_trigger = yes }
+		} 
 
-		effect = {  } 
+		effect = { 
+			remove_country_modifier = annexers_legacy
+			define_advisor = {
+				type = trader
+				skill = 2
+				discount = yes
+				culture = ROOT
+				religion = ROOT
+			}
+			set_estate_privilege = estate_burghers_league_of_xiongxiap
+		} 
 	}
 
 	Z60_ascendant_might = {
@@ -129,9 +357,14 @@ Z60_branch_1_2 = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			tag = V23 #Luzhong
+			legitimacy = 90
+		} 
 
-		effect = {  } 
+		effect = {  
+			country_event = { id = tsukqiao.3 }
+		} 
 	}
 }
 
@@ -142,7 +375,7 @@ Z60_branch_1_3 = {
 	has_country_shield = yes
 	potential = { 
 		tag = Z60 
-		#has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_dead_of_a_dreamer
 	} 
 
 	Z60_his_sorrow = {
@@ -150,20 +383,80 @@ Z60_branch_1_3 = {
 		position = 1
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			has_estate_privilege = estate_eunuchs_anb_advisors
+			has_estate_privilege = estate_church_religious_diplomats
+		} 
 
-		effect = {  } 
+		effect = {  
+			add_country_modifier = {
+				name = tsukqiao_by_all_means
+				duration = 9125
+			}
+		}
 	}
 
 	Z60_the_brothers = {
 		icon = mission_asian_trader
 		position = 2
-		required_missions = { Z60_his_sorrow } 
-		provinces_to_highlight = {  } 
+		required_missions = { Z60_his_sorrow }
+		provinces_to_highlight = {  
+			owned_by = Y02 #Jinqiu
+			NOT = {
+				has_spy_network_from = {
+					who = ROOT
+					value = 30
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			Y02 = { #Jinqiu
+				has_spy_network_from = {
+					who = ROOT
+					value = 30
+				}
+			}
+			num_of_estate_privileges = {
+				estate = estate_eunuchs_anb
+				value = 4
+			}
+			OR = {
+				adm_power = 50
+				has_adm_advisor = yes
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			if = {
+				limit = { NOT = { has_adm_advisor = yes } }
+				add_adm_power = -50
+			}
+			custom_tooltip = tsukqiao_mass_truces_1.tt
+			custom_tooltip = tsukqiao_brothers_in_xiongxiap.tt
+			hidden_effect = {
+				if = {
+					limit = { ai = no}
+					every_known_country = {
+						limit = {
+							capital_scope = {
+								OR = {
+									superregion = yanshen_superregion
+									region = shuvuushudi_region
+								}
+								NOT = { tag = Y02 } #Jinqiu
+							}
+							add_truce_with = Y02 #Jinqiu
+							add_truce_with = ROOT
+							Y02 = { add_truce_with = PREV }
+							ROOT = { add_truce_with = PREV }
+						}
+					}
+					country_event = { id = tsukqiao.4 days = 1825 }
+					set_country_flag = tsukqioa_brothers_in_xiongxiap_flag
+				}
+			}
+		}
 	}
 
 	Z60_her_dream = {
@@ -174,33 +467,161 @@ Z60_branch_1_3 = {
 			Z60_the_brothers
 			Z60_the_matriarch
 		}
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		provinces_to_highlight = {  
+			owned_by = Y02 #Jinqiu
+			NOT = { war_with = Y02 }
+		} 
 
-		effect = {  } 
+		trigger = {  
+			army_size = 1
+			offensive_war_with = Y02 #Jinqiu
+		} 
+
+		effect = {
+			4848 = { add_core = ROOT } #Heiyukcheng
+			4851 = { add_core = ROOT } #Caoying
+			custom_tooltip = tsukqiao_jinqiu_war.tt
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						alliance_with = Y02
+					}
+					white_peace = ROOT
+				}
+				set_country_flag = tsukqiao_jinqiu_war_flag
+			}
+		} 
 	}
+}
+
+Z60_branch_1_3_independent = {
+	slot = 3
+	generic = no
+	ai = yes
+	has_country_shield = yes
+	potential = { 
+		tag = Z60 
+		has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_independent_missions
+	} 
 
 	Z60_the_traitor_kin = {
 		icon = mission_fire_of_london
 		position = 5
 		required_missions = { Z60_her_dream } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			province_id = 4855 #Jianlin
+			NOT = {
+				AND = {
+					owner = {
+						has_spy_network_from = {
+							who = ROOT
+							value = 30
+						}
+						has_been_insulted_by_root = yes
+					}
+				}
+				owned_by = ROOT
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			OR = {
+				4855 = { #Jianlin
+					owner = {
+						has_spy_network_from = {
+							who = ROOT
+							value = 30
+						}
+						has_been_insulted_by_root = yes
+					}
+				}
+				owns = 4855 #Jianlin
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			4855 = { add_core = ROOT } #Jianlin
+			custom_tooltip = tsukqaio_excellent_might_yanszin.tt
+			unlock_merc_company = {
+				merc_company = merc_beikling_hill_raiders
+			}
+			hidden_effect = {
+				anjiang_area = { set_country_flag = tsukqiao_independent_missions }
+				linyuan_area = { set_country_flag = tsukqiao_independent_missions }
+				yanzhong_area = { set_country_flag = tsukqiao_independent_missions }
+			}
+		} 
 	}
 
 	Z60_of_right = {
 		icon = mission_restore_faith_in_the_throne
 		position = 6
 		required_missions = { Z60_the_traitor_kin } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			OR = {
+				AND = {
+					OR = {
+						area = anjiang_area
+						area = linyuan_area
+						area = yanzhong_area
+					}
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					province_id = 4855 #Jianlin
+					NOT = {
+						infantry_in_province = 8
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			anjiang_area = {
+				type = ALL
+				owned_by = ROOT
+			}
+			linyuan_area = {
+				type = ALL
+				owned_by = ROOT
+			}
+			yanzhong_area = {
+				type = ALL
+				owned_by = ROOT
+			}
+			4855 = { infantry_in_province = 8 } #Jianlin
+		} 
 
-		effect = {  } 
+		effect = {
+			add_adm_power = 100
+			add_dip_power = 100
+			add_mil_power = 100
+			add_church_power = 100
+			add_prestige = 20
+			4855 = { #Jianlin
+				change_religion = ROOT 
+				accretive_path_rebels = 6
+			}
+			anjiang_area = {
+				limit = { NOT = { province_id = 4849 } } #Yingzhen
+				add_base_tax = -2
+				add_base_production = -2
+				add_base_manpower = -2
+				add_devastation = 30
+			}
+			4852 = { #Tiaochi
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
+			}
+			4975 = { #Jieshik
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
+			}
+		} 
 	}
 }
 
@@ -211,7 +632,7 @@ Z60_branch_1_4 = {
 	has_country_shield = yes
 	potential = { 
 		tag = Z60 
-		#has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_dead_of_a_dreamer
 	} 
 
 	Z60_the_matriarch = {
@@ -220,10 +641,45 @@ Z60_branch_1_4 = {
 		required_missions = { Z60_his_sorrow } 
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {  
+			medium_tolerance_harpy_race_trigger = yes
+			balrijin_area = {
+				has_state_edict = edict_promote_military_recruitment
+			}
+			OR = {
+				has_mil_advisor = yes
+				mil_power = 50
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			if = {
+				limit = { NOT = { has_mil_advisor = yes } }
+				add_mil_power = -50
+			}
+			4852 = { #Tiaochi
+				pezarangi_harpy_1_pezarang_warriors = ROOT
+				pezarangi_harpy_1_pezarang_warriors = ROOT
+				pezarangi_harpy_1_pezarang_warriors = ROOT
+			}
+			add_country_modifier = {
+				name = tsukqiao_matriarch_deal
+				duration = 7300
+			}
+		} 
 	}
+}
+
+Z60_branch_1_4_independent = {
+	slot = 4
+	generic = no
+	ai = yes
+	has_country_shield = yes
+	potential = { 
+		tag = Z60 
+		has_country_flag = tsukqiao_dead_of_a_dreamer
+		has_country_flag = tsukqiao_independent_missions
+	} 
 
 	Z60_the_aftermath = {
 		icon = mission_rb_control_state_religion
@@ -264,10 +720,9 @@ Z60_branch_2_1 = {
 	generic = no
 	ai = yes
 	has_country_shield = yes
-	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+	potential = {
+		was_tag = Z60 
+		tag = V23
 	} 
 
 	Z60_appease_the_chimera = {
@@ -335,9 +790,8 @@ Z60_branch_2_2 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 	} 
 
 	Z60_break_the_dragon = {
@@ -447,9 +901,8 @@ Z60_branch_2_3 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 	} 
 
 	Z60_were_they_failed = {
@@ -546,9 +999,8 @@ Z60_branch_2_4 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 	} 
 
 	Z60_expand_the_compact = {
@@ -616,9 +1068,8 @@ Z60_branch_2_5 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 	} 
 
 	Z60_ashes_of_history = {
@@ -700,9 +1151,8 @@ Z60_branch_3_2 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 		#has_country_flag = fire_forged_domain
 	} 
 
@@ -738,9 +1188,8 @@ Z60_branch_3_3 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 		#has_country_flag = fire_forged_domain
 	} 
 
@@ -776,9 +1225,8 @@ Z60_branch_3_4 = {
 	ai = yes
 	has_country_shield = yes
 	potential = { 
-		tag = Z60
-		#was_tag = Z60 
-		#tag = V23
+		was_tag = Z60 
+		tag = V23
 		#has_country_flag = fire_forged_domain
 	}
 
