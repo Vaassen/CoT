@@ -82,7 +82,7 @@ Z60_branch_1_1 = {
 								who = ROOT
 								value = 80
 							}
-							has_80_opinion_improved_relation = yes
+							has_80_opinion_improved_relation = { target = ROOT }
 						}
 						NOT = {
 							has_spy_network_from = {
@@ -107,7 +107,7 @@ Z60_branch_1_1 = {
 					who = Y01
 					value = 80
 				}
-				Y01 = { has_80_opinion_improved_relation = yes }
+				Y01 = { has_80_opinion_improved_relation = { target = ROOT } }
 			}
 			has_spy_network_in = {
 				who = Y01
@@ -219,7 +219,7 @@ Z60_branch_1_2 = {
 						who = Y01 #Azjakuma
 						value = 50
 					}
-					Y01 = { has_50_opinion_improved_relation = yes } #Azjakuma
+					has_50_opinion_improved_relation = { target = ROOT } #Azjakuma
 				}
 			}
 		} 
@@ -234,7 +234,7 @@ Z60_branch_1_2 = {
 					who = Y01 #Azjakuma
 					value = 50
 				}
-				Y01 = { has_50_opinion_improved_relation = yes } #Azjakuma
+				Y01 = { has_50_opinion_improved_relation = { target = ROOT } } #Azjakuma
 			}
 		} 
 
@@ -869,20 +869,142 @@ Z60_branch_2_1 = {
 		required_missions = { Z60_ascendant_might } 
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			if = {
+				limit = {
+					R62 = { exists = yes } #The Command
+				}
+				has_spy_network_in = {
+					who = R62
+					value = 50
+				}
+				spymaster = 2
+				dip_power = 100
+			}
+			else_if = {
+				limit = {
+					V98 = { exists = yes } #Shammanhome
+				}
+				has_spy_network_in = {
+					who = V98
+					value = 50
+				}
+				spymaster = 2
+				dip_power = 100
+			}
+			else_if = {
+				limit = {
+					any_known_country = {
+						culture_group = hobgoblin
+						NOT = { primary_culture = eagle_hobgoblin }
+						any_owned_province = {
+							region = shamakhad_region
+						}
+					}
+				}
+				has_spy_network_in = {
+					who = PREV #As in, the highest dev hobgobbo meeting those requirements
+					value = 50
+				}
+				spymaster = 2
+				dip_power = 100
+			}
+			else = {
+				#Mission is bypassed
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			if = {
+				limit = {
+					R62 = { exists = yes } #The Command
+				}
+				add_spy_network_in = {
+					who = R62
+					value = -50
+				}
+				add_truce_with = R62
+				add_dip_power = -100
+			}
+			else_if = {
+				limit = {
+					V98 = { exists = yes } #Shammanhome
+				}
+				add_truce_with = V98
+				add_spy_network_in = {
+					who = V98
+					value = -50
+				}
+				add_dip_power = -100
+			}
+			else = {
+				hidden_effect = {
+					select_highest_dev_known_country_with_limit = {
+						index = 1
+						limit = "
+							culture_group = hobgoblin
+							NOT = { primary_culture = eagle_hobgoblin }
+							any_owned_province = {
+								region = shamakhad_region
+							}
+						"
+						effect = "
+							save_event_target_as = tsukqiao_hobgobbo_trucymate
+						"
+					}
+				}
+				add_spy_network_in = {
+					who = event_target:tsukqiao_hobgobbo_trucymate
+					value = -50
+				}
+				add_truce_with = event_target:tsukqiao_hobgobbo_trucymate
+				add_dip_power = -100
+			}
+		} 
 	}
 
 	Z60_end_the_tagharoghi = {
 		icon = mission_break_sicily
 		position = 10
 		required_missions = { Z60_appease_the_chimera } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			region = demon_hills_region
+			OR = {
+				owned_by = Y01
+				NOT = { owned_by = ROOT }
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			demon_hills_region = { owned_by = ROOT }
+			Y01 = { exists = no }
+		} 
 
-		effect = {  } 
+		effect = {
+			5430 = { #Shinukhorchi
+				add_base_tax = -1
+				add_base_production = -1
+				add_base_manpower = -1
+				add_devastation = 20
+			}
+			add_country_modifier = {
+				name = tsukqiao_backstab_the_backstabbers
+				duration = -1
+			}
+			if = {
+				limit = {
+					OR = {
+						R62 = { exists = yes }
+						V98 = { exists = yes }
+						event_target:tsukqiao_hobgobbo_trucymate = { exists = yes }
+					}
+				}
+				country_event = {
+					id = tsukqiao.7
+					days = 1825
+				}
+			}
+		} 
 	}
 
 	Z60_behead_the_chimera = {
@@ -892,33 +1014,226 @@ Z60_branch_2_1 = {
 			Z60_end_the_tagharoghi
 			Z60_oath_of_power
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			region = shamakhad_region
+			NOT = { owned_by = ROOT }
+		} 
 
-		trigger = {  } 
+		trigger = {
+			OR = {
+				any_known_country = {
+					num_of_provinces_owned_or_owned_by_subjects_with = {
+						value = 20
+						region = shamakhad_region
+					}
+					defensive_war_with = ROOT
+				}
+				num_of_owned_provinces_with = {
+					value = 20
+					region = shamakhad_region
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			add_manpower = 10
+			add_country_modifier = {
+				name = tsukqiao_show_them_true_might
+				duration = 3650
+			}
+			pharata_area = {
+				add_core = ROOT
+			}
+			sir_area = {
+				add_core = ROOT
+			}
+		}
 	}
 
 	Z60_true_terror_of_haless = {
 		icon = mission_burning_castle
 		position = 14
 		required_missions = { Z60_behead_the_chimera } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			OR = {
+				region = jade_mines_region
+				region = shamakhad_region
+			}
+			NOT = {
+				area = khadisrapur_area
+				area = tilathi_area
+				area = middle_nadimraj_area
+				area = bidhilar_area
+				area = tiltaghar_area
+				area = east_rajnadhaga_area
+				area = khadirnadi_area
+				area = west_rajnadhaga_area
+				owned_by = ROOT
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			R62 = { exists = no } #The Command
+			V98 = { exists = no } #Shammanhome
+			R95 = { exists = no } #Lion Command
+			R94 = { exists = no } #Boar Command
+			R96 = { exists = no } #Wolf Command
+			custom_trigger_tooltip = {
+				tooltip = tsukqiao_command_starting_land.tt
+				jade_mines_region = {
+					type = ALL
+					owned_by = ROOT
+				}
+				shamakhad_region = {
+					type = ALL
+					OR = {
+						area = khadisrapur_area
+						area = tilathi_area
+						area = middle_nadimraj_area
+						area = bidhilar_area
+						area = tiltaghar_area
+						area = east_rajnadhaga_area
+						area = khadirnadi_area
+						area = west_rajnadhaga_area
+						owned_by = ROOT
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			4311 = { #Gronstunad
+				add_base_tax = -3
+				add_base_production = -3
+				add_base_manpower = -3
+				add_devastation = 40
+			}
+			4630 = { #Sarilavhan
+				add_base_tax = -2
+				add_base_production = -2
+				add_base_manpower = -2
+				add_devastation = 20
+				change_religion = ROOT
+				change_culture = ROOT
+				add_province_modifier = {
+					name = tsukqiao_imperial_quarters
+					duration = -1
+				}
+			}
+			custom_tooltip = tsukqiao_5_free_dev_in_beikling.tt
+			hidden_effect = {
+				set_country_flag = tsukqiao_free_dev_1
+				set_country_flag = tsukqiao_free_dev_2
+				set_country_flag = tsukqiao_free_dev_3
+				set_country_flag = tsukqiao_free_dev_4
+				set_country_flag = tsukqiao_free_dev_5
+				country_event = {
+					id = tsukqiao.11 
+					days = 1825
+				}
+			}
+		}
 	}
 
 	Z60_end_the_elephants = {
 		icon = mission_elephant_war
 		position = 16
 		required_missions = { Z60_at_harimars_doors } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {  
+			OR = {
+				AND = {
+					region = dhujat_region
+					NOT = {
+						area = rangadevi_area
+						area = sarisung_area
+						area = semphrerong_area
+						area = phangban_area
+						area = dhurajaghan_area
+						area = khiraspid_area
+						area = khirnadhiman_area
+						area = thadarsaghol_area
+						area = tughayasa_area
+						owned_by = ROOT
+					}
+				}
+				AND = {
+					culture = ghavaanaj
+					owned_by = ROOT
+					NOT = { has_manpower_building_trigger = yes }
+				}
+				AND = {
+					province_id = 4485 #Sharaajaghal
+					NOT = {	has_building = state_house }
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {  
+			custom_trigger_tooltip = {
+				tooltip = tsukqiao_elephant_lord_land.tt
+				dhujat_region = {
+					type = ALL
+					OR = {
+						area = rangadevi_area
+						area = sarisung_area
+						area = semphrerong_area
+						area = phangban_area
+						area = dhurajaghan_area
+						area = khiraspid_area
+						area = khirnadhiman_area
+						area = thadarsaghol_area
+						area = tughayasa_area
+						owned_by = ROOT
+					}
+				}
+			}
+			num_of_owned_provinces_with = {
+				value = 10
+				culture = ghavaanaj
+				has_manpower_building_trigger = yes
+			}
+			4485 = { #Sharaajaghal
+				owned_by = ROOT
+				has_building = state_house
+			}
+		} 
 
-		effect = {  } 
+		effect = {  
+			4485 = { #Sharaajaghal
+				add_base_tax = -4
+				add_base_production = -4
+				add_base_manpower = -4
+				add_devastation = 50
+				change_culture = ROOT
+				change_religion = ROOT
+				add_province_modifier = {
+					name = tsukqiao_imperial_quarters
+					duration = -1
+				}
+			}
+			custom_tooltip = tsukqiao_5_dev_in_elephat.tt
+			hidden_effect = {
+				for = {
+					amount = 5
+					effect = "
+						random_owned_province = {
+							limit = {
+								NOT = { culture = ghavaanaj }
+								NOT = { has_province_flag = tsukqiao_elephant_dev }
+							}
+							add_base_tax = 1
+							add_base_production = 1
+							add_base_manpower = 2
+							set_province_flag = tsukqiao_elephant_dev
+						}
+					"
+				}
+			}
+			country_event = {
+				id = tsukqiao.13
+				days = 1825
+			}
+		} 
 	}
 }
 
