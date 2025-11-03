@@ -46,7 +46,8 @@ custom_button = {
 				NOT = { has_disaster = remnant_stagnation_disaster }
 			}
 		}
-		is_state_core = FROM
+		is_core = FROM
+		is_owned_by_trade_company = no
 		controlled_by = FROM
 		custom_trigger_tooltip = {
 			tooltip = diggy_no_building #This includes armies and such
@@ -483,10 +484,6 @@ custom_button = { #Button for the UI when building UI is closed
 			OR = {
 				tag = FROM
 				is_subject_of = FROM
-				AND = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					is_giesadh = yes
-				}
 			}
 			FROM = {
 				NOT = { has_country_flag = province_button_UI_opened }
@@ -510,10 +507,6 @@ custom_window = { #Window for the UI when building UI is closed
             OR = {
                 tag = FROM
                 is_subject_of = FROM
-				AND = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					is_giesadh = yes
-				}
             }
             FROM = {
                 has_country_flag = province_button_UI_opened
@@ -528,10 +521,6 @@ custom_window = { #Window for the UI when building UI is open and no monument
 			OR = {
 				tag = FROM
 				is_subject_of = FROM
-				AND = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					is_giesadh = yes
-				}
 			}
 		}
     }
@@ -547,10 +536,6 @@ custom_window = { #Window for the UI when building UI is open and there is a mon
 			OR = {
 				tag = FROM
 				is_subject_of = FROM
-				AND = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					is_giesadh = yes
-				}
 			}
 		}
     }
@@ -1114,6 +1099,7 @@ custom_button = { #Wood Elf Ranger Camps
 			primary_culture = wood_elf
 			OR = {
 				has_reform = wood_elf_salla
+				has_reform = wood_elf_salla_non_rangers
 				has_reform = the_great_salla
 				has_reform = autocracy_reform_sf
 				has_reform = oak_monarchy_reform
@@ -1126,39 +1112,209 @@ custom_button = { #Wood Elf Ranger Camps
 		NOT = { has_terrain = fey_gladeway }
 		NOT = { has_terrain = gladeway }
 	}
-	trigger = {
-		if = { #If/Else for proper tooltips
-			limit = { NOT = { has_province_modifier = deepwoods_rangers_camp } }
-			is_below_grove_limit_trigger = yes
-			owner = {
-				mil_power = 10
-				treasury = 25
-			}
-			base_manpower = 5
+	frame = {
+		number = 1
+		trigger = {
+			NOT = { owner = { has_country_flag = deepwoods_rangers_disabled } }
 		}
-		else = { has_province_modifier = deepwoods_rangers_camp }
+	}
+	frame = {
+		number = 2
+		trigger = {
+			owner = { 
+				has_country_flag = deepwoods_rangers_disabled 
+				has_country_modifier = mythical_cavalry_hawks
+			}
+		}
+	}
+	trigger = {
+		if = { limit = { NOT = { owner = { has_country_flag = deepwoods_rangers_disabled } } }
+			if = { #If/Else for proper tooltips
+				limit = { NOT = { has_province_modifier = deepwoods_rangers_camp } }
+				is_below_grove_limit_trigger = { modifier = deepwoods_rangers_camp }
+				owner = {
+					mil_power = 10
+					treasury = 25
+				}
+				base_manpower = 5
+			}
+			else = { has_province_modifier = deepwoods_rangers_camp }
+		}
+		else_if = { limit = { owner = { has_country_flag = mythical_cavalry_hawks_aviary_construction_unlocked } }
+			if = { limit = { NOT = { has_province_modifier = I27_great_hawk_aviary_mod } }
+				is_below_grove_limit_trigger = { modifier = I27_great_hawk_aviary_mod }
+				owner = {
+					mil_power = 10
+					treasury = 25
+				}
+				base_manpower = 5
+			}
+			else = { has_province_modifier = I27_great_hawk_aviary_mod }
+		}
 	}
 	effect = {
-		if = {
-			limit = { NOT = { has_province_modifier = deepwoods_rangers_camp } }
-			owner = {
-				add_mil_power = -10
-				add_treasury = -25
+		if = { limit = { NOT = { owner = { has_country_flag = deepwoods_rangers_disabled } } }
+			if = {
+				limit = { NOT = { has_province_modifier = deepwoods_rangers_camp } }
+				owner = {
+					add_mil_power = -10
+					add_treasury = -25
+				}
+				add_province_modifier = {
+					name = deepwoods_rangers_camp
+					duration = -1
+				}
+				apply_strategy_effect = yes
 			}
-			add_province_modifier = {
-				name = deepwoods_rangers_camp
-				duration = -1
+			else = {
+				owner = { add_mil_power = 5 }
+				remove_province_modifier = deepwoods_rangers_camp
+				remove_strategy_effect = yes
 			}
-			apply_strategy_effect = yes
 		}
-		else = {
-			owner = { add_mil_power = 5 }
-			remove_province_modifier = deepwoods_rangers_camp
-			remove_strategy_effect = yes
+		else_if = { limit = { owner = { has_country_modifier = mythical_cavalry_hawks } }
+			if = { limit = { NOT = { has_province_modifier = I27_great_hawk_aviary_mod } }
+				owner = {
+					add_mil_power = -10
+					add_treasury = -25
+				}
+				add_province_modifier = {
+					name = I27_great_hawk_aviary_mod
+					duration = -1
+				}
+				hidden_effect = { 
+					I27_se_apply_aviary_adjacency_mods = yes
+					every_neighbor_province = { I27_se_apply_aviary_adjacency_mods = yes } 
+				}
+			}
+			else = {
+				owner = { add_mil_power = 5 }
+				remove_province_modifier = I27_great_hawk_aviary_mod
+				hidden_effect = { # Easier to remove modifiers and then add them back if needed, rather than checking if they should be removed in the first place.
+					I27_se_remove_aviary_adjacency_mods = yes
+					I27_se_apply_aviary_adjacency_mods = yes
+					every_neighbor_province = {
+						I27_se_remove_aviary_adjacency_mods = yes
+						I27_se_apply_aviary_adjacency_mods = yes
+					}
+				}
+			}
 		}
 	}
 	tooltip = deepwoods_rangers_button_tt
 }
+
+custom_button = { #build Lencori Behemoth shipyard
+	name = lencori_behemoth_shipyard_button
+	potential = {
+		owner = {
+			tag = FROM
+			has_country_flag = have_behemoth
+			lencori_qualifies_for_behemoths = yes
+		}
+		has_port = yes
+	}
+	trigger = {
+		has_port = yes
+		development = 10
+		owner = {
+			if = {
+				limit = { has_estate_privilege = estate_burghers_control_over_behemoth_shipyards }
+				has_estate_privilege = estate_burghers_control_over_behemoth_shipyards
+				treasury = 300
+			}
+			else = {
+				treasury = 200
+			}
+		}
+		lencori_owner_qualifies_for_behemoths = yes
+		custom_trigger_tooltip = {
+			tooltip = lencori_behemoth_shipyard_naval_supplies_tt
+			calc_true_if = {
+				# This calc_true_if is a workaround to get a live-updating check of a > b
+				# by instead checking that a-b > 0
+				# where a is the total naval supplies produced
+				# and b is the number of existing shipyards (with some math, precomputed by
+				# the scripted effect lencori_behemoth_update_all_shipyards)
+				amount = 0
+				hidden_trigger = {
+					owner = {
+						check_variable = {
+							which = lencori_behemoth_required_naval_supplies
+							value = -1000
+						}
+						calc_true_add_naval_supplies_produced_110 = yes
+					}
+				}
+			}
+		}
+		if = {
+			limit = { NOT = { owner = { has_country_modifier = improved_behemoth_construction } } }
+			if = {
+				limit = { NOT = { owner = { has_estate_privilege = estate_burghers_control_over_behemoth_shipyards } } }
+				owner_has_less_than_n_lencori_behemoth_shipyards = { n = 5 }
+			}
+			else = {
+				owner_has_less_than_n_lencori_behemoth_shipyards = { n = 10 }
+			}
+		}
+		else = {
+			if = {
+				limit = { owner = { NOT = { has_estate_privilege = estate_burghers_control_over_behemoth_shipyards} } }
+				owner_has_less_than_n_lencori_behemoth_shipyards = { n = 10 }
+			}
+			else = {
+				owner_has_less_than_n_lencori_behemoth_shipyards = { n = 15 }
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = has_no_lencori_behemoth_shipyard_tt
+			NOT = {
+				OR = {
+					has_province_modifier = lencori_behemoth_shipyard
+					has_province_modifier = lencori_behemoth_shipyard_impress
+					has_province_modifier = lencori_behemoth_shipyard_improved
+					has_province_modifier = lencori_behemoth_shipyard_impress_improved
+					has_province_modifier = lencori_shipyard_of_lament
+				}
+			}
+		}
+	}
+	effect = {
+		owner = {
+			if = {
+				limit = { has_estate_privilege = estate_burghers_control_over_behemoth_shipyards }
+				add_treasury = -300
+				add_estate_loyalty = {
+					estate = estate_burghers
+					loyalty = 5
+				}
+			}
+			else = {
+				add_treasury = -200
+			}
+			hidden_effect = {
+				if = {
+					limit = { has_country_modifier = improved_behemoth_construction }
+					subtract_variable = {
+						which = lencori_behemoth_required_naval_supplies
+						value = 5
+					}
+				}
+				else = {
+					subtract_variable = {
+						which = lencori_behemoth_required_naval_supplies
+						value = 10
+					}
+				}
+				export_lencori_behemoth_required_naval_supplies_value_for_tt = yes
+			}
+		}
+		lencori_behemoth_add_shipyard_modifier = yes
+	}
+	tooltip = lencori_behemoth_shipyard_button_tt
+}
+
 
 #Slot 5 - Tag specific button
 custom_button = { #Dummy closed
@@ -1471,7 +1627,7 @@ custom_button = {	#celmaldor trade league investment
 			is_or_was_tag = { tag = Z22 }
 		}
 		owner = {
-			is_giesadh_or_vic_league_member = yes 
+			is_z22_vic_league_member = yes 
 			NOT = {
 				has_global_flag = z22_in_investment_screen
 			}
