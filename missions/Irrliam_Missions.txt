@@ -178,7 +178,7 @@ irrliam_coastal_expansion = {
 		}
 	}
 	
-	irrliam_gates_of_cannor = {
+	irrliam_the_new_sun_elf = {
 		icon = mission_control_the_barbary_coast
 		required_missions = {
 			irrliam_heirs_of_dalarand
@@ -195,7 +195,15 @@ irrliam_coastal_expansion = {
 				AND = {
 					country_or_non_sovereign_subject_holds = ROOT
 					devastation = 0.1
-				}				
+				}
+				AND = {
+					is_capital = yes
+					owner = {
+						total_development = ROOT
+						culture = sun_elf
+						NOT = { tag = ROOT }
+					}
+				}			
 			}
 		}
 		
@@ -368,7 +376,7 @@ irrliam_river_expansion = {
 		}
 	}
 	
-	irrliam_phoenix_rising = {
+	irrliam_igniting_the_ash_palace = {
 		icon = mission_empire
 		required_missions = { 
 			irrliam_the_grand_sunblessing
@@ -430,51 +438,117 @@ irrliam_big_development = {
 	}
 	has_country_shield = yes
 	
-	irrliam_vassal_loyalty = {
+	irrliam_revisit_treaty_of_brasan = {
 		icon = mission_alliances
 		required_missions = { 
 		}
 		position = 1
 		
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					province_id = 565
+					country_or_non_sovereign_subject_holds = ROOT
+				}
+				AND = {
+					is_capital = yes
+					owner = {
+						is_subject_of = ROOT
+						liberty_desire = 50
+					}
+				}
+			}
+		}
+
 		trigger = {
 			is_at_war = no
 			all_subject_country = {
-				is_subject_of = ROOT
 				NOT = { liberty_desire = 50 }
 			}
+			is_incident_happened = incident_bulwar_under_threat
+			owns_or_non_sovereign_subject_of = 565
 		}
 		
 		effect = { 
-			add_country_modifier = {
-				name = irrliam_vassal_loyalty
-				duration = 10950
+			simple_dynamic_effect = {
+				first_custom_tooltip = irrliam_kept_all_loyal
+				first_limit = "
+					NOT = {
+						truce_with = F24
+						truce_with = F40
+						truce_with = F43
+						truce_with = F44
+					}
+				"
+				first_effect = "every_subject_country = { add_liberty_desire = -25 }"
+				second_custom_tooltip = irrliam_had_to_smack_some
+				second_limit = "
+					OR = {
+						truce_with = F24
+						truce_with = F40
+						truce_with = F43
+						truce_with = F44
+					}
+				"
+				second_effect = "
+					every_subject_country = {
+						limit = { truce_with = ROOT }
+						add_liberty_desire = -20
+					}
+				"
 			}
-			568 = { add_permanent_claim = ROOT }
-			572 = { add_permanent_claim = ROOT }
 		}
 	}
 	
-	irrliam_land_route = {
+	irrliam_contacts_in_bulwar = {
 		icon = mission_bedouins
-		required_missions = { irrliam_vassal_loyalty 
-		}
-		position = 2
+		required_missions = { irrliam_revisit_treaty_of_brasan }
+		position = 3
 		
 		provinces_to_highlight = {
-			OR = { 
-				province_id = 568
-				province_id = 572
+			province_id = 601
+			NOT = {
+				country_or_non_sovereign_subject_holds = ROOT
+				F39 = {
+					OR = {
+						has_opinion = {
+							who = ROOT
+							value = 120
+						}
+						tag_or_overlord_has_spy_network_from = {
+							who = ROOT
+							value = 50
+						}
+					}
+				}
 			}
-			NOT = { country_or_non_sovereign_subject_holds = ROOT }
 		}
 		
 		trigger = {
-			568 = {
-				country_or_non_sovereign_subject_holds = ROOT
+			if = {
+				limit = {
+					exists = F39
+					NOT = { is_subject_of = ROOT }
+				}
+				F39 = {
+					OR = {
+						has_opinion = {
+							who = ROOT
+							value = 120
+						}
+						tag_or_overlord_has_spy_network_from = {
+							who = ROOT
+							value = 50
+						}
+					}
+				}
+				OR = {
+					spymaster = 1
+					diplomat = 1
+					dip_power = 150
+				}
 			}
-			572 = {
-				country_or_non_sovereign_subject_holds = ROOT
-			}
+			else = { owns_or_non_sovereign_subject_of = 601 }
 		}
 		
 		effect = {
@@ -487,144 +561,134 @@ irrliam_big_development = {
 			}
 			if = {
 				limit = {
-					exists = F32
+					exists = F39
 				}
-				add_casus_belli = {
-					target = F32
-					type = cb_vassalize_mission
-					months = 360
+				if = {
+					limit = { F39 = { is_subject_of = ROOT } }
+					add_historical_friend_mutual = { tag = F39 }
 				}
-			}	
+				else = {
+					if = {
+						limit = {
+							NOT = {
+								spymaster = 1
+								diplomat = 1
+							}
+						}
+						add_dip_power = -150
+					}
+					country_event = { id = irrliam.6 }
+				}
+			}
+			else = { 601 = { add_local_autonomy = -25 } }
 		}
 	}
 	
-	irrliam_brasan = {
+	irrliam_align_the_temples = {
 		icon = mission_dominate_genoa
-		required_missions = { irrliam_land_route 
-		}
-		position = 3
-		
-		provinces_to_highlight = {
-			province_id = 565
-			OR = {
-				NOT = { owned_by = F24 }
-				NOT = { is_core = F24 }
-				NOT = { has_tax_building_trigger = yes }
-			}
-		}
-		
-		trigger = { 
-			treasury = 150
-			F24 = { 
-				is_subject_of = ROOT 
-			}
-			F24 = {
-				has_opinion = {
-					who = ROOT
-					value = 200
-				}
-				owns_core_province = 565
-				565 = { 
-					renaissance = 100
-					has_tax_building_trigger = yes
-				}
-			}	
-		}
-		
-		effect = {
-			add_treasury = -150
-			565 = {
-				add_base_production = 3
-				add_base_tax = 3
-				add_permanent_province_modifier = {
-					name = irrliam_brasan_development
-					duration = -1
-				}
-			}
-		}
-	}
-	
-	irrliam_bulwar = {
-		icon = mission_mosque
-		required_missions = { irrliam_brasan 
-		}
+		required_missions = { irrliam_contacts_in_bulwar }
 		position = 4
 		
 		provinces_to_highlight = {
-			province_id = 601
 			OR = {
-				NOT = { owned_by = F39 }
-				NOT = { is_core = F39 }
-				NOT = { has_courthouse_building_trigger = yes }
+				AND = {
+					province_id = 601
+					country_or_non_sovereign_subject_holds = ROOT
+				}
+				is_capital_of = U20
+				is_capital_of = F31
 			}
 		}
 		
 		trigger = { 
-			treasury = 175
-			F39 = { 
-				is_subject_of = ROOT 
-			}
-			F39 = {
-				has_opinion = {
-					who = ROOT
-					value = 175
+			has_estate_privilege = estate_church_religious_diplomats
+			owns_or_non_sovereign_subject_of = 601
+			if = {
+				limit = { exists = U20 }
+				U20 = {
+					if = {
+						limit = { is_subject = no }
+						has_opinion = {
+							who = ROOT
+							value = 75
+						}
+						ROOT = { treasury = 100 }
+					}
+					else = {
+						overlord = { has_spy_network_from = { who = ROOT value = 30 } }
+					}
 				}
-				owns_core_province = 601
-				601 = { has_courthouse_building_trigger = yes }
+			}
+			if = {
+				limit = { exists = F31 }
+				F31 = {
+					if = {
+						limit = { is_subject = no }
+						has_opinion = {
+							who = ROOT
+							value = 75
+						}
+						ROOT = { treasury = 100 }
+					}
+					else = {
+						overlord = { has_spy_network_from = { who = ROOT value = 30 } }
+					}
+				}
 			}
 		}
 		
 		effect = {
-			add_treasury = -175
-			601 = { 
-				add_base_production = 4
-				add_base_tax = 2
+			if = {
+				limit = { F31 = { exists = yes is_subject = no } }
+				F31 = { country_event = { id = irrliam.6 days = 10 } }
+				custom_tooltip = irrliam_align_insight
+				add_treasury = -100
+			}
+			else = {
+				custom_tooltip = irrliam_align_better_reward
+				eduz_vacyn_area = { add_permanent_claim = ROOT }
+			}
+			if = {
+				limit = { U20 = { exists = yes is_subject = no } }
+				U20 = { country_event = { id = irrliam.6 days = 20 } }
+				custom_tooltip = irrliam_align_insight
+				add_treasury = -100
+			}
+			else = {
+				custom_tooltip = irrliam_align_better_reward
+				azka_sur_area = { add_permanent_claim = ROOT }
 			}
 		}
 	}
 	
-	irrliam_eastern_development = {
-		icon = mission_colonial
-		required_missions = { irrliam_bulwar 
-		}
+	irrliam_the_unsightly_mountain = {
+		icon = mission_mosque
+		required_missions = { irrliam_align_the_temples }
 		position = 5
 		
 		provinces_to_highlight = {
-			area = harklum_area
+			country_or_non_sovereign_subject_holds = ROOT
 			OR = {
-				NOT = { country_or_non_sovereign_subject_holds = ROOT }
-				NOT = { has_tax_building_trigger = yes }
-				NOT = { has_production_building_trigger = yes }
+				area = jikarzax_area
+				area = baganash_area
+				area = far_east_salahad_area
+				area = saranza_area
+				area = grixek_area
 			}
 		}
 		
 		trigger = { 
-			treasury = 150
-			F36 = { 
-				is_subject_of = ROOT 
-			}
-			F36 = {
-				has_opinion = {
-					who = ROOT
-					value = 175
-				}
-			}
-			harklum_area = { 
-				type = all
-				country_or_non_sovereign_subject_holds = ROOT
-				has_tax_building_trigger = yes
-				has_production_building_trigger = yes
-			}
+			jikarzax_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
+			baganash_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
+			far_east_salahad_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
+			saranza_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
+			grixek_area = { type = all country_or_non_sovereign_subject_holds = ROOT }
 		}
 		
 		effect = {
-			add_treasury = -150
-			harklum_area = {
-				add_base_tax = 2
-				add_base_production = 2
-			}
+			country_event = { id = irrliam.8 }
 		}
-	}
+	}	
 }
 
 irrliam_small_development = {
