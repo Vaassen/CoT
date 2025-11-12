@@ -108,20 +108,10 @@ I55_2_missions = {
 		trigger = {
 			if = {
 				limit = { is_ruler_transmutation_level_3 = no }
-				type_is_studying_magic = {
-					type = ruler
-					school = transmutation
-				}
+				ruler_is_advancing_transmutation = yes
 			}
 			has_estate_privilege = estate_mages_seek_magical_advice
-			custom_trigger_tooltip = {
-				tooltip = I55_has_irdaeos_rite_malu_tt
-				OR = {
-					has_country_flag = irdaeos_communion_night
-					has_country_flag = irdaeos_communion_shaping
-					has_country_flag = irdaeos_communion_tatooing
-				}
-			}
+			has_malukhuga_religious_practice = yes
 			church_power = 50
 		} 
 
@@ -234,16 +224,31 @@ I55_3_missions = {
 			I55_4_1_nightfall
 		}
 		
-		provinces_to_highlight = {
-			
-		}
+		provinces_to_highlight = {}
 
 		trigger = {
-			
+			is_ruler_transmutation_level_1_minimum = yes
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = I55_has_adm_advisor_for_180_tt
+					has_adm_advisor_for_duration = { duration = 180 type = court_mage } #6 months
+				}
+				adm_power = 100
+			}
 		}
 
 		effect = {
-			
+			country_event = { #Cauterizing History
+				id = black_herd_events.2
+			}
+			if = {
+				limit = { has_adm_advisor_for_duration = { duration = 180 type = court_mage } } #6 months
+				custom_tooltip = I55_advisor_no_tt
+			}
+			else = {
+				custom_tooltip = I55_advisor_yes_tt
+				hidden_effect = { add_adm_power = -100 }
+			}
 		}
 	}
 
@@ -257,15 +262,67 @@ I55_3_missions = {
 		}
 		
 		provinces_to_highlight = {
-			
+			OR = {
+				AND = {
+					area = shevrmorzgh_area
+					NOT = {
+						AND = {
+							owned_by = ROOT
+							OR = {
+								has_province_modifier = province_razed
+								anb_has_been_exploited = yes
+							}
+						}
+					}
+				}
+				AND = {
+					is_capital_of = I90 #Maghargma
+					ROOT = {
+						NOT = {
+							AND = {
+								has_won_war_against = { who = I90 } #Maghargma
+								army_strength = {
+									who = I90 #Maghargma
+									value = 1
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
-			
+			shevrmorzgh_area = {
+				type = all
+				owned_by = ROOT
+				OR = {
+					has_province_modifier = province_razed
+					anb_has_been_exploited = yes
+				}
+			}
+			has_won_war_against = { who = I90 } #Maghargma
+			army_strength = {
+				who = I90 #Maghargma
+				value = 1
+			}
 		}
 
 		effect = {
-			
+			add_power_projection_mission = { amount = 25 }
+			add_treasury = 500
+			shevrmorzgh_area = {
+				change_culture = ROOT
+				change_religion = ROOT
+				remove_ogre_minority_size_effect = yes
+				remove_ogre_minority_size_effect = yes
+			}
+			ogre_valley_region = {
+				add_province_modifier = { #Not permanent is purposeful. Be fast or lose it
+					name = I55_twilight_incursion
+					duration = 9125 #25 years
+				}
+			}
 		}
 	}
 }
@@ -376,19 +433,14 @@ I55_4_missions = {
 				owned_by = I73 #Nightmare
 				AND = {
 					province_id = 5052 #Damazgubli
-					NOT = {
-						AND = {
-							owned_by = ROOT
-							is_core = ROOT
-						}
-					}
+					NOT = { owned_by = ROOT }
 				}
 			}
 		}
 
 		trigger = {
 			NOT = { exists = I73 } #Nightmare
-			owns_core_province = 5052 #Damazgubli
+			owns = 5052 #Damazgubli
 			army_size_percentage = 0.95
 		}
 
@@ -399,10 +451,10 @@ I55_4_missions = {
 				manuever = 3
 				siege = 3
 			}
-			caubheameas_area = { add_permanent_claim = ROOT }
 			ugheabar_area = { add_permanent_claim = ROOT }
 			naglaibar_area = { add_permanent_claim = ROOT }
 			foirakhian_area = { add_permanent_claim = ROOT }
+			caubheameas_area = { add_permanent_claim = ROOT }
 		}
 	}
 
@@ -430,14 +482,9 @@ I55_4_missions = {
 		}
 
 		trigger = {
-			caubheameas_area = {
-				country_or_non_sovereign_subject_holds = ROOT
-				OR = {
-					has_province_modifier = autonomy_decreased
-					NOT = { local_autonomy = 10 }
-				}
-			}
+			horde_unity = 90
 			ugheabar_area = {
+				type = all
 				country_or_non_sovereign_subject_holds = ROOT
 				OR = {
 					has_province_modifier = autonomy_decreased
@@ -445,13 +492,21 @@ I55_4_missions = {
 				}
 			}
 			naglaibar_area = {
+				type = all
 				country_or_non_sovereign_subject_holds = ROOT
 				OR = {
 					has_province_modifier = autonomy_decreased
 					NOT = { local_autonomy = 10 }
 				}
 			}
-			horde_unity = 90
+			caubheameas_area = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+				OR = {
+					has_province_modifier = autonomy_decreased
+					NOT = { local_autonomy = 10 }
+				}
+			}
 		}
 
 		effect = {
@@ -477,11 +532,21 @@ I55_4_missions = {
 		}
 
 		trigger = {
-			
+			has_spent_amount_mana_on_spells = {
+				amount = 200
+				school = all
+			}
+			num_of_estate_agendas_completed = {
+				estate = estate_mages
+				value = 2
+			}
+			num_of_battles = { amount = 10 }
 		}
 
 		effect = {
-			
+			change_mana = { amount = 50 }
+			set_country_flag = enable_shockshroud_mages_flag
+			set_estate_privilege = estate_mages_black_herd_shockshroud_mages
 		}
 	}
 
@@ -498,11 +563,39 @@ I55_4_missions = {
 		}
 
 		trigger = {
-			
+			estate_loyalty = {
+				estate = estate_mages
+				loyalty = 55
+			}
+			NOT = {
+				estate_influence = {
+					estate = estate_mages
+					influence = 40
+				}
+			}
+			has_estate_privilege = estate_mages_magocratic_administration
+			irdaeos_religious_actions_completed = {
+				type = Communion
+				amount = 3
+			}
+			num_of_estate_agendas_completed = {
+				estate = estate_mages
+				value = 4
+			}
 		}
 
 		effect = {
-			
+			remove_estate_privilege = estate_monstrous_tribes_free_clans
+			set_government_rank_scripted_effect = { rank = 2 }
+			capital_scope = {
+				add_building_construction = {
+					building = mage_tower
+					speed = 2
+					cost = 0
+				}
+			}
+			add_government_reform = I55_magocratic_caehnate
+			custom_tooltip = I55_ku_warn_tt
 		}
 	}
 }
@@ -520,15 +613,76 @@ I55_5_missions = {
 		required_missions = { I55_4_1_nightfall } 
 		
 		provinces_to_highlight = {
-			
+			province_id = 5052 #Damazgubli
+			NOT = {
+				AND = {
+					owned_by = ROOT
+					num_of_units_in_province = {
+						amount = 5
+						who = ROOT
+					}
+				}
+			}
 		}
 
 		trigger = {
-			
+			5052 = { #Damazgubli
+				owned_by = ROOT
+				num_of_units_in_province = {
+					amount = 5
+					who = ROOT
+				}
+			}
+			has_estate_privilege = estate_mages_reduced_research_regulations
+			has_adm_advisor_for_duration = { duration = 180 } #6 months
 		}
 
 		effect = {
-			
+			5052 = { #Damazgubli
+				add_core = ROOT
+				change_province_name = "Emblazoned Deep"
+				custom_tooltip = I55_reduce_dev_tt
+				add_province_modifier = {
+					name = I55_home_to_none_but_stone
+					duration = -1
+				}
+				custom_tooltip = desc_I55_home_to_none_but_stone
+				hidden_effect = {
+					while = {
+						limit = { base_tax = 2 }
+						add_base_tax = -1
+						ROOT = { add_adm_power = 25 }
+					}
+					while = {
+						limit = { base_production = 2 }
+						add_base_production = -1
+						ROOT = { add_dip_power = 25 }
+					}
+					while = {
+						limit = { base_manpower = 2 }
+						add_base_manpower = -1
+						ROOT = { add_mil_power = 25 }
+					}
+				}
+			}
+
+			custom_tooltip = I55_enable_studying_event_tt
+			if = {
+				limit = {
+					OR = {
+						ruler_is_advancing_evocation = yes
+						ruler_is_advancing_transmutation = yes
+						ruler_is_advancing_necromancy = yes
+					}
+				}
+				custom_tooltip = I55_studying_event_yes_tt
+				hidden_effect = {
+					country_event = { #Emblazing The Deep
+						id = black_herd_events.3
+					}
+				}
+			}
+			else = { custom_tooltip = I55_studying_event_no_tt }
 		}
 	}
 
