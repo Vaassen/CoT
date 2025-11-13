@@ -247,7 +247,7 @@ clear_federation_global_flag = {
 	clr_global_flag = lake_federation_soldier_first
 	clr_global_flag = lake_military_reform
 	clr_global_flag = lake_the_mainland_question
-	clr_global_flag = lake_the_pirate_act
+	#clr_global_flag = lake_the_pirate_act
 	clr_global_flag = lake_cohesion_1
 	clr_global_flag = lake_cohesion_2
 	clr_global_flag = lake_cohesion_3
@@ -427,13 +427,6 @@ centaur_battle_count_lost = {
 			which = battleWinRate
 			value = 100
 		}
-	}
-}
-
-centaur_won_war_count = {
-	if = {
-		limit = { has_country_modifier = centaur_administration }
-		change_variable = { nbWarWon = 1 }
 	}
 }
 
@@ -1309,7 +1302,7 @@ federation_decrease_cohesion_all = { #works for not-president
 			clr_global_flag = lake_cohesion_2
 			#country_event = { id = splintering.1 }
 		}
-		if = { #needed seperate from elseif chain because of event firing
+		if = { #needed separate from elseif chain because of event firing
 			limit = {
 				NOT = {
 					has_global_flag = lake_cohesion_5
@@ -1389,6 +1382,10 @@ federation_cohesion_form_formable = {
 			custom_tooltip = J52_stay_enuuk_tt
 		}
 		else = { change_religion = enuuk_followers }
+		if = {
+			limit = { NOT = { government = republic } }
+			change_government = republic
+		}
 		hidden_effect = { restore_country_name = yes }
 		set_country_flag = cohesion_J52_former 
 	}
@@ -1922,6 +1919,16 @@ sedentarization_apply_min_autonomy_negating_modifier = {
 				remove_province_modifier = sed_min_autonomy_from_territory_negation
 				remove_province_modifier = sed_min_autonomy_from_half_state_negation
 			}
+
+			if = { #Ikogshaantus
+				limit = { has_province_modifier = J52_consecrated_industry }
+				add_province_modifier = {
+					name = sed_min_autonomy_from_ikog_consecration_negation
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = { remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation }
 		}
 	}
 }
@@ -1966,7 +1973,6 @@ sedentarization_reset_province_outpost = {
 					has_province_flag = sed_reset_to_phase_three
 				}
 			}
-			clr_province_flag = sed_province_has_outpost
 			if = {
 				limit = { has_province_flag = sed_reset_to_completion }
 				area = {
@@ -1985,13 +1991,19 @@ sedentarization_reset_province_outpost = {
 						 set_local_autonomy = 50
 					}
 				}
-				owner = {
-					subtract_variable = {
-						which = sed_outpost_cap_usage
-						value = 1
+				if = {	# This special sanity check is specifically because of outpost_completion_heavy_settlement_effect,
+						# which reduces outpost_cap_usage (among other things), right before this is called.
+					limit = { sedentarization_province_has_outpost = yes }
+					owner = {
+						subtract_variable = {
+							which = sed_outpost_cap_usage
+							value = 1
+						}
 					}
 				}
 			}
+			# Must come after the special sanity check; will already be cleared if "...heavy_settlement_effect" was called
+			clr_province_flag = sed_province_has_outpost
 		}
 		else_if = {
 			limit = { has_province_flag = sed_reset_to_phase_one }
@@ -2171,7 +2183,7 @@ sedentarization_pick_yearly_event = {
 			}
 			modifier = {
 				factor = 2
-				has_country_flag = J52_more_sedentarization_flag #Ikogshaantus
+				owner = { has_country_flag = J52_more_sedentarization_flag } #Ikogshaantus
 			}
 			# Outpost owner is used for some triggers (currently just Phase Two)
 			owner = { save_event_target_as = sed_outpost_owner }
@@ -2212,6 +2224,10 @@ sedentarization_on_province_owner_change = {
 				name = sed_entrenched_centaur_nomadism
 				duration = -1
 			}
+		}
+		else = {
+			# non-centaurs get free territorial cores so they don't have to both core and sedentarize
+			add_territorial_core = owner
 		}
 		# Housekeeping for province flags and modifiers and country variables
 		owner = { save_event_target_as = sed_outpost_owner }
@@ -2321,7 +2337,10 @@ sedentarization_outpost_try_phase_change = {
 		limit = {
 			area_for_scope_province = {
 				type = all
-				owned_by = event_target:sed_outpost_owner
+				OR = {
+					owned_by = event_target:sed_outpost_owner
+					NOT = { has_province_modifier = sed_forbidden }
+				}
 			}
 		}
 		# Phase One, progressing to Phase Two. Phase One is the only phase with an RNG event requirement; check if it has happened.
@@ -2500,11 +2519,13 @@ sedentarization_outpost_completion_generic_propagation = {
 	area = {
 		limit = {
 			NOT = { province_id = ROOT }
+			has_province_modifier = sed_forbidden
 		}
 		sedentarization_outpost_completion_$completion_effect$ = { culture_source = event_target:sed_outpost }
 		remove_province_modifier = sed_outpost_areal_influence_phase_iii
 		remove_province_modifier = sed_min_autonomy_from_territory_negation
 		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+		remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
 	}
 }
 
@@ -2561,11 +2582,28 @@ sedentarization_outpost_completion_heavy_settlement_effect = {
 sedentarization_remove_system_from_province = {
 	custom_tooltip = sed_remove_system_from_province
 	hidden_effect = {
+		# There's a nonzero want for MT makers to be able to bypass the system, even if it's only part of an area.
+		# That complicates things, particularly about outpost capacity, and if only part of an area is removed.
+		if = {
+			limit = { sedentarization_province_has_outpost = yes }
+			sedentarization_reset_province_outpost = yes
+			owner = {
+				subtract_variable = {
+					which = sed_outpost_cap_usage
+					value = 1
+				}
+			}
+			area = {
+				remove_province_modifier = sed_min_autonomy_from_territory_negation
+				remove_province_modifier = sed_min_autonomy_from_half_state_negation
+				remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
+			}
+		}
 		remove_province_modifier = sed_forbidden
 		remove_province_modifier = sed_entrenched_centaur_nomadism
-		sedentarization_reset_province_outpost = yes
 		remove_province_modifier = sed_min_autonomy_from_territory_negation
 		remove_province_modifier = sed_min_autonomy_from_half_state_negation
+		remove_province_modifier = sed_min_autonomy_from_ikog_consecration_negation
 		sedentarization_clear_phase_one_flags = yes
 		sedentarization_clear_phase_two_flags = yes
 		sedentarization_clear_phase_three_flags = yes
@@ -2576,3 +2614,298 @@ sedentarization_remove_system_from_province = {
 	}
 }
 ### End of - Sedentarization system related effects
+
+### Triunic religion related effects
+
+building_zeal_self_effect = {
+	if = { 
+		limit = { 
+			any_owned_province = { 
+				has_any_manufactory_construction = yes 
+				NOT = { has_province_flag = triunic_building_zeal_target }
+			} 
+		} 
+		random_owned_province = { 
+			limit = { 
+				has_any_manufactory_construction = yes 
+				NOT = { has_province_flag = triunic_building_zeal_target }
+			} 
+			add_construction_progress = 1
+			set_province_flag = triunic_building_zeal_target 
+		}
+	} 
+	else = { 
+		random_owned_province = { 
+			limit = { 
+				has_construction = building 
+				NOT = { has_province_flag = triunic_building_zeal_target }
+			} 
+			add_construction_progress = 1
+			set_province_flag = triunic_building_zeal_target
+		}
+	}
+}
+
+building_zeal_barracks_effect = {
+	if = {
+		limit = { has_country_modifier = lake_federation_member }
+		random_known_country = { 
+			limit = { 
+				OR = { 
+					religion = kodave_followers 
+					AND = { 
+						religion = kalyin_worshippers 
+						has_harmonized_with = kodave_followers 
+					} 
+				} 
+			}
+			random_owned_province = { 
+				limit = { 
+					has_manpower_building_trigger = no 
+				} 
+				add_building_construction = { 
+					building = barracks 
+					cost = 0 
+				} 
+			}
+			add_opinion = { 
+				who = ROOT 
+				modifier = opinion_triunic_foreign_construction 
+			}
+			add_favors = { 
+				who = ROOT 
+				amount = 10 
+			}
+		} 
+	} 
+	else_if = {
+		limit = { 
+			tag = J33
+		}
+
+		random_subject_country = {
+			limit = {
+				is_subject_of_type = democratic_sphere_of_influence_subject
+			}
+
+			random_owned_province = {
+				limit = {
+					has_manpower_building_trigger = no
+				}
+				add_building_construction = {
+					building = barracks
+					cost = 0
+				}
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = opinion_triunic_foreign_construction
+			}
+			add_favors = {
+				who = ROOT
+				amount = 10
+			}
+		}
+	} 
+	else = {
+		# we are sunijalla!
+		random_subject_country = {
+
+			random_owned_province = {
+				limit = {
+					has_manpower_building_trigger = no
+				}
+				add_building_construction = {
+					building = barracks
+					cost = 0
+				}
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = opinion_triunic_foreign_construction
+			}
+			add_favors = {
+				who = ROOT
+				amount = 10
+			}
+		}
+	}
+}
+
+building_zeal_dock_effect = {
+	if = {
+		limit = { 
+			has_country_modifier = lake_federation_member 
+		}
+		random_known_country = { 
+			limit = { 
+				OR = { 
+					religion = yukel_followers 
+					AND = { 
+						religion = kalyin_worshippers 
+						has_harmonized_with = yukel_followers 
+					} 
+				} 
+			}
+			random_owned_province = { 
+				limit = { 
+					has_dock_building_trigger = no 
+				} 
+				add_building_construction = { 
+					building = dock 
+					cost = 0 
+				} 
+			}
+			add_opinion = { 
+				who = ROOT 
+				modifier = opinion_triunic_foreign_construction 
+			}
+			add_favors = { 
+				who = ROOT 
+				amount = 10 
+			} 
+		} 
+	} 
+	else_if = {
+		limit = { 
+			tag = J33
+		}
+
+		random_subject_country = {
+			limit = {
+				is_subject_of_type = democratic_sphere_of_influence_subject
+			}
+
+			random_owned_province = {
+				limit = {
+					has_dock_building_trigger = no
+				}
+				add_building_construction = {
+					building = dock
+					cost = 0
+				}
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = opinion_triunic_foreign_construction
+			}
+			add_favors = {
+				who = ROOT
+				amount = 10
+			}
+		}
+	} 
+	else = {
+		# we are sunijalla!
+		random_subject_country = {
+			random_owned_province = {
+				limit = {
+					has_dock_building_trigger = no
+				}
+				add_building_construction = {
+					building = dock
+					cost = 0
+				}
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = opinion_triunic_foreign_construction
+			}
+			add_favors = {
+				who = ROOT
+				amount = 10
+			}
+		}
+	}
+}
+### End of - Triunic religion related effects
+
+form_lejdazamh_effects = {
+	change_tag = J55
+	hidden_effect = { restore_country_name = yes }
+	#swap_non_generic_missions = yes
+	remove_non_electors_emperors_from_empire_effect = yes
+	hidden_effect = {
+		forbidden_lands_superregion = {
+			limit = {
+				OR = {
+					region = west_forbidden_plains_region
+					region = east_forbidden_plains_region
+					region = ogre_valley_region
+					region = yyl_moista_region
+					region = serpent_gift_region
+					region = nuzurbokh_region
+				}
+				NOT = { is_core = ROOT }
+			}
+			add_permanent_claim = ROOT
+		}
+	}
+	increase_government_rank_scripted_effect = { rank = 3 }
+	add_prestige = 25
+	add_country_modifier = {
+		name = "centralization_modifier"
+		duration = 7300
+	}
+	if = {
+		limit = { has_country_modifier = subjugated_horde }
+		remove_country_modifier = subjugated_horde
+	}
+	if = {
+		limit = { has_country_modifier = settled_horde }
+		remove_country_modifier = settled_horde
+	}
+	country_event = { id = ideagroups.1 } #Swap Ideas
+}
+
+I57_potential_aureate_effects = { #Golden Tremor
+	change_trade_goods = gold
+	add_province_modifier = {
+		name = I57_tarnished_veins
+		duration = -1
+	}
+	remove_province_modifier = sed_entrenched_centaur_nomadism
+	add_province_modifier = {
+		name = sed_nomadic_governance
+		duration = -1
+	}
+	set_province_flag = cen_double_nzoc_effects_flag
+}
+
+#Yudunyovi
+unlock_yudunyovi_deity = {
+	custom_tooltip = linebreak_tt
+	set_country_flag = yudunyovi_$deity$_unlocked_flag
+	custom_tooltip = yudunyovi_unlock_deity_$deity$_tt
+	[[change_deity] change_personal_deity = $deity$ ]
+	custom_tooltip = yudunyovi_deity_effect_tt
+	custom_tooltip = yudunyovi_$deity$_effects_tt
+
+	if = {
+		limit = {
+			calc_true_if = {
+				amount = 8
+				has_country_flag = yudunyovi_taqoshur_unlocked_flag
+				has_country_flag = yudunyovi_soiti_unlocked_flag
+				has_country_flag = yudunyovi_yukel_unlocked_flag
+				has_country_flag = yudunyovi_kalyin_unlocked_flag
+				has_country_flag = yudunyovi_shirdos_unlocked_flag
+				has_country_flag = yudunyovi_yerush_unlocked_flag
+				has_country_flag = yudunyovi_ekchorvu_unlocked_flag
+				has_country_flag = yudunyovi_tayoghur_unlocked_flag
+				has_country_flag = yudunyovi_asimlik_unlocked_flag
+			}
+		}
+		custom_tooltip = yudunyovi_enable_final_quest_tt
+	}
+}
+
+yudunyovi_get_req_tooltips = {
+	if = {
+		limit = {
+			$req$
+		}
+		custom_tooltip = yudunyovi_$deity$_req_$num$_yes_tt
+	}
+	else = { custom_tooltip = yudunyovi_$deity$_req_$num$_no_tt }
+}

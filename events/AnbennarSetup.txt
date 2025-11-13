@@ -161,7 +161,6 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		#is_year = 1444 # Always returns true
 		NOT = { has_country_flag = init_vision }
 	}
 
@@ -169,8 +168,7 @@ country_event = {
 	option = {
 		name = "anbennar_setup.3.a"
 
-		setup_vision = yes
-		#setup_ai_attitude = yes
+		setup_vision_generic = yes
 	}
 }
 
@@ -287,71 +285,7 @@ country_event = {
 	}
 }
 
-#Base Setup for Mage Type
-country_event = {
-	id =  anbennar_setup.6
-	title =  anbennar_setup.6.t
-	desc =  anbennar_setup.6.d
-	picture = WAR_OF_THE_ROSES_eventPicture
-	
-	#fire_only_once = yes
-	hidden = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		NOT = { has_mages_organization_privilege = yes }
-		has_estate = estate_mages
-	}
-	
-	option = {
-		name = "anbennar_setup.6.a"
-		if = {
-			limit = {
-				has_country_flag = mage_organization_decentralized_flag
-			}
-			set_estate_privilege = estate_mages_organization_guilds
-		}
-		else_if = {
-			limit = {
-				has_country_flag = mage_organization_centralized_flag
-				OR = {
-					religion = ravelian
-					religion = xhazobkult
-					religion = skaldhyrric_faith
-				}
-			}
-			set_estate_privilege = estate_mages_organization_religious
-		}
-		else_if = {
-			limit = {
-				has_country_flag = mage_organization_centralized_flag
-				OR = {
-					religion = the_jadd
-					religion = bulwari_sun_cult
-					religion = old_bulwari_sun_cult
-				}
-			}
-			set_estate_privilege = estate_mages_organization_jaherian_statute
-		}
-		else_if = {
-			limit = {
-				has_country_flag = mage_organization_centralized_flag
-			}
-			set_estate_privilege = estate_mages_organization_state
-		}
-		else_if = {
-			limit = {
-				has_country_flag = mage_organization_magisterium_flag
-			}
-			set_estate_privilege = estate_mages_organization_magisterium
-		}
-		else = {	#if nothing - THIS IS HANDLED BY MageOrganization Event to allow new countries to choose!
-			set_estate_privilege = estate_mages_organization_guilds
-		}
-	}
-}
-
-#Country Setup for Evil Opinions
+#Country Setup for Evil Opinions - right now, specifically for witch-kings?
 country_event = {
 	id =  anbennar_setup.7
 	title =  anbennar_setup.7.t
@@ -373,11 +307,11 @@ country_event = {
 		
         if = {
             limit = {
-                has_ruler_modifier = witch_king_modifier
+                ruler_is_witch_king = yes
             }
 			every_country = {	#If you're a monstrous nation you like other monstrous nations
 				limit = {
-					has_ruler_modifier = witch_king_modifier
+					ruler_is_witch_king = yes
 					NOT = {
 						has_opinion_modifier = { who = ROOT modifier = both_evil }
 					}
@@ -386,7 +320,7 @@ country_event = {
 			}
 			every_country = {	#If you're not a monstrous nation you hate monstrous nations
 				limit = {
-					NOT = { has_ruler_modifier = witch_king_modifier }
+					ruler_is_not_witch_king = yes
 					NOT = {
 						has_opinion_modifier = { who = ROOT modifier = root_evil }
 					}
@@ -395,12 +329,10 @@ country_event = {
 			}
 		}
         if = {
-            limit = {
-                NOT = { has_ruler_modifier = witch_king_modifier }
-            }
+            limit = { ruler_is_not_witch_king = yes }
 			every_country = {	#If you're a monstrous nation you like other monstrous nations
 				limit = {
-					has_ruler_modifier = witch_king_modifier
+					ruler_is_witch_king = yes
 					NOT = {
 						has_opinion_modifier = { who = ROOT modifier = root_evil }
 					}
@@ -518,56 +450,43 @@ country_event = {
 		clear_racial_administration = yes
 		clear_racial_military = yes
 
-		#Elven
-		if = {
+		if = { #Elven checks
 			limit = {
 				culture_is_elven = yes
-				NOT = {
-					AND = {
-						primary_culture = sun_elf
-						capital_scope = { superregion = bulwar_superregion }
-						NOT = { tag = F46 }
+			}
+			add_country_modifier = {
+				name = elven_administration
+				duration = -1
+				hidden = yes
+			}
+			if = { #Bulwari Elves
+				limit = {
+					primary_culture = sun_elf
+					capital_scope = { superregion = bulwar_superregion }
+				}
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
+				}
+				apply_sprite_pack = sun_elf_sprite_pack
+			}
+			else = {
+				add_country_modifier = {
+					name = elven_military
+					duration = -1
+					hidden = yes
+				}
+				if = { #No Cradle of Civilization Compensator
+					limit = { NOT = { has_dlc = "Cradle of Civilization" } }
+					add_country_modifier = { 
+						name = elven_military_no_dlc
+						duration = -1  
 					}
 				}
 			}
-			add_country_modifier = {
-				name = elven_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = elven_military
-				duration = -1
-				hidden = yes
-			}
-			if = { limit = { NOT = { has_dlc = "Cradle of Civilization" } }
-				add_country_modifier = { 
-					name = elven_military_no_dlc
-					duration = -1  
-				}
-			}
 		}
-		#Elven Bulwari
-		if = {
-			limit = {
-				primary_culture = sun_elf
-				capital_scope = { superregion = bulwar_superregion }
-			}
-			add_country_modifier = {
-				name = elven_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = human_military
-				duration = -1
-				hidden = yes
-			}
-			apply_sprite_pack = sun_elf_sprite_pack 
-			# confusingly named, but the same sprite pack they got previously 
-		}
-		#Dwarven
-		if = {
+		else_if = { #Dwarven checks
 			limit = {
 				culture_is_dwarven = yes
 			}
@@ -582,8 +501,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#Gnollish
-		if = {
+		else_if = { #Gnollish checks
 			limit = {
 				culture_is_gnollish = yes
 			}
@@ -598,46 +516,37 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#gnomish
-		if = {
+		else_if = { #Gnomish checks
 			limit = {
 				culture_is_gnomish = yes
-				NOT = { tag = A80 }
 			}
 			add_country_modifier = {
 				name = gnomish_administration
 				duration = -1
 				hidden = yes
 			}
-			add_country_modifier = {
-				name = gnomish_military
-				duration = -1
-				hidden = yes
+			if = { #Iochand
+				limit = { tag = A80 }
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
+				}
 			}
-			add_country_modifier = {
-				name = gnomish_military_artificer_buff
-				duration = -1
-				hidden = yes
-			}
-		}
-		#gnomish monarchy
-		if = {
-			limit = {
-				tag = A80
-			}
-			add_country_modifier = {
-				name = gnomish_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = human_military
-				duration = -1
-				hidden = yes
+			else = {
+				add_country_modifier = {
+					name = gnomish_military
+					duration = -1
+					hidden = yes
+				}
+				add_country_modifier = {
+					name = gnomish_military_artificer_buff
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-		#goblin
-		if = {
+		else_if = { #Goblin checks
 			limit = {
 				culture_is_goblin = yes
 			}
@@ -652,45 +561,32 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#half_elven
-		if = {
+		else_if = { #Half-Elven checks
 			limit = {
 				culture_is_half_elven = yes
-				NOT = {
-					tag = Y65
+			}
+			add_country_modifier = {
+				name = half_elven_administration
+				duration = -1
+				hidden = yes
+			}
+			if = { #Arawkelin
+				limit = { tag = Y65 }
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
 				}
 			}
-			add_country_modifier = {
-				name = half_elven_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = half_elven_military
-				duration = -1
-				hidden = yes
+			else = {
+				add_country_modifier = {
+					name = half_elven_military
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-		#Arawkelin
-		if = {
-			limit = {
-				culture_is_half_elven = yes
-				tag = Y65
-			}
-			add_country_modifier = {
-				name = half_elven_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = human_military
-				duration = -1
-				hidden = yes
-			}
-		}
-
-		#half_orcish
-		if = {
+		else_if = { #Half-Orcish checks
 			limit = {
 				culture_is_half_orcish = yes
 			}
@@ -705,8 +601,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#halfling
-		if = {
+		else_if = { #Halfling checks
 			limit = {
 				culture_is_halfling = yes
 			}
@@ -715,15 +610,23 @@ country_event = {
 				duration = -1
 				hidden = yes
 			}
-			add_country_modifier = {
-				name = halfling_military
-				duration = -1
-				hidden = yes
+			if = { #Tsanizadai
+				limit = { tag = L50 }
+				add_country_modifier = {
+					name = lizardfolk_military
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = {
+				add_country_modifier = {
+					name = halfling_military
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-
-		#harpy
-		if = {
+		else_if = { #Harpy checks
 			limit = {
 				culture_is_harpy = yes
 			}
@@ -738,93 +641,67 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#Human
-		if = {
+		else_if = { #Human checks
 			limit = {
 				culture_is_human = yes
-				NOT = {
-					tag = F62
-					tag = Y07
-				}
 			}
 			add_country_modifier = {
 				name = human_administration
 				duration = -1
 				hidden = yes
 			}
-			add_country_modifier = {
-				name = human_military
-				duration = -1
-				hidden = yes
+			if = { #Duwarkani
+				limit = { tag = F62 }
+				add_country_modifier = {
+					name = harpy_military
+					duration = -1
+					hidden = yes
+				}
+				apply_sprite_pack = harpy_sprite_pack
 			}
-		}
-
-		#Duwarkani
-		if = {
-			limit = {
-				AND = {
-					culture_is_human = yes
-					tag = F62
+			else_if = { #Guhe
+				limit = { tag = Y07 }
+				add_country_modifier = {
+					name = harimari_military
+					duration = -1
+					hidden = yes
+				}
+				apply_sprite_pack = harimari_sprite_pack
+			}
+			else_if = { #Hisot Yamok
+				limit = { tag = S23 }
+				add_country_modifier = {
+					name = gnollish_military
+					duration = -1
+					hidden = yes
+				}
+				apply_sprite_pack = gnoll_sprite_pack
+			}
+			else_if = { #Insyaa Mixed Setup
+				limit = { 
+					OR = {
+						tag = N16
+						tag = N78
+						tag = N87
+						tag = N94
+						tag = N98
+					}
+				}
+				add_country_modifier = {
+					name = ogre_military
+					duration = -1
+					hidden = yes
 				}
 			}
-			add_country_modifier = {
-				name = human_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = harpy_military
-				duration = -1
-				hidden = yes
-			}
-			apply_sprite_pack = harpy_sprite_pack
-		}
-		
-		#Guhe
-		if = {
-			limit = {
-				AND = {
-					culture_is_human = yes
-					tag = Y07
+			else = {
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
 				}
 			}
-			add_country_modifier = {
-				name = human_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = harimari_military
-				duration = -1
-				hidden = yes
-			}
-			apply_sprite_pack = harimari_sprite_pack
 		}
-
-		#Hisost Yamok
-		if = {
-			limit = {
-				AND = {
-					culture_is_human = yes
-					tag = S23
-				}
-			}
-			add_country_modifier = {
-				name = human_administration
-				duration = -1
-				hidden = yes
-			}
-			add_country_modifier = {
-				name = gnollish_military
-				duration = -1
-				hidden = yes
-			}
-			remove_country_modifier = human_military
-			apply_sprite_pack = gnoll_sprite_pack
-		}
-
-		#kobold
-		if = {
+		else_if = { #Kobold checks
 			limit = {
 				culture_is_kobold = yes
 			}
@@ -839,8 +716,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#orcish
-		if = {
+		else_if = { #Orcish checks
 			limit = {
 				culture_is_orcish = yes
 			}
@@ -855,8 +731,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#ruinborn
-		if = {
+		else_if = { #Ruinborn checks
 			limit = {
 				culture_is_ruinborn = yes
 			}
@@ -871,8 +746,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#troll
-		if = {
+		else_if = { #Troll checks
 			limit = {
 				culture_is_troll = yes
 			}
@@ -887,8 +761,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#ogre
-		if = {
+		else_if = { #Ogre checks
 			limit = {
 				culture_is_ogre = yes
 			}
@@ -897,14 +770,32 @@ country_event = {
 				duration = -1
 				hidden = yes
 			}
-			add_country_modifier = {
-				name = ogre_military
-				duration = -1
-				hidden = yes
+			if = { #Insyaa Mixed Setup Ogre
+				limit = {
+					OR = {
+						tag = N83
+						tag = N84
+						tag = N89
+						tag = N90
+						tag = N94
+					}
+				}
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
+				}
+			}
+			else = {
+				add_country_modifier = {
+					name = ogre_military
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-		#centaur
-		if = {
+
+		else_if = { #Centaur checks
 			limit = {
 				culture_is_centaur = yes
 			}
@@ -919,8 +810,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-		#harimari
-		if = {
+		else_if = { #Harimari checks
 			limit = {
 				culture_is_harimari = yes
 			}
@@ -929,14 +819,24 @@ country_event = {
 				duration = -1
 				hidden = yes
 			}
-			add_country_modifier = {
-				name = harimari_military
-				duration = -1
-				hidden = yes
+			if = { #Mewomender
+				limit = { tag = S66 }
+				add_country_modifier = {
+					name = human_military
+					duration = -1
+					hidden = yes
+				}
+				apply_sprite_pack = mengi_units_pack
+			}
+			else = {
+				add_country_modifier = {
+					name = harimari_military
+					duration = -1
+					hidden = yes
+				}
 			}
 		}
-		#hobgoblin
-		if = {
+		else_if = { #Hobgoblin checks
 			limit = {
 				culture_is_hobgoblin = yes
 			}
@@ -950,16 +850,15 @@ country_event = {
 				duration = -1
 				hidden = yes
 			}
-			if = { limit = { NOT = { has_dlc = "Cradle of Civilization" } }
+			if = { #No Cradle of Civilization Compensator
+				limit = { NOT = { has_dlc = "Cradle of Civilization" } }
 				add_country_modifier = { 
 					name = hobgoblin_military_no_dlc
 					duration = -1  
 				}
 			}
 		}
-
-		#lizardfolk
-		if = {
+		else_if = { #Lizardfolk checks
 			limit = {
 				culture_is_lizardfolk = yes
 			}
@@ -974,9 +873,7 @@ country_event = {
 				hidden = yes
 			}
 		}
-
-		#mechanim
-		if = {
+		else_if = { #Mechanim checks
 			limit = {
 				culture_is_mechanim = yes
 			}
@@ -991,7 +888,6 @@ country_event = {
 				hidden = yes
 			}
 		}
-
 	}
 
 	option = {
@@ -1477,6 +1373,7 @@ country_event = {
 				tag = A81 #Giberd
 			}
 			set_country_flag = magic_artificery_mixed
+			add_country_modifier = { name = magic_artificery_mixed_mod duration = -1 }
 			country_event = {
 				id = flavor_giberd.10
 				days = 1
@@ -1507,29 +1404,6 @@ country_event = {
 	
 	immediate = {
 		set_up_artifice_system = yes
-	}
-	
-	option = {
-		name = anbennar_setup.17.a
-	}
-}
-
-#update points when we load the game
-country_event = {
-	id =  anbennar_setup.20
-	title =  anbennar_setup.20.t
-	desc =  anbennar_setup.20.d
-	picture = WAR_OF_THE_ROSES_eventPicture
-	
-	hidden = yes
-	is_triggered_only = yes
-	
-	trigger = {
-		always = yes
-	}
-	
-	immediate = {
-		update_artifice_points = yes
 	}
 	
 	option = {
@@ -1579,21 +1453,42 @@ country_event = {
 
 	immediate = {
 		#wild hunt starts with less troops due to Great Incursion
+		#Actually, Wild Hunt starts with nothing, because they don't deserve nice things. -CB
+		#Actually, they can have some things.
 		I78 = {
 			capital_scope = {
 				kill_units = {
    					who = PREV
 					type = cavalry
-				 	amount = 11
+				 	amount = 3
 				}
 			}
 			5146 = {
 				kill_units = {
-   					who = I78
+   					who = PREV
 					type = cavalry
-				 	amount = 2
+				 	amount = 9
 				}
 			}
+			5134 = {
+				kill_units = {
+					who = PREV
+					type = barque
+					amount = 2
+				}
+				kill_units = {
+					who = PREV
+					type = galley
+					amount = 6
+				}
+				kill_units = {
+					who = PREV
+					type = cog
+					amount = 10
+				}
+			}
+			add_manpower = -10
+			add_sailors = -1000
 		}
 		#wild hunt's vassals start with less troops due to Great Incursion
 		I74 = {
@@ -1649,5 +1544,44 @@ country_event = {
 	}
 	option = {
 		name = anbennar_setup.22.a
+	}
+}
+
+country_event = { #Initialize magic system
+	id = anbennar_setup.23
+	title = anbennar_setup.23.t
+	desc = anbenanar_setup.23.d
+	picture = CONQUEST_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		NOT = { has_country_flag = magic_system_initialized }
+		exists = yes #Pirates, Rebels, and Natives were doing this and causing problems
+	}
+
+	option = {
+		name = anbennar_setup.23.a
+		ai_chance = { factor = 1 }
+
+		set_country_flag = magic_system_initialized
+
+		country_event = { id = magic_system.21 } #hand out spell schools to whomever may need them
+		country_event = { id = magic_system.30 } #calculate powerful mage mana regen
+
+		if = { #AI setup
+			limit = { ai = yes }
+			subtract_variable = { currentMana = 37 } #starting buffer so they don't immediately cast/advance
+			subtract_variable = { ai_magic_experience = 750 }
+		}
+		else = { #Player-only setup
+			if = { #Everyone eventually initializes this in magic_on_ruler_death
+				limit = { NOT = { check_variable = { mana_regen_ruler = 0.05 } } }
+				set_variable = { mana_regen_ruler = 0 }
+			}
+			
+			monthly_magic_upkeep_pulse = yes #first tick of monthly calcs, for players
+		}
 	}
 }

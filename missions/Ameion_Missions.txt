@@ -360,7 +360,7 @@ G52_1 = {
 		
 		provinces_to_highlight = {
 			NOT = { country_or_non_sovereign_subject_holds = ROOT }
-			NOT = { is_island = yes }
+			island = no
 			NOT = { area = vothelisi_area }
 			region = devand_region
 			has_discovered = ROOT
@@ -371,7 +371,7 @@ G52_1 = {
 				type = all
 				OR = {
 					country_or_non_sovereign_subject_holds = ROOT
-					is_island = yes
+					island = yes
 					area = vothelisi_area
 				}
 			}
@@ -1019,6 +1019,7 @@ G52_2 = {
 						duration = 9125
 					}
 				}
+				2627 = { change_culture = mteibhar }
 			}
 			else_if = {
 				limit = { has_country_flag = G52_mteibhar_conquest }
@@ -1346,7 +1347,32 @@ G52_2 = {
 			if = {
 				limit = { J90 = { is_subject_of = ROOT } }
 				add_historical_friend = J90
-				hidden_effect = { J90 = { add_historical_friend = ROOT } }
+				hidden_effect = { 
+					J90 = { 
+						add_historical_friend = ROOT
+						add_country_modifier = {
+							name = G52_jungle_frontier
+							duration = 5
+						}
+					}
+				}
+				if = {
+					limit = {
+						amadia_region = {
+							is_city = no
+							is_colony = no
+						}
+					}
+					J90 = {
+						amadia_region = {
+							limit = {
+								is_city = no
+								is_colony = no
+							}
+							add_siberian_construction = 500
+						}
+					}
+				}
 			}
 			else = {
 				add_country_modifier = {
@@ -1360,7 +1386,26 @@ G52_2 = {
 				add_accepted_culture = banche
 				add_accepted_culture = faalte
 				custom_tooltip = ameion_godless_order_tt
-				tooltip = { add_historical_friend = J90 }
+				tooltip = { 
+					add_historical_friend = J90
+					if = {
+						limit = {
+							amadia_region = {
+								is_city = no
+								is_colony = no
+							}
+						}
+						J90 = {
+							amadia_region = {
+								limit = {
+									is_city = no
+									is_colony = no
+								}
+								add_siberian_construction = 500
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1577,7 +1622,7 @@ G52_3 = {
 					estate = all
 					share = -5
 				}
-				set_government_rank = 2
+				set_government_rank_scripted_effect = { rank = 2 }
 				custom_tooltip = ameion_crownland_tt
 			}
 			add_stability_or_adm_power = yes
@@ -2006,6 +2051,10 @@ G52_3 = {
 		
 		provinces_to_highlight = {
 			owned_by = ROOT
+			OR = {
+				superregion = kheionai_superregion
+				superregion = taychend_superregion
+			}
 			NOT = { 
 				area = nanru_nakar_area
 				area = nagarchend_area
@@ -2016,7 +2065,10 @@ G52_3 = {
 				area = zaernmaera_area
 			}
 			OR = {
-				area_for_scope_province = { NOT = { has_building = state_house } }
+				area_for_scope_province = {
+					NOT = { has_building = state_house }
+					type = all
+				}
 				has_building = state_house
 			}
 			OR = {
@@ -2030,6 +2082,10 @@ G52_3 = {
 		trigger = {
 			num_of_owned_provinces_with = {
 				value = 15
+				OR = {
+					superregion = kheionai_superregion
+					superregion = taychend_superregion
+				}
 				NOT = { 
 					area = nanru_nakar_area
 					area = nagarchend_area
@@ -2133,16 +2189,23 @@ G52_3 = {
 		position = 16
 		
 		provinces_to_highlight = {
-			NOT = { superregion = ruin_proper_superregion }
-			NOT = { region = tor_nayyi_region }
-			continent = south_america
+			OR = {
+				AND = {
+					NOT = { culture_is_ruinborn = yes }
+					owned_by = ROOT
+				}
+				AND = {
+					NOT = {
+						superregion = ruin_proper_superregion
+						region = tor_nayyi_region
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+					continent = south_america
+				}
+			}
 			NOT = {
 				is_sea = yes
 				is_wasteland = yes
-			}
-			OR = {
-				NOT = { country_or_non_sovereign_subject_holds = ROOT }
-				NOT = { culture_is_ruinborn = yes }
 			}
 			has_discovered = ROOT
 		}
@@ -2447,20 +2510,23 @@ G52_4 = {
 			 	region = yodhanchend_region
 				province_has_current_tech_fort_trigger = yes
 			}
-			calc_true_if = {
-			 	all_subject_country = {
-					NOT = { tag = J70 }
-					capital_scope = { superregion = taychend_superregion }
+			OR = {
+				calc_true_if = {
+					all_subject_country = {
+						NOT = { tag = J70 }
+						capital_scope = { superregion = taychend_superregion }
+					}
+					amount = 3
 				}
-				amount = 3
+				NOT = { any_known_country = { capital_scope = { superregion = taychend_superregion } } }
 			}
 		}
 		
 		effect = {
 			custom_tooltip = ameion_strong_duchies_tt
-			every_subject_country = { 
+			every_subject_country = {
 				limit = { capital_scope = { superregion = taychend_superregion } }
-				change_religion = kheionism
+				add_liberty_desire = -10
 				hidden_effect = {
 					remove_opinion = {
 						who = ROOT
@@ -2642,7 +2708,10 @@ G52_4 = {
 				has_building = impressment_offices
 				value = 10
 			}
-			naval_forcelimit = 150
+			OR = {
+				naval_forcelimit = 150
+				num_of_geobukseon = 40
+			}
 		}
 		
 		effect = {
@@ -2734,13 +2803,12 @@ G52_4 = {
 					}
 				}
 			}
-			dip_power = 100
-			mil_power = 100
+			at_least_magical_infrastructure_level_3 = yes
+			has_mana_to_cast_level_3_spell = yes
 		}
 		
 		effect = {
-			add_dip_power = -100
-			add_mil_power = -100
+			pay_mana_for_level_3_spell = yes
 			add_country_modifier = {
 				name = G52_bloombound_warships
 				duration = -1
@@ -2769,6 +2837,11 @@ G52_4 = {
 		
 		effect = {
 			custom_tooltip = ameion_mage_privledges
+			set_country_flag = remove_absolutism_from_guilds
+			set_country_flag = remove_absolutism_from_regulations
+			set_country_flag = remove_absolutism_from_investments
+			set_country_flag = remove_absolutism_from_ascendant
+			set_country_flag = remove_absolutism_from_nexus
 		}
 	}
 }
@@ -2998,7 +3071,7 @@ G52_5 = {
 		}
 	}
 	
-	G52_peace_coexistance = {
+	G52_peace_coexistence = {
 		icon = mission_reliable_allies
 		required_missions = { G52_place_exile }
 		position = 8
@@ -3042,7 +3115,7 @@ G52_5 = {
 	
 	G52_isle_severance = {
 		icon = mission_rb_conquer_brittany
-		required_missions = { G52_twilight G52_peace_coexistance }
+		required_missions = { G52_twilight G52_peace_coexistence }
 		position = 10
 		
 		provinces_to_highlight = {

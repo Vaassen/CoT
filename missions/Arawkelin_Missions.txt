@@ -5,9 +5,41 @@ arawkelin_1 = {
 	has_country_shield = yes
 	potential = { tag = Y65 } 
 
+	Y65_countryside_conversions = {
+		icon = mission_che_the_cave_country
+		position = 1
+		provinces_to_highlight = {  } 
+
+		trigger = {
+			adm_power = 50
+			dip_power = 50
+			mil_power = 50
+		}
+
+		effect = {
+			add_adm_power = -50
+			add_dip_power = -50
+			add_mil_power = -50
+			pingurnsai_area = {
+				add_province_modifier = {
+					name = "arawkelin_countryside_conversion"
+					duration = 9125
+				}
+			}
+			lembiahar_area = {
+				add_province_modifier = {
+					name = "arawkelin_countryside_conversion"
+					duration = 9125
+				}
+			}
+		}
+	}
+
 	Y65_begin_deforestation = {
 		icon = mission_jungle_pilgrim
-		position = 1
+		position = 2
+		required_missions = { Y65_countryside_conversions } 
+
 		provinces_to_highlight = {
 			owned_by = ROOT
 				OR = {
@@ -42,34 +74,6 @@ arawkelin_1 = {
 			country_event = { id = flavour_arawkelin.9 }  
 			custom_tooltip = arawkelin_event_insight.1
 		} 
-	}
-
-	Y65_countryside_conversions = {
-		icon = mission_che_the_cave_country
-		position = 2
-		required_missions = { Y65_begin_deforestation } 
-		provinces_to_highlight = {  } 
-
-		trigger = {
-			adm_power = 100
-			dip_power = 100
-			mil_power = 100
-		}
-
-		effect = {
-			pingurnsai_area = {
-				add_province_modifier = {
-					name = "arawkelin_countryside_conversion"
-					duration = 9125
-				}
-			}
-			lembiahar_area = {
-				add_province_modifier = {
-					name = "arawkelin_countryside_conversion"
-					duration = 9125
-				}
-			}
-		}
 	}
 
 	Y65_oust_the_binhrung = {
@@ -378,13 +382,23 @@ arawkelin_2 = {
 					religion = ROOT
 					culture = kelino
 				}
-				Y69 = { add_government_reform = stratocracy_reform }
+				Y69 = { 
+					add_government_reform = stratocracy_reform 
+
+				}
 			}
 			create_march = Y69
 			Y69 = {
 				add_country_modifier = {
 					name = "arawkelin_sponsored_expedition"
 					duration = -1
+				}
+				hidden_effect = {
+					add_country_modifier = {
+						name = arawkelin_brenulan_shame_buff
+						duration = -1
+						hidden = yes
+					}
 				}
 			}
 			mesatulek_area = { add_permanent_claim = Y69 } 
@@ -395,7 +409,7 @@ arawkelin_2 = {
 		icon = mission_portuguese_malacca
 		position = 3
 		required_missions = {
-			Y65_countryside_conversions
+			Y65_begin_deforestation
 			Y65_reign_in_the_expedition
 		}
 		provinces_to_highlight = {
@@ -945,7 +959,10 @@ arawkelin_3 = {
 		provinces_to_highlight = {
 			OR = {
 				AND = {
-					Y20 = { exists = yes }
+					Y20 = { 
+						exists = yes 
+						NOT = { is_subject_of = ROOT }
+					}
 					is_capital_of = Y20
 					NOT = {
 						owner = {
@@ -957,7 +974,12 @@ arawkelin_3 = {
 					}
 				}
 				AND = {
-					Y20 = { exists = no }
+					Y20 = { 
+						OR = { 
+							exists = no 
+							is_subject_of = ROOT
+						}
+					}
 					area = iongsim_area
 					NOT = { country_or_non_sovereign_subject_holds = ROOT }
 				}
@@ -966,7 +988,12 @@ arawkelin_3 = {
 
 		trigger = {
 			if = {
-				limit = { Y20 = { exists = yes } }
+				limit = { 
+					Y20 = { 
+						exists = yes 
+						NOT = { is_subject_of = ROOT }
+					} 
+				}
 				alliance_with = Y20
 				reverse_has_opinion = {
 					who = Y20
@@ -983,16 +1010,26 @@ arawkelin_3 = {
 
 		effect = {
 			if = {
-				limit = { Y20 = { NOT = { exists = yes } } }
+				limit = { 
+					Y20 = { 
+						OR = {
+							NOT = { exists = yes } 
+							is_subject_of = ROOT
+						}
+					} 
+				}
 				every_owned_province = {
 					limit = { is_core = Y20 }
 					remove_core = ROOT
 				}
-				release_with_religion_and_culture = {
-					tag = Y20
-					religion = ROOT
-					culture = gangim
-				} 
+				if = {
+					limit = { Y20 = { NOT = { exists = yes } } }
+					release_with_religion_and_culture = {
+						tag = Y20
+						religion = ROOT
+						culture = gangim
+					} 
+				}
 				create_subject = {
 					subject_type = commercial_enterprise
 					subject = Y20
@@ -1116,6 +1153,7 @@ arawkelin_3 = {
 				}
 				random_owned_province = { 
 					limit = {
+						NOT = { province_id = 4963 }
 						NOT = { has_province_modifier = arawkelin_burgeoning_city }
 						development = 20
 						has_production_building_trigger = yes
@@ -1139,6 +1177,7 @@ arawkelin_3 = {
 				}
 				random_owned_province = { 
 					limit = {
+						NOT = { province_id = 4963 }
 						NOT = { has_province_modifier = arawkelin_burgeoning_city }
 						development = 20
 						has_production_building_trigger = yes
@@ -1405,8 +1444,12 @@ arawkelin_4 = {
 
 		trigger = {
 			num_of_owned_provinces_with = {
-				value = 3
-				has_province_modifier = arawkelin_deforestation_in_progress
+				value = 5
+				OR = {
+					has_province_modifier = arawkelin_half_deforestation
+					has_province_modifier = arawkelin_full_deforestation
+					has_province_modifier = arawkelin_artificial_farmland
+				}
 			}
 			arawkelin_area = {
 				type = all
@@ -1542,7 +1585,7 @@ arawkelin_4 = {
 		effect = { 
 			custom_tooltip = arawkelin_deforestation_ringlet_isles.tt
 			hidden_effect = {
-				set_country_flag = arawkelin_deforestation_ringlet_isles
+				set_country_flag = arawkelin_deforestation_ringlet_isles_unlocked
 			}
 			rimvuawuni_area = { add_permanent_claim = ROOT }
 			6138 = {
@@ -1871,7 +1914,8 @@ arawkelin_5 = {
 			ishyamtumu_region = { add_permanent_claim = ROOT }
 			custom_tooltip = arawkelin_deforestation_sarhal.tt
 			hidden_effect = {
-				set_country_flag = arawkelin_deforestation_sarhal
+				set_country_flag = arawkelin_deforestation_bamaliwuni_unlocked
+				set_country_flag = arawkelin_deforestation_ishyamtumu_unlocked
 			}
 		} 
 	}
