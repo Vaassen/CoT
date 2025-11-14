@@ -76,18 +76,66 @@ I55_1_necro_missions = {
 		}
 		
 		provinces_to_highlight = {
-			
+			province_id = 5025 #Loethatsvi
+			NOT = {
+				AND = {
+					owned_by = ROOT
+					is_state_core = ROOT
+					is_capital_of = ROOT
+					development = 9
+					num_of_units_in_province = {
+						amount = 10
+						who = ROOT
+					}
+				}
+			}
 		}
 
 		trigger = {
-			
+			5025 = { #Loethatsvi
+				owned_by = ROOT
+				is_state_core = ROOT
+				is_capital_of = ROOT
+				development = 9
+				num_of_units_in_province = {
+					amount = 10
+					who = ROOT
+				}
+			}
+			at_least_magic_project_level = { project = lichdom level = 1 }
+			has_adm_advisor = yes
+			has_dip_advisor = yes
+			has_mil_advisor = yes
+			if = {
+				limit = { is_ruler_necromancy_level_3 = no }
+				ruler_is_advancing_necromancy = yes
+			}
 		}
 
 		effect = {
-			
+			5025 = { #Loethatsvi
+				change_province_name = "Loethatsvi"
+				change_culture = ROOT
+				
+				tooltip = { kill_units = { who = ROOT } }
+				custom_tooltip = I55_unchained_sacrifice_tt
+
+				hidden_effect = {
+					ROOT = { set_variable = { bh_undead_cavalry_var = 0 } }
+					while = {
+						limit = { units_in_province = ROOT }
+						ROOT = { 
+							increase_magic_experience = { unmodified_amount = 5 }
+							change_variable = { bh_undead_cavalry_var = 1 }
+						}
+						kill_units = { who = ROOT amount = 1 }
+					}
+				}
+			}
 		}
 	}
 }
+
 I55_2_missions = {
 	slot = 2
 	generic = no
@@ -132,6 +180,7 @@ I55_2_missions = {
 
 		provinces_to_highlight = {
 			is_capital = yes
+			superregion = forbidden_lands_superregion
 			owner = {
 				culture_is_ogre = yes
 				NOT = {
@@ -155,7 +204,39 @@ I55_2_missions = {
 		} 
 
 		effect = {
-			
+			custom_tooltip = I55_ogre_spy_tt
+			country_event = {
+				id = black_herd_events.1 #Leaflets of the Glutton King
+			}
+			hidden_effect = {
+				every_country = {
+					limit = { culture_is_ogre = yes }
+					if = {
+						limit = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
+							}
+						}
+						add_country_modifier = {
+							name = I55_umbral_disrupters
+							duration = 3650 #10 Years
+						}
+					}
+					else_if = {
+						limit = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 5
+							}
+						}
+						add_country_modifier = {
+							name = I55_shadowy_disrupters
+							duration = 3650 #10 Years
+						}
+					}
+				}
+			}
 		}
 	}
 }
@@ -175,15 +256,70 @@ I55_2_necro_missions = {
 		required_missions = { I55_3_3_retribution } 
 		
 		provinces_to_highlight = {
-			
+			OR = {
+				AND = {
+					OR = {
+						area = kvakeinolba_area
+						area = krotavatsvi_area
+						area = ghavatalur_area
+						area = dzimokli_area
+					}
+					NOT = {
+						AND = {
+							owned_by = ROOT
+							is_core = ROOT
+						}
+					}
+				}
+				is_capital_of = I90 #Maghargma
+				AND = {
+					province_id = 5037 #Maghargma
+					NOT = {
+						AND = {
+							is_capital_of = ROOT
+							num_of_buildings_in_province = 5
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
-			
+			kvakeinolba_area = {
+				type = all
+				owned_by = ROOT
+				is_core = ROOT
+			}
+			krotavatsvi_area = {
+				type = all
+				owned_by = ROOT
+				is_core = ROOT
+			}
+			ghavatalur_area = {
+				type = all
+				owned_by = ROOT
+				is_core = ROOT
+			}
+			dzimokli_area = {
+				type = all
+				owned_by = ROOT
+				is_core = ROOT
+			}
+			NOT = { exists = I90 } #Maghargma
+			5037 = { #Maghargma
+				is_capital_of = ROOT
+				num_of_buildings_in_province = 5
+			}
+			adm_tech = 4
+			dip_tech = 4
+			mil_tech = 4
+			treasury = 300
 		}
 
 		effect = {
-			
+			country_event = { #Ashen Past
+				id = black_herd_events.4
+			}
 		}
 	}
 
@@ -196,15 +332,41 @@ I55_2_necro_missions = {
 		}
 		
 		provinces_to_highlight = {
-			
+			region = ogre_valley_region
+			NOT = {
+				has_province_modifier = province_razed
+				anb_has_been_exploited = yes
+			}
 		}
 
 		trigger = {
-			
+			OR = {
+				AND = {
+					is_ruler_necromancy_level_2_minimum = yes
+					ruler_is_advancing_necromancy = yes
+					check_variable = { ruler_magic_experience = 500 }
+				}
+				is_ruler_necromancy_level_3 = yes
+			}
+			ogre_valley_region = {
+				type = all
+				OR = {
+					has_province_modifier = province_razed
+					anb_has_been_exploited = yes
+				}
+			}
+			has_cast_steal_vitality = yes
+			at_least_magical_infrastructure_level_1 = yes
 		}
 
 		effect = {
-			
+			if = {
+				limit = { has_not_cast_undead_army = yes }
+				set_country_flag = necromancy_3_undead_army_spell_free_next_cast
+				generic_cast_spell = { school = necromancy level = 3 id = undead_army }
+				custom_tooltip = spell_is_free_tt
+			}
+			add_splendor = 800
 		}
 	}
 }
@@ -389,11 +551,21 @@ I55_3_necro_missions = {
 		}
 
 		trigger = {
-			
+			is_ruler_necromancy_level_3 = yes
+			at_least_magic_project_level = { project = lichdom level = 2 }
+			is_advancing_lichdom = yes
+			army_size_percentage = 1
 		}
 
 		effect = {
-			
+			add_country_modifier = {
+				name = I55_open_the_veil
+				duration = 7300 #20 years
+			}
+			west_forbidden_plains_region = { add_permanent_claim = ROOT }
+			east_forbidden_plains_region = { add_permanent_claim = ROOT }
+			serpent_gift_region = { add_permanent_claim = ROOT }
+			nuzurbokh_region = { add_permanent_claim = ROOT }
 		}
 	}
 
@@ -403,15 +575,99 @@ I55_3_necro_missions = {
 		required_missions = { I55_3_6_arise } 
 		
 		provinces_to_highlight = {
-			
+			OR = {
+				AND = {
+					region = west_forbidden_plains_region
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					region = east_forbidden_plains_region
+					NOT = { owned_by = ROOT }
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 33
+								region = east_forbidden_plains_region
+							}
+						}
+					}
+				}
+				AND = {
+					region = serpent_gift_region
+					NOT = { owned_by = ROOT }
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 13
+								region = serpent_gift_region
+							}
+						}
+					}
+				}
+				AND = {
+					province_id = 5132 #Remollgeibar
+					NOT = {
+						AND = {
+							is_capital_of = ROOT
+							has_great_project = {
+								type = glyphs_irdaeos
+								tier = 1
+							}
+						}
+					}
+				}
+				AND = {
+					is_capital = yes
+					owner = {
+						culture_is_centaur = yes
+						OR = {
+							army_size = ROOT
+							num_of_cities = ROOT
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
-			
+			ruler_is_lich = yes
+			west_forbidden_plains_region = {
+				type = all
+				owned_by = ROOT
+			}
+			num_of_owned_provinces_with = {
+				value = 33
+				region = east_forbidden_plains_region
+			}
+			num_of_owned_provinces_with = {
+				value = 13
+				region = serpent_gift_region
+			}
+			5132 = { #Remollgeibar
+				is_capital_of = ROOT
+				has_great_project = {
+					type = glyphs_irdaeos
+					tier = 1
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = I55_largest_centaur_tt
+				all_country = {
+					OR = {
+						NOT = { culture_is_centaur = yes }
+						AND = {
+							NOT = { army_size = ROOT }
+							NOT = { num_of_cities = ROOT }
+						}
+					}
+				}
+			}
 		}
 
 		effect = {
-			
+			country_event = { #Starlight
+				id = black_herd_events.5
+			}
 		}
 	}
 }
@@ -574,13 +830,13 @@ I55_4_missions = {
 				}
 			}
 			has_estate_privilege = estate_mages_magocratic_administration
-			irdaeos_religious_actions_completed = {
-				type = Communion
-				amount = 3
-			}
 			num_of_estate_agendas_completed = {
 				estate = estate_mages
 				value = 4
+			}
+			irdaeos_religious_actions_completed = {
+				type = Communion
+				amount = 3
 			}
 		}
 
@@ -642,11 +898,11 @@ I55_5_missions = {
 				add_core = ROOT
 				change_province_name = "Emblazoned Deep"
 				custom_tooltip = I55_reduce_dev_tt
+				custom_tooltip = desc_I55_home_to_none_but_stone
 				add_province_modifier = {
 					name = I55_home_to_none_but_stone
 					duration = -1
 				}
-				custom_tooltip = desc_I55_home_to_none_but_stone
 				hidden_effect = {
 					while = {
 						limit = { base_tax = 2 }
