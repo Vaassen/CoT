@@ -2730,8 +2730,7 @@ country_event = { #The Fate of the Oracle
 	option = { # Kill the oracle
 		name = the_command.46.a
 		ai_chance = { factor = 1 }
-		add_stability_or_adm_power = yes
-		add_stability_or_adm_power = yes
+		add_2_stability_or_adm_power = yes
 		add_legitimacy_or_monarch_power = { VAL = 30 }
 		
 		# add_country_modifier = {
@@ -2811,7 +2810,7 @@ country_event = { #The Fate of the Oracle
 		add_legitimacy = -20
 		custom_tooltip = command_fate_of_the_oracle_enslave_tt
 		set_country_flag = command_enslaved_the_oracle_flag
-		make_spell_half_off = { school = divination level = 2 id = 0 duration = -1 }
+		make_spell_half_off = { school = divination level = 2 id = scry duration = -1 }
 	}
 	option = { # leave the oracle free
 		name = the_command.46.c
@@ -2872,7 +2871,7 @@ country_event = { #Command encroaches on Raj!
 	option = { #
 		name = the_command.47.a
 		ai_chance = { factor = 1 }
-		raj_cohesion_change_bonus = { amount = -5 }
+		raj_permanent_cohesion_change_bonus = { amount = -5 }
 	}
 }
 
@@ -4301,6 +4300,32 @@ country_event = { #Rise of the Shamans End
 		}
 		add_years_of_income = 2
 		add_country_modifier = { name = command_chimera_resurgent duration = 3650 }
+		if = {
+			limit = { has_country_modifier = command_exemplary_leadership }
+			remove_country_modifier = command_exemplary_leadership
+			add_ruler_modifier = {
+				name = command_respected_leadership
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = command_respected_leadership }
+			remove_country_modifier = command_respected_leadership
+			add_ruler_modifier = {
+				name = command_legendary_leadership
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { NOT = { has_country_modifier = command_legendary_leadership } }
+			add_ruler_modifier = {
+				name = command_exemplary_leadership
+				duration = -1
+			}
+		}
+		else = {
+			add_mil_power = 50
+		}
 		hidden_effect = {
 			every_owned_province = {
 				clr_province_flag = command_has_had_shaman_uprising_flag
@@ -4370,7 +4395,7 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 
 						capital_scope = {
 							add_province_modifier = {
-								name = abjuration_1_0_mod_3
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4421,7 +4446,7 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 						
 						capital_scope = {
 							add_province_modifier = {
-								name = abjuration_1_0_mod_3
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4460,12 +4485,12 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 							witch_king = yes
 						}
 
-						necromancy_3_0_effect = yes
+						necromancy_3_undead_army_effect = yes
 						add_country_modifier = { name = command_suresh_of_the_stalking_way duration = -1 }
 						
 						capital_scope = {
 							add_province_modifier = {
-								name = abjuration_1_0_mod_3
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4486,44 +4511,49 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 		switch_tag = V98
 	}
 }
-country_event = { #Conquest of Temple from Shamans
+country_event = { #Re-Conquest of Temple from Shamans
 	id = the_command.83
 	title = the_command.83.t
 	desc = the_command.83.desc
 	picture = HIGH_TEMPLE_CITY_eventPicture
+	goto = temple_area_reconquest_shaman_revolt
 
 	is_triggered_only = yes
 	
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { #has to look right for the tooltip
+					event_target:temple_area_reconquest_shaman_revolt = { is_capital = yes }
+				}
+				V98 = {
+					random_owned_province = {
+						limit = {
+							province_group = temple_province_group
+							NOT = { province_id = event_target:temple_area_reconquest_shaman_revolt }
+						}
+						save_event_target_as = new_capital_shaman_revolt
+					}
+				}
+			}
+		}
+	}
 	option = {
 		name = the_command.83.a
 		ai_chance = { factor = 1 }
-
-		FROM = {
+		
+		event_target:temple_area_reconquest_shaman_revolt = {
 			damage_temple_effect_small = yes
 			add_devastation = 25
-			area = {
+			area = {     
 				cede_province = R62
 				remove_core = V98
+				add_core = R62
 			}
 		}
 		if = {
-			limit = { #has to look right for the tooltip
-				V98 = {
-					any_owned_province = {
-						province_group = temple_province_group
-						NOT = { province_id = FROM }
-					}
-				}
-			}
-			V98 = {
-				random_owned_province = {
-					limit = {
-						province_group = temple_province_group
-						NOT = { province_id = FROM }
-					}
-					V98 = { set_capital = PREV }
-				}
-			}
+			limit = { has_saved_event_target = new_capital_shaman_revolt }
+			V98 = { set_capital = event_target:new_capital_shaman_revolt }
 		}
 	}
 }
@@ -6835,6 +6865,7 @@ country_event = { #Sir revolt end - Command loss
 
 	is_triggered_only = yes
 	major = yes
+	fire_only_once = yes
 
 	immediate = {
 		every_known_country = {
@@ -7922,6 +7953,7 @@ country_event = { #Sir Revolt End - Command Victory
 
 	is_triggered_only = yes
 	major = yes
+	fire_only_once = yes
 
 	immediate = {
 		set_country_flag = command_sir_revolt_victory
