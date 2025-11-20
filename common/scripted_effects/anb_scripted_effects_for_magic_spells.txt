@@ -160,7 +160,7 @@ generic_cast_spell = {
 
 			$school$_$level$_$id$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_free_next_cast }
 			$school$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_free_next_cast }
-			all_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_half_next_cast }
+			all_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_free_next_cast }
 		}
 	}
 	else_if = { #Half-cost spell
@@ -191,6 +191,34 @@ generic_cast_spell = {
 
 		pay_half_mana_for_level_$level$_spell = yes
 	}
+	else_if = { #25% off spell
+		limit = {
+			OR = {
+				has_country_modifier = all_spell_three_quarter
+				has_country_flag = all_spell_three_quarter_next_cast
+				has_ruler_flag = all_spell_three_quarter
+
+				has_country_modifier = $school$_$level$_$id$_spell_three_quarter
+				has_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast
+				has_ruler_flag = $school$_$level$_$id$_spell_three_quarter
+
+				has_country_modifier = $school$_spell_three_quarter
+				has_country_flag = $school$_spell_three_quarter_next_cast
+				has_ruler_flag = $school$_spell_three_quarter
+			}
+		}
+		custom_tooltip = spell_is_three_quarter_tt
+
+		trigger_switch = { #Next cast 25% off spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast }
+			$school$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_three_quarter_next_cast }
+			all_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_three_quarter_next_cast }
+		}
+
+		pay_three_quarter_mana_for_level_$level$_spell = yes
+	}
 	else = { pay_mana_for_level_$level$_spell = yes }
 
 	[[war]
@@ -198,15 +226,23 @@ generic_cast_spell = {
 		hidden_effect = { clear_active_war_magic = yes }
 	]
 
+	hidden_effect = {
+		count_spells_effect = { school = $school$ }
+	}
+	
 	$school$_$level$_$id$_effect = yes
 }
 pay_half_mana_for_level_0_spell = { change_mana = { amount = -12.5 } }
+pay_three_quarter_mana_for_level_0_spell = { change_mana = { amount = -18.75 } }
 pay_mana_for_level_0_spell = { change_mana = { amount = -25 } }
 pay_half_mana_for_level_1_spell = { change_mana = { amount = -25 } }
+pay_three_quarter_mana_for_level_1_spell = { change_mana = { amount = -37.5 } }
 pay_mana_for_level_1_spell = { change_mana = { amount = -50 } }
 pay_half_mana_for_level_2_spell = { change_mana = { amount = -50 } }
+pay_three_quarter_mana_for_level_2_spell = { change_mana = { amount = -75 } }
 pay_mana_for_level_2_spell = { change_mana = { amount = -100 } }
 pay_half_mana_for_level_3_spell = { change_mana = { amount = -100 } }
+pay_three_quarter_mana_for_level_3_spell = { change_mana = { amount = -150 } }
 pay_mana_for_level_3_spell = { change_mana = { amount = -200 } }
 
 clear_active_war_magic = {
@@ -268,6 +304,23 @@ ai_magic_siege_pulse = {
 		}
 		country_event = { id = magic_system.304 } #Siege magic handler
 	}
+}
+
+# enables counting for a specific school, or overall cast spells with "all"
+start_count_spells_effect = { #school/all
+    set_country_flag = count_$school$_spells
+    set_variable = { which = count_$school$_spells value = 0 }
+}
+
+count_spells_effect = { #school/all, internal use
+    if = {
+        limit = { has_country_flag = count_$school$_spells }
+        change_variable = { which = $school$_spell_count value = 1 }
+    }
+    if = {
+        limit = { has_country_flag = count_all_spells }
+        change_variable = { which = all_spell_count value = 1 }
+    }
 }
 
 ##################
@@ -632,6 +685,13 @@ divination_1_eye_for_talent_effect = {  # Eye for Talent
 			limit = { has_country_modifier = orb_of_omniscience_div_tracker }
 			change_variable = { orb_of_omniscience_progress_tracker = 50 }
 		}
+		if = {
+			limit = { has_country_flag = track_eye_for_talent_count }
+			change_variable = {
+                which = magic_eye_for_talent_cast_count
+                value = 1
+            }
+		}
 	}
 }
 divination_1_eye_for_talent_hire_sub_effect = { # Eye for Talent sub-effect
@@ -740,35 +800,66 @@ divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
 	}
 }
 divination_2_scry_effect = {  # Scry #VERY FINICKY ABOUT ROOT SCOPE DUE TO FOW EFFECT
-	if = {
-		limit = {
-			has_ruler_flag = ancestor_spirit_patron
-			receiving_mindarayan_buff = yes
-		}
-		if = { #80%
-			limit = { 4527 = { has_great_project = { type = oracle_mountain tier = 3 } } }
-			divination_2_scry_sub_effect = { days = 3285 months = 108 }
-		}
-		else = { divination_2_scry_sub_effect = { days = 2920 months = 96 } }
-		custom_tooltip = magic_booster_by_patron_tt
-		custom_tooltip = tughayasa_divination_booster_tt
-	}
-	else_if = {
-		limit = { has_ruler_flag = ancestor_spirit_patron }
-		divination_2_scry_sub_effect = { days = 2555 months = 84 }
-		custom_tooltip = magic_booster_by_patron_tt
-	}
-	else_if = { #getting a mindarayan buff
+	#Lets go with additive. Base duration = { days = 1825 months = 60 }
+	# +100% : orb of omniscience level 2 - also provides institution progress
+	# +40% oracle_mountain tier 3: 40% longer, see tughayasa_better_divination_2_tt
+	# +20% oracle_mountain tier 1: 20% longer, see tughayasa_better_divination_1_tt
+	#
+	# Please do not add any MT specific, or limited scope duration increasing effects to Scry, unless they are mutually exclusive with mindarayan
+	# This effect is already quite unwieldy
+	# Possibly *ONE* more stackable bonus would be permitted, for something impactful
+	# (The if/else chain for a third duration buff can be found in the git history)
+
+
+	if = { #getting a mindarayan buff
 		limit = { receiving_mindarayan_buff = yes }
-		if = { #40%
+		if = { #Tier 3 oracle_mountain
 			limit = { 4527 = { has_great_project = { type = oracle_mountain tier = 3 } } }
-			divination_2_scry_sub_effect = { days = 2555 months = 84 }
+			if = {
+				limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 2 } }
+				#Buff, 100+40%
+				divination_2_scry_sub_effect = { days = 4380 months = 144 buffed = yes }
+			}
+			else = { #40%
+				divination_2_scry_sub_effect = { days = 2555 months = 84 }
+			}
 		}
-		else = { divination_2_scry_sub_effect = { days = 2190 months = 72 } }
+		else = { #Tier 2 oracle_mountain
+			if = {
+				limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 2 } }
+				#Buff, 100+20%
+				divination_2_scry_sub_effect = { days = 4015 months = 132 buffed = yes }
+			}
+			else = { #20%
+				divination_2_scry_sub_effect = { days = 2190 months = 72 }
+			}
+		}
+	}
+
+	else = { #No mindarayan buff
+		if = {
+			limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 2 } }
+			#Buff, 100%
+			divination_2_scry_sub_effect = { days = 3650 months = 120 buffed = yes }
+		}
+		else = { #0%
+			divination_2_scry_sub_effect = { days = 1825 months = 60 }
+		}
+	}
+
+
+	#The custom tooltips are here because the code is difficult to read when they're mixed in
+	if = {
+		limit = { receiving_mindarayan_buff = yes }
 		custom_tooltip = tughayasa_divination_booster_tt
 	}
-	else = { divination_2_scry_sub_effect = { days = 1825 months = 60 } }
-	custom_tooltip = divination_2_scry_upgrade_no
+	if = {
+		limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 2 } }
+		custom_tooltip = divination_2_scry_upgrade_yes
+	}
+	else = {
+		custom_tooltip = divination_2_scry_upgrade_no
+	}
 
 	hidden_effect = {
 		if = {
@@ -785,7 +876,7 @@ divination_2_scry_sub_effect = { #Scry sub-effect
 		custom_tooltip = magic_booster_by_witch_king_tt
 	}
 	else = { add_or_extend_country_modifier = { name = is_scrying_mod duration = $days$ hidden = yes } }
-	custom_tooltip = spell_sabotage_effect_tt
+	custom_tooltip = spell_sabotage_effect2_tt
 	tooltip = { remove_fow = $months$ }
 	hidden_effect = {
 		every_war_enemy_country = {
@@ -1277,18 +1368,32 @@ illusion_0_invisibility_effect = { # Invisibility
 illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 	custom_tooltip = spell_sabotage_effect_tt
 	custom_tooltip = illusion_1_fear_and_loathing_spell_effect_tt
+	custom_tooltip = spell_sabotage_effect2_tt
+	tooltip = { add_country_modifier = { name = illusion_1_fear_and_loathing_debuff duration = 3650 } }
 	hidden_effect = {
 		every_war_enemy_country = {
-			limit = { capital_scope = { controlled_by = PREV has_siege = no } }
+			limit = { 
+				OR = {
+					is_in_war = {
+						attacker_leader = PREV
+					}
+					is_in_war = {
+						defender_leader = PREV
+					}
+				}
+				capital_scope = { controlled_by = PREV has_siege = no }
+			}
 			country_event = { id = magic_spell.601 }
 			capital_scope = { anti_tax_rebels = 1 }
+		}
+		every_enemy_country = {
+			add_country_modifier = { name = illusion_1_fear_and_loathing_debuff duration = 3650 }
 		}
 		every_rival_country = {
-			limit = { NOT = { war_with = ROOT } capital_scope = { controlled_by = PREV has_siege = no } }
-			country_event = { id = magic_spell.601 }
-			capital_scope = { anti_tax_rebels = 1 }
+			add_country_modifier = { name = illusion_1_fear_and_loathing_debuff duration = 3650 }
 		}
 	}
+	add_country_modifier = { name = illusion_1_fear_and_loathing_mod duration = 3650 }
 }
 illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 	decrease_estate_witch_king_points = { size = medium }
@@ -1318,20 +1423,119 @@ illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 	}
 	else = { custom_tooltip = illusion_1_bread_and_circuses_no_active_agenda }
 
-	hidden_effect = {
-		if = {
-			limit = { NOT = { has_any_active_estate_agenda = yes } }
-			country_event = { id = estate_privileges_and_agendas_events.3 }
-			add_estate_loyalty = { estate = all loyalty = 5 }
+	#This is the `summon_the_diet` effect block. Any changes should be made to both
+	if = { #Trigger means AI can only cast the spell when they would pass this limit
+		limit = { NOT = { has_any_active_estate_agenda = yes } }
+		# custom_tooltip = ESTATES_SUMMON_THE_DIET_DESC
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_anzalkatsa_naga = yes } }
+				country_event = { id = estate_privileges_and_agendas_events.3 }
+			}
+			if = { #MUST be an `if` or event won't fire
+				limit = { has_anzalkatsa_naga = yes }
+				clr_country_flag = Invalidate_NagaAgenda
+				country_event = { id = estate_privileges_and_agendas_events.14 }
+			}
+			if = {
+				limit = {
+					ai = yes
+				}
+				random_list = {
+					1 = {}
+					9 = { set_country_flag = auto_complete_estate_agenda_all }
+				}
+			}
 		}
-		else = { auto_complete_estate_agenda = { estate = all } }
+		custom_tooltip = SEPERATOR_TOOLTIP
+		
+		if = {
+			limit = {
+				has_country_flag = recent_estate_agenda
+			}
+			clr_country_flag = recent_estate_agenda
+		}
+		set_country_flag = recent_estate_agenda
+
+		if = {
+			limit = {
+				# AI are excluded from this component of the spell so their influence doesn't get too high
+				ai = no
+				NOT = {
+					has_government_attribute = diet_increases_not_influence
+					has_estate_privilege = estate_burghers_to_outsmart_and_outwit
+				}
+			}
+			add_estate_influence_modifier = {
+				estate = all
+				desc = EST_VAL_DIET_SUMMONED
+				duration = 7300
+				influence = 5
+				short = yes
+			}
+		}
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 5
+			short = yes
+		}
+		if = {
+			limit = {
+				has_government_attribute = republican_tradition_from_diets
+			}
+			add_scaled_republican_tradition = 2
+		}
+		if = {
+			limit = { 
+				owns = 394
+				394 = { #can use modifier trigger
+					baths_of_verinus_are_active = yes #scripted so bypasses can be added
+				}
+			}
+			if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 3 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+			else_if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 2 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+			else_if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 1 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+		}
+
+		#Pashaine
+		pashaine_add_clue = yes
+
+		accretive_path_gain_chi = { aspect = meditation_through_labour category = dip amount = 15 }
 	}
+	else = { hidden_effect = { auto_complete_estate_agenda = { estate = all } } }
 }
 illusion_2_assimilation_program_effect = { # Assimilation Program
 	add_country_modifier = { name = illusion_2_assimilation_program_mod duration = 7300 }
 }
 illusion_2_shadows_in_the_night_effect = { # Shadows in the Night
-	custom_tooltip = spell_sabotage_effect_tt
+	custom_tooltip = spell_sabotage_effect2_tt
 	tooltip = { add_country_modifier = { name = illusion_2_shadows_in_the_night_mod duration = 1825 } }
 	hidden_effect = {
 		every_war_enemy_country = { country_event = { id = magic_spell.600 } add_country_modifier = { name = illusion_2_shadows_in_the_night_mod duration = 1825 } }
@@ -1737,15 +1941,15 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 				has_ruler_flag = manifestation_of_surael_patron
 			}
 		}
-		transmutation_1_plant_growth_sub_effect = { days = 3650 }
+		transmutation_1_plant_growth_sub_effect = { days = 3650 } #10 years
 		custom_tooltip = magic_booster_by_patron_tt
 	}
 	else_if = {
 		limit = { has_ruler_flag = spring_old_patron }
-		transmutation_1_plant_growth_sub_effect = { days = 2555 }
+		transmutation_1_plant_growth_sub_effect = { days = 2555 } #7 years
 		custom_tooltip = magic_booster_by_patron_tt
 	}
-	else = { transmutation_1_plant_growth_sub_effect = { days = 1825 } }
+	else = { transmutation_1_plant_growth_sub_effect = { days = 1825 } } #5 years
 	if = {
 		limit = { has_estate_privilege = estate_mages_fifth_family }
 		custom_tooltip = toarnaire_fifth_tt
