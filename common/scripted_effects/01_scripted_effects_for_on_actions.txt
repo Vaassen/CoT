@@ -3659,7 +3659,41 @@ on_battle_won_unit_effect = {
 			}
 		}
 	}
-
+	#Dogeater
+	if = {
+		limit = {
+			unit_owner = { has_ruler_flag = dush_dogeater }
+			is_ruler_commanding_unit = yes
+		}
+		unit_owner = {
+			change_variable = {
+					which = battle_won_dush
+					value = 1
+			}
+			if = {
+					limit = {
+						check_variable = {
+							which = battle_won_dush
+							value = 30
+						}
+					}
+					country_event = {
+						id = flavour_dogeater.92
+					}
+			}
+			if = {
+					limit = {
+						check_variable = {
+							which = battle_won_dush
+							value = 15
+						}
+					}
+					country_event = {
+						id = flavour_dogeater.91
+					}
+			}
+		}
+	}
 	#Pashaine
 	if = {
 		limit = {
@@ -3970,9 +4004,14 @@ on_battle_won_country_effect = {
 			}
 		}
 	}
+	
 	if = {
-		limit = { religion = goblinic_shamanism  NOT = { FROM = { OR = { tag = REB tag = NAT } } } }
-		FROM = { goblinic_shamanism_event = yes } # Fires events for a cult spreading upon winning a battle
+		limit = {
+			religion = goblinic_shamanism
+			NOT = { FROM = { OR = { tag = REB tag = NAT } } }
+			FROM = { goblinic_shamanism_trigger = yes }
+		}
+		FROM = { goblinic_shamanism_event = yes } #Cult spread depending on FROM culture/rel
 	}
 	#ROOT = { country_event = { id = infestation_goblin.300 } } # post-rebellion cleanup
 	ROOT = { jaddari_deioderan_battle_counter_update = { value = 1 } }
@@ -4401,6 +4440,55 @@ on_battle_won_country_effect = {
 				id = golden_tremor_events.6
 				days = 3
 			}
+		}
+	}
+
+	if = { #Endhuvi
+		limit = {
+			is_or_was_tag = { tag = R36 }
+			NOT = { FROM = { OR = { tag = REB tag = NAT } } }
+		}
+		if = { #Aid Non-Raj Ally in War
+			limit = {
+				NOT = { has_country_flag = R36_aided_an_outsider_ally }
+				any_ally = {
+					OR = {
+						is_in_war = {
+							attacker_leader = THIS
+							attackers = ROOT
+						}
+						is_in_war = {
+							defender_leader = THIS
+							defenders = ROOT
+						}
+					}
+					NOT = {
+						has_reform = prabhi_reform
+						has_reform = senapti_reform
+						has_reform = raja_reform
+					}
+				}
+			}
+			set_country_flag = R36_aided_an_outsider_ally
+		}
+		if = { #Aided Parusad Bhola
+			limit = {
+				NOT = { has_country_flag = R36_supported_parusad_in_a_war }
+				any_ally = {
+					tag = R49
+					OR = {
+						is_in_war = {
+							attacker_leader = THIS
+							attackers = ROOT
+						}
+						is_in_war = {
+							defender_leader = THIS
+							defenders = ROOT
+						}
+					}
+				}
+			}
+			set_country_flag = R36_supported_parusad_in_a_war
 		}
 	}
 }
@@ -4869,6 +4957,18 @@ on_battle_won_province_effect = {
 					type = general
 				}
 			}
+		}
+	}
+
+	if = {
+		limit = {
+			FROM = {
+				tag = REB
+				rebel_is_holohana = yes
+			}
+		}
+		FROM = {
+			holohana_injury_trigger_switch = yes
 		}
 	}
 }
@@ -6179,8 +6279,90 @@ on_war_declaration_effect = {
 			}
 		}
 	}
-	
-
+	if = {
+		limit = {
+			has_country_flag = B28_corin_flag
+			FROM = {
+				OR = {
+					religion = corinite
+					has_personal_deity = corin
+					has_personal_deity = corin_upgraded
+				}
+			}
+		}
+		add_country_modifier = {
+			name = B28_slayer_of_corin
+			duration = -1
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = B28_tide_flag
+		}
+		remove_country_modifier = B28_ook_01
+		remove_country_modifier = B28_ook_02
+		remove_country_modifier = B28_ook_03
+		remove_country_modifier = B28_ook_1
+		remove_country_modifier = B28_ook_2
+		remove_country_modifier = B28_ook_3
+		if = {
+				limit = {
+					NOT = { stability = -2 }
+				}
+				add_country_modifier = {
+					name = B28_ook_3
+					duration = 3650
+				}
+				add_war_exhaustion = -6
+			}
+			else_if = {
+				limit = {
+					NOT = { stability = -1 }
+				}
+				add_country_modifier = {
+					name = B28_ook_2
+					duration = 3650
+				}
+				add_war_exhaustion = -4
+			}
+			else_if = {
+				limit = {
+					NOT = { stability = 0 }
+				}
+				add_country_modifier = {
+					name = B28_ook_1
+					duration = 3650
+				}
+				add_war_exhaustion = -2
+			}
+			else_if = {
+				limit = {
+					NOT = { stability = 2 }
+				}
+				add_country_modifier = {
+					name = B28_ook_01
+					duration = 3650
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { stability = 3 }
+				}
+				add_country_modifier = {
+					name = B28_ook_02
+					duration = 3650
+				}
+			}
+			else_if = {
+				limit = {
+					stability = 3
+				}
+				add_country_modifier = {
+					name = B28_ook_03
+					duration = 3650
+				}
+			}
+	}
 	if = {
 		limit = {
 			tag = A77
@@ -7937,6 +8119,10 @@ on_dip_development_effect = {
 			}
 		}
 	}
+	if = { limit = { has_province_modifier = I27_well_fed_hawks_mod base_production = 8 }
+		remove_province_modifier = I27_well_fed_hawks_mod
+		add_province_modifier = { name = I27_well_fed_hawks_upgraded_mod duration = -1 }
+	}
 	if = {
 		limit = { has_province_modifier = konolkhatep_abyssal_golden_mine }
 		add_base_production = 1
@@ -8829,9 +9015,17 @@ on_main_war_won_effect = {
 	}
 	if = {
 		limit = { 
-			has_government_attribute = plundered_knowledge_reform_effect
-			FROM = {
-				NOT = { has_country_modifier = monstrous_nation }
+			OR = {
+				AND = {
+					has_government_attribute = plundered_knowledge_reform_effect
+					FROM = {
+						NOT = { has_country_modifier = monstrous_nation }
+					}
+				}
+				AND = {
+					has_reform = B28_rule_of_the_strong
+					has_country_flag = B28_rapid_evo
+				}
 			}
 		}
 		change_government_reform_progress = 20
@@ -9499,6 +9693,15 @@ on_built_tax_building_effect = {
 		}
 		add_province_modifier = {
 			name = yudunyovi_powerful_ustiqlik
+			duration = -1
+		}
+	}
+	if = {
+		limit = {
+			owner = { mission_completed = R36_countryside_schools }
+		}
+		add_province_modifier = {
+			name = R36_countryside_schools_mod
 			duration = -1
 		}
 	}
@@ -10888,6 +11091,11 @@ startup_1444_effects = {
 			}
 		}
 
+		# Salla Myna startup event
+		if = { limit = { tag = I27 }
+			country_event = { id = flavour_salla_myna.0 } #Salla Myna Nature Disturbed event
+		}
+
 		#Escanni refugees
 		if = {
 			limit = { owns = 451 }
@@ -10942,6 +11150,18 @@ startup_1444_effects = {
 				has_government_attribute = expand_the_league_1_attribute
 			}
 			country_event = { id = flavour_vic_league.0 }
+		}
+		if = {
+			limit = {
+				is_subject_of_type = vic_league_member
+			}
+			set_variable = { which = VicLeagueAnnexYear value = 1469 }
+			set_variable = { which = VicLeagueAnnexMonth value = 11 }
+		}
+
+		if = { #Endhuvi
+			limit = { tag = R36 }
+			country_event = { id = flavour_endhuvi.0 }
 		}
 	}
 }
@@ -13965,7 +14185,6 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
-
 	
 	if = { #Golden Tremor
 		limit = {
@@ -13982,6 +14201,9 @@ on_province_owner_change_effect = {
 
 	#Bibyobi
 	S98_change_province_effect = yes
+
+	# Apply Salla Myna Hawk Rider Aviary adjacency mods
+	I27_se_apply_aviary_adjacency_mods = yes
 	
 	#Celmaldor
 	if = {
@@ -14013,6 +14235,99 @@ on_province_owner_change_effect = {
 			name = z22_whitespear_whaling_guild
 			duration = -1
 		}
+	}
+
+	#Endhuvi
+	if = {
+		limit = { owner = { is_or_was_tag = { tag = R36 } } }
+		endhuvi_fish_buff_province = yes
+		if = {
+			limit = { has_province_modifier = porcelain_city }
+			if = {
+				limit = { owner = { mission_completed = R36_a_healthy_body_is_a_healthy_mind } }
+				add_province_modifier = {
+					name = R36_porcelain_city_upgrade_3
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { owner = { mission_completed = R36_growing_our_reach } }
+				add_province_modifier = {
+					name = R36_porcelain_city_upgrade_1
+					duration = -1
+				}
+			}
+		}
+		if = {
+			limit = {
+				owner = { mission_completed = R36_countryside_schools }
+				has_tax_building_trigger = yes
+			}
+			add_province_modifier = {
+				name = R36_countryside_schools_mod
+				duration = -1
+			}
+		}
+	}
+	if = {
+		limit = { has_global_flag = endhuvi_barge_buff_flag }
+		if = {
+			limit = { province_id = event_target:endhuvi_cinnabar_lotus_province }
+			if = { #If endhuvi gains the barge back
+				limit = { owner = { is_or_was_tag = { tag = R36 } } }
+				owner = { country_event = { id = flavour_endhuvi.102 } }
+			}
+			if = { #If endhuvi loses the barge
+				limit = { FROM = { is_or_was_tag = { tag = R36 } } }
+				FROM = { 
+					every_known_country = {
+						remove_opinion = {
+							who = ROOT
+							modifier = opinion_R36_cinnabar_lotus_society_barge_1
+						}
+						remove_opinion = {
+							who = ROOT
+							modifier = opinion_R36_cinnabar_lotus_society_barge_2
+						}
+						remove_opinion = {
+							who = ROOT
+							modifier = opinion_R36_cinnabar_lotus_society_barge_3
+						}
+					}
+				}
+				if = {
+					limit = { has_province_modifier = R36_cinnabar_lotus_society_barge_3 }
+					remove_province_modifier = R36_cinnabar_lotus_society_barge_3
+					4492 = {
+						add_permanent_province_modifier = {
+							name = R36_cinnabar_lotus_society_barge_3
+							duration = -1
+						}
+						save_global_event_target_as = endhuvi_cinnabar_lotus_province
+						if = {
+							limit = { owner = { is_or_was_tag = { tag = R36 } } }
+							owner = { country_event = { id = flavour_endhuvi.102 } }
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = { 
+				is_neighbor_of = event_target:endhuvi_cinnabar_lotus_province
+				event_target:endhuvi_cinnabar_lotus_province = { owner = { is_or_was_tag = { tag = R36 } } }
+			}
+			event_target:endhuvi_cinnabar_lotus_province = { owner = { country_event = { id = flavour_endhuvi.102 } } }
+		}
+	}
+	if = { #Holohana - flag gets automatically removed when province is decolonized this readds it
+		limit = {
+			has_province_modifier = holohana_rumbling
+			NOT = { 
+				has_holohana_rumbling_flag = yes
+			}
+		}
+		holohana_add_back_rumbling = yes
 	}
 }
 
@@ -14261,6 +14576,76 @@ S53_won_battle_against_trolls = {
 	change_variable = {
 		trollBattlesWon = 1
 	}	
+}
+
+anb_on_exploit_effect = {
+	if = { limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
+		set_province_flag = anb_has_been_exploited_flag
+	}
+	if = {
+		limit = { 
+			owner = { has_government_attribute = centaur_refund_exploit_dev }
+			has_base_nomadic_zone_of_control_modifier = yes
+		}
+		add_base_$dev$ = 1
+		add_devastation = 15
+	}
+	if = {
+		limit = { owner = { religion = devouring_path } }
+		owner = { add_church_power = 15 }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = karakhanbar_not_losing_development_chance }
+		}
+		random = {
+			chance = 50
+			add_base_$dev$ = 1
+		}
+	}
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = wyvernheart_exploit_culture
+			}
+			has_construction = culture
+		}
+		add_construction_progress = 0.33
+	}
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = B28_ash_flag
+				has_reform = B28_rule_of_the_strong
+			}
+		}
+		add_province_modifier = {
+			name = B28_looting_province_$dev$
+			duration = 3650
+			}
+		province_event = {
+			id = flavour_dogeater.999
+			days = 3650
+		}
+	}
+	if = { #Kheionai
+		limit = {
+			owner = { has_reform = kheionai_the_kheionolyklos }
+			has_seat_in_parliament = yes
+			NOT = {
+				has_terrain = city_terrain
+				development = 20
+			}
+		}
+		remove_province_modifier = kheionai_the_kheionolyklos_good_mod
+		add_province_modifier = {
+			name = kheionai_the_kheionolyklos_bad_mod
+			duration = -1
+		}
+	}
+	giberd_exploit_benonhill = yes
+	transmutative_path_lower_chi_wellspring_to_size_effect = yes
+	diggy_diggy_uesrennu = yes
 }
 on_province_owner_change_monuments = {
 	##### When monument changes owner #####
@@ -14949,6 +15334,22 @@ on_province_owner_change_monuments = {
 				duration = -1
 			}
 		}
+	}
+	if = { #Iron Palace
+		limit = {
+			province_id = 4630 #Sarilavhan
+			has_construction = iron_palace
+			NOT = {
+				is_capital = yes
+				custom_trigger_tooltip = {
+					tooltip = iron_seal_found
+					owned_by = R00 
+				}
+			}
+		}
+		cancel_construction = yes #hidden construction bug
+		#if you annex your subject while they are upgrading the monument, it continues but is hidden
+		#the iron_palace construction is really long and you can't speed it up with this bug, so cancel it here
 	}
 }
 
