@@ -2139,8 +2139,7 @@ create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 
 # The impacts of witch-kinginess are:
 ### Ruler: scaling diplo reputation malus (-1 dip rep, +5% AE impact per bracket increase)
-### Estate: scaling estate influence based on distance between ruler and estate infamy levels (-5/10/15/20% loyalty and +10/25/50/100% for each level of difference)
-#### This is only calculated based on the tiers, not the raw value - e.g. the distance between Respected estate and Denounced ruler is always 2 regardless of actual infamy values
+### Estate: scaling estate influence and estate loyalty maluses (+5/10/15/20% influence and -10/25/50/100% loyalty per bracket)
 ### Consort/Heir: nothing, but will become ruler witch-kinginess if they take the throne
 
 # The scale of increases are:
@@ -2162,7 +2161,6 @@ become_a_witch_king_effect = {
 		if = {
 			limit = { NOT = { check_variable = { which = ruler_witch_king_points value = 16 } } }
 			change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
-			calculate_estate_and_ruler_infamy_difference = yes
 		}
 		change_variable = { mana_regen_ruler = 0.3 } #All witch-king modifiers give 0.3
 	}
@@ -2266,72 +2264,6 @@ calculate_magical_infamy_modifier = {
 	}
 }
 
-# calculates the distance between ruler and estate infamy tiers, for the maluses to estate loyalty and influence
-# based on distance between tiers of the ruler and estates infamy only, not the precise infamy values
-# this is why it is rounded and divided by 4 (as each tier has a "width" of 4 points of infamy)
-# the distance between e.g. Denounced and Respected should always be 2 regardless of actual infamy values
-calculate_estate_and_ruler_infamy_difference = {
-	hidden_effect = {
-		set_variable = {
-			which = ruler_estate_infamy_tier_difference
-			which = ruler_witch_king_points
-		}
-		divide_variable = {
-			which = ruler_estate_infamy_tier_difference
-			value = 4
-		}
-		round_variable = {
-			which = ruler_estate_infamy_tier_difference
-			value = -1
-		}
-		set_variable = {
-			which = infamyFoo
-			which = country_witch_king_points
-		}
-		divide_variable = {
-			which = infamyFoo
-			value = 4
-		}
-		round_variable = {
-			which = infamyFoo
-			value = -1
-		}
-		subtract_variable = {
-			which = ruler_estate_infamy_tier_difference
-			which = infamyFoo
-		}
-		if = {
-			limit = {
-				NOT = { check_variable = { which = ruler_estate_infamy_tier_difference value = 0 } }
-			}
-			multiply_variable = {
-				which = ruler_estate_infamy_tier_difference
-				value = -1
-			}
-		}
-		# the absolute value of the difference in tiers
-	}
-}
-
-# in some situations it's known that the ruler or estate infamy is 0 already,
-# f.e. when clearing one of them
-# in that case, a shorter version of the above can be used as no difference needs to be calculated
-reset_estate_and_ruler_infamy_difference_from_target = {
-	hidden_effect = {
-		set_variable = {
-			which = ruler_estate_infamy_tier_difference
-			which = $target$_witch_king_points
-		}
-		divide_variable = {
-			which = ruler_estate_infamy_tier_difference
-			value = 4
-		}
-		round_variable = {
-			which = ruler_estate_infamy_tier_difference
-			value = -1
-		}
-	}
-}
 
 increase_type_witch_king_points_small = { #1 point
 	custom_tooltip = increase_$type$_witch_king_points_small
@@ -2394,7 +2326,6 @@ transfer_witch_king_points = {
 increase_ruler_witch_king_points = {
 	increase_type_witch_king_points_$size$ = { type = ruler }
 	calculate_magical_infamy_modifier = yes
-	calculate_estate_and_ruler_infamy_difference = yes
 }
 increase_consort_witch_king_points = {
 	increase_type_witch_king_points_$size$ = { type = consort }
@@ -2404,12 +2335,10 @@ increase_heir_witch_king_points = {
 }
 increase_estate_witch_king_points = {
 	increase_type_witch_king_points_$size$ = { type = country }
-	calculate_estate_and_ruler_infamy_difference = yes
 }
 decrease_ruler_witch_king_points = {
 	decrease_type_witch_king_points_$size$ = { type = ruler }
 	calculate_magical_infamy_modifier = yes
-	calculate_estate_and_ruler_infamy_difference = yes
 }
 decrease_consort_witch_king_points = {
 	decrease_type_witch_king_points_$size$ = { type = consort }
@@ -2419,7 +2348,6 @@ decrease_heir_witch_king_points = {
 }
 decrease_estate_witch_king_points = {
 	decrease_type_witch_king_points_$size$ = { type = country }
-	calculate_estate_and_ruler_infamy_difference = yes
 }
 
 increase_witch_king_points_based_on_advancement = {
@@ -2481,7 +2409,6 @@ decrease_witch_king_points_large = { decrease_witch_king_points = { size = large
 
 clr_ruler_witch_king_points = {
 	clr_type_witch_king_points = { type = ruler }
-	reset_estate_and_ruler_infamy_difference_from_target = { target = country }
 }
 clr_consort_witch_king_points = {
 	clr_type_witch_king_points = { type = consort }
@@ -2491,33 +2418,32 @@ clr_heir_witch_king_points = {
 }
 clr_estate_witch_king_points = {
 	clr_type_witch_king_points = { type = country }
-	reset_estate_and_ruler_infamy_difference_from_target = { target = ruler }
 }
 
 transfer_witch_king_points_to_ruler = {
 	transfer_witch_king_points = { from = $from$ to = ruler }
-	calculate_estate_and_ruler_infamy_difference = yes
 }
-
+transfer_witch_king_points_to_consort = {
+	transfer_witch_king_points = { from = $from$ to = consort }
+}
+transfer_witch_king_points_to_heir = {
+	transfer_witch_king_points = { from = $from$ to = heir }
+}
 transfer_witch_king_points_to_estate = {
 	transfer_witch_king_points = { from = $from$ to = country }
-	calculate_estate_and_ruler_infamy_difference = yes
 }
 
 transfer_witch_king_points_from_ruler = {
 	transfer_witch_king_points = { from = ruler to = $to$ }
-	reset_estate_and_ruler_infamy_difference_from_target = { target = country }
 }
-
+transfer_witch_king_points_from_consort = {
+	transfer_witch_king_points = { from = consort to = $to$ }
+}
+transfer_witch_king_points_from_heir = {
+	transfer_witch_king_points = { from = heir to = $to$ }
+}
 transfer_witch_king_points_from_estate = {
 	transfer_witch_king_points = { from = country to = $to$ }
-	reset_estate_and_ruler_infamy_difference_from_target = { target = ruler }
 }
 
-# NOTE: currently, these are only used to transfer consort->ruler and heir->ruler on new rulers,
-# but for future-proofing the reason why there only to/from ruler/estate are listed here
-# is because those are the ones that require recalculation for estate/ruler infamy difference
-# if there was e.g. transfer_witch_king_points_to_consort and that was used as
-# transfer_witch_king_points_to_consort = { from = ruler }
-# the ruler would have their points cleared without getting an infamy distance update - they would also be missing an infamy modifier update
-# (it also means it doesn't matter which one you pick to do ruler->estate or estate->ruler, either to or from will work fine)
+
