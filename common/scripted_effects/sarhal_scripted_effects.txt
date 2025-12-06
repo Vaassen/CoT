@@ -393,11 +393,21 @@ yezel_mora_misery_monthly_gain = {
 		value = 0
 	}
 
+	#Trying to use more efficient binary tree searches for these check
 	# +1 misery per point of negative stab
-	# I know it's usually better to use line breaks, but I want to make it clear it's basically the same effect for each level of negative stab. 
-	if = { limit = { NOT = { stability = -2 } } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { NOT = { stability = -1 } } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { NOT = { stability = 0  } } change_variable = { which = yezel_mora_misery_gain value = 1 } }
+	if = { limit = { NOT = { stability = -1 } } # -3 or -2
+		if = { limit = { NOT = { stability = -2 } } # -3
+			change_variable = { which = yezel_mora_misery_gain value = 3 }
+		}
+		else = { # -2 stability
+			change_variable = { which = yezel_mora_misery_gain value = 2 }
+		}
+	}
+	else = { # -1 or higher
+		if = { limit = { NOT = { stability = 0 } } # -1 stability
+			change_variable = { which = yezel_mora_misery_gain value = 1 }
+		}
+	}
 
 	# +0.05 misery per province with 90+ devastation
 	every_owned_province = {
@@ -413,29 +423,85 @@ yezel_mora_misery_monthly_gain = {
 	}
 
 	# +1 misery per 2 unrest above 0
-	# I know it's usually better to use line breaks, but I want to make it clear it's basically the same effect for each level of unrest. 
-	# We can't export this global unrest to a variable :(
-	if = { limit = { unrest = 2  } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 4  } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 6  } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 8  } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 10 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 12 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 14 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 16 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 18 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 20 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 22 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 24 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 26 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 28 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 30 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 32 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 34 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 36 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 38 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	if = { limit = { unrest = 40 } change_variable = { which = yezel_mora_misery_gain value = 1 } }
-	# I think 40 global unrest is a more than reasonable cap. I've never seen it go that high.
+
+	# We can't export this global unrest to a variable :( so use a binary search to be most optimal
+	if = { limit = { unrest = 18 } # 18-32
+		if = { limit = { unrest = 26 } # 26-32
+			if = { limit = { unrest = 30 } # 30-32
+				if = { limit = { unrest = 32 } # 32
+					change_variable = { which = yezel_mora_misery_gain value = 16 }
+				}
+				else = { # 30
+					change_variable = { which = yezel_mora_misery_gain value = 15 }
+				}
+			}
+			else = { # 26-28
+				if = { limit = { unrest = 28 } # 28
+					change_variable = { which = yezel_mora_misery_gain value = 14 }
+				}
+				else = { # 26
+					change_variable = { which = yezel_mora_misery_gain value = 13 }
+				}
+			}
+		}
+		else = { # 18-24
+			if = { limit = { unrest = 22 } # 22-24
+				if = { limit = { unrest = 24 } # 24
+					change_variable = { which = yezel_mora_misery_gain value = 12 }
+				}
+				else = { # 22
+					change_variable = { which = yezel_mora_misery_gain value = 11 }
+				}
+			}
+			else = { # 18-20
+				if = { limit = { unrest = 20 } # 20
+					change_variable = { which = yezel_mora_misery_gain value = 10 }
+				}
+				else = { # 18
+					change_variable = { which = yezel_mora_misery_gain value = 9 }
+				}
+			}
+		}
+	}
+	else_if = { limit = { unrest = 2 }  # 2-16
+		if = { limit = { unrest = 10 } # 10-16
+			if = { limit = { unrest = 14 } # 14-16
+				if = { limit = { unrest = 16 } # 16
+					change_variable = { which = yezel_mora_misery_gain value = 8 }
+				}
+				else = { # 14
+					change_variable = { which = yezel_mora_misery_gain value = 7 }
+				}
+			}
+			else = { # 10-12
+				if = { limit = { unrest = 12 } # 12
+					change_variable = { which = yezel_mora_misery_gain value = 6 }
+				}
+				else = { # 10
+					change_variable = { which = yezel_mora_misery_gain value = 5 }
+				}
+			}
+		}
+		else = { # 2-8
+			if = { limit = { unrest = 6 } # 6-8
+				if = { limit = { unrest = 8 } # 8
+					change_variable = { which = yezel_mora_misery_gain value = 4 }
+				}
+				else = { # 6
+					change_variable = { which = yezel_mora_misery_gain value = 3 }
+				}
+			}
+			else = { # 2-4
+				if = { limit = { unrest = 4 } # 4
+					change_variable = { which = yezel_mora_misery_gain value = 2 }
+				}
+				else = { # 2
+					change_variable = { which = yezel_mora_misery_gain value = 1 }
+				}
+			}
+		}
+	}
+	# I think 32 global unrest is a more than reasonable cap. I've never seen it go that high.
 
 	# Scale by overextension and the plane alignment modifier
 	yezel_mora_misery_gain_scale_variable = {
