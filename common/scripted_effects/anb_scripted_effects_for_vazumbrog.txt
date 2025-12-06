@@ -422,7 +422,38 @@ dauvek_veker_action_shadowweave_scouts = {
 		}
 		custom_tooltip = GV_TT_MERC_NOT_BORDERING_INACCESSIBLE_PROVINCE
 	}
-	else = {
+	if = {
+		# replicate the inversion of all the 3 triggers above to dodge the
+		# "events dont work in else in scripted effects" bug
+		limit = {
+			any_hired_mercenary_company = {
+				template = merc_dauvek_veker
+			}
+			NOT = {
+				any_hired_mercenary_company = {
+					template = merc_dauvek_veker
+					location = {
+						unit_in_battle = yes
+					}
+				}
+			}
+			NOT = {
+				any_hired_mercenary_company = {
+					template = merc_dauvek_veker
+					location = {
+						NOT = {
+							any_neighbor_province = {
+								owner = {
+									NOT = { tag = I14 }
+									NOT = { is_subject_of = I14 }
+									NOT = { gives_military_access_to = I14 }
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 		custom_tooltip = GV_TT_SHADOWWEAVE_SCOUTS_ABILITY_DESC
 		custom_tooltip = " "
 
@@ -463,7 +494,6 @@ dauvek_veker_action_shadowweave_scouts = {
 			}
 		}
 	}
-
 }
 
 dauvek_veker_action_citadel = {
@@ -537,8 +567,7 @@ dauvek_veker_action_citadel = {
 gor_vazumbrog_give_cb_for_hold = {
 	if = {
 		limit = { # No CB if already ours
-			NOT = { $province_id$ = { owned_by = ROOT } }
-			NOT = { $province_id$ = { owned_by_subject_of = ROOT } }
+			NOT = { $province_id$ = { country_or_subject_holds = ROOT } }
 		}
 		if = {
 			limit = {
@@ -572,18 +601,6 @@ gor_vazumbrog_give_cb_for_hold = {
 		}
 		if = {
 			limit = {
-				NOT = {
-					AND = {
-						# inversion of previous if statement to avoid a bug crashing the game
-						# another case of scripted effect + else/else_if being borked to all hell
-						# in this case, it crashes when evaluating add_casus_belli
-						$province_id$ = { is_city = yes }
-						OR = {
-							NOT = { exists = $tag$ }
-							NOT = { $province_id$ = { owned_by = $tag$ } }
-						}
-					}
-				}
 				exists = $tag$
 				$province_id$ = {
 					is_city = yes
@@ -615,66 +632,14 @@ gor_vazumbrog_give_cb_for_hold = {
 #THIS and FROM scope is country losing the war and releasing the hold
 #ROOT scope is the country winning the war
 gor_vazumbrog_restore_hold = {
-	if = {
-		limit = {
-			# special case for non-monarchies
-			tag = $released_tag$
-			owns = $hold_province$
-		}
-		if = {
-			limit = { NOT = { capital = $hold_province$ } }
-			set_capital = $hold_province$
-		}
-
-		if = {
-			limit = { NOT = { government = monarchy } }
-			change_government = monarchy
-		}
-		add_government_reform = dwarovar_dwarven_clan_reform
-
-		change_primary_culture = $culture$
-		change_religion = ROOT
-
-		if = {
-			limit = {
-				any_owned_province = {
-					fast_has_pop_of_race { race = goblin }
-				}
-			}
-			generic_start_purge = { race = goblin free = yes }
-		}
-
-		if = {
-			limit = {
-				any_owned_province = {
-					fast_has_pop_of_race { race = orcish }
-				}
-			}
-			generic_start_purge = { race = orcish free = yes }
-		}
-
-		$hold_province$ = {
-			area = {
-				limit = { owned_by = $released_tag$ }
-				change_culture = $culture$
-				change_religion = ROOT
-			}
-			clr_province_flag = reclaim_hold_target_province
-		}
-		ROOT = {
-			create_subject = {
-				subject_type = personal_union
-				subject = $released_tag$
-			}
-		}
-	}
+	# cede provinces to the new hold if needed
 	if = {
 		limit = {
 			NOT = { tag = $released_tag$ }
 			owns = $hold_province$
 		}
 
-
+		# take the area around the hold
 		$hold_province$ = {
 			area = {
 				limit = {
@@ -688,6 +653,7 @@ gor_vazumbrog_restore_hold = {
 			}
 		}
 
+		# also take every owned serpentspine road
 		every_owned_province = {
 			limit = { has_terrain = dwarven_road }
 			cede_province = $released_tag$
@@ -700,98 +666,104 @@ gor_vazumbrog_restore_hold = {
 			}
 		}
 
-		ROOT = {
-			$released_tag$ = {
-				if = {
-					limit = { NOT = { capital = $hold_province$ } }
-					set_capital = $hold_province$
-				}
+		$released_tag$ = {
+			add_opinion = {
+				who = ROOT
+				modifier = released_in_peace
+			}
+		}
+	}
 
-				if = {
-					limit = { NOT = { government = monarchy } }
-					change_government = monarchy
-				}
-				add_government_reform = dwarovar_dwarven_clan_reform
-
-				change_primary_culture = $culture$
-				change_religion = ROOT
-
-				if = {
-					limit = {
-						any_owned_province = {
-							fast_has_pop_of_race { race = goblin }
-						}
-					}
-					generic_start_purge = { race = goblin free = yes }
-				}
-
-				if = {
-					limit = {
-						any_owned_province = {
-							fast_has_pop_of_race { race = orcish }
-						}
-					}
-					generic_start_purge = { race = orcish free = yes }
-				}
-				#set_variable = { which = goblin_race_tolerance_ai value = -100 }
-
-				add_opinion = {
-					who = ROOT
-					modifier = released_in_peace
-				}
-
-				$hold_province$ = {
-					area = {
-						limit = { owned_by = $released_tag$ }
-						change_culture = $culture$
-						change_religion = ROOT
-					}
-					clr_province_flag = reclaim_hold_target_province
-				}
+	# next, set up the new tag
+	if = {
+		limit = {
+			$released_tag$ = { owns = $hold_province$ } # safeguard in case some shenanigans happened during the war
+		}
+		$released_tag$ = {
+			if = {
+				limit = { NOT = { capital = $hold_province$ } }
+				set_capital = $hold_province$
 			}
 
+			if = {
+				limit = { NOT = { government = monarchy } }
+				change_government = monarchy
+			}
+			add_government_reform = dwarovar_dwarven_clan_reform
+
+			change_primary_culture = $culture$
+			change_religion = ROOT
+
+			if = {
+				limit = {
+					any_owned_province = {
+						fast_has_pop_of_race { race = goblin }
+					}
+				}
+				generic_start_purge = { race = goblin free = yes }
+			}
+
+			if = {
+				limit = {
+					any_owned_province = {
+						fast_has_pop_of_race { race = orcish }
+					}
+				}
+				generic_start_purge = { race = orcish free = yes }
+			}
+
+			$hold_province$ = {
+				area = {
+					limit = { owned_by = $released_tag$ }
+					change_culture = $culture$
+					change_religion = ROOT
+				}
+				clr_province_flag = reclaim_hold_target_province
+			}
+		}
+		ROOT = {
 			create_subject = {
 				subject_type = personal_union
 				subject = $released_tag$
 			}
 		}
+	}
 
-
-		if = {
-			limit = {
-	            capital_scope = {
-	                NOT = { continent = serpentspine }
-	            }
-	        }
-			every_owned_province = {
-				limit = { continent = serpentspine }
-				cede_province = ---
-				random_list = {
-					20 = {
-						change_native_size = 4
-						change_native_hostileness = 7
-						change_native_ferocity = 6
-					}
-					20 = {
-						change_native_size = 5
-						change_native_hostileness = 5
-						change_native_ferocity = 6
-					}
-					20 = {
-						change_native_size = 6
-						change_native_hostileness = 4
-						change_native_ferocity = 5
-					}
-					20 = {
-						change_native_size = 7
-						change_native_hostileness = 5
-						change_native_ferocity = 4
-					}
-					20 = {
-						change_native_size = 8
-						change_native_hostileness = 4
-						change_native_ferocity = 4
-					}
+	# push non-serpentspine nation out of the serpentspine
+	if = {
+		limit = {
+			capital_scope = {
+				NOT = { continent = serpentspine }
+			}
+		}
+		every_owned_province = {
+			limit = { continent = serpentspine }
+			cede_province = ---
+			random_list = {
+				20 = {
+					change_native_size = 4
+					change_native_hostileness = 7
+					change_native_ferocity = 6
+				}
+				20 = {
+					change_native_size = 5
+					change_native_hostileness = 5
+					change_native_ferocity = 6
+				}
+				20 = {
+					change_native_size = 6
+					change_native_hostileness = 4
+					change_native_ferocity = 5
+				}
+				20 = {
+					change_native_size = 7
+					change_native_hostileness = 5
+					change_native_ferocity = 4
+				}
+				20 = {
+					change_native_size = 8
+					change_native_hostileness = 4
+					change_native_ferocity = 4
 				}
 			}
 		}
