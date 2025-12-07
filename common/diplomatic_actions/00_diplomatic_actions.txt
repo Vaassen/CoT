@@ -644,6 +644,22 @@ declarewar = {
 			always = no
 		}
 	}
+	
+	condition = {
+		tooltip = NO_VIC_AGAINST_LEADER_ALLY
+		potential = { 
+			is_subject_of_type = vic_league_member
+			overlord = {
+				OR = {
+					alliance_with = FROM
+					has_guaranteed = FROM
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 
 	pre_effect = {
 		if = { #Caergaraen
@@ -653,6 +669,37 @@ declarewar = {
 			}
 			country_event = {
 				id = caergaraen.2 #Judging The Guilty
+			}
+		}
+	}
+
+	condition = {
+		tooltip = I78_centaur_hre
+		potential = { 
+			has_country_modifier = centaur_administration
+			FROM = { has_country_modifier = centaur_administration }
+		}
+		allow = {
+			NOT = {
+				AND = {
+					has_global_flag = I78_caehns_authority_no_war
+					FROM = { capital_scope = { superregion = forbidden_lands_superregion } }
+				}
+			}
+		}
+	}
+
+	condition = {
+		tooltip = I78_centaur_hre_2_locking_in_time
+		potential = { 
+			FROM = { has_country_modifier = centaur_administration }
+		}
+		allow = {
+			NOT = {
+				AND = {
+					has_global_flag = I78_caehns_authority_double_no_war
+					FROM = { capital_scope = { superregion = forbidden_lands_superregion } }
+				}
 			}
 		}
 	}
@@ -1515,6 +1562,29 @@ declarewar = {
 				chance = 10
 				set_country_flag = yingzhen_assassinated_once
 				country_event = { id = haless.742 days = 1 random = 364 }
+			}
+		}
+
+		if = { #Ashhana Lizardfolk gain Control
+			limit = {
+				has_government_mechanic = ashhana_blood_curse_mechanic
+			}
+			#Upon declaring war, gain +4 Control and Claw Strength
+			#When you have the War as Art reform, gain 8 Control and Claw Strength
+			if = {
+				limit = {
+					has_reform = war_as_art
+				}
+				ashhana_blood_curse_add_control_by_source = {
+					source = claw
+					amount = 4
+				}
+			}
+			else = {
+				ashhana_blood_curse_add_control_by_source = {
+					source = claw
+					amount = 2
+				}
 			}
 		}
 	}
@@ -3042,13 +3112,24 @@ annexationaction = {
     }	
 	
 	condition = {
-		tooltip = vic_league_annex_conditions
+		tooltip = vic_league_annex_conditions_year
 		potential = {
 			FROM = { is_subject_of_type = vic_league_member }
 		}
 		allow = {
 			FROM = {
 				had_country_flag = { flag = vic_league_duration_tracker days = 9125 }
+			}
+		}
+	}
+	
+	condition = {
+		tooltip = vic_league_annex_conditions_other
+		potential = {
+			FROM = { is_subject_of_type = vic_league_member }
+		}
+		allow = {
+			FROM = {
 				NOT = { liberty_desire = 10 }
 				has_opinion = {
 					who = ROOT
@@ -3522,6 +3603,24 @@ callaction = {
 			NOT = {
 				event_target:raj_raja_global_target = {	war_with = ROOT }
 			}
+		}
+	}
+	
+	condition = { #Vic League
+		tooltip = NO_VIC_AGAINST_FELLOW_VIC_MEMBER
+		potential = {
+			FROM = {
+				is_subject_of_type = vic_league_member
+				overlord = {
+					OR = {
+						war_with = ROOT
+						any_subject_country = { war_with = ROOT }
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
 		}
 	}
 
@@ -4113,6 +4212,17 @@ requestpeace = {
 			}
 		}
 	}
+	
+	condition = { #Ashhana blood curse revolt requires 100% warscore to finish
+		tooltip = ASHHANA_DISASTER_CANT_PEACE_tt
+		potential = {
+			is_in_war = { casus_belli = cb_ashhana_freedom_of_expression }
+			FROM = { is_in_war = { casus_belli = cb_ashhana_freedom_of_expression } }
+		}
+		allow = {
+			always = no
+		}
+	}
 }
 
 support_heir = {
@@ -4267,6 +4377,35 @@ giftaction = {
 				value = 10
 			}
 		}
+		#Ashhana tribes with the Spread the Cure reform gain 1 Control and Canvas Strength when sending a gfit
+		#worth 10 opinion, but only once every 5 years per nation
+		if = {
+			limit = {
+				has_reform = spread_the_cure
+				FROM = {
+					primary_culture = ashhana_lizardfolk
+					has_10_opinion_sent_gift = {
+						target = ROOT
+					}
+					NOT = {
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = opinion_ashhana_spread_the_cure
+						}
+					}
+				}
+			}
+			FROM = {
+				add_opinion = {
+					who = root
+					modifier = opinion_ashhana_spread_the_cure
+				}
+			}
+			ashhana_blood_curse_add_control_by_source = {
+				source = canvas
+				amount = 1
+			}
+		}
 	}
 }
 
@@ -4330,6 +4469,22 @@ trade_favors_for_sailors = {
 	}
 }
 
+knowledge_sharing = {
+	effect = {
+		if = { 
+			limit = { 
+				tag = I27 
+				mission_completed = I27_new_thoughts 
+				FROM = { 
+					primary_culture = wood_elf 
+					capital_scope = { superregion = deepwoods_superregion } 
+				} 
+			}
+			add_favors = { who = FROM amount = 25 }
+			FROM = { add_country_modifier = { name = I27_faster_embracement_mod duration = 1825 } }
+		}
+	}
+}
 support_independence_action = {
 	condition = {
 		tooltip = vic_league_no_external_support
