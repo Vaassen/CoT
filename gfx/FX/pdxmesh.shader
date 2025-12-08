@@ -822,7 +822,7 @@ Effect PdxMeshAlphaBlendZWriteSkinned
 
 Effect PdxMeshAlphaBlendZWriteSkinnedShadow
 {
-	VertexShader = "VertexPdxMeshStandardSkinned"
+	VertexShader = "VertexPdxMeshStandardSkinnedShadow"
 	BlendState = "BlendStateAlphaBlend"
 	DepthStencilState = "DepthStencilZWrite"
 	PixelShader = "PixelPdxMeshStandardShadow"
@@ -838,9 +838,9 @@ Effect PdxMeshAlphaBlendNoZWrite
 
 Effect PdxMeshAlphaBlendNoZWriteShadow
 {
-	VertexShader = "VertexPdxMeshStandard"
+	VertexShader = "VertexPdxMeshStandardShadow"
 	BlendState = "BlendStateAlphaBlend"
-	DepthStencilState = "DepthStencilZWrite"
+	DepthStencilState = "DepthStencilNoZWrite"
 	PixelShader = "PixelPdxMeshStandardShadow"
 }
 
