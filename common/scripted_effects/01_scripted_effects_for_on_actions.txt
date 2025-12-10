@@ -1977,6 +1977,7 @@ anb_scripted_effects_for_ruler_death  = {
 				government = monarchy
 			}
 			ruler_is_not_lich = yes
+			NOT = { has_government_attribute = no_stability_loss_on_monarch_death } # else you get it double refunded
 		}
 		add_stability = 1
 	}
@@ -4491,6 +4492,31 @@ on_battle_won_country_effect = {
 			set_country_flag = R36_supported_parusad_in_a_war
 		}
 	}
+
+	if = { #Ashhana Lizardfolk gain Control
+		limit = {
+			has_government_mechanic = ashhana_blood_curse_mechanic
+		}
+		#After battle, gain 1 Control and Claw Strength for each 6 000 casualties inflicted
+		set_variable = {
+			which = ashhana_blood_curse_land_units_killed_control
+			which = land_units_killed
+		}
+		divide_variable = {
+			which = ashhana_blood_curse_land_units_killed_control
+			value = 6000
+		}
+		change_variable = {
+			which = claw_strength
+			which = ashhana_blood_curse_land_units_killed_control
+		}
+		gov_power_var_effect = {
+			mechanic = ashhana_blood_curse_mechanic
+			power = ashhana_blood_curse_control
+			var = ashhana_blood_curse_land_units_killed_control
+			sign = +
+		}
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -4628,6 +4654,31 @@ on_battle_lost_country_effect = {
 				var = land_units_lost_z88 
 				sign = + 
 			}
+		}
+	}
+
+	if = { #Ashhana Lizardfolk gain Control
+		limit = {
+			has_government_mechanic = ashhana_blood_curse_mechanic
+		}
+		#After battle, gain 1 Control and Claw Strength for each 6 000 casualties inflicted
+		set_variable = {
+			which = ashhana_blood_curse_land_units_killed_control
+			which = land_units_killed
+		}
+		divide_variable = {
+			which = ashhana_blood_curse_land_units_killed_control
+			value = 6000
+		}
+		change_variable = {
+			which = claw_strength
+			which = ashhana_blood_curse_land_units_killed_control
+		}
+		gov_power_var_effect = {
+			mechanic = ashhana_blood_curse_mechanic
+			power = ashhana_blood_curse_control
+			var = ashhana_blood_curse_land_units_killed_control
+			sign = +
 		}
 	}
 }
@@ -5069,6 +5120,10 @@ on_battle_lost_province_effect = {
 			chance = 10
 			area = { add_devastation = 50 }
 		}
+	}
+	if = {
+		limit = { has_province_flag = holohana_give_credit }
+		holohana_give_credit_for_kill = yes
 	}
 }
 
@@ -7282,6 +7337,22 @@ on_province_culture_change_effect = {
 		remove_province_modifier = eltikan_macamairghe
 	}
 
+	#Ashhana tribes with Crocodilian Unity will gain control and claw strength from culture converting
+	if = {
+		limit = {
+			owner = {
+				has_reform = crocadilian_unity
+			}
+			culture = ashhana_lizardfolk
+		}
+		owner = {
+			ashhana_blood_curse_add_control_by_source = {
+				source = claw
+				amount = 1
+			}
+		}
+	}
+
 	#Pashaine
 	if = {
 		limit = {
@@ -8527,6 +8598,34 @@ on_development_effect = {
 				mechanic_type = vic_league_mechanic
 				power_type = vic_league_dip_power
 				value = 10
+			}
+		}
+	}
+
+	#Ashhana Lizardfolk gain Control
+	if = {
+		limit = {
+			owner = {
+				has_government_mechanic = ashhana_blood_curse_mechanic
+			}
+		}
+		owner = {
+			#If you have the Paintbrushes for Everyone reform, gain +2 Control and Canvas Strength,
+			#otherwise gain +1
+			if = {
+				limit = {
+					has_reform = paintbrushes_for_everyone
+				}
+				ashhana_blood_curse_add_control_by_source = {
+					source = canvas
+					amount = 1
+				}
+			}
+			else = {
+				ashhana_blood_curse_add_control_by_source = {
+					source = canvas
+					amount = 0.5
+				}
 			}
 		}
 	}
@@ -11162,6 +11261,11 @@ startup_1444_effects = {
 		if = { #Endhuvi
 			limit = { tag = R36 }
 			country_event = { id = flavour_endhuvi.0 }
+		}
+
+		if = {
+			limit = { tag = A05 }
+			A05 = { country_event = { id = reveria.45 days = 1800 random = 600 } }
 		}
 	}
 }
@@ -15078,6 +15182,34 @@ on_province_owner_change_monuments = {
 			owner = { set_country_flag = yidablaerun_poor_uniforms_disabled }
 		}
 	}
+	if = { #If conquered the monument - remove the modifier
+		limit = { 
+			province_id = 5631 #Cyamutaka - where the monument is
+		}
+		FROM = {
+			every_owned_province = {
+				remove_province_modifier = izmeri_expand_the_buildings
+			}
+		}
+		if = {
+			limit = {
+				has_great_project = {
+					type = izmeri_the_black_stone_city
+					tier = 2
+				}
+				owner = { can_use_izmeri_the_black_stone_city = yes }
+			}
+			owner = {
+				every_owned_province = {
+					limit = { has_coast_defense_building_trigger = yes }
+					add_province_modifier = {
+						name = izmeri_expand_the_buildings
+						duration = -1
+					}
+				}
+			}
+		}
+	}
 
 	##### When you have monument #####
 	if = { #Ascajar
@@ -15350,6 +15482,27 @@ on_province_owner_change_monuments = {
 		cancel_construction = yes #hidden construction bug
 		#if you annex your subject while they are upgrading the monument, it continues but is hidden
 		#the iron_palace construction is really long and you can't speed it up with this bug, so cancel it here
+	}
+	#Imzeri - the Blackstone City
+	if = { #If owns the monument and can use it - add the modifier
+		limit = {
+			owner = {
+				owns = 5631
+				can_use_izmeri_the_black_stone_city = yes
+			}
+			5631 = {
+				has_great_project = {
+					type = izmeri_the_black_stone_city
+					tier = 2
+				}
+			}
+			has_coast_defense_building_trigger = yes
+			NOT = { has_province_modifier = izmeri_expand_the_buildings }
+		}
+		add_province_modifier = {
+			name = izmeri_expand_the_buildings
+			duration = -1
+		}
 	}
 }
 
