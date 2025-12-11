@@ -198,7 +198,7 @@ update_spell_tooltips = {
 	else = { export_to_variable = { which = feral_animals_reg value = total_development } }
 	set_variable = { which = leashed_elementals_reg which = feral_animals_reg }
 
-	multiply_variable = { feral_animals_reg = 0.05 } #Reg per dev
+	multiply_variable = { feral_animals_reg = 0.1 } #Reg per dev
 	if = {
 		limit = { NOT = { check_variable = { feral_animals_reg = 4 } } }
 		set_variable = { feral_animals_reg = 4 } #Minimum of 4 regiments
@@ -214,7 +214,7 @@ update_spell_tooltips = {
 	set_variable = { which = feral_animals_inf which = feral_animals_reg }
 	subtract_variable = { which = feral_animals_inf which = feral_animals_cav } #infantry
 
-	multiply_variable = { leashed_elementals_reg = 0.04 } #Reg per dev
+	multiply_variable = { leashed_elementals_reg = 0.1 } #Reg per dev
 	if = {
 		limit = { NOT = { check_variable = { leashed_elementals_reg = 4 } } }
 		set_variable = { leashed_elementals_reg = 4 } #Minimum of 4 regiments
@@ -1655,6 +1655,12 @@ magic_on_ruler_death = {
 		limit = { has_cast_undead_army = yes }
 		country_event = { id = magic_spell.702 days = 60 } 
 	}
+
+	clr_ruler_witch_king_points = yes
+	# NOTE: for immortals like liches this doesn't matter,
+	# as they obtain the witch king modifier on respawning anyway
+	# but if another immortal needs to keep their infamy,
+	# they would need to save and restore it themselves...
 }
 magic_on_heir_death = {
 	if = {
@@ -1669,14 +1675,14 @@ magic_on_heir_death = {
 		limit = { heir_is_not_powerful_mage = yes }
 		remove_country_modifier = heir_mage_personality_mod
 	}
-	clr_type_witch_king_points = { type = heir }
+	clr_heir_witch_king_points = yes
 }
 magic_on_consort_death = {
 	if = {
 		limit = { consort_is_not_powerful_mage = yes }
 		remove_country_modifier = consort_mage_personality_mod
 	}
-	clr_type_witch_king_points = { type = consort }
+	clr_consort_witch_king_points = yes
 }
 
 set_heir_mage_effect = {
@@ -2133,7 +2139,7 @@ create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 
 # The impacts of witch-kinginess are:
 ### Ruler: scaling diplo reputation malus (-1 dip rep, +5% AE impact per bracket increase)
-### Estate: scaling estate influence (-5% loyalty equilibrium, +5% influence per bracket increase)
+### Estate: scaling estate influence and estate loyalty maluses (+5/10/15/20% influence and -10/25/50/100% loyalty per bracket)
 ### Consort/Heir: nothing, but will become ruler witch-kinginess if they take the throne
 
 # The scale of increases are:
@@ -2152,8 +2158,11 @@ become_a_witch_king_effect = {
 		remove_country_modifier = infamy_denounced_modifier
 		remove_country_modifier = infamy_suspicious_modifier
 		remove_country_modifier = infamy_respected_modifier
-		change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
-		change_variable = { mana_regen_ruler = 0.28 } #All witch-king modifiers give 0.28
+		if = {
+			limit = { NOT = { check_variable = { which = ruler_witch_king_points value = 16 } } }
+			change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
+		}
+		change_variable = { mana_regen_ruler = 0.3 } #All witch-king modifiers give 0.3
 	}
 	set_country_flag = ruled_by_witch_king
 
@@ -2254,6 +2263,8 @@ calculate_magical_infamy_modifier = {
 		country_event = { id = magic_ruler.68 days = 1825 random = 365 }
 	}
 }
+
+
 increase_type_witch_king_points_small = { #1 point
 	custom_tooltip = increase_$type$_witch_king_points_small
 	hidden_effect = {
@@ -2395,3 +2406,44 @@ decrease_witch_king_points = {
 decrease_witch_king_points_small = { decrease_witch_king_points = { size = small [[level] level = $level$ ] } }
 decrease_witch_king_points_medium = { decrease_witch_king_points = { size = medium [[level] level = $level$ ] } }
 decrease_witch_king_points_large = { decrease_witch_king_points = { size = large [[level] level = $level$ ] } }
+
+clr_ruler_witch_king_points = {
+	clr_type_witch_king_points = { type = ruler }
+}
+clr_consort_witch_king_points = {
+	clr_type_witch_king_points = { type = consort }
+}
+clr_heir_witch_king_points = {
+	clr_type_witch_king_points = { type = heir }
+}
+clr_estate_witch_king_points = {
+	clr_type_witch_king_points = { type = country }
+}
+
+transfer_witch_king_points_to_ruler = {
+	transfer_witch_king_points = { from = $from$ to = ruler }
+}
+transfer_witch_king_points_to_consort = {
+	transfer_witch_king_points = { from = $from$ to = consort }
+}
+transfer_witch_king_points_to_heir = {
+	transfer_witch_king_points = { from = $from$ to = heir }
+}
+transfer_witch_king_points_to_estate = {
+	transfer_witch_king_points = { from = $from$ to = country }
+}
+
+transfer_witch_king_points_from_ruler = {
+	transfer_witch_king_points = { from = ruler to = $to$ }
+}
+transfer_witch_king_points_from_consort = {
+	transfer_witch_king_points = { from = consort to = $to$ }
+}
+transfer_witch_king_points_from_heir = {
+	transfer_witch_king_points = { from = heir to = $to$ }
+}
+transfer_witch_king_points_from_estate = {
+	transfer_witch_king_points = { from = country to = $to$ }
+}
+
+
