@@ -141,7 +141,8 @@ country_event = {
 
 		custom_tooltip = S50_unlock_rangers_tt
 		hidden_effect = {
-			# Remove and re-add to reform so the ranger attribute is not just shown but actually applied.
+			# Remove and re-add to reform so the ranger attribute is not just shown but actually applied. maybe not actually needed anymore?
+			set_country_flag = S50_deathsworn_rangers
 			set_country_flag = S50_council_of_wardens_unlocked
 			remove_government_reform = yemotaferi_council_of_wardens
 			add_government_reform = yemotaferi_council_of_wardens
@@ -342,7 +343,7 @@ country_event = {
 			}
 		}
 
-		add_ruler_personality = shadow_planetouched_personality
+		add_heir_personality = shadow_planetouched_personality
 	}
 
 	after = {
@@ -366,7 +367,6 @@ country_event = {
 		name = yemotaferi.3.a
 		S42 = {
 			inherit = S43
-			add_liberty_desire = -100
 		}
 		vassalize = S42
 		muukombi_area = {
@@ -375,6 +375,11 @@ country_event = {
 		gakeigiti_area = {
 			add_permanent_claim = S42
 		}
+		hidden_effect = {
+			S42 = {
+				change_religion = beast_memory
+			}
+		}
 	}
 
 	# Goose
@@ -382,7 +387,6 @@ country_event = {
 		name = yemotaferi.3.b
 		S43 = {
 			inherit = S42
-			add_liberty_desire = -100 # check if this is actually the way to go, or if we need a perma mod for the intended effect
 		}
 		vassalize = S43
 		muukombi_area = {
@@ -390,6 +394,11 @@ country_event = {
 		}
 		gakeigiti_area = {
 			add_permanent_claim = S43
+		}
+		hidden_effect = {
+			S43 = {
+				change_religion = beast_memory
+			}
 		}
 	}
 }
@@ -421,21 +430,21 @@ country_event = {
 				}
 				export_to_variable = {
 					which = migrateDevTax
-					value = development
+					value = base_tax
 				}
 				change_variable = { which = migrateDevTax value = -1 }
 				ROOT = { change_variable = { which = migrateDevTax which = PREV } }
 
 				export_to_variable = {
 					which = migrateDevProduction
-					value = development
+					value = base_production
 				}
 				change_variable = { which = migrateDevProduction value = -1 }
 				ROOT = { change_variable = { which = migrateDevProduction which = PREV } }
 
 				export_to_variable = {
 					which = migrateDevManpower
-					value = development
+					value = base_manpower
 				}
 				change_variable = { which = migrateDevManpower value = -1 }
 				ROOT = { change_variable = { which = migrateDevManpower which = PREV } }
@@ -444,12 +453,52 @@ country_event = {
 				add_base_production = -100
 				add_base_manpower = -100
 
-				random_core_country = {
+				
+				if = {
 					limit = {
-						NOT = { tag = ROOT }
+						any_core_country = {
+							NOT = {
+								OR = {
+									NOT = { tag = L66 } 
+									NOT = { tag = S70 }
+									NOT = { tag = S65 }									
+								}
+							}
+						}
+					}
+					random_core_country = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { tag = L66 } 
+							NOT = { tag = S70 }
+							NOT = { tag = S65 }	
+						}
+						save_event_target_as = tag_to_cede_to
+					}
+				}
+				else_if = {
+					limit = {
+						any_neighbor_province = {
+							NOT = { owned_by = ROOT }
+						}
+					}
+					random_neighbor_province = {
+						limit = {
+							NOT = { owned_by = ROOT }
+						}
+						owner = { save_event_target_as = tag_to_cede_to }
+					}
+				}
+				else = {
+					random_neighbor_country = {
+						limit = {
+							culture_group = mengi
+						}
 					}
 					save_event_target_as = tag_to_cede_to
 				}
+
+
 
 				random_core_country = {
 					limit = {
@@ -462,7 +511,7 @@ country_event = {
 					save_event_target_as = tag_to_cede_to
 				}
 
-				cede_province = tag_to_cede_to
+				cede_province = event_target:tag_to_cede_to
 			}
 
 			while = {
@@ -493,10 +542,12 @@ country_event = {
 
 		6718 = {
 			if = {
-				NOT = {
-					has_great_project = {
-						type = hawatli_wizti_tali
-						tier = 2
+				limit = {
+					NOT = {
+						has_great_project = {
+							type = hawatli_wizti_tali
+							tier = 2
+						}
 					}
 				}
 			}
@@ -506,6 +557,8 @@ country_event = {
 			}
 			add_devastation = -20
 		}
+
+		set_capital = 6718
 	}
 }
 
@@ -573,6 +626,8 @@ country_event = {
 			}
 		}
 
+		# TODO: these guys either need more land or extra lump resources
+
 		if = {
 			limit = {
 				exists = S70
@@ -592,10 +647,13 @@ country_event = {
 					name = S50_shadow_fervour
 					duration = 3650
 				}
-				build_to_forcelimit = {
-					infantry = 0.7
-					artillery = 0.3
+				capital_scope = {
+					build_to_forcelimit = {
+						infantry = 0.7
+						artillery = 0.3
+					}
 				}
+				add_treasury = 1000
 			}
 		}
 		else = {
@@ -614,33 +672,43 @@ country_event = {
 				name = S50_shadow_fervour
 				duration = 3650
 			}
-			build_to_forcelimit = {
-				infantry = 0.7
-				artillery = 0.3
+			capital_scope = {
+				build_to_forcelimit = {
+					infantry = 0.7
+					artillery = 0.3
+				}
 			}
+
 			define_war_wizard = { name = "Komina Riftwhisper" level = 3 female = yes}
+			add_treasury = 1000
 		}
 		F71 = { 
 			add_country_modifier = {
 				name = S50_shadow_fervour
 				duration = 3650
 			}
-			build_to_forcelimit = {
-				infantry = 0.7
-				artillery = 0.3
+			capital_scope = {
+				build_to_forcelimit = {
+					infantry = 0.7
+					artillery = 0.3
+				}
 			}
 			define_war_wizard = { name = "Ilfanill Gloomweaver" level = 3 female = yes}
+			add_treasury = 1000
 		}
 		F68 = { 
 			add_country_modifier = {
 				name = S50_shadow_fervour
 				duration = 3650
 			}
-			build_to_forcelimit = {
-				infantry = 0.7
-				artillery = 0.3
+			capital_scope = {
+				build_to_forcelimit = {
+					infantry = 0.7
+					artillery = 0.3
+				}
 			}
 			define_war_wizard = { name = "Hireet Smoketusk" level = 3 female = yes}
+			add_treasury = 1000
 		}
 
 		custom_tooltip = S50_final_war_claims_tt
@@ -688,13 +756,13 @@ country_event = {
 
 		custom_tooltip = S50_hag_slayer_opinion_tt
 		hidden_effect = {
-			all_known_country = {
+			every_known_country = {
 				limit = {
 					capital_scope = {
 						continent = africa
 					}
 				}
-				reverse_add_opinion = {
+				add_opinion = {
 					who = ROOT
 					modifier = S50_shattered_hag_coven
 				}
@@ -749,8 +817,10 @@ country_event = {
 
 		every_owned_or_subject_province = {
 			limit = {
-				region = gol_region
-				region = khetapera_region
+				OR = {
+					region = gol_region
+					region = khetapera_region
+				}
 			}
 
 			cede_province = F68
@@ -769,9 +839,12 @@ country_event = {
 
 		every_owned_or_subject_province = {
 			limit = {
-				region = far_salahad_region
-				region = gazraak_region
-				region = dreksaret_region
+				OR = {
+					region = far_salahad_region
+					region = gazraak_region
+					region = dreksaret_region
+				}
+
 			}
 
 			cede_province = F72
@@ -898,6 +971,7 @@ country_event = {
 			add_country_modifier = {
 				name = S50_approach_threshold_cooldown_mod
 				duration = 9125
+				hidden = yes
 			}
 		}
 
