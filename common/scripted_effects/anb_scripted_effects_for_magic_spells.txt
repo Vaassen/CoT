@@ -134,7 +134,7 @@ make_spell_school_half_off = {
 		add_country_modifier = { name = $school$_spell_half duration = $duration$ }
 	]
 }
-generic_cast_spell = {
+generic_cast_spell = { #Duplicate relevant changes in 'magical_traditions_cast_spell'
 
 	# Handles paying mana, given a limited number of ways to alter mana cost
 	if = {
@@ -232,6 +232,113 @@ generic_cast_spell = {
 	
 	$school$_$level$_$id$_effect = yes
 }
+
+#Magical traditions scripted effects
+magical_traditions_cast_spell = { #Duplicate relevant changes in 'generic_cast_spell'
+	# Handles paying mana, given a limited number of ways to alter mana cost
+	if = {
+		limit = { #Free spell!
+			OR = {
+				has_country_modifier = all_spell_free
+				has_country_flag = all_spell_free_next_cast
+				has_ruler_flag = all_spell_free
+
+				[[has_spell_specific_discounts]
+					has_country_modifier = $school$_$level$_$id$_spell_free
+					has_country_flag = $school$_$level$_$id$_spell_free_next_cast
+					has_ruler_flag = $school$_$level$_$id$_spell_free
+				]
+
+				has_country_modifier = $school$_spell_free
+				has_country_flag = $school$_spell_free_next_cast
+				has_ruler_flag = $school$_spell_free
+			}
+		}
+		custom_tooltip = spell_is_free_tt
+
+		trigger_switch = { #Next cast free spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_free_next_cast }
+			$school$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_free_next_cast }
+			all_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_free_next_cast }
+		}
+	}
+	else_if = { #Half-cost spell
+		limit = {
+			OR = {
+				has_country_modifier = all_spell_half
+				has_country_flag = all_spell_half_next_cast
+				has_ruler_flag = all_spell_half
+
+				[[has_spell_specific_discounts]
+					has_country_modifier = $school$_$level$_$id$_spell_half
+					has_country_flag = $school$_$level$_$id$_spell_half_next_cast
+					has_ruler_flag = $school$_$level$_$id$_spell_half
+				]
+
+				has_country_modifier = $school$_spell_half
+				has_country_flag = $school$_spell_half_next_cast
+				has_ruler_flag = $school$_spell_half
+			}
+		}
+		custom_tooltip = spell_is_half_tt
+
+		trigger_switch = { #Next cast half-cost spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_half_next_cast }
+			$school$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_half_next_cast }
+			all_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_half_next_cast }
+		}
+
+		pay_half_mana_for_level_$level$_spell = yes
+	}
+	else_if = { #25% off spell
+		limit = {
+			OR = {
+				has_country_modifier = all_spell_three_quarter
+				has_country_flag = all_spell_three_quarter_next_cast
+				has_ruler_flag = all_spell_three_quarter
+
+				[[has_spell_specific_discounts]
+					has_country_modifier = $school$_$level$_$id$_spell_three_quarter
+					has_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast
+					has_ruler_flag = $school$_$level$_$id$_spell_three_quarter
+				]
+
+				has_country_modifier = $school$_spell_three_quarter
+				has_country_flag = $school$_spell_three_quarter_next_cast
+				has_ruler_flag = $school$_spell_three_quarter
+			}
+		}
+		custom_tooltip = spell_is_three_quarter_tt
+
+		trigger_switch = { #Next cast 25% off spell handled inside
+			on_trigger = has_country_flag
+
+			$school$_$level$_$id$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast }
+			$school$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_three_quarter_next_cast }
+			all_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_three_quarter_next_cast }
+		}
+
+		pay_three_quarter_mana_for_level_$level$_spell = yes
+	}
+	else = { pay_mana_for_level_$level$_spell = yes }
+
+	[[war]
+		custom_tooltip = only_one_war_magic_tt
+		hidden_effect = { clear_active_war_magic = yes }
+	]
+
+	hidden_effect = {
+		count_spells_effect = { school = $school$ }
+	}
+	
+	$school$_$level$_$id$_effect = yes
+}
+
+
 pay_half_mana_for_level_0_spell = { change_mana = { amount = -12.5 } }
 pay_three_quarter_mana_for_level_0_spell = { change_mana = { amount = -18.75 } }
 pay_mana_for_level_0_spell = { change_mana = { amount = -25 } }
@@ -2113,31 +2220,58 @@ transmutation_3_rite_of_conception_effect = { # Rite of Conception
 ##########################################
 ### Custom Spell List Scripted Effects ###
 ##########################################
+#Relevant files:
+# common\custom_gui\magic_spell_lists.txt
+# interface\topbar.gui
+# common\scripted_effects\anb_scripted_effects_for_magic_spells.txt
+# common\scripted_triggers\anb_scripted_triggers_magic.txt
+# customizable_localization\anb_magic_menus_localization.txt
+# localisation\anb_magic_spells_custom_l_english.yml
+# common\event_modifiers\anb_magic_modifiers.txt
+
+#### Instructions for new spells/spell lists
+
+# Your Magical Traditions 'spell list' must have a name, consisting of:
+#	- a 'group': the region name
+#	- a 'subgroup': the specific name of your list
+# ( the base list in each region must have subgroup = default )
+# This will be used across all scripted effects and triggers
+
+# All new spell lists require the following:
+# - A new entry in the respective 'clr_<group>_spell_lists' scripted effect
+# - A new scripted trigger 'has_<group>_spell_list_<subgroup>' in the respective 'Pre-formed magical tradition triggers' scripted effect
+# - Localisation for spell list name, tooltips, etc, in localisation\anb_magic_spells_custom_l_english.yml
+# - Custom localization: entries in customizable_localization\anb_magic_menus_localization.txt
+#	- 'getTraditionNameGroup<group>' and 'getTraditionName<Group><Subgroup>' sections
+
+# New spells each require the following:
+# - Scripted effects in the 'Magical Traditions scripted effects' section of the file
+#	- named with the format: <school>_<level>_<group>_<subgroup>_<spellnumber>_effect
+# - Scripted triggers in the 'Magical traditions spell triggers' section
+#	- Requires both:
+#		- custom_spell_<group>_<subgroup>_<spellnumber>_trigger
+#		- $school$_$level$_$id$_trigger = yes -- this enables using a spell in multiple spell lists
+# - Localisation for spell names, tooltips, etc, in localisation\anb_magic_spells_custom_l_english.yml
+# - Custom localization: entries in customizable_localization\anb_magic_menus_localization.txt
+#	- Find the '# Spell list custom loc' section
+# - Modifiers:
+#	- Put these in the 'MAGICAL TRADITIONS' section in common\event_modifiers\anb_magic_modifiers.txt
+
+
+
 
 # group = name of group
 # optional: sub-group
-#[[tooltip]] = yes
-#example:
-# set_custom_spell_list = {
-# 	group = template
-# 	subgroup = tag_specific_example
-# }
-	#Original form
-	# set_custom_spell_list = {
-	# 	clr_all_custom_spell_groups = yes
-	# 	custom_tooltip = gain_magic_list_$group$[[subgroup]_$subgroup$]
-	# 	hidden_effect = {
-	# 		set_country_flag = magic_list_any #Special - used for a fast trigger
-	# 		set_country_flag = magic_list_$group$[[subgroup]_$subgroup$]
-	# 	}
-	# }
-#New form to enable a default flag to set
-set_custom_spell_list = {
+## initialise/set_custom_spell_list will take two forms, depending on provided arguments
+# set_custom_spell_list_2 = { group = $group$ } -> equivalent to -> set_custom_spell_list_2_with_subgroup = { group = $group$ subgroup = default }
+# set_custom_spell_list_2_with_subgroup = { group = $group$ subgroup = $subgroup$ }
+
+initialise_custom_spell_list = { #For history files
+	set_custom_spell_list_2[[subgroup]_with_subgroup] = { group = $group$ [[subgroup] subgroup = $subgroup$ ] }
+}
+set_custom_spell_list = { #For in-game effects
 	clr_all_custom_spell_groups = yes
 	set_custom_spell_list_2[[subgroup]_with_subgroup] = { group = $group$ [[subgroup] subgroup = $subgroup$ ] }
-	## This will take two forms, depending on provided arguments
-	# set_custom_spell_list_2 = { group = $group$ } -> equivalent to -> set_custom_spell_list_2_with_subgroup = { group = $group$ subgroup = default }
-	# set_custom_spell_list_2_with_subgroup = { group = $group$ subgroup = $subgroup$ }
 }
 #'We have overloading at home'
 set_custom_spell_list_2 = { #for no 'subgroup' argument
@@ -2178,8 +2312,6 @@ clr_all_custom_spell_groups = {
 # optional: sub-group
 # optional: no_replacement - remove access to magical traditions
 #usage: clr_custom_spell_list = { group = template subgroup = tag_specific_example }
-#I realise this is rechecking the same flag when called from clear_$group$_spell_lists, but I think this is more performant
-##Jothell Note months later: maybe just remove the check from 'clear_$group$_spell_lists'
 clr_custom_spell_list = {
 	if = {
 		limit = { has_country_flag = magic_list_$group$[[subgroup]_$subgroup$] }
@@ -2194,219 +2326,66 @@ clr_custom_spell_list = {
 	}
 }
 
-
-
-
-
 #These effects must include all sub lists for the system to work properly
 clr_template_spell_lists = {
 	if = { #Fast check of group flag
 		limit = { has_any_custom_spell_list_in_group = { group = template } }
-		if = { #Put any sublists here
-			limit = { has_custom_spell_list_in_group = { group = template subgroup = tag_specific_example } }
-			clr_custom_spell_list = { group = template subgroup = tag_specific_example }
-		}
-		else_if = { #Put any sublists here
-			limit = { has_custom_spell_list_in_group = { group = template subgroup = tag_specific_example2 } }
-			clr_custom_spell_list = { group = template subgroup = tag_specific_example2 }
-		}
-		#else_if = { } #
-		else = { #Show tooltip for losing default group traditions
-			clr_custom_spell_list = { group = template subgroup = default }
-		}
+		clr_custom_spell_list = { group = template subgroup = default }
+		#Put any sublists here
+		clr_custom_spell_list = { group = template subgroup = tag_specific_example }
+		clr_custom_spell_list = { group = template subgroup = tag_specific_example2 }
 	}
 }
 clr_aelantir_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = aelantir } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = aelantir subgroup = default }
-		}
+		clr_custom_spell_list = { group = aelantir subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_cannor_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = cannor } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = cannor subgroup = default }
-		}
+		clr_custom_spell_list = { group = cannor subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_dwarovar_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = dwarovar } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = dwarovar subgroup = default }
-		}
+		clr_custom_spell_list = { group = dwarovar subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_forbidden_plains_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = forbidden_plains } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = forbidden_plains subgroup = default }
-		}
+		clr_custom_spell_list = { group = forbidden_plains subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_haless_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = haless } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = haless subgroup = default }
-		}
+		clr_custom_spell_list = { group = haless subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_insyaa_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = insyaa } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = insyaa subgroup = default }
-		}
+		clr_custom_spell_list = { group = insyaa subgroup = default }
+		#Put any sublists here
 	}
 }
 clr_sarhal_spell_lists = {
 	if = {
 		limit = { has_any_custom_spell_list_in_group = { group = sarhal } }
-		if = {
-			limit = { always = no } #replace me
-		}
-		#else_if
-		else = {
-			clr_custom_spell_list = { group = sarhal subgroup = default }
-		}
+		clr_custom_spell_list = { group = sarhal subgroup = default }
+		#Put any sublists here
 	}
 }
 
-# magic_list_aelantir
-# magic_list_cannor
-# magic_list_dwarovar
-# magic_list_forbidden_plains
-# magic_list_haless
-# magic_list_insyaa
-# magic_list_sarhal
-
-#Magical traditions scripted effects
-magical_traditions_cast_spell = {
-	# Handles paying mana, given a limited number of ways to alter mana cost
-	if = {
-		limit = { #Free spell!
-			OR = {
-				has_country_modifier = all_spell_free
-				has_country_flag = all_spell_free_next_cast
-				has_ruler_flag = all_spell_free
-
-				[[discount_mod] has_country_modifier = $school$_$level$_$id$_spell_free ]
-				has_country_flag = $school$_$level$_$id$_spell_free_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_free
-
-				has_country_modifier = $school$_spell_free
-				has_country_flag = $school$_spell_free_next_cast
-				has_ruler_flag = $school$_spell_free
-			}
-		}
-		custom_tooltip = spell_is_free_tt
-
-		trigger_switch = { #Next cast free spell handled inside
-			on_trigger = has_country_flag
-
-			$school$_$level$_$id$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_free_next_cast }
-			$school$_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_free_next_cast }
-			all_spell_free_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_free_next_cast }
-		}
-	}
-	else_if = { #Half-cost spell
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				[[discount_mod] has_country_modifier = $school$_$level$_$id$_spell_half ]
-				has_country_flag = $school$_$level$_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
-		custom_tooltip = spell_is_half_tt
-
-		trigger_switch = { #Next cast half-cost spell handled inside
-			on_trigger = has_country_flag
-
-			$school$_$level$_$id$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_half_next_cast }
-			$school$_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_half_next_cast }
-			all_spell_half_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_half_next_cast }
-		}
-
-		pay_half_mana_for_level_$level$_spell = yes
-	}
-	else_if = { #25% off spell
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_three_quarter
-				has_country_flag = all_spell_three_quarter_next_cast
-				has_ruler_flag = all_spell_three_quarter
-
-				[[discount_mod] has_country_modifier = $school$_$level$_$id$_spell_three_quarter ]
-				has_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_three_quarter
-
-				has_country_modifier = $school$_spell_three_quarter
-				has_country_flag = $school$_spell_three_quarter_next_cast
-				has_ruler_flag = $school$_spell_three_quarter
-			}
-		}
-		custom_tooltip = spell_is_three_quarter_tt
-
-		trigger_switch = { #Next cast 25% off spell handled inside
-			on_trigger = has_country_flag
-
-			$school$_$level$_$id$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast }
-			$school$_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = $school$_spell_three_quarter_next_cast }
-			all_spell_three_quarter_next_cast = { custom_tooltip = for_next_cast_only_tt clr_country_flag = all_spell_three_quarter_next_cast }
-		}
-
-		pay_three_quarter_mana_for_level_$level$_spell = yes
-	}
-	else = { pay_mana_for_level_$level$_spell = yes }
-
-	[[war]
-		custom_tooltip = only_one_war_magic_tt
-		hidden_effect = { clear_active_war_magic = yes }
-	]
-
-	hidden_effect = {
-		count_spells_effect = { school = $school$ }
-	}
-	
-	$school$_$level$_$id$_effect = yes
-}
 
 magical_traditions_on_spell_cast_effect = { magical_traditions_on_$group$_spell_cast_effect = yes }
 # magical_traditions_on_$group$_spell_cast_effect
@@ -2421,6 +2400,9 @@ magical_traditions_on_sarhal_spell_cast_effect = {}
 
 
 #Magical Traditions scripted_effects
+#These are named as such: <school>_<level>_<group>_<subgroup>_<spellnumber>_effect
+
+#template spells
 illusion_0_template_default_1_effect = { add_treasury = 1 }
 illusion_1_template_default_2_effect = { add_treasury = 2 }
 illusion_1_template_default_3_effect = { add_treasury = 3 }
@@ -2434,3 +2416,10 @@ illusion_2_template_tag_specific_example_4_effect = { add_treasury = 10 }
 illusion_2_template_tag_specific_example_5_effect = { add_treasury = 11 }
 illusion_3_template_tag_specific_example_6_effect = { add_treasury = 12 }
 
+#aelantir spells
+#cannor spells
+#dwarovar spells
+#forbidden plains spells
+#haless spells
+#insyaa spells
+#sarhal spells
