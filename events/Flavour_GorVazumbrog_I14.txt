@@ -5058,7 +5058,8 @@ province_event = {
 			}
 			hidden_effect = {
 				province_event = {
-					id = flavour_gor_vazumbrog.822 # bounce back
+					id = flavour_gor_vazumbrog.821
+					days = 180
 				}
 			}
 		}
@@ -5119,7 +5120,12 @@ province_event = {
 		remove_province_modifier = vault_hearthstone_engine_mod
 		remove_province_modifier = vault_hearthstone_engine_mod_investigate
 
-		hidden_effect = { owner = { set_country_flag = vault_hearthstone_engine_water_forever } }
+		hidden_effect = {
+			owner = {
+				set_country_flag = vault_hearthstone_engine_water_forever
+				change_variable = { vault_hearthstone_engine_water_count = 1 }
+			}
+		}
 
 		if = {
 			limit = {
@@ -5132,7 +5138,8 @@ province_event = {
 				}
 				hidden_effect = {
 					province_event = {
-						id = flavour_gor_vazumbrog.822
+						id = flavour_gor_vazumbrog.823
+						days = 180
 					}
 				}
 			}
@@ -5150,7 +5157,8 @@ province_event = {
 					}
 					hidden_effect = {
 						province_event = {
-							id = flavour_gor_vazumbrog.822
+							id = flavour_gor_vazumbrog.823
+							days = 180
 						}
 					}
 				}
@@ -5159,38 +5167,6 @@ province_event = {
 	}
 	after = {
 		clr_province_flag = vault_hearthstone_engine_locked
-	}
-}
-
-# bounceback
-province_event = {
-	id = flavour_gor_vazumbrog.822
-	title = flavour_gor_vazumbrog.822.t
-	desc = flavour_gor_vazumbrog.822.d
-	picture = ASSASSINATION_eventPicture
-
-	is_triggered_only = yes
-	hidden = yes
-
-	option = {
-		name = flavour_gor_vazumbrog.822.a
-		if = {
-			limit = {
-				owner = {
-					has_country_flag = vault_hearthstone_engine_water_forever
-				}
-			}
-			province_event = {
-				id = flavour_gor_vazumbrog.823
-				days = 180
-			}
-		}
-		else = {
-			province_event = {
-				id = flavour_gor_vazumbrog.821
-				days = 180
-			}
-		}
 	}
 }
 
@@ -5231,25 +5207,40 @@ province_event = {
 		add_devastation = 10
 		remove_province_modifier = vault_hearthstone_engine_mod
 		remove_province_modifier = vault_hearthstone_engine_mod_investigate
-
 		if = {
 			limit = {
-				has_saved_event_target = event_province
+				has_saved_event_target = event_province # this means we must own a non-serpentbloom cavern
 			}
-			event_target:event_province = {
-				add_province_modifier = {
-					name = vault_hearthstone_engine_mod
-					duration = -1
-				}
-				hidden_effect = {
-					province_event = {
-						id = flavour_gor_vazumbrog.822
+			if = { # queue up next one
+				limit = { NOT = { check_variable = { which = vault_hearthstone_engine_water_count value = 15 } } }
+				event_target:event_province = {
+					add_province_modifier = {
+						name = vault_hearthstone_engine_mod
+						duration = -1
+					}
+					hidden_effect = {
+						change_variable = { vault_hearthstone_engine_water_count = 1 }
+						province_event = {
+							id = flavour_gor_vazumbrog.823
+							days = 180
+						}
 					}
 				}
 			}
+			else = {
+				# avoid recursion limit -- just convert everything now if we reached 15
+				every_owned_province = {
+					limit = {
+						has_terrain = cavern
+						NOT = { trade_goods = serpentbloom }
+					}
+					change_trade_goods = serpentbloom
+				}
+				owner = { clr_country_flag = vault_hearthstone_engine_enabled } # end of event chain - until fired again from province button
+			}
 		}
 		else = {
-			owner = { clr_country_flag = vault_hearthstone_engine_enabled }
+			owner = { clr_country_flag = vault_hearthstone_engine_enabled } # end of event chain - until fired again from province button
 		}
 	}
 }
