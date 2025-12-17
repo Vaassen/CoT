@@ -1977,6 +1977,7 @@ anb_scripted_effects_for_ruler_death  = {
 				government = monarchy
 			}
 			ruler_is_not_lich = yes
+			NOT = { has_government_attribute = no_stability_loss_on_monarch_death } # else you get it double refunded
 		}
 		add_stability = 1
 	}
@@ -4492,6 +4493,35 @@ on_battle_won_country_effect = {
 		}
 	}
 
+	if = { # Yezel Mora gains Misery
+		limit = {
+			tag = S70
+			OR = {
+				has_government_mechanic = yezel_mora_misery_mechanic_t1
+				has_government_mechanic = yezel_mora_misery_mechanic_t2
+				has_government_mechanic = yezel_mora_misery_mechanic_t3
+			}
+		}
+		# Gain 1 misery per 10 000 soldiers killed (fractions are okay)
+		set_variable = {
+			which = yezel_mora_misery_gain
+			which = land_units_lost
+		}
+		divide_variable = {
+			which = yezel_mora_misery_gain
+			value = 10000
+		}
+
+		# Scale by overextension and the plane alignment modifier
+		yezel_mora_misery_gain_scale_variable = {
+			var = yezel_mora_misery_gain
+		}
+
+		add_yezel_mora_misery_gov_power = {
+			var_amount = yezel_mora_misery_gain
+		}
+	}
+
 	if = { #Ashhana Lizardfolk gain Control
 		limit = {
 			has_government_mechanic = ashhana_blood_curse_mechanic
@@ -4678,6 +4708,35 @@ on_battle_lost_country_effect = {
 			power = ashhana_blood_curse_control
 			var = ashhana_blood_curse_land_units_killed_control
 			sign = +
+		}
+	}
+
+	if = { # Yezel Mora gains Misery
+		limit = {
+			tag = S70
+			OR = {
+				has_government_mechanic = yezel_mora_misery_mechanic_t1
+				has_government_mechanic = yezel_mora_misery_mechanic_t2
+				has_government_mechanic = yezel_mora_misery_mechanic_t3
+			}
+		}
+		# Gain 1 misery per 10 000 soldiers killed (fractions are okay)
+		set_variable = {
+			which = yezel_mora_misery_gain
+			which = land_units_lost
+		}
+		divide_variable = {
+			which = yezel_mora_misery_gain
+			value = 10000
+		}
+
+		# Scale by overextension and the plane alignment modifier
+		yezel_mora_misery_gain_scale_variable = {
+			var = yezel_mora_misery_gain
+		}
+
+		add_yezel_mora_misery_gov_power = {
+			var_amount = yezel_mora_misery_gain
 		}
 	}
 }
@@ -11261,6 +11320,11 @@ startup_1444_effects = {
 			limit = { tag = R36 }
 			country_event = { id = flavour_endhuvi.0 }
 		}
+
+		if = {
+			limit = { tag = A05 }
+			A05 = { country_event = { id = reveria.45 days = 1800 random = 600 } }
+		}
 	}
 }
 
@@ -15176,6 +15240,89 @@ on_province_owner_change_monuments = {
 			owner = { set_country_flag = yidablaerun_poor_uniforms_disabled }
 		}
 	}
+	if = { #Izmeri - the Blackstone City
+		limit = { 
+			province_id = 5631 #Cyamutaka
+		}
+		FROM = {
+			every_owned_province = {
+				remove_province_modifier = izmeri_expand_the_buildings
+			}
+		}
+		if = {
+			limit = {
+				has_great_project = {
+					type = izmeri_the_black_stone_city
+					tier = 2
+				}
+				owner = { can_use_izmeri_the_black_stone_city = yes }
+			}
+			owner = {
+				every_owned_province = {
+					limit = { has_coast_defense_building_trigger = yes }
+					add_province_modifier = {
+						name = izmeri_expand_the_buildings
+						duration = -1
+					}
+				}
+			}
+		}
+	}
+	if = { #Mosaic Map of Karassk
+		limit = {
+			province_id = 5898 #Karassk
+		}
+		FROM = {
+			remove_country_modifier = mosaic_map_of_karassk_marine_upgrade_1
+			remove_country_modifier = mosaic_map_of_karassk_marine_upgrade_2
+			remove_country_modifier = mosaic_map_of_karassk_marine_upgrade_3
+		}
+		if = { 
+			limit = { 
+				can_use_mosaic_map_of_karassk = yes 
+				has_great_project = {
+					type = mosaic_map_of_karassk
+					tier = 1
+				}
+			}
+			if = {
+				limit = {
+					has_great_project = {
+						type = mosaic_map_of_karassk
+						tier = 3
+					}
+				}
+				owner = {
+					add_country_modifier = { 
+						name = mosaic_map_of_karassk_marine_upgrade_3
+						duration = -1
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_great_project = {
+						type = mosaic_map_of_karassk
+						tier = 2
+					}
+				}
+				owner = {
+					add_country_modifier = { 
+						name = mosaic_map_of_karassk_marine_upgrade_2
+						duration = -1
+					}
+				}
+			}
+			else = {
+				owner = {
+					add_country_modifier = { 
+						name = mosaic_map_of_karassk_marine_upgrade_1
+						duration = -1
+					}
+				}		
+			}
+		}
+	}
 
 	##### When you have monument #####
 	if = { #Ascajar
@@ -15448,6 +15595,27 @@ on_province_owner_change_monuments = {
 		cancel_construction = yes #hidden construction bug
 		#if you annex your subject while they are upgrading the monument, it continues but is hidden
 		#the iron_palace construction is really long and you can't speed it up with this bug, so cancel it here
+	}
+	#Imzeri - the Blackstone City
+	if = { #If owns the monument and can use it - add the modifier
+		limit = {
+			owner = {
+				owns = 5631
+				can_use_izmeri_the_black_stone_city = yes
+			}
+			5631 = {
+				has_great_project = {
+					type = izmeri_the_black_stone_city
+					tier = 2
+				}
+			}
+			has_coast_defense_building_trigger = yes
+			NOT = { has_province_modifier = izmeri_expand_the_buildings }
+		}
+		add_province_modifier = {
+			name = izmeri_expand_the_buildings
+			duration = -1
+		}
 	}
 }
 
