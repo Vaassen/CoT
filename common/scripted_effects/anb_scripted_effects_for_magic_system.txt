@@ -198,7 +198,7 @@ update_spell_tooltips = {
 	else = { export_to_variable = { which = feral_animals_reg value = total_development } }
 	set_variable = { which = leashed_elementals_reg which = feral_animals_reg }
 
-	multiply_variable = { feral_animals_reg = 0.05 } #Reg per dev
+	multiply_variable = { feral_animals_reg = 0.1 } #Reg per dev
 	if = {
 		limit = { NOT = { check_variable = { feral_animals_reg = 4 } } }
 		set_variable = { feral_animals_reg = 4 } #Minimum of 4 regiments
@@ -214,7 +214,7 @@ update_spell_tooltips = {
 	set_variable = { which = feral_animals_inf which = feral_animals_reg }
 	subtract_variable = { which = feral_animals_inf which = feral_animals_cav } #infantry
 
-	multiply_variable = { leashed_elementals_reg = 0.04 } #Reg per dev
+	multiply_variable = { leashed_elementals_reg = 0.1 } #Reg per dev
 	if = {
 		limit = { NOT = { check_variable = { leashed_elementals_reg = 4 } } }
 		set_variable = { leashed_elementals_reg = 4 } #Minimum of 4 regiments
@@ -380,7 +380,7 @@ historical_magic_advancements = {
 	[[overall_level] set_variable = { effective_magic_level = $overall_level$ }]
 }
 
-magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about your situation.
+magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about your situation. Fires on Cancel AND Completion!
 	custom_tooltip = magic_advancement_abort_all_effect_tt
 	hidden_effect = {
 		magic_advancement_clr_type_flags = { type = ruler }
@@ -407,8 +407,8 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		### Infrastructure Modifiers and Flags
 		remove_country_modifier = advancing_magical_infrastructure_mod
-		remove_country_modifier = magical_infrastructure_institution_penalty
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
+		remove_country_modifier = magical_infrastructure_institution_1_penalty
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
 		clr_country_flag = magical_infrastructure_hurt_tower
 		clr_country_flag = magical_infrastructure_help_tower
 		clr_country_flag = magical_infrastructure_help_ward
@@ -460,6 +460,14 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 		
 		### rizvambrethar
 		rizvambrethar_remove_experience_boost = yes
+
+		### Salla Drennen
+		remove_country_modifier = I28_fey_futility
+		remove_country_modifier = I28_mixed_approach
+		remove_country_modifier = I28_right_to_the_biggest
+		remove_country_modifier = I28_slow_the_work
+		remove_country_modifier = I28_reinforce_lattice
+		
 	}
 }
 magic_advancement_clr_type_flags = {
@@ -540,7 +548,10 @@ start_magic_study = { #type = [ruler,heir,country]
 	}
 }
 start_magic_project = { #Country only
-
+	#Show custom tooltips on the alert when conditions are met
+	[[warning]
+		show_magic_project_$project$_warning = yes
+	]
 	custom_tooltip = start_country_magic_advancement_tt
 
 	set_country_flag = magic_advancement
@@ -605,6 +616,14 @@ magic_school_level_up = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFECT
 		}
 
 		hidden_effect = { change_variable = { $type$_spell_schools = 1 } }
+
+		[[was_studied]
+			hidden_effect = {
+				change_variable = { num_times_studied_magic_$type$ = 1 }
+				change_variable = { num_times_studied_magic_total = 1 }
+			}
+		]
+		
 
 		recalculate_$type$_mana_regen = yes
 
@@ -794,6 +813,42 @@ clr_flag_based_on_advancement = {
 	}
 }
 
+# show_magic_project_$project$_warning
+show_magic_project_homunculus_warning = {
+	#Special warning for junior PU subjects
+	if = {
+		limit = {
+			exactly_magic_project_level = { project = homunculus level = 2 }
+			is_lesser_in_union = yes
+		}
+		if = {
+			limit = {
+				has_government_attribute = heir
+			}
+			custom_tooltip = homunculus_is_lesser_in_union_no_heir_tt
+		}
+		if = {
+			limit = {
+				has_government_attribute = queen
+			}
+			custom_tooltip = homunculus_is_lesser_in_union_no_consort_tt
+		}
+	}
+}
+#Warning to prevent players unknowingly locking MTs that need artificers
+show_magic_project_lichdom_warning = {
+	if = {
+		limit = {
+			OR = { #
+				artificery_locked_mixed_mode = yes
+				artificery_locked_artificery_mode = yes
+				artificery_tag_needs_artificers = yes
+			}
+		}
+		custom_tooltip = lichdom_mage_only_lock
+	}
+}
+
 ##################
 ### EXPERIENCE ###
 ##################
@@ -971,8 +1026,8 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 
 				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
 				if = {
-					limit = { is_long_lived_ruler = yes }
-					divide_variable = { last_months_xp_gain = 2 }
+					limit = { slow_study_ruler = yes }
+					multiply_variable = { last_months_xp_gain = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 				}
 				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
@@ -999,8 +1054,8 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 
 				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
 				if = {
-					limit = { is_long_lived_heir = yes }
-					divide_variable = { last_months_xp_gain = 2 }
+					limit = { slow_study_heir = yes }
+					multiply_variable = { last_months_xp_gain = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 				}
 				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
@@ -1025,7 +1080,7 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 				multiply_variable = { which = experienceGain which = country_experience_modifier }
 
 				multiply_variable = { which = last_months_xp_gain which = country_experience_modifier }
-				divide_variable = { last_months_xp_gain = 3 }
+				divide_variable = { last_months_xp_gain = 3 } #MAGIC_ESTATE_SLOW_STUDY_RATIO
 				truncate_variable_3 = { which = last_months_xp_gain } #Estimate of monthly xp
 
 				change_variable = { which = experienceGain which = unmodifiedExperience }
@@ -1072,11 +1127,11 @@ calc_school_experience_modifier_effect = {
 
 reduce_infrastructure_institution_penalty = {
 	if = {
-		limit = { has_country_modifier = magical_infrastructure_2_institution_penalty }
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
-		add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+		limit = { has_country_modifier = magical_infrastructure_institution_2_penalty }
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
+		add_country_modifier = { name = magical_infrastructure_institution_1_penalty duration = -1 desc = until_advancement_concludes }
 	}
-	else = { remove_country_modifier = magical_infrastructure_institution_penalty }
+	else = { remove_country_modifier = magical_infrastructure_institution_1_penalty }
 }
 
 ai_magic_xp_pulse = {
@@ -1162,8 +1217,8 @@ calc_ai_ruler_xp_modifier = {
 		value = modifier:mages_ruler_experience_mod
 	}
 	if = {
-		limit = { is_long_lived_ruler = yes }
-		multiply_variable = { ai_magic_value = 2 }
+		limit = { slow_study_ruler = yes }
+		divide_variable = { ai_magic_value = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 	}
 }
 calc_ai_heir_xp_modifier = {
@@ -1172,12 +1227,12 @@ calc_ai_heir_xp_modifier = {
 		value = modifier:mages_ruler_experience_mod
 	}
 	if = {
-		limit = { is_long_lived_heir = yes }
-		multiply_variable = { ai_magic_value = 2 }
+		limit = { slow_study_heir = yes }
+		divide_variable = { ai_magic_value = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 	}
 }
 calc_ai_country_xp_modifier = {
-	multiply_variable = { ai_magic_value = 3 }
+	multiply_variable = { ai_magic_value = 3 } #MAGIC_RULER_SLOW_STUDY_RATIO
 	export_to_variable = {
 		variable_name = ai_magic_modifier
 		value = modifier:mages_estate_experience_mod
@@ -1207,17 +1262,17 @@ monthly_magic_upkeep_pulse = {
 		}
 
 		if = { limit = { has_ruler_flag = magic_advancement }
-			if = { limit = { is_long_lived_ruler = yes }
-				divide_variable = { monthly_xp_tick = 2 }
+			if = { limit = { slow_study_ruler = yes }
+				multiply_variable = { monthly_xp_tick = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 			}
 		}
 		else_if = { limit = { has_heir_flag = magic_advancement }
-			if = { limit = { is_long_lived_heir = yes }
-				divide_variable = { monthly_xp_tick = 2 }
+			if = { limit = { slow_study_heir = yes }
+				multiply_variable = { monthly_xp_tick = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
 			}
 		}
 		else_if = { limit = { has_country_flag = magic_advancement }
-			divide_variable = { which = monthly_xp_tick value = 3 }
+			divide_variable = { which = monthly_xp_tick value = 3 } #MAGIC_ESTATE_SLOW_STUDY_RATIO
 		}
 
 		increase_magic_experience = { var_amount = monthly_xp_tick }
@@ -1259,6 +1314,12 @@ clear_all_spell_levels_for_type = {
 	clear_spell_levels_for_type_and_school = { type = $type$ school = illusion }
 	clear_spell_levels_for_type_and_school = { type = $type$ school = necromancy }
 	clear_spell_levels_for_type_and_school = { type = $type$ school = transmutation }
+
+	#This scripted effect is rarely used outside the magic system itself
+	#Currently only `flavor_konolkhatep.126`
+	#In this case, these arguments should be used
+	[[mana_regen] recalculate_$type$_mana_regen = yes ]
+	[[calc_total] calc_schools_total_level = yes ]
 }
 
 save_spell_levels_for_type_and_school_to_name = {
@@ -1594,6 +1655,12 @@ magic_on_ruler_death = {
 		limit = { has_cast_undead_army = yes }
 		country_event = { id = magic_spell.702 days = 60 } 
 	}
+
+	clr_ruler_witch_king_points = yes
+	# NOTE: for immortals like liches this doesn't matter,
+	# as they obtain the witch king modifier on respawning anyway
+	# but if another immortal needs to keep their infamy,
+	# they would need to save and restore it themselves...
 }
 magic_on_heir_death = {
 	if = {
@@ -1608,14 +1675,14 @@ magic_on_heir_death = {
 		limit = { heir_is_not_powerful_mage = yes }
 		remove_country_modifier = heir_mage_personality_mod
 	}
-	clr_type_witch_king_points = { type = heir }
+	clr_heir_witch_king_points = yes
 }
 magic_on_consort_death = {
 	if = {
 		limit = { consort_is_not_powerful_mage = yes }
 		remove_country_modifier = consort_mage_personality_mod
 	}
-	clr_type_witch_king_points = { type = consort }
+	clr_consort_witch_king_points = yes
 }
 
 set_heir_mage_effect = {
@@ -1700,6 +1767,7 @@ set_ruler_mage_effect = {
 	# You can hand out any number of additional random spell schools with random = 3
 	# You can also hand out saved spell schools with saved_levels = <name>
 	# The above will happen IN PLACE of normal spell school generation
+	# You can explicitly prevent normal spell school generation with 'no_magic_levels = yes'
 	# If you want to save this person's spell schools, you can do so with save_levels = <name>
 # Define special properties:
 	# war_wizard = yes makes the ruler or heir into a war wizard
@@ -1721,6 +1789,7 @@ define_powerful_mage = { #types are ruler, heir, and consort
 		clear_all_spell_levels_for_type = { type = $type$ } #Just in case
 		hidden_effect = { set_variable = { random_starting_schools = 0 } }
 
+		[[no_magic_levels]  set_$type$_flag = initialized_magic_flags ] #Skips random spell levels
 		[[abjuration]		custom_tooltip = abjuration_$abjuration$ set_$type$_flag = abjuration_$abjuration$ set_$type$_flag = initialized_magic_flags ]
 		[[conjuration]		custom_tooltip = conjuration_$conjuration$ set_$type$_flag = conjuration_$conjuration$ set_$type$_flag = initialized_magic_flags ]
 		[[divination]		custom_tooltip = divination_$divination$ set_$type$_flag = divination_$divination$ set_$type$_flag = initialized_magic_flags ]
@@ -2070,7 +2139,7 @@ create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
 
 # The impacts of witch-kinginess are:
 ### Ruler: scaling diplo reputation malus (-1 dip rep, +5% AE impact per bracket increase)
-### Estate: scaling estate influence (-5% loyalty equilibrium, +5% influence per bracket increase)
+### Estate: scaling estate influence and estate loyalty maluses (+5/10/15/20% influence and -10/25/50/100% loyalty per bracket)
 ### Consort/Heir: nothing, but will become ruler witch-kinginess if they take the throne
 
 # The scale of increases are:
@@ -2089,8 +2158,11 @@ become_a_witch_king_effect = {
 		remove_country_modifier = infamy_denounced_modifier
 		remove_country_modifier = infamy_suspicious_modifier
 		remove_country_modifier = infamy_respected_modifier
-		change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
-		change_variable = { mana_regen_ruler = 0.28 } #All witch-king modifiers give 0.28
+		if = {
+			limit = { NOT = { check_variable = { which = ruler_witch_king_points value = 16 } } }
+			change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
+		}
+		change_variable = { mana_regen_ruler = 0.3 } #All witch-king modifiers give 0.3
 	}
 	set_country_flag = ruled_by_witch_king
 
@@ -2191,6 +2263,8 @@ calculate_magical_infamy_modifier = {
 		country_event = { id = magic_ruler.68 days = 1825 random = 365 }
 	}
 }
+
+
 increase_type_witch_king_points_small = { #1 point
 	custom_tooltip = increase_$type$_witch_king_points_small
 	hidden_effect = {
@@ -2245,7 +2319,7 @@ transfer_witch_king_points = {
 		set_variable = { which = $to$_witch_king_points which = $from$_witch_king_points }
 		clr_$to$_flag = is_infamous_$from$ #Because it's usually a ruler who was a consort/heir
 		clr_$from$_flag = is_infamous_$from$
-		set_variable = { which = $from$_witch_king_points = 0 }
+		set_variable = { which = $from$_witch_king_points value = 0 }
 	}
 }
 
@@ -2332,3 +2406,133 @@ decrease_witch_king_points = {
 decrease_witch_king_points_small = { decrease_witch_king_points = { size = small [[level] level = $level$ ] } }
 decrease_witch_king_points_medium = { decrease_witch_king_points = { size = medium [[level] level = $level$ ] } }
 decrease_witch_king_points_large = { decrease_witch_king_points = { size = large [[level] level = $level$ ] } }
+
+clr_ruler_witch_king_points = {
+	clr_type_witch_king_points = { type = ruler }
+}
+clr_consort_witch_king_points = {
+	clr_type_witch_king_points = { type = consort }
+}
+clr_heir_witch_king_points = {
+	clr_type_witch_king_points = { type = heir }
+}
+clr_estate_witch_king_points = {
+	clr_type_witch_king_points = { type = country }
+}
+
+transfer_witch_king_points_to_ruler = {
+	transfer_witch_king_points = { from = $from$ to = ruler }
+}
+transfer_witch_king_points_to_consort = {
+	transfer_witch_king_points = { from = $from$ to = consort }
+}
+transfer_witch_king_points_to_heir = {
+	transfer_witch_king_points = { from = $from$ to = heir }
+}
+transfer_witch_king_points_to_estate = {
+	transfer_witch_king_points = { from = $from$ to = country }
+}
+
+transfer_witch_king_points_from_ruler = {
+	transfer_witch_king_points = { from = ruler to = $to$ }
+}
+transfer_witch_king_points_from_consort = {
+	transfer_witch_king_points = { from = consort to = $to$ }
+}
+transfer_witch_king_points_from_heir = {
+	transfer_witch_king_points = { from = heir to = $to$ }
+}
+transfer_witch_king_points_from_estate = {
+	transfer_witch_king_points = { from = country to = $to$ }
+}
+
+## Scripted Effects
+##
+#primary scripted effect
+add_MI_institution_penalty_bypass_effect = {
+	hidden_effect = {
+		set_country_flag = bypass_magical_infrastructure_$level$_institution_penalty_$amount$
+	}
+	custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #"You will suffer no/half experience penalty when unlocking MI X"
+}
+
+## Bypass an xp penalty for a specific MI level
+add_amount_MI_X_institution_penalty_bypass = {
+	if = {
+		limit = { at_least_magical_infrastructure_level_$level$ = yes }
+		custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #Say what it would have done
+		custom_tooltip = MI_$level$_already_achieved #say something, do nothing
+	}
+	else = {
+		add_MI_institution_penalty_bypass_effect = { level = $level$ amount = $amount$ }
+	}
+}
+
+### Bypass an xp penalty for the next MI level
+#I'm a bit iffy on this
+add_bypass_2_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { full = yes amount = 2 }
+}
+add_partial_penalty_bypass_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { partial = yes amount = 1 }
+}
+add_next_MI_institution_penalty_bypass_effect = { #Don't use this directly, #<full/partial> = yes
+	custom_tooltip = add_next_bypass_tt
+	if = {
+		limit = { has_magical_infrastructure_level_0 = yes }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = renaissance } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 1 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = new_world_i } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 2 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = printing_press } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 3 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = global_trade } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 4 } }
+		custom_tooltip = MI_max_already_achieved #say something, do nothing
+	}
+}
+
+calc_MI_xp_penalty_for_advancement_effect = { #target_level, penalty
+	custom_tooltip = MI_$target_level$_missing_$penalty$_institution_tt
+	add_country_modifier = { name = magical_infrastructure_institution_$penalty$_penalty duration = -1 desc = until_advancement_concludes } 
+}
