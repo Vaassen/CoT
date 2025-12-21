@@ -407,8 +407,8 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		### Infrastructure Modifiers and Flags
 		remove_country_modifier = advancing_magical_infrastructure_mod
-		remove_country_modifier = magical_infrastructure_institution_penalty
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
+		remove_country_modifier = magical_infrastructure_institution_1_penalty
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
 		clr_country_flag = magical_infrastructure_hurt_tower
 		clr_country_flag = magical_infrastructure_help_tower
 		clr_country_flag = magical_infrastructure_help_ward
@@ -1174,11 +1174,11 @@ calc_school_experience_modifier_effect = {
 
 reduce_infrastructure_institution_penalty = {
 	if = {
-		limit = { has_country_modifier = magical_infrastructure_2_institution_penalty }
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
-		add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+		limit = { has_country_modifier = magical_infrastructure_institution_2_penalty }
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
+		add_country_modifier = { name = magical_infrastructure_institution_1_penalty duration = -1 desc = until_advancement_concludes }
 	}
-	else = { remove_country_modifier = magical_infrastructure_institution_penalty }
+	else = { remove_country_modifier = magical_infrastructure_institution_1_penalty }
 }
 
 ai_magic_xp_pulse = {
@@ -2493,4 +2493,93 @@ transfer_witch_king_points_from_estate = {
 	transfer_witch_king_points = { from = country to = $to$ }
 }
 
+## Scripted Effects
+##
+#primary scripted effect
+add_MI_institution_penalty_bypass_effect = {
+	hidden_effect = {
+		set_country_flag = bypass_magical_infrastructure_$level$_institution_penalty_$amount$
+	}
+	custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #"You will suffer no/half experience penalty when unlocking MI X"
+}
 
+## Bypass an xp penalty for a specific MI level
+add_amount_MI_X_institution_penalty_bypass = {
+	if = {
+		limit = { at_least_magical_infrastructure_level_$level$ = yes }
+		custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #Say what it would have done
+		custom_tooltip = MI_$level$_already_achieved #say something, do nothing
+	}
+	else = {
+		add_MI_institution_penalty_bypass_effect = { level = $level$ amount = $amount$ }
+	}
+}
+
+### Bypass an xp penalty for the next MI level
+#I'm a bit iffy on this
+add_bypass_2_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { full = yes amount = 2 }
+}
+add_partial_penalty_bypass_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { partial = yes amount = 1 }
+}
+add_next_MI_institution_penalty_bypass_effect = { #Don't use this directly, #<full/partial> = yes
+	custom_tooltip = add_next_bypass_tt
+	if = {
+		limit = { has_magical_infrastructure_level_0 = yes }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = renaissance } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 1 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = new_world_i } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 2 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = printing_press } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 3 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = global_trade } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 4 } }
+		custom_tooltip = MI_max_already_achieved #say something, do nothing
+	}
+}
+
+calc_MI_xp_penalty_for_advancement_effect = { #target_level, penalty
+	custom_tooltip = MI_$target_level$_missing_$penalty$_institution_tt
+	add_country_modifier = { name = magical_infrastructure_institution_$penalty$_penalty duration = -1 desc = until_advancement_concludes } 
+}
