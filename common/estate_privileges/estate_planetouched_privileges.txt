@@ -172,9 +172,6 @@ estate_planetouched_organization_oppressed = {
 	can_revoke = {
 		always = no
 	}
-	on_granted = {
-#TBD: revolts on new ruler
-	}
 	benefits = {
 		all_estate_loyalty_equilibrium = 0.05
 		planetouched_loyalty_modifier = -0.05
@@ -237,12 +234,7 @@ estate_planetouched_scattered_inheritance = {
 					influence = 50
 				}
 			}
-#			AND = { #TBD: Planetouched general.
-#				has_country_flag = planetouched_general
-#				has_leader_with = {
-#					name = ""
-#				}
-#			}
+			has_country_flag = have_had_planetouched_general
 			has_reform = elemental_right_to_rule
 		}
 	}
@@ -1173,7 +1165,48 @@ estate_planetouched_oppressed_assets = {
 
 estate_planetouched_state_contract = {
 	icon = privilege_grant_autonomy
-	is_valid = { has_estate_privilege = estate_planetouched_organization_state } #TBD: decision
+	is_valid = { has_estate_privilege = estate_planetouched_organization_state }
+	on_granted = {
+		if = {
+			limit = { has_dlc = "Domination" }
+			enable_estate_action = {
+				estate_action = CONTRACT_OUT_TO_ESTATES_PLANETOUCHED
+			}
+		}
+		else = {
+			custom_tooltip = has_no_effects_on_granted
+		}
+	}
+	on_invalid = {
+		if = {
+			limit = { has_dlc = "Domination" }
+			disable_estate_action = {
+				estate_action = NEW_WORLD_MISSION_CHURCH
+			}
+		}
+		else = {
+			hidden_effect = {
+				disable_estate_action = {
+					estate_action = NEW_WORLD_MISSION_CHURCH
+				}
+			}
+		}
+	}
+	on_revoked = {
+		if = {
+			limit = { has_dlc = "Domination" }
+			disable_estate_action = {
+				estate_action = NEW_WORLD_MISSION_CHURCH
+			}
+		}
+		else = {
+			hidden_effect = {
+				disable_estate_action = {
+					estate_action = NEW_WORLD_MISSION_CHURCH
+				}
+			}
+		}
+	}
 	
 	ai_will_do = {
 		factor = 5
@@ -1271,7 +1304,64 @@ estate_planetouched_state_servitude = {
 	loyalty = 0.1
 	influence = 0.15
 	max_absolutism = 5
-	is_valid = { has_estate_privilege = estate_planetouched_organization_state } #TBD: Religious culture
+	is_valid = { has_estate_privilege = estate_planetouched_organization_state }
+	on_granted = {
+		if = {
+			limit = { has_estate_privilege = estate_church_one_faith_one_culture }
+			add_country_modifier = {
+				name = estate_planetouched_religious_culture_mod
+				duration = -1
+			}
+		}
+	}
+	on_revoked = {
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_church_one_faith_one_culture } }
+			remove_country_modifier = estate_planetouched_religious_culture_mod
+		}
+	}
+	on_invalid = {
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_church_one_faith_one_culture } }
+			remove_country_modifier = estate_planetouched_religious_culture_mod
+		}
+	}
+	on_granted_province = {
+		if = {
+			limit = { has_estate_privilege = estate_church_one_faith_one_culture }
+			remove_province_modifier = estate_church_false_culture
+		}
+	}
+	on_revoked_province = {
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_church_one_faith_one_culture } }
+			if = {
+				limit = {
+					NOT = { culture_group = ROOT }
+					has_owner_accepted_culture = no
+				}
+				add_province_modifier = {
+					name = estate_church_false_culture
+					duration = -1
+				}
+			}
+		}
+	}
+	on_invalid_province = {
+		if = {
+			limit = { NOT = { has_estate_privilege = estate_church_one_faith_one_culture } }
+			if = {
+				limit = {
+					NOT = { culture_group = ROOT }
+					has_owner_accepted_culture = no
+				}
+				add_province_modifier = {
+					name = estate_church_false_culture
+					duration = -1
+				}
+			}
+		}
+	}
 	
 	ai_will_do = {
 		factor = 5
