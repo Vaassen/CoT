@@ -41,6 +41,7 @@ clear_spellbook_flags = {
 	clr_country_flag = magic_menu_spellbook_illusion_flag
 	clr_country_flag = magic_menu_spellbook_necromancy_flag
 	clr_country_flag = magic_menu_spellbook_transmutation_flag
+	clr_country_flag = show_custom_spell_list
 }
 
 magic_advancement_selection_clear_advancement_flags = {
@@ -380,7 +381,7 @@ historical_magic_advancements = {
 	[[overall_level] set_variable = { effective_magic_level = $overall_level$ }]
 }
 
-magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about your situation. Fires on Cancel AND Completion!
+magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about your situation. ALSO FIRES WHEN FINISHING PROJECTS!! Fires on Cancel AND Completion!
 	custom_tooltip = magic_advancement_abort_all_effect_tt
 	hidden_effect = {
 		magic_advancement_clr_type_flags = { type = ruler }
@@ -407,8 +408,8 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		### Infrastructure Modifiers and Flags
 		remove_country_modifier = advancing_magical_infrastructure_mod
-		remove_country_modifier = magical_infrastructure_institution_penalty
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
+		remove_country_modifier = magical_infrastructure_institution_1_penalty
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
 		clr_country_flag = magical_infrastructure_hurt_tower
 		clr_country_flag = magical_infrastructure_help_tower
 		clr_country_flag = magical_infrastructure_help_ward
@@ -468,6 +469,53 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 		remove_country_modifier = I28_slow_the_work
 		remove_country_modifier = I28_reinforce_lattice
 		
+
+		#Unique Projects
+		#Umbral Covenant
+		if = {
+			limit = {
+				tag = S90
+			}
+			remove_country_modifier = S90_project1_research_speed_1
+			remove_country_modifier = S90_project1_research_speed_2
+			remove_country_modifier = S90_project1_research_speed_3
+			remove_country_modifier = S90_project1_research_speed_4
+			remove_country_modifier = S90_unlimited_power
+			remove_country_modifier = S90_grounding_effort
+			remove_country_modifier = S90_sublimation_effort
+			remove_country_modifier = S90_hydration_effort
+			remove_country_modifier = S90_vapourisation_effort
+			remove_country_modifier = S90_komina_I
+			remove_country_modifier = S90_komina_II
+			remove_country_modifier = S90_komina_III
+			remove_country_modifier = S90_unto_the_altars
+			remove_country_modifier = S90_give_and_take
+			remove_country_modifier = S90_arcane_desire
+			remove_country_modifier = S90_project3_research_speed_1
+			remove_country_modifier = S90_project3_research_speed_2
+			remove_country_modifier = S90_project3_research_speed_3
+			remove_country_modifier = S90_project3_research_speed_4
+			clr_country_flag = S90_stars_first_event_happened
+			clr_country_flag = S90_stars_second_event_happened
+			clr_country_flag = S90_stars_third_event_happened
+			clr_country_flag = S90_stars_fourth_event_happened
+			clr_country_flag = S90_ashen_first_event_happened
+			clr_country_flag = S90_ashen_second_event_happened
+			clr_country_flag = S90_ashen_third_event_happened
+			clr_country_flag = S90_ashen_fourth_event_happened
+			clr_country_flag = S90_ashen_fifth_event_happened
+			clr_country_flag = S90_ashen_sixth_event_happened
+			clr_country_flag = S90_ashen_seventh_event_happened
+			clr_country_flag = S90_comewithme_diviner
+			clr_country_flag = S90_comewithme_apprentice
+			clr_country_flag = S90_comewithme_general
+			clr_country_flag = S90_spire_secrets_complete
+			clr_country_flag = S90_loveme_first_event_happened
+			clr_country_flag = S90_loveme_second_event_happened
+			clr_country_flag = S90_loveme_third_event_happened
+			clr_country_flag = S90_loveme_fourth_event_happened
+			clr_country_flag = S90_loveme_first_event_happened
+		}
 	}
 }
 magic_advancement_clr_type_flags = {
@@ -1130,11 +1178,11 @@ calc_school_experience_modifier_effect = {
 
 reduce_infrastructure_institution_penalty = {
 	if = {
-		limit = { has_country_modifier = magical_infrastructure_2_institution_penalty }
-		remove_country_modifier = magical_infrastructure_2_institution_penalty
-		add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+		limit = { has_country_modifier = magical_infrastructure_institution_2_penalty }
+		remove_country_modifier = magical_infrastructure_institution_2_penalty
+		add_country_modifier = { name = magical_infrastructure_institution_1_penalty duration = -1 desc = until_advancement_concludes }
 	}
-	else = { remove_country_modifier = magical_infrastructure_institution_penalty }
+	else = { remove_country_modifier = magical_infrastructure_institution_1_penalty }
 }
 
 ai_magic_xp_pulse = {
@@ -2447,6 +2495,97 @@ transfer_witch_king_points_from_heir = {
 }
 transfer_witch_king_points_from_estate = {
 	transfer_witch_king_points = { from = country to = $to$ }
+}
+
+## Scripted Effects
+##
+#primary scripted effect
+add_MI_institution_penalty_bypass_effect = {
+	hidden_effect = {
+		set_country_flag = bypass_magical_infrastructure_$level$_institution_penalty_$amount$
+	}
+	custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #"You will suffer no/half experience penalty when unlocking MI X"
+}
+
+## Bypass an xp penalty for a specific MI level
+add_amount_MI_X_institution_penalty_bypass = {
+	if = {
+		limit = { at_least_magical_infrastructure_level_$level$ = yes }
+		custom_tooltip = bypass_MI_$level$_penalty_$amount$_tt #Say what it would have done
+		custom_tooltip = MI_$level$_already_achieved #say something, do nothing
+	}
+	else = {
+		add_MI_institution_penalty_bypass_effect = { level = $level$ amount = $amount$ }
+	}
+}
+
+### Bypass an xp penalty for the next MI level
+#I'm a bit iffy on this
+add_bypass_2_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { full = yes amount = 2 }
+}
+add_partial_penalty_bypass_to_next_MI_advance_effect = {
+	add_next_MI_institution_penalty_bypass_effect = { partial = yes amount = 1 }
+}
+add_next_MI_institution_penalty_bypass_effect = { #Don't use this directly, #<full/partial> = yes
+	custom_tooltip = add_next_bypass_tt
+	if = {
+		limit = { has_magical_infrastructure_level_0 = yes }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = renaissance } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 1 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 1 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = new_world_i } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 2 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 2 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = printing_press } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 3 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 3 } }
+		[[full]
+			add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+		]
+		[[partial]
+			if = {
+				limit = { NOT = { has_institution = global_trade } }
+				add_amount_MI_X_institution_penalty_bypass = { amount = $amount$ level = 4 }
+			}
+		]
+	}
+	else_if = {
+		limit = { exactly_magical_infrastructure_level = { level = 4 } }
+		custom_tooltip = MI_max_already_achieved #say something, do nothing
+	}
+}
+
+calc_MI_xp_penalty_for_advancement_effect = { #target_level, penalty
+	custom_tooltip = MI_$target_level$_missing_$penalty$_institution_tt
+	add_country_modifier = { name = magical_infrastructure_institution_$penalty$_penalty duration = -1 desc = until_advancement_concludes } 
 }
 
 
