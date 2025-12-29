@@ -272,26 +272,32 @@ country_event = {
 						}
 					}
 				}
-				export_to_variable = {
-					which = migrateDevTax
-					value = base_tax
-				}
-				change_variable = { which = migrateDevTax value = -1 }
-				ROOT = { change_variable = { which = migrateDevTax which = PREV } }
 
-				export_to_variable = {
-					which = migrateDevProduction
-					value = base_production
-				}
-				change_variable = { which = migrateDevProduction value = -1 }
-				ROOT = { change_variable = { which = migrateDevProduction which = PREV } }
+				ROOT = {
+                    export_to_variable = {
+                        which = migrateDevTaxTemp
+                        value = base_tax
+                        who = PREV
+                    }
+                    subtract_variable = { which = migrateDevTaxTemp value = 1 }
+                    change_variable = { which = migrateDevTax which = MigrateDevTaxTemp }
 
-				export_to_variable = {
-					which = migrateDevManpower
-					value = base_manpower
-				}
-				change_variable = { which = migrateDevManpower value = -1 }
-				ROOT = { change_variable = { which = migrateDevManpower which = PREV } }
+					export_to_variable = {
+                        which = migrateDevManpowerTemp
+                        value = base_tax
+                        who = PREV
+                    }
+                    subtract_variable = { which = migrateDevManpowerTemp value = 1 }
+                    change_variable = { which = migrateDevManpower which = migrateDevManpowerTemp }
+
+					export_to_variable = {
+                        which = migrateDevProductionTemp
+                        value = base_tax
+                        who = PREV
+                    }
+                    subtract_variable = { which = migrateDevProductionTemp value = 1 }
+                    change_variable = { which = migrateDevProduction which = migrateDevProductionTemp }
+                }
 
 				set_base_tax = 1
 				set_base_production = 1
@@ -346,7 +352,10 @@ country_event = {
 
 				}
 
-				cede_province = event_target:tag_to_cede_to
+				if = {
+					limit = { has_saved_event_target = tag_to_cede_to }
+					cede_province = event_target:tag_to_cede_to
+				}
 			}
 
 			while = {
@@ -419,24 +428,28 @@ country_event = {
 				if = {
 					limit = {
 						is_core = F68
+						NOT = { owned_by = F68 }
 					}
 					cede_province = F68
 				}
 				else_if = {
 					limit = {
 						is_core = F71
+						NOT = { owned_by = F71 }
 					}
 					cede_province = F71
 				}
 				else_if = {
 					limit = {
 						is_core = L66
+						NOT = { owned_by = L66 }
 					}
 					cede_province = L66
 				}
 				else_if = {
 					limit = {
 						culture = echenka
+						NOT = { owned_by = F68 }
 					}
 					cede_province = F68
 					add_core = F68
@@ -448,6 +461,7 @@ country_event = {
 							religion = xhazobkult
 							religion = shadow_pact
 						}
+						NOT = { owned_by = F71 }
 					}
 					cede_province = F71
 					add_core = F71
@@ -456,6 +470,7 @@ country_event = {
 					limit = {
 						culture_group = mengi
 						religion = shadow_pact
+						NOT = { owned_by = L66 }
 					}
 					cede_province = L66
 					add_core = L66
@@ -560,9 +575,6 @@ country_event = {
 					}
 				}
 				every_owned_province = {
-					limit = {
-						NOT = { is_core = ROOT }
-					}
 					add_permanent_claim = ROOT
 				}
 			}
@@ -823,8 +835,7 @@ country_event = {
 		down_river_from_shadow = {
 			limit = {
 				OR = {
-					owned_by = ROOT
-					owned_by_subject_of = ROOT
+					country_or_subject_holds = ROOT
 					owner = {
 						alliance_with = ROOT
 					}
