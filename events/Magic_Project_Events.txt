@@ -50,11 +50,14 @@ namespace = magic_project
 ### Furthermore, each project should have a handler event magic_project_<project_key>.0 which sorts players into the right event
 ### There are also a number of conventions you should follow:
 ###### Since the variable is ticked up before an event is completed, and you cannot count on most flags to stay around, use the presence of magic_project_completed_flag in the handler to tell you when a project has been completed
+###### magic_completed_flag (and all other progress flags/modifiers) is cleared after magic_project_<project_key>.0 selects the completion event
+###### If your final event depends on the state of the project at completion you must check and clear it in your completion event instead
 ###### Add and clear in_magic_progress_event flag with your events (this prevents cheesing via abort button)
 ###### All your event titles should be prefaced with the name of the project, so that players know why they're receiving the event
 ### Remember to modify magic_system.100 so that players actually receive advancement events
 ### If you want your project to count for magical infrastructure requirements, change calc_completed_magic_projects
 ### Remember to clear your progress flags/modifiers in magic_advancement_abort_all_effect
+
 
 country_event = { #clears the completion flag so that you can use it in the event handler
 	id = magic_project.1
@@ -346,7 +349,7 @@ country_event = { #Magical Infrastructure
 		name = magic_project_infrastructure.110.t
 		trigger = {
 			has_estate = estate_mages
-			has_estate = estate_clergy
+			has_estate = estate_church
 			estate_influence = { estate = estate_mages influence = 40 }
 			NOT = { has_estate_privilege = estate_mages_organization_religious }
 			NOT = { has_country_flag = magical_infrastructure_help_clergy }
@@ -403,7 +406,7 @@ country_event = { #Magical Infrastructure
 			factor = 0.8
 			modifier = {
 				factor = 1.5
-				average_home_autonomy = 0.2
+				average_home_autonomy = 20
 			}
 		}
 		country_event = { id = magic_project_infrastructure.113 }
@@ -827,7 +830,7 @@ country_event = { #Mages and the Clergy
 	option = { #Empower the Mages
 		name = magic_project_infrastructure.110.b
 
-		add_estate_loyalty = { estate = estate_clergy loyalty = -20 }
+		add_estate_loyalty = { estate = estate_church loyalty = -20 }
 		increase_magic_experience = { amount = 25 }
 	}
 }
@@ -1130,7 +1133,23 @@ country_event = { #Magical Fortress 4 - Complete Foundation
 		custom_tooltip = magical_fortress_project_effect_1
 		capital_scope = {
 			add_province_modifier = { name = magical_fortress_mod_1 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_1 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_1 duration = -1 }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_1
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				add_province_modifier = {
+					name = magical_fortress_province_mod_1
+					duration = -1
+				}
+			}
 		}
 		magical_fortress_grant_bonus = { mod = prestige }
 		add_prestige = 10
@@ -1212,10 +1231,27 @@ country_event = { #Magical Fortress 8 - Complete Castle
 		custom_tooltip = magical_fortress_project_effect_2
 		capital_scope = {
 			remove_province_modifier = magical_fortress_mod_1
-			remove_province_modifier = abjuration_1_0_mod_1
+			remove_province_modifier = abjuration_1_ward_mod_1
 			add_province_modifier = { name = magical_fortress_mod_2 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_2 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_2 duration = -1 }
 			hidden_effect = { province_event = { id = kheionai.2 } }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_2
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				remove_province_modifier = magical_fortress_province_mod_1
+				add_province_modifier = {
+					name = magical_fortress_province_mod_2
+					duration = -1
+				}
+			}
 		}
 		
 		magical_fortress_grant_bonus = { mod = splendor }
@@ -1299,9 +1335,26 @@ country_event = { #Magical Fortress 12 - Complete Palace
 		custom_tooltip = magical_fortress_project_effect_3
 		capital_scope = {
 			remove_province_modifier = magical_fortress_mod_2
-			remove_province_modifier = abjuration_1_0_mod_2
+			remove_province_modifier = abjuration_1_ward_mod_2
 			add_province_modifier = { name = magical_fortress_mod_3 duration = -1 }
-			add_province_modifier = { name = abjuration_1_0_mod_3 duration = -1 }
+			add_province_modifier = { name = abjuration_1_ward_mod_3 duration = -1 }
+		}
+		custom_tooltip = estate_nobles_development_of_castles_gt
+		tooltip = {
+			add_province_modifier = {
+				name = magical_fortress_province_mod_3
+				duration = -1
+			}
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_fort_building_trigger = yes }
+				remove_province_modifier = magical_fortress_province_mod_2
+				add_province_modifier = {
+					name = magical_fortress_province_mod_3
+					duration = -1
+				}
+			}
 		}
 		magical_fortress_grant_bonus = { mod = mana_regen }
 		change_mana = { amount = 50 }
@@ -2028,7 +2081,8 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 				case1 = "set_country_flag = ooo_line2_1"
 			}
 			randnum_effect = {
-				max = 5
+				max = 6
+				case6 = "set_country_flag = ooo_line3_6"
 				case5 = "set_country_flag = ooo_line3_5"
 				case4 = "set_country_flag = ooo_line3_4"
 				case3 = "set_country_flag = ooo_line3_3"
@@ -2036,20 +2090,13 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 				case1 = "set_country_flag = ooo_line3_1"
 			}
 			randnum_effect = {
-				max = 5
+				max = 6
+				case6 = "set_country_flag = ooo_line4_6"
 				case5 = "set_country_flag = ooo_line4_5"
 				case4 = "set_country_flag = ooo_line4_4"
 				case3 = "set_country_flag = ooo_line4_3"
 				case2 = "set_country_flag = ooo_line4_2"
 				case1 = "set_country_flag = ooo_line4_1"
-			}
-			randnum_effect = {
-				max = 5
-				case5 = "set_country_flag = ooo_line5_5"
-				case4 = "set_country_flag = ooo_line5_4"
-				case3 = "set_country_flag = ooo_line5_3"
-				case2 = "set_country_flag = ooo_line5_2"
-				case1 = "set_country_flag = ooo_line5_1"
 			}
 		}
 	}
@@ -2068,23 +2115,19 @@ country_event = { # Orb of Omniscience 1 - Make a promise
 		clr_country_flag = ooo_line2_2
 		clr_country_flag = ooo_line2_1
 
+		clr_country_flag = ooo_line3_6
 		clr_country_flag = ooo_line3_5
 		clr_country_flag = ooo_line3_4
 		clr_country_flag = ooo_line3_3
 		clr_country_flag = ooo_line3_2
 		clr_country_flag = ooo_line3_1
 
+		clr_country_flag = ooo_line4_6
 		clr_country_flag = ooo_line4_5
 		clr_country_flag = ooo_line4_4
 		clr_country_flag = ooo_line4_3
 		clr_country_flag = ooo_line4_2
 		clr_country_flag = ooo_line4_1
-
-		clr_country_flag = ooo_line5_5
-		clr_country_flag = ooo_line5_4
-		clr_country_flag = ooo_line5_3
-		clr_country_flag = ooo_line5_2
-		clr_country_flag = ooo_line5_1
 
 		clr_country_flag = in_magic_progress_event
 	}
@@ -2339,9 +2382,9 @@ country_event = { # 4 - Ending event (Level 3)
 		name = magic_project_orb_of_omniscience.6.a
 		ai_chance = { factor = 1 }
 		custom_tooltip = orb_of_omniscience_project_effect_3
-		tooltip = { divination_2_1_effect = yes }
+		tooltip = { divination_2_manipulated_fortune_effect = yes }
 		custom_tooltip = orb_of_omniscience_project_effect_3_2
-		tooltip = { divination_3_0_effect = yes }
+		tooltip = { divination_3_foresight_effect = yes }
 		custom_tooltip = tooltip_magic_project_complete
 	}
 }
@@ -2439,7 +2482,7 @@ country_event = { #Artifact of Enthrallment 0 - Prologue
 	is_triggered_only = yes
 	immediate = { set_country_flag = in_magic_progress_event }
 
-	option = { # "Hwæt!"
+	option = { # "Hwï¿½t!"
 		name = magic_project_artifact_of_enthrallment.1.a
 		trigger = {
 			OR = {
@@ -3171,6 +3214,25 @@ country_event = { #Battlemage Academy 4 - Graduation
 	picture = UNIVERSITY_eventPicture
 
 	is_triggered_only = yes
+	immediate = {
+		if = {
+			limit = { ai = yes } #AI handling for missing progress events, note RNG works normally
+			random_list = {
+				1 = {
+					trigger = { NOT = { has_country_modifier = battlemage_academy_outhouse_1 has_country_modifier = battlemage_academy_outhouse_2 } }
+					set_country_flag = battlemage_academy_outhouse_flag
+				}
+				1 = {
+					trigger = { NOT = { has_country_modifier = battlemage_academy_underwear_1 has_country_modifier = battlemage_academy_underwear_2 } }
+					set_country_flag = battlemage_academy_underwear_flag
+				}
+				1 = {
+					trigger = { NOT = { has_country_modifier = battlemage_academy_graffiti_1 has_country_modifier = battlemage_academy_graffiti_2 } }
+					set_country_flag = battlemage_academy_graffiti_flag
+				}
+			}
+		}
+	}
 
 	after = {
 		hidden_effect = {
@@ -3831,7 +3893,7 @@ country_event = { #Theatre of Simulacra menu
 		clr_country_flag = in_theatre_of_simulacra
 
 		if = { #You can do multiple at a time
-			limit = { has_country_flag = new_theatre_bonus }
+			limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
 			clr_country_flag = new_theatre_bonus
 			if = {
 				limit = { exactly_magic_project_level = { project = theatre_of_simulacra level = 3 } }
@@ -4531,7 +4593,7 @@ country_event = { #Theatre of Simulacra Bounceback
 			clr_country_flag = in_theatre_of_simulacra
 
 			if = { #You can do multiple at a time
-				limit = { has_country_flag = new_theatre_bonus }
+				limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
 				clr_country_flag = new_theatre_bonus
 				if = {
 					limit = { exactly_magic_project_level = { project = theatre_of_simulacra level = 3 } }
@@ -4559,6 +4621,7 @@ country_event = { #Theatre of Simulacra sub-menu
 		name = magic_project_theatre_of_simulacra.15.go_back
 		ai_chance = { factor = 1 }
 		clr_country_flag = in_powerful_mage_theatre
+		country_event = { id = magic_project_theatre_of_simulacra.13 }
 	}
 
 	option = {
@@ -4695,7 +4758,6 @@ country_event = { #Theatre of Simulacra sub-menu
 				limit = { has_country_flag = in_powerful_mage_theatre }
 				country_event = { id = magic_project_theatre_of_simulacra.16 }
 			}
-			else = { country_event = { id = magic_project_theatre_of_simulacra.13 } }
 		}
 	}
 }
@@ -4722,9 +4784,10 @@ country_event = { #Theatre of Simulacra sub-menu bounceback
 			}
 
 			clr_country_flag = in_theatre_of_simulacra
+			clr_country_flag = in_powerful_mage_theatre
 
 			if = { #You can do multiple at a time
-				limit = { has_country_flag = new_theatre_bonus }
+				limit = { OR = { has_country_flag = new_theatre_bonus ai = yes } }
 				clr_country_flag = new_theatre_bonus
 				if = {
 					limit = { exactly_magic_project_level = { project = theatre_of_simulacra level = 3 } }
@@ -4864,7 +4927,7 @@ country_event = { #Lichdom 1 - Finding out how to do it
 		ai_chance = { factor = 1 }
 		add_treasury = -100
 		increase_estate_witch_king_points = { size = small }
-		start_magic_project = { project = lichdom school = necromancy }
+		start_magic_project = { project = lichdom school = necromancy warning = yes }
 	}
 
 	option = { #I'll find it myself!
@@ -4873,6 +4936,7 @@ country_event = { #Lichdom 1 - Finding out how to do it
 		add_adm_power = -50
 		add_dip_power = -50
 
+		show_magic_project_lichdom_warning = yes
 		increase_ruler_witch_king_points = { size = small }
 		set_ruler_flag = magic_advancement
 		set_ruler_flag = necromancy_advancement
@@ -5301,7 +5365,11 @@ country_event = { #Lich - Gov change to Magocracy
 	trigger = {
 		ruler_is_lich = yes
 		NOT = { has_government_attribute = is_magocracy }
-		NOT = { has_government_attribute = locked_T1_reform }
+		OR = {
+			NOT = { has_government_attribute = locked_T1_reform }
+			has_government_attribute = is_raja # Allows you to swap to Mahyaraja reform
+		}
+		
 		has_estate = estate_mages
 
 		NOT = { government = tribal }
@@ -5365,7 +5433,7 @@ country_event = { #Lich - Gov change to Magocracy
 		
 		if = {
 			limit = { has_government_attribute = is_raja }
-			change_government = theocracy
+			change_government = monarchy
 			add_government_reform = raja_magocracy_reform
 		}
 		else = {
@@ -6260,16 +6328,10 @@ country_event = { #Homunculus, Vivum
 	immediate = {
 		hidden_effect = {
 			randnum_effect = {
-				max = 7
-				case7 = " #Humane - Rarest since you can't get it via recalc
+				max = 6
+				case6 = " #Humane - Rarest since you can't get it via recalc
 					if = {
 						limit = { NOT = { is_emperor_of_china = yes } }
-						randnum_recalc = { max = 6 }
-					}
-				"
-				case6 = " #Papal Puppetmaster
-					if = {
-						limit = { NOT = { religion = ravelian } }
 						randnum_recalc = { max = 5 }
 					}
 				"
@@ -6293,15 +6355,16 @@ country_event = { #Homunculus, Vivum
 			NOT = { has_government_attribute = is_magocracy }
 			NOT = { has_ruler_flag = xhazob_patron }
 			NOT = { has_global_modifier_value = { which = female_advisor_chance value = 1 } }
+			is_lesser_in_union = no
 		}
 		custom_tooltip = homunculi_no_mage_hint_tt
 		remove_heir = {  }
 		define_heir = {
 			dynasty = ROOT
 			age = 20
-			adm = 6
-			dip = 6
-			mil = 6
+			adm = 4
+			dip = 4
+			mil = 4
 			claim = 25
 			no_consort_with_heir = yes
 			male = yes
@@ -6309,6 +6372,29 @@ country_event = { #Homunculus, Vivum
 		set_heir_flag = long_lived_ruler
 		set_heir_flag = is_a_homunculus #Keeps them immortal
 		custom_tooltip = homunculus_is_male_tt
+		if = {
+			limit = { check_variable = { randnum = 6 } }
+			force_add_heir_personality = { personality = humane_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 5 } }
+			force_add_heir_personality = { personality = legendary_pirate_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 4 } }
+			force_add_heir_personality = { personality = legendary_conqueror_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 3 } }
+			force_add_heir_personality = { personality = great_engineer_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 2 } }
+			force_add_heir_personality = { personality = iron_crowned_personality }
+		}
+		else = {
+			force_add_heir_personality = { personality = peasant_revolt_leader_personality }
+		}
 		custom_tooltip = tooltip_magic_project_advance
 	}
 	option = { #Heir, female
@@ -6319,15 +6405,16 @@ country_event = { #Homunculus, Vivum
 			NOT = { has_government_attribute = is_magocracy }
 			NOT = { has_ruler_flag = xhazob_patron }
 			has_global_modifier_value = { which = female_advisor_chance value = 0.01 }
+			is_lesser_in_union = no
 		}
 		custom_tooltip = homunculi_no_mage_hint_tt
 		remove_heir = {  }
 		define_heir = {
 			dynasty = ROOT
 			age = 20
-			adm = 6
-			dip = 6
-			mil = 6
+			adm = 4
+			dip = 4
+			mil = 4
 			claim = 25
 			no_consort_with_heir = yes
 			female = yes
@@ -6335,6 +6422,29 @@ country_event = { #Homunculus, Vivum
 		set_heir_flag = long_lived_ruler
 		set_heir_flag = is_a_homunculus #Keeps them immortal
 		custom_tooltip = homunculus_is_female_tt
+		if = {
+			limit = { check_variable = { randnum = 6 } }
+			force_add_heir_personality = { personality = humane_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 5 } }
+			force_add_heir_personality = { personality = legendary_pirate_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 4 } }
+			force_add_heir_personality = { personality = legendary_conqueror_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 3 } }
+			force_add_heir_personality = { personality = great_engineer_personality }
+		}
+		else_if = {
+			limit = { check_variable = { randnum = 2 } }
+			force_add_heir_personality = { personality = iron_crowned_personality }
+		}
+		else = {
+			force_add_heir_personality = { personality = peasant_revolt_leader_personality }
+		}
 		custom_tooltip = tooltip_magic_project_advance
 	}
 	option = {
@@ -6342,13 +6452,18 @@ country_event = { #Homunculus, Vivum
 		ai_chance = { factor = 1 }
 
 		add_country_modifier = { name = homunculus_eminence_grise duration = -1 }
-		add_power_projection = { type = mam_new_caliphate_pp amount = 10 }
+		add_power_projection = { type = homonculus_eminence_grise_pp amount = 15 }
 		custom_tooltip = tooltip_magic_project_advance
+
+		show_magic_project_homunculus_warning = yes
 	}
 	option = {
 		name = magic_project_homunculus.6.c
 		ai_chance = { factor = 1 }
-		trigger = { has_government_attribute = queen }
+		trigger = {
+			has_government_attribute = queen
+			is_lesser_in_union = no
+		}
 
 		if = { 
 			limit = { has_consort = yes }
@@ -6364,9 +6479,9 @@ country_event = { #Homunculus, Vivum
 			define_consort = {
 				dynasty = ROOT
 				age = 20
-				adm = 6
-				dip = 6
-				mil = 6
+				adm = 4
+				dip = 4
+				mil = 4
 				male = yes	
 			}
 		}
@@ -6380,9 +6495,9 @@ country_event = { #Homunculus, Vivum
 			define_consort = {
 				dynasty = ROOT
 				age = 20
-				adm = 6
-				dip = 6
-				mil = 6
+				adm = 4
+				dip = 4
+				mil = 4
 				female = yes
 			}
 		}
@@ -6392,32 +6507,43 @@ country_event = { #Homunculus, Vivum
 		add_country_modifier = { name = homunculus_consort duration = -1 }
 		if = {
 			limit = { check_variable = { randnum = 7 } }
-			add_queen_personality = humane_personality
+			force_add_consort_personality = { personality = humane_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 6 } }
-			add_queen_personality = fu_papal_puppetmaster_personality
+			force_add_consort_personality = { personality = fu_papal_puppetmaster_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 5 } }
-			add_queen_personality = legendary_pirate_personality
+			force_add_consort_personality = { personality = legendary_pirate_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 4 } }
-			add_queen_personality = legendary_conqueror_personality
+			force_add_consort_personality = { personality = legendary_conqueror_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 3 } }
-			add_queen_personality = great_engineer_personality
+			force_add_consort_personality = { personality = great_engineer_personality }
 		}
 		else_if = {
 			limit = { check_variable = { randnum = 2 } }
-			add_queen_personality = iron_crowned_personality
+			force_add_consort_personality = { personality = iron_crowned_personality }
 		}
 		else = {
-			add_queen_personality = peasant_revolt_leader_personality
+			force_add_consort_personality = { personality = peasant_revolt_leader_personality }
 		}
 		custom_tooltip = tooltip_magic_project_advance
+	}
+	
+	option = {
+		name = magic_project_homunculus.6.e
+		ai_chance = { factor = 1 }
+		trigger = {
+			has_government_attribute = is_magocracy
+			NOT = { has_government_attribute = queen }
+		}
+		
+		add_country_modifier = { name = homunculus_attendant duration = -1 }
 	}
 }
 country_event = { #Homunculus Genius Loci
@@ -6805,7 +6931,7 @@ country_event = { #Homunculus, Hide or Reveal?
 	}
 }
 
-country_event = { #Homunculus reveal event sorter — these are the worst outcomes
+country_event = { #Homunculus reveal event sorter ï¿½ these are the worst outcomes
 	id = magic_project_homunculus.9
 	title = magic_project_homunculus.9.t
 	desc = magic_project_homunculus.9.d
@@ -7041,3 +7167,1222 @@ country_event = { #Homunculus Getting Old...
 #Assassination Attempt on Homunculus Heir
 
 #Assassination Attempt on Homunculus Consort (not as likely only happens if no heir)
+
+
+#SALLA DRENNEN PROJECT
+
+namespace = magic_project_drennen_project_1
+
+country_event = { 
+	id = magic_project_drennen_project_1.0
+	title = magic_project_drennen_project_1.0.t
+	desc = magic_project_drennen_project_1.0.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+		
+	}
+	
+	option = {
+		name = magic_project_drennen_project_1.0.a
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			country_event = {
+				id = magic_project_drennen_project_1.1
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 20 }
+				NOT = { has_country_flag = magic_project_first_event_happened }
+			}
+			set_country_flag = magic_project_first_event_happened
+			country_event = {
+				id = salla_drennen.24
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 40 }
+				NOT = { has_country_flag = magic_project_second_event_happened }
+			}
+			set_country_flag = magic_project_second_event_happened
+			country_event = {
+				id = salla_drennen.25
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 60 }
+				NOT = { has_country_flag = magic_project_third_event_happened }
+			}
+			set_country_flag = magic_project_third_event_happened
+			country_event = {
+				id = salla_drennen.26
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 80 }
+				NOT = { has_country_flag = magic_project_fourth_event_happened }
+			}
+			set_country_flag = magic_project_fourth_event_happened
+			country_event = {
+				id = salla_drennen.27
+			}
+		}
+	}
+}
+
+country_event = {
+	id = magic_project_drennen_project_1.1
+	title = magic_project_drennen_project_1.1.t
+	desc = magic_project_drennen_project_1.1.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	
+	option = {
+		name = magic_project_drennen_project_1.1.a
+		if = {
+			limit = { at_least_magic_project_level = { project = drennen_project_1 level = 3 } }
+			country_event = { id = salla_drennen.20 }
+		}
+		else = {
+			country_event = { id = salla_drennen.19 }
+		}
+	}
+}
+
+#UMBRAL COVENANT PROJECTS
+
+namespace = magic_project_umbral_project_spire
+
+#project one
+
+country_event = { #HANDLER
+	id = magic_project_umbral_project_spire.0
+	title = magic_project_umbral_covenant.0.t
+	desc = magic_project_umbral_covenant.0.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+	}
+	
+	option = {
+		name = magic_project_umbral_covenant.0.a
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			country_event = { id = magic_project_umbral_project_spire.10 } #The Bigger They Are
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 20 }
+				NOT = { has_country_flag = S90_stars_first_event_happened }
+			}
+			set_country_flag = S90_stars_first_event_happened
+			country_event = { id = magic_project_umbral_project_spire.2 } #unearthly?
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 40 }
+				NOT = { has_country_flag = S90_stars_second_event_happened }
+			}
+			set_country_flag = S90_stars_second_event_happened
+			country_event = { id = magic_project_umbral_project_spire.3 } #plumbing the interior
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 60 }
+				NOT = { has_country_flag = S90_stars_third_event_happened }
+			}
+			set_country_flag = S90_stars_third_event_happened
+			country_event = { id = magic_project_umbral_project_spire.4 } #Drawn from starlight
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 80 }
+				NOT = { has_country_flag = S90_stars_fourth_event_happened }
+			}
+			set_country_flag = S90_stars_fourth_event_happened
+			country_event = { id = magic_project_umbral_project_spire.5 } #a relay?
+		}
+	}
+}
+
+country_event = { #START EVENT
+	id = magic_project_umbral_project_spire.1
+	title = magic_project_umbral_covenant.1.t
+	desc = magic_project_umbral_covenant.1.d
+	picture = SPY_eventPicture
+	fire_only_once = yes
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.1.a
+		hidden_effect = {
+			set_variable = {
+				which = S90_secrets_spires_reward
+				value = 0
+			}
+		}
+	}
+}
+#TODO LOCALISE
+country_event = {
+	id = magic_project_umbral_project_spire.2
+	title = magic_project_umbral_covenant.2.t
+	desc = magic_project_umbral_covenant.2.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.2.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.2.b
+		add_mil_power = -100
+		add_yearly_manpower = -1
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.2.c
+		trigger = {
+			is_ruler_evocation_level_3 = yes
+		}
+		highlight = yes
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+}
+
+country_event = {
+	id = magic_project_umbral_project_spire.3
+	title = magic_project_umbral_covenant.3.t
+	desc = magic_project_umbral_covenant.3.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.3.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.3.b
+		add_dip_power = -100
+		add_years_of_income = -1
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.3.c
+		trigger = {
+			is_ruler_divination_level_3 = yes
+		}
+		highlight = yes
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+}
+
+country_event = {
+	id = magic_project_umbral_project_spire.4
+	title = magic_project_umbral_covenant.4.t
+	desc = magic_project_umbral_covenant.4.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.4.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.4.b
+		add_church_power = -200
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.4.c
+		trigger = {
+			is_ruler_necromancy_level_3 = yes
+		}
+		highlight = yes
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+}
+
+country_event = {
+	id = magic_project_umbral_project_spire.5
+	title = magic_project_umbral_covenant.5.t
+	desc = magic_project_umbral_covenant.5.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.5.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.5.b
+		change_mana = { amount = -200 }
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 1
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.5.c
+		change_mana = { amount = -200 }
+		add_country_modifier = {
+			name = S90_unlimited_power
+			duration = 3650
+		}
+		hidden_effect = {
+			change_variable = {
+				which = S90_secrets_spires_reward
+				value = 2
+			}
+		}
+	}
+}
+
+
+
+country_event = { #COMPLETION EVENT
+	id = magic_project_umbral_project_spire.10
+	title = magic_project_umbral_covenant.10.t
+	desc = magic_project_umbral_covenant.10.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = magic_project_umbral_covenant.10.a
+		every_known_country = {
+			limit = {
+				culture_group = lizardfolk
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = S90_spireshatter
+			}
+		}
+		custom_tooltip = S90_spire_shatter_unlock_tt
+		set_country_flag = S90_spire_secrets_complete
+		hidden_effect = {
+			5585 = {
+				add_great_project = { type = S90_shattered_zatsarya instant = yes }
+			}
+		}
+		if = {
+			limit = { has_country_flag = S90_zerat_spire }
+			hidden_effect = {
+				move_great_project = {
+					type = S90_shattered_zatsarya
+					province = 5921
+					instant = yes
+				}
+			}
+			5921 = {
+				destroy_great_project = { type = khus_an_zhyani }
+				hide_ambient_object = LF_Spire_F_5
+				show_ambient_object = LF_Spire_B_UC_5
+				set_province_flag = S90_spire_exploded 
+				add_great_project = { type = S90_shattered_zatsarya instant = yes }
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = S90_new_hookfield }
+			hidden_effect = {
+				move_great_project = {
+					type = S90_shattered_zatsarya
+					province = 5763
+					instant = yes
+				}
+			}
+			5763 = {
+				destroy_great_project = { type = kazakesh }
+				hide_ambient_object = LF_Spire_F_1
+				show_ambient_object = LF_Spire_B_UC_1
+				set_province_flag = S90_spire_exploded 
+				add_great_project = { type = S90_shattered_zatsarya instant = yes }
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = S90_gamyi }
+			hidden_effect = {
+				move_great_project = {
+					type = S90_shattered_zatsarya
+					province = 5863
+					instant = yes
+				}
+			}
+			5863 = {
+				destroy_great_project = { type = kuiika_gamyi }
+				set_province_flag = S90_spire_exploded 
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { 
+				has_country_flag = S90_kuvunika
+			}
+			5585 = {
+				destroy_great_project = { type = kuvunika_citadel }
+				set_province_flag = S90_spire_exploded 
+			}
+			5585 = {
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+			
+		}
+		else_if = {
+			limit = { has_country_flag = S90_metat_tagokag }
+			hidden_effect = {
+				move_great_project = {
+					type = S90_shattered_zatsarya
+					province = 5971
+					instant = yes
+				}
+			}
+			5971 = {
+				destroy_great_project = { type = khaga_yatsa }
+				hide_ambient_object = LF_Spire_F_2
+				show_ambient_object = LF_Spire_B_UC_2
+				set_province_flag = S90_spire_exploded
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = S90_mubfadodja }
+			hidden_effect = {
+				move_great_project = {
+					type = S90_shattered_zatsarya
+					province = 6032
+					instant = yes
+				}
+			}
+			6032 = {
+				destroy_great_project = { type = arskitse }
+				hide_ambient_object = LF_Spire_F_4
+				show_ambient_object = LF_Spire_B_UC_4
+				set_province_flag = S90_spire_exploded
+				if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 5 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 3 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 3 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 2 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { check_variable = { which = S90_secrets_spires_reward value = 1 } }
+					}
+					add_great_project_tier = { type = S90_shattered_zatsarya tier = 1 }
+				}
+			}
+		}
+	}
+}
+
+
+#project 2
+
+namespace = magic_project_umbral_project_ashen
+
+country_event = { #HANDLER
+	id = magic_project_umbral_project_ashen.0
+	title = magic_project_umbral_covenant.50.t
+	desc = magic_project_umbral_covenant.50.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+	}
+	
+	option = {
+		name = magic_project_umbral_covenant.50.a
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			country_event = { id = magic_project_umbral_project_ashen.65 } #Divide and conquer
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 12 }
+				NOT = { has_country_flag = S90_ashen_first_event_happened }
+			}
+			set_country_flag = S90_ashen_first_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.52 } #grounding
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 24 }
+				NOT = { has_country_flag = S90_ashen_second_event_happened }
+			}
+			set_country_flag = S90_ashen_second_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.53 } #come with me
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 36 }
+				NOT = { has_country_flag = S90_ashen_third_event_happened }
+			}
+			set_country_flag = S90_ashen_third_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.54 } #sublimation
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 48 }
+				NOT = { has_country_flag = S90_ashen_fourth_event_happened }
+			}
+			set_country_flag = S90_ashen_fourth_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.53 } #come with me
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 60 }
+				NOT = { has_country_flag = S90_ashen_fifth_event_happened }
+			}
+			set_country_flag = S90_ashen_fifth_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.55 } #hydration
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 72 }
+				NOT = { has_country_flag = S90_ashen_sixth_event_happened }
+			}
+			set_country_flag = S90_ashen_sixth_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.53 } #come with me
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 84 }
+				NOT = { has_country_flag = S90_ashen_seventh_event_happened }
+			}
+			set_country_flag = S90_ashen_seventh_event_happened
+			country_event = { id = magic_project_umbral_project_ashen.56 } #vapourise
+		}
+	}
+}
+
+country_event = { #START EVENT 1
+	id = magic_project_umbral_project_ashen.51
+	title = magic_project_umbral_covenant.51.t
+	desc = magic_project_umbral_covenant.51.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = magic_project_umbral_covenant.51.a
+		hidden_effect = {
+			set_variable = {
+				which = S90_komina_friendship
+				value = 0
+			}
+		}
+	}
+}
+
+country_event = { #grounding
+	id = magic_project_umbral_project_ashen.52
+	title = magic_project_umbral_covenant.52.t
+	desc = magic_project_umbral_covenant.52.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.52.a
+		change_mana = { amount = -50 }
+	}
+	option = {
+		name = magic_project_umbral_covenant.52.b
+		add_years_of_income = -1
+		add_country_modifier = {
+			name = S90_grounding_effort
+			duration = -1
+		}
+		add_country_modifier = {
+			name = S90_project1_research_speed_1
+			duration = -1
+		}
+	}
+}
+
+country_event = { #come with me
+	id = magic_project_umbral_project_ashen.53
+	title = magic_project_umbral_covenant.53.t
+	desc = magic_project_umbral_covenant.53.d #might need custom descriptions later - Liv TODO after loc
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.53.a #diviner
+		trigger = {
+			NOT =  { has_country_flag = S90_comewithme_diviner }
+		}
+		set_country_flag = S90_comewithme_diviner
+		country_event = {
+			id = magic_project_umbral_project_ashen.61
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.53.b #apprentice
+		trigger = {
+			NOT = { has_country_flag = S90_comewithme_apprentice }
+		}
+		set_country_flag = S90_comewithme_apprentice
+		country_event = {
+			id = magic_project_umbral_project_ashen.62
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.53.c #general
+		trigger = {
+			NOT = { has_country_flag = S90_comewithme_general }
+		}
+		set_country_flag = S90_comewithme_general
+		country_event = {
+			id = magic_project_umbral_project_ashen.63
+		}
+	}
+}
+
+country_event = { #Sublimation
+	id = magic_project_umbral_project_ashen.54
+	title = magic_project_umbral_covenant.54.t
+	desc = magic_project_umbral_covenant.54.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.54.a
+		change_mana = { amount = -50 }
+	}
+	option = {
+		name = magic_project_umbral_covenant.54.b
+		add_yearly_manpower = -1
+		add_country_modifier = {
+			name = S90_sublimation_effort
+			duration = -1
+		}
+		if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project1_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+
+country_event = { #Hydration
+	id = magic_project_umbral_project_ashen.55
+	title = magic_project_umbral_covenant.55.t
+	desc = magic_project_umbral_covenant.55.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.55.a
+		change_mana = { amount = -50 }
+	}
+	option = {
+		name = magic_project_umbral_covenant.55.b
+		change_mana = { amount = -100 }
+		add_country_modifier = {
+			name = S90_hydration_effort
+			duration = -1
+		}
+		if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_2
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_2
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project1_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+
+country_event = { #Vapourisation
+	id = magic_project_umbral_project_ashen.56
+	title = magic_project_umbral_covenant.56.t
+	desc = magic_project_umbral_covenant.56.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.56.a
+		change_mana = { amount = -50 }
+	}
+	option = {
+		name = magic_project_umbral_covenant.56.b
+		add_prestige = -50
+		add_country_modifier = {
+			name = S90_vapourisation_effort
+			duration = -1
+		}
+		if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_3
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_3
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_4
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_2
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_2
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project1_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project1_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project1_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project1_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+
+
+country_event = { #Diviner
+	id = magic_project_umbral_project_ashen.61
+	title = magic_project_umbral_covenant.61.t
+	desc = magic_project_umbral_covenant.61.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.61.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.61.b
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 1
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.61.c
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 2
+			}
+		}
+	}
+}
+
+country_event = { #apprentice
+	id = magic_project_umbral_project_ashen.62
+	title = magic_project_umbral_covenant.62.t
+	desc = magic_project_umbral_covenant.62.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.62.a
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 2
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.62.b
+	}
+	option = {
+		name = magic_project_umbral_covenant.62.c
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 1
+			}
+		}
+	}
+}
+
+country_event = { #general
+	id = magic_project_umbral_project_ashen.63
+	title = magic_project_umbral_covenant.63.t
+	desc = magic_project_umbral_covenant.63.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.63.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.63.b
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 2
+			}
+		}
+	}
+	option = {
+		name = magic_project_umbral_covenant.63.c
+		hidden_effect = {
+			change_variable = {
+				which = S90_komina_friendship
+				value = 1
+			}
+		}
+	}
+}
+
+country_event = { #COMPLETION EVENT - Divide and Conquer
+	id = magic_project_umbral_project_ashen.65
+	title = magic_project_umbral_covenant.65.t
+	desc = magic_project_umbral_covenant.65.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.65.a
+		S70 = {
+			remove_country_modifier = S90_by_three
+		}
+		if = {
+			limit = {
+				check_variable = {
+					which = S90_komina_friendship 
+					value = 6
+				}
+			}
+			add_country_modifier = {
+				name = S90_komina_III
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					which = S90_komina_friendship 
+					value = 4
+				}
+			}
+			add_country_modifier = {
+				name = S90_komina_II
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = {
+					which = S90_komina_friendship 
+					value = 1
+				}
+			}
+			add_country_modifier = {
+				name = S90_komina_I
+				duration = -1
+			}
+		}
+	}
+}
+
+#PROJECT THREE
+
+namespace = magic_project_umbral_project_loveme
+
+country_event = { #HANDLER
+	id = magic_project_umbral_project_loveme.0
+	title = magic_project_umbral_covenant.100.t
+	desc = magic_project_umbral_covenant.100.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	trigger = {
+	}
+	
+	option = {
+		name = magic_project_umbral_covenant.100.a
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			country_event = {
+				id = flavor_umbral_covenant.20 #and despair
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 10 }
+				NOT = { has_country_flag = S90_loveme_first_event_happened }
+			}
+			set_country_flag = S90_loveme_first_event_happened
+			country_event = { id = magic_project_umbral_project_loveme.102 } #Souls for the Spellcraft
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 30 }
+				NOT = { has_country_flag = S90_loveme_second_event_happened }
+			}
+			set_country_flag = S90_loveme_second_event_happened
+			country_event = { id = magic_project_umbral_project_loveme.103 } #Mana Manipulation
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 50 }
+				NOT = { has_country_flag = S90_loveme_third_event_happened }
+			}
+			set_country_flag = S90_loveme_third_event_happened
+			country_event = { id = magic_project_umbral_project_loveme.104 } #Unbind the Beasts
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 70 }
+				NOT = { has_country_flag = S90_loveme_fourth_event_happened }
+			}
+			set_country_flag = S90_loveme_fourth_event_happened
+			country_event = { id = magic_project_umbral_project_loveme.105 } #All I Am
+		}
+	}
+}
+
+country_event = { # Souls for the spellcraft
+	id = magic_project_umbral_project_loveme.102
+	title = magic_project_umbral_covenant.102.t
+	desc = magic_project_umbral_covenant.102.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.102.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.102.b
+		add_country_modifier = {
+			name = S90_unto_the_altars
+			duration = -1
+		}
+		add_country_modifier = {
+			name = S90_project3_research_speed_1
+			duration = -1
+		}
+	}
+}
+
+country_event = { # Mana Manipulation
+	id = magic_project_umbral_project_loveme.103
+	title = magic_project_umbral_covenant.103.t
+	desc = magic_project_umbral_covenant.103.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.103.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.103.b
+		add_country_modifier = {
+			name = S90_arcane_desire
+			duration = -1
+		}
+		if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project3_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+
+country_event = { # Unbind the Beasts
+	id = magic_project_umbral_project_loveme.104
+	title = magic_project_umbral_covenant.104.t
+	desc = magic_project_umbral_covenant.104.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.104.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.104.b
+		add_country_modifier = {
+			name = S90_give_and_take
+			duration = -1
+		}
+		if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_2
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_2
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project3_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+
+country_event = { # Event 105
+	id = magic_project_umbral_project_loveme.105
+	title = magic_project_umbral_covenant.105.t
+	desc = magic_project_umbral_covenant.105.d
+	picture = SPY_eventPicture
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_umbral_covenant.105.a
+	}
+	option = {
+		name = magic_project_umbral_covenant.105.b
+		custom_tooltip = S90_all_i_am_tt
+		if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_3
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_3
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_4
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_2
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_2
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_country_modifier = S90_project3_research_speed_1
+			}
+			hidden_effect = {
+				remove_country_modifier = S90_project3_research_speed_1
+			}
+			add_country_modifier = {
+				name = S90_project3_research_speed_2
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = S90_project3_research_speed_1
+				duration = -1
+			}
+		}
+	}
+}
+

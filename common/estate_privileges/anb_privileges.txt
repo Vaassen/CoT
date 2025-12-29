@@ -831,7 +831,7 @@ estate_adventurers_ennoblement_of_adventurers = {
 	loyalty = 0.05
 	land_share = 5
 	influence = 0.05
-	is_valid = { NOT = { OR = { religion = gods_of_the_taychend religion = oren_nayiru } } }
+	is_valid = { NOT = { OR = { religion = gods_of_the_taychend religion = oren_nayiru } } NOT = { has_country_flag = estate_adventurers_ennoblement_of_adventurers_invalid } }
 	can_select = {
 		has_estate = estate_nobles
 	}
@@ -2491,6 +2491,7 @@ estate_adventurers_help_expedition_2 = {
 #estate_artificers_loyalty_privilege = {
 #	icon = privilege_royal_authority
 #	max_absolutism = -10
+# 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 #	loyalty = 0.1
 #	influence = 0
 #	can_select = {
@@ -2780,7 +2781,7 @@ estate_monstrous_tribes_free_clans = {
 	is_valid = {
 		culture_group = centaur
 		NOT = { has_country_flag = centaur_caehns_valor_2 }
-		NOT = { tag = I91 }
+		NOT = { tag = I91 }  #KU Splinters
 		NOT = { tag = I92 }
 		NOT = { tag = I93 }
 		NOT = { tag = I94 }
@@ -2796,6 +2797,14 @@ estate_monstrous_tribes_free_clans = {
 		administrative_efficiency = -0.1
 	}
 	on_granted = {
+	}
+	conditional_modifier = { #Golden Tremor
+		trigger = { has_country_flag = I57_buff_free_clans_flag }
+		modifier = {
+			global_unrest = 5
+			years_of_nationalism = 5
+			monstrous_tribes_loyalty_modifier = -0.1
+		}
 	}
 	ai_will_do = {
 		factor = 0
@@ -2858,6 +2867,169 @@ estate_monstrous_tribes_gozlamoir_system = {
 	}
 	ai_will_do = {
 		factor = 10
+	}
+}
+
+#Fetishist/Goblinic Shamanism privs, copied from Church estate privs
+#If you change one version of the 3 following privs, please change it for the church estate as well
+#Privilege to enable cults for heirs
+estate_monstrous_tribes_heir_shrine = {
+	icon = privilege_heir_cult
+	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
+	influence = 0.1
+	loyalty = 0
+	is_valid = {
+		religion = goblinic_shamanism
+		has_dlc = "Rights of Man"
+		NOT = { has_country_flag = heir_cult_through_missions }
+		has_government_attribute = heir
+		NOT = { has_estate = estate_church } #failsafe to avoid duplicate privs
+	}
+	can_select = {
+		has_access_to_any_goblinic_cult = yes
+		NOT = { has_estate_privilege = estate_monstrous_tribes_embrace_singluar_cult }
+	}
+	on_granted = {
+		enable_cult_for_heirs = yes
+	}
+	on_revoked = {
+		disable_cult_for_heirs = yes
+	}
+	on_invalid = {
+		disable_cult_for_heirs = yes
+	}
+	penalties = {
+	}
+	benefits = {
+	}
+	#conditional_modifier = {
+	#	trigger = { has_government_attribute = no_influence_from_fetishist_privileges }
+	#	modifier = {
+	#		monstrous_tribes_influence_modifier = -0.2
+	#	}
+	#}
+	ai_will_do = {
+		factor = 100
+		modifier = {
+			factor = 0.1
+			is_absolutism_active = yes
+		}
+		# modifier = {
+			# factor = 0
+			# has_mission = kon_collect_cults
+		# }
+		# modifier = {
+			# factor = 0
+			# has_mission = zim_cults
+		# }
+	}
+}
+
+#Privilege to enable primary cults
+estate_monstrous_tribes_embrace_singluar_cult = {
+	icon = privilege_singular_cult
+	max_absolutism = -5
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	influence = 0.1
+	loyalty = 0
+	is_valid = {
+		religion = goblinic_shamanism
+		has_dlc = "Rights of Man"
+		NOT = { has_estate = estate_church } #failsafe to avoid duplicate privs
+	}
+	can_select = {
+		has_access_to_any_goblinic_cult = yes
+		custom_trigger_tooltip = {
+			tooltip = take_primary_cult_decision_tt1
+			months_of_ruling = 60
+		}
+		custom_trigger_tooltip = {
+			tooltip = take_primary_cult_decision_tt2
+			NOT = {
+				has_country_flag = has_selected_a_primary_cult
+			}
+		}
+		NOT = { has_estate_privilege = estate_monstrous_tribes_flexible_cults }
+		NOT = { has_estate_privilege = estate_monstrous_tribes_heir_shrine }
+	}
+	can_revoke = {
+		custom_trigger_tooltip = {
+			tooltip = remove_primary_cult_decision_tt
+			had_country_flag = {
+				flag = has_selected_a_primary_cult
+				days = 3600
+			}
+		}
+	}
+	on_granted = {
+		enable_primary_cult = yes
+	}
+	on_revoked = {
+		disable_primary_cult = yes
+		add_stability = -2
+	}
+	on_invalid = {
+		disable_primary_cult = yes
+	}
+	penalties = {
+	}
+	benefits = {
+		no_stability_loss_on_monarch_death = yes
+	}
+#	conditional_modifier = {
+#		trigger = { has_government_attribute = no_influence_from_fetishist_privileges }
+#		modifier = {
+#			monstrous_tribes_influence_modifier = -0.25
+#		}
+#	}
+	ai_will_do = {
+		factor = 1000
+#		modifier = {
+#			factor = 0
+#			NOT = { has_mission = zim_cults }
+#		}
+	}
+}
+
+#Privilge to enable cult switching
+estate_monstrous_tribes_flexible_cults = {
+	icon = privilege_switch_hindu_deity
+	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
+	influence = 0.05
+	is_valid = {
+		religion = goblinic_shamanism
+		has_dlc = "Rights of Man"
+		NOT = { has_country_flag = enabled_cult_switching_mission }
+		NOT = { is_long_lived_ruler = yes } #long lived rulers already have access to it
+		NOT = { has_estate = estate_church } #failsafe to avoid duplicate privs
+	}
+	can_select = {
+		has_access_to_any_goblinic_cult = yes
+		NOT = { has_estate_privilege = estate_monstrous_tribes_embrace_singluar_cult }
+	}
+	on_granted = {
+		enable_cult_switching = yes
+	}
+	on_revoked = {
+		disable_cult_switching = yes
+	}
+	on_invalid = {
+		disable_cult_switching = yes
+	}
+	penalties = {
+	}
+	benefits = {
+	}
+	#conditional_modifier = {
+	#	trigger = { has_government_attribute = no_influence_from_fetishist_privileges }
+	#	modifier = {
+	#		monstrous_tribes_influence_modifier = -0.05
+	#	}
+	#}
+	ai_will_do = {
+		factor = 0	#Not really needed, the AI should choose the right Cult from the get-go
 	}
 }
 
@@ -2954,7 +3126,7 @@ estate_church_guaranteed_autonomy = {
 		factor = 1000
 		modifier = {
 			factor = 0
-			religious_unity = 100
+			religious_unity = 1.0
 			NOT = { has_estate_privilege = estate_church_guaranteed_autonomy }
 		}
 		modifier = { # Anbennar
@@ -3005,7 +3177,7 @@ estate_church_reverse_guaranteed_autonomy = {
 		factor = 1000
 		modifier = {
 			factor = 0
-			religious_unity = 100
+			religious_unity = 1.0
 			NOT = { has_estate_privilege = estate_church_guaranteed_autonomy }
 		}
 	}
@@ -3189,9 +3361,10 @@ estate_burghers_magnate_council = {
 			global_trade_power = 0.10
 			burghers_loyalty_modifier = 0.05 
 			burghers_influence_modifier = 0.10
-			max_absolutism = -10 
+			max_absolutism = -10
 		}
 	}
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes has_reform = empower_magnate_council } modifier = { max_absolutism = 2 } }
 	# This is too much, adding more crownland through events is more sustainable
 	# mechanics = {
 	# 	exempt_from_seize_land
@@ -4692,12 +4865,7 @@ xhazobkult_organized_sacrifices = {
 		religion = xhazobkult
 		culture_group = gnollish
 		has_country_modifier = monstrous_nation
-		NOT = { 
-			has_estate_privilege = xhazobkult_ritualized_cleansing 
-			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
-			has_country_flag = removing_monstrous
-		}
+		not_has_started_demonsterizing = yes
 		if = {
 			limit = { ai = yes }
 			is_demonic_school = yes
@@ -4707,12 +4875,9 @@ xhazobkult_organized_sacrifices = {
 		religion = xhazobkult
 		culture_group = gnollish
 		has_country_modifier = monstrous_nation
-		NOT = { 
-			has_estate_privilege = xhazobkult_ritualized_cleansing 
-			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
-			has_country_flag = removing_monstrous
-		}
+		not_has_started_demonsterizing = yes
+		not_has_granted_ritualized_cleansing_privilege = yes
+		NOT = { has_estate_privilege = xhazobkult_organized_sacrifices_clergy }
 		if = {
 			limit = { ai = yes }
 			is_demonic_school = yes
@@ -4854,12 +5019,7 @@ xhazobkult_organized_sacrifices_clergy = {
 		religion = xhazobkult
 		culture_group = gnollish
 		has_country_modifier = monstrous_nation
-		NOT = { 
-			has_estate_privilege = xhazobkult_ritualized_cleansing 
-			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
-			has_estate_privilege = xhazobkult_organized_sacrifices
-			has_country_flag = removing_monstrous
-		}
+		not_has_started_demonsterizing = yes
 		if = {
 			limit = { ai = yes }
 			is_demonic_school = yes
@@ -4869,12 +5029,9 @@ xhazobkult_organized_sacrifices_clergy = {
 		religion = xhazobkult
 		culture_group = gnollish
 		has_country_modifier = monstrous_nation
-		NOT = { 
-			has_estate_privilege = xhazobkult_ritualized_cleansing 
-			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
-			has_estate_privilege = xhazobkult_organized_sacrifices
-			has_country_flag = removing_monstrous
-		}
+		not_has_started_demonsterizing = yes
+		not_has_granted_ritualized_cleansing_privilege = yes
+		NOT = { has_estate_privilege = xhazobkult_organized_sacrifices }
 		if = {
 			limit = { ai = yes }
 			is_demonic_school = yes
@@ -5015,13 +5172,8 @@ xhazobkult_ritualized_cleansing = {
 	is_valid = {
 		religion = xhazobkult
 		culture_group = gnollish
-		NOT = { 
-			has_estate_privilege = xhazobkult_organized_sacrifices 
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
-			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
-			ruler_has_personality = xhazobs_chosen_personality
-			has_ruler_flag = undergoing_xhazob_ritual
-		}
+		is_not_summoning_xhazob_trigger = yes
+		NOT = { ruler_has_personality = xhazobs_chosen_personality }
 		if = {
 			limit = { ai = yes }
 			is_non_demonic_school = yes
@@ -5030,20 +5182,23 @@ xhazobkult_ritualized_cleansing = {
 	can_select = {
 		religion = xhazobkult
 		culture_group = gnollish
+		is_not_summoning_xhazob_trigger = yes
+		not_has_granted_organized_sacrifices_privilege = yes
 		NOT = { 
-			has_estate_privilege = xhazobkult_organized_sacrifices 
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
 			has_estate_privilege = xhazobkult_ritualized_cleansing_clergy
 			ruler_has_personality = xhazobs_chosen_personality
-			has_ruler_flag = undergoing_xhazob_ritual
 		}
 		if = {
 			limit = { ai = yes }
 			is_non_demonic_school = yes
 		}
 	}
-	penalties = { }
-	benefits = { }
+	penalties = {
+		yearly_patriarch_authority = -0.01
+	}
+	benefits = { 
+		tolerance_heathen = 1
+	}
 	on_granted = {
 		custom_tooltip = exclusive_ritualized_cleansing_tooltip
 		custom_tooltip = " "
@@ -5172,13 +5327,8 @@ xhazobkult_ritualized_cleansing_clergy = {
 	is_valid = {
 		religion = xhazobkult
 		culture_group = gnollish
-		NOT = { 
-			has_estate_privilege = xhazobkult_organized_sacrifices 
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
-			has_estate_privilege = xhazobkult_ritualized_cleansing
-			ruler_has_personality = xhazobs_chosen_personality
-			has_ruler_flag = undergoing_xhazob_ritual
-		}
+		is_not_summoning_xhazob_trigger = yes
+		NOT = { ruler_has_personality = xhazobs_chosen_personality }
 		if = {
 			limit = { ai = yes }
 			is_non_demonic_school = yes
@@ -5187,20 +5337,23 @@ xhazobkult_ritualized_cleansing_clergy = {
 	can_select = {
 		religion = xhazobkult
 		culture_group = gnollish
+		is_not_summoning_xhazob_trigger = yes
+		not_has_granted_organized_sacrifices_privilege = yes
 		NOT = { 
-			has_estate_privilege = xhazobkult_organized_sacrifices 
-			has_estate_privilege = xhazobkult_organized_sacrifices_clergy
 			has_estate_privilege = xhazobkult_ritualized_cleansing
 			ruler_has_personality = xhazobs_chosen_personality
-			has_ruler_flag = undergoing_xhazob_ritual
 		}
 		if = {
 			limit = { ai = yes }
 			is_non_demonic_school = yes
 		}
 	}
-	penalties = { }
-	benefits = { }
+	penalties = {
+		yearly_patriarch_authority = -0.01
+	}
+	benefits = { 
+		tolerance_heathen = 1
+	}
 	on_granted = {
 		custom_tooltip = exclusive_ritualized_cleansing_tooltip
 		custom_tooltip = " "
@@ -5335,10 +5488,7 @@ xhazobkult_flesh_of_flesh = {
 		NOT = { has_country_flag = zokka_zokka_heir_of_zokka_flag }
 	}
 	can_select = {
-		custom_trigger_tooltip = {
-			tooltip = xhazobkult_attempting_xhaz
-			has_ruler_flag = undergoing_xhazob_ritual
-		}
+		is_summoning_xhazob_trigger = yes
 		OR = {
 			government = tribal
 			government = monarchy
@@ -5378,10 +5528,7 @@ xhazobkult_incinerate_weak = {
 		has_ruler_flag = undergoing_xhazob_ritual
 	}
 	can_select = {
-		custom_trigger_tooltip = {
-			tooltip = xhazobkult_attempting_xhaz
-			has_ruler_flag = undergoing_xhazob_ritual
-		}
+		is_summoning_xhazob_trigger = yes
 		NOT = { has_estate_privilege = xhazobkult_incinerate_weak_clergy }
 	}
 	penalties = {
@@ -5407,10 +5554,7 @@ xhazobkult_incinerate_weak_clergy = {
 		has_ruler_flag = undergoing_xhazob_ritual
 	}
 	can_select = {
-		custom_trigger_tooltip = {
-			tooltip = xhazobkult_attempting_xhaz
-			has_ruler_flag = undergoing_xhazob_ritual
-		}
+		is_summoning_xhazob_trigger = yes
 		NOT = { has_estate_privilege = xhazobkult_incinerate_weak }
 	}
 	penalties = {
@@ -5428,7 +5572,6 @@ xhazobkult_incinerate_weak_clergy = {
 estate_mages_sun_elf_evocation = {
 	icon = privilege_seek_support_of_clergy
 	max_absolutism = 0
-	conditional_modifier = { trigger = { AND = { has_absolutism_reduction_for_estate_privileges = yes OR = { has_country_flag = nsc_privilege_burgher_influence has_country_flag = nsc_privilege_noble_influence } } } modifier = { max_absolutism = 1 } }
 	loyalty = 0
 	influence = 0.05
 	is_valid = {
@@ -5494,7 +5637,6 @@ estate_mages_sun_elf_evocation = {
 estate_mages_sun_elf_abjuration = {
 	icon = privilege_seek_support_of_clergy
 	max_absolutism = 0
-	conditional_modifier = { trigger = { AND = { has_absolutism_reduction_for_estate_privileges = yes OR = { has_country_flag = nsc_privilege_burgher_influence has_country_flag = nsc_privilege_noble_influence } } } modifier = { max_absolutism = 1 } }
 	loyalty = 0
 	influence = 0.05
 	is_valid = {
@@ -5560,7 +5702,6 @@ estate_mages_sun_elf_abjuration = {
 estate_mages_syncretic_transmutation = {
 	icon = privilege_seek_support_of_clergy
 	max_absolutism = 0
-	conditional_modifier = { trigger = { AND = { has_absolutism_reduction_for_estate_privileges = yes OR = { has_country_flag = nsc_privilege_burgher_influence has_country_flag = nsc_privilege_noble_influence } } } modifier = { max_absolutism = 1 } }
 	loyalty = 0
 	influence = 0.05
 	is_valid = {
@@ -5625,7 +5766,6 @@ estate_mages_syncretic_transmutation = {
 estate_mages_bulwari_divination = {
 	icon = privilege_seek_support_of_clergy
 	max_absolutism = 0
-	conditional_modifier = { trigger = { AND = { has_absolutism_reduction_for_estate_privileges = yes OR = { has_country_flag = nsc_privilege_burgher_influence has_country_flag = nsc_privilege_noble_influence } } } modifier = { max_absolutism = 1 } }
 	loyalty = 0
 	influence = 0.05
 	is_valid = {
@@ -5691,7 +5831,6 @@ estate_mages_bulwari_divination = {
 estate_mages_bulwari_conjuration = {
 	icon = privilege_seek_support_of_clergy
 	max_absolutism = 0
-	conditional_modifier = { trigger = { AND = { has_absolutism_reduction_for_estate_privileges = yes OR = { has_country_flag = nsc_privilege_burgher_influence has_country_flag = nsc_privilege_noble_influence } } } modifier = { max_absolutism = 1 } }
 	loyalty = 0
 	influence = 0.05
 	is_valid = {
@@ -6144,8 +6283,18 @@ estate_mages_temple_desecrators = {
 	loyalty = 0.05
 	influence = 0.1
 	is_valid = {
-		religion = devouring_path
+		OR = {
+			religion = devouring_path
+			religion = black_doctrine
+		}
 		has_country_flag = devouring_temple_secrets
+		any_owned_province = {
+			OR = {
+				superregion = rahen_superregion
+				superregion = vimdatrong_superregion
+				superregion = yanshen_superregion
+			}
+		}
 	}
 	can_select = {
 		treasury = 100
@@ -6419,323 +6568,323 @@ estate_church_balgarsmiths_mining = {
 	}
 }
 
-estate_clergy_osc_centralization_synod = {
-	icon = privilege_seek_support_of_clergy
-	max_absolutism = 0
-	loyalty = 0
-	influence = 0
-	is_valid = {
-		religion = old_bulwari_sun_cult
-		has_country_flag = osc_centralization_synod_flag
-	}
-	can_revoke = {
-		always = no
-	}
-	penalties = {
-	}
-	benefits = {
-		manpower_in_true_faith_provinces = 0.10
-	}
-	conditional_modifier = {        #First Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_1
-        }
-        modifier = {
-            tolerance_own = 1
-        }
-    }
-    conditional_modifier = {        #First Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_2
-        }
-        modifier = {
-            legitimacy = 0.5
-        }
-    }
-    conditional_modifier = {        #Second Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_1
-        }
-        modifier = {
-			production_efficiency = 0.1
-			advisor_pool = 1
-			church_loyalty_modifier = 0.05
-			church_influence_modifier = -0.05
-        }
-    }
-	conditional_modifier = {        #Second Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_2
-        }
-        modifier = {
-            missionaries = 1
-			missionary_maintenance_cost = -0.25
-			church_loyalty_modifier = 0.1
-        }
-    }
-	conditional_modifier = {        #Second Debate option 3
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_3
-        }
-        modifier = {
-            land_morale = 0.05
-			yearly_absolutism = 0.05
-			church_influence_modifier = -0.1
-        }
-    }
-	conditional_modifier = {        #Virtuous Cults Government Reform
-		trigger = {
-			has_government_attribute = virtuous_cults_upgrade
-		}
-		modifier = {
-			land_morale = 0.05
-		}
-	}
-	ai_will_do = {
-		factor = 10
-	}
-}
+# estate_clergy_osc_centralization_synod = {
+# 	icon = privilege_seek_support_of_clergy
+# 	max_absolutism = 0
+# 	loyalty = 0
+# 	influence = 0
+# 	is_valid = {
+# 		religion = old_bulwari_sun_cult
+# 		has_country_flag = osc_centralization_synod_flag
+# 	}
+# 	can_revoke = {
+# 		always = no
+# 	}
+# 	penalties = {
+# 	}
+# 	benefits = {
+# 		manpower_in_true_faith_provinces = 0.10
+# 	}
+# 	conditional_modifier = {        #First Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_1
+#         }
+#         modifier = {
+#             tolerance_own = 1
+#         }
+#     }
+#     conditional_modifier = {        #First Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_2
+#         }
+#         modifier = {
+#             legitimacy = 0.5
+#         }
+#     }
+#     conditional_modifier = {        #Second Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_1
+#         }
+#         modifier = {
+# 			production_efficiency = 0.1
+# 			advisor_pool = 1
+# 			church_loyalty_modifier = 0.05
+# 			church_influence_modifier = -0.05
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_2
+#         }
+#         modifier = {
+#             missionaries = 1
+# 			missionary_maintenance_cost = -0.25
+# 			church_loyalty_modifier = 0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 3
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_3
+#         }
+#         modifier = {
+#             land_morale = 0.05
+# 			yearly_absolutism = 0.05
+# 			church_influence_modifier = -0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Virtuous Cults Government Reform
+# 		trigger = {
+# 			has_government_attribute = virtuous_cults_upgrade
+# 		}
+# 		modifier = {
+# 			land_morale = 0.05
+# 		}
+# 	}
+# 	ai_will_do = {
+# 		factor = 10
+# 	}
+# }
 
-estate_clergy_osc_centralization_high_council = {
-	icon = privilege_seek_support_of_clergy
-	max_absolutism = 0
-	loyalty = 0
-	influence = 0
-	is_valid = {
-		religion = old_bulwari_sun_cult
-		has_country_flag = osc_centralization_high_coucil_flag
-	}
-	can_revoke = {
-		always = no
-	}
-	penalties = {
-	}
-	benefits = {
-		establish_order_cost = -0.5
-	}
+# estate_clergy_osc_centralization_high_council = {
+# 	icon = privilege_seek_support_of_clergy
+# 	max_absolutism = 0
+# 	loyalty = 0
+# 	influence = 0
+# 	is_valid = {
+# 		religion = old_bulwari_sun_cult
+# 		has_country_flag = osc_centralization_high_coucil_flag
+# 	}
+# 	can_revoke = {
+# 		always = no
+# 	}
+# 	penalties = {
+# 	}
+# 	benefits = {
+# 		establish_order_cost = -0.5
+# 	}
 
-	conditional_modifier = {        #Alternative Benefit
-        trigger = {
-			NOT = { has_dlc = "Golden Century" }
-        }
-        modifier = {
-			advisor_cost = -0.1
-		}
-    }
+# 	conditional_modifier = {        #Alternative Benefit
+#         trigger = {
+# 			NOT = { has_dlc = "Golden Century" }
+#         }
+#         modifier = {
+# 			advisor_cost = -0.1
+# 		}
+#     }
 
-	conditional_modifier = {        #First Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_1
-        }
-        modifier = {
-            tolerance_own = 1
-        }
-    }
-    conditional_modifier = {        #First Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_2
-        }
-        modifier = {
-            legitimacy = 0.5
-        }
-    }
-    conditional_modifier = {        #Second Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_1
-        }
-        modifier = {
-			production_efficiency = 0.1
-			advisor_pool = 1
-			church_loyalty_modifier = 0.05
-			church_influence_modifier = -0.05
-        }
-    }
-	conditional_modifier = {        #Second Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_2
-        }
-        modifier = {
-            missionaries = 1
-			missionary_maintenance_cost = -0.25
-			church_loyalty_modifier = 0.1
-        }
-    }
-	conditional_modifier = {        #Second Debate option 3
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_3
-        }
-        modifier = {
-            land_morale = 0.05
-			yearly_absolutism = 0.05
-			church_influence_modifier = -0.1
-        }
-    }
-	conditional_modifier = {        #Virtuous Cults Government Reform
-		trigger = {
-			has_government_attribute = virtuous_cults_upgrade
-		}
-		modifier = {
-			land_morale = 0.05
-		}
-	}
-	ai_will_do = {
-		factor = 10
-	}
-}
+# 	conditional_modifier = {        #First Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_1
+#         }
+#         modifier = {
+#             tolerance_own = 1
+#         }
+#     }
+#     conditional_modifier = {        #First Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_2
+#         }
+#         modifier = {
+#             legitimacy = 0.5
+#         }
+#     }
+#     conditional_modifier = {        #Second Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_1
+#         }
+#         modifier = {
+# 			production_efficiency = 0.1
+# 			advisor_pool = 1
+# 			church_loyalty_modifier = 0.05
+# 			church_influence_modifier = -0.05
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_2
+#         }
+#         modifier = {
+#             missionaries = 1
+# 			missionary_maintenance_cost = -0.25
+# 			church_loyalty_modifier = 0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 3
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_3
+#         }
+#         modifier = {
+#             land_morale = 0.05
+# 			yearly_absolutism = 0.05
+# 			church_influence_modifier = -0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Virtuous Cults Government Reform
+# 		trigger = {
+# 			has_government_attribute = virtuous_cults_upgrade
+# 		}
+# 		modifier = {
+# 			land_morale = 0.05
+# 		}
+# 	}
+# 	ai_will_do = {
+# 		factor = 10
+# 	}
+# }
 
-estate_clergy_osc_centralization_elected_kasra = {
-	icon = privilege_seek_support_of_clergy
-	max_absolutism = 0
-	loyalty = 0
-	influence = 0
-	is_valid = {
-		religion = old_bulwari_sun_cult
-		has_country_flag = osc_centralization_elected_kasra_flag
-	}
-	can_revoke = {
-		always = no
-	}
-	penalties = {
-	}
-	benefits = {
-		free_adm_policy = 1
-	}
-	conditional_modifier = {        #First Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_1
-        }
-        modifier = {
-            tolerance_own = 1
-        }
-    }
-    conditional_modifier = {        #First Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_2
-        }
-        modifier = {
-            legitimacy = 0.5
-        }
-    }
-    conditional_modifier = {        #Second Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_1
-        }
-        modifier = {
-			production_efficiency = 0.1
-			advisor_pool = 1
-			church_loyalty_modifier = 0.05
-			church_influence_modifier = -0.05
-        }
-    }
-	conditional_modifier = {        #Second Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_2
-        }
-        modifier = {
-            missionaries = 1
-			missionary_maintenance_cost = -0.25
-			church_loyalty_modifier = 0.1
-        }
-    }
-	conditional_modifier = {        #Second Debate option 3
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_3
-        }
-        modifier = {
-            land_morale = 0.05
-			yearly_absolutism = 0.05
-			church_influence_modifier = -0.1
-        }
-    }
-	conditional_modifier = {        #Virtuous Cults Government Reform
-		trigger = {
-			has_government_attribute = virtuous_cults_upgrade
-		}
-		modifier = {
-			land_morale = 0.05
-		}
-	}
-	ai_will_do = {
-		factor = 10
-	}
-}
+# estate_clergy_osc_centralization_elected_kasra = {
+# 	icon = privilege_seek_support_of_clergy
+# 	max_absolutism = 0
+# 	loyalty = 0
+# 	influence = 0
+# 	is_valid = {
+# 		religion = old_bulwari_sun_cult
+# 		has_country_flag = osc_centralization_elected_kasra_flag
+# 	}
+# 	can_revoke = {
+# 		always = no
+# 	}
+# 	penalties = {
+# 	}
+# 	benefits = {
+# 		free_adm_policy = 1
+# 	}
+# 	conditional_modifier = {        #First Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_1
+#         }
+#         modifier = {
+#             tolerance_own = 1
+#         }
+#     }
+#     conditional_modifier = {        #First Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_2
+#         }
+#         modifier = {
+#             legitimacy = 0.5
+#         }
+#     }
+#     conditional_modifier = {        #Second Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_1
+#         }
+#         modifier = {
+# 			production_efficiency = 0.1
+# 			advisor_pool = 1
+# 			church_loyalty_modifier = 0.05
+# 			church_influence_modifier = -0.05
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_2
+#         }
+#         modifier = {
+#             missionaries = 1
+# 			missionary_maintenance_cost = -0.25
+# 			church_loyalty_modifier = 0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 3
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_3
+#         }
+#         modifier = {
+#             land_morale = 0.05
+# 			yearly_absolutism = 0.05
+# 			church_influence_modifier = -0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Virtuous Cults Government Reform
+# 		trigger = {
+# 			has_government_attribute = virtuous_cults_upgrade
+# 		}
+# 		modifier = {
+# 			land_morale = 0.05
+# 		}
+# 	}
+# 	ai_will_do = {
+# 		factor = 10
+# 	}
+# }
 
-estate_clergy_osc_centralization_nominated_kasra = {
-	icon = privilege_seek_support_of_clergy
-	max_absolutism = 0
-	loyalty = 0
-	influence = 0
-	is_valid = {
-		religion = old_bulwari_sun_cult
-		has_country_flag = osc_centralization_nominated_kasra_flag
-	}
-	can_revoke = {
-		always = no
-	}
-	penalties = {
-	}
-	benefits = {
-		max_absolutism = 10
-	}
-	conditional_modifier = {        #First Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_1
-        }
-        modifier = {
-            tolerance_own = 1
-        }
-    }
-    conditional_modifier = {        #First Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_first_debate_2
-        }
-        modifier = {
-            legitimacy = 0.5
-        }
-    }
-    conditional_modifier = {        #Second Debate option 1
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_1
-        }
-        modifier = {
-			production_efficiency = 0.1
-			advisor_pool = 1
-			church_loyalty_modifier = 0.05
-			church_influence_modifier = -0.05
-        }
-    }
-	conditional_modifier = {        #Second Debate option 2
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_2
-        }
-        modifier = {
-            missionaries = 1
-			missionary_maintenance_cost = -0.25
-			church_loyalty_modifier = 0.1
-        }
-    }
-	conditional_modifier = {        #Second Debate option 3
-        trigger = {
-            has_country_flag = osc_centralization_second_debate_3
-        }
-        modifier = {
-            land_morale = 0.05
-			yearly_absolutism = 0.5
-			church_influence_modifier = -0.1
-        }
-    }
-	conditional_modifier = {        #Virtuous Cults Government Reform
-		trigger = {
-			has_government_attribute = virtuous_cults_upgrade
-		}
-		modifier = {
-			land_morale = 0.05
-		}
-	}
-	ai_will_do = {
-		factor = 10
-	}
-}
+# estate_clergy_osc_centralization_nominated_kasra = {
+# 	icon = privilege_seek_support_of_clergy
+# 	max_absolutism = 0
+# 	loyalty = 0
+# 	influence = 0
+# 	is_valid = {
+# 		religion = old_bulwari_sun_cult
+# 		has_country_flag = osc_centralization_nominated_kasra_flag
+# 	}
+# 	can_revoke = {
+# 		always = no
+# 	}
+# 	penalties = {
+# 	}
+# 	benefits = {
+# 		max_absolutism = 10
+# 	}
+# 	conditional_modifier = {        #First Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_1
+#         }
+#         modifier = {
+#             tolerance_own = 1
+#         }
+#     }
+#     conditional_modifier = {        #First Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_first_debate_2
+#         }
+#         modifier = {
+#             legitimacy = 0.5
+#         }
+#     }
+#     conditional_modifier = {        #Second Debate option 1
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_1
+#         }
+#         modifier = {
+# 			production_efficiency = 0.1
+# 			advisor_pool = 1
+# 			church_loyalty_modifier = 0.05
+# 			church_influence_modifier = -0.05
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 2
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_2
+#         }
+#         modifier = {
+#             missionaries = 1
+# 			missionary_maintenance_cost = -0.25
+# 			church_loyalty_modifier = 0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Second Debate option 3
+#         trigger = {
+#             has_country_flag = osc_centralization_second_debate_3
+#         }
+#         modifier = {
+#             land_morale = 0.05
+# 			yearly_absolutism = 0.5
+# 			church_influence_modifier = -0.1
+#         }
+#     }
+# 	conditional_modifier = {        #Virtuous Cults Government Reform
+# 		trigger = {
+# 			has_government_attribute = virtuous_cults_upgrade
+# 		}
+# 		modifier = {
+# 			land_morale = 0.05
+# 		}
+# 	}
+# 	ai_will_do = {
+# 		factor = 10
+# 	}
+# }
 
 #hul-az-krakazol
 estate_adventurers_yeti_trophy = {
@@ -6882,7 +7031,7 @@ estate_mages_organization_science_mages = {
 	loyalty = -0.05
 	influence = 0.1
 	is_valid = {
-		has_country_flag = orlghelovar_science_mages_privilege
+		has_estate_privilege = estate_mages_organization_science_mages
 	}
 	can_revoke = {
 		always = no
@@ -9415,7 +9564,6 @@ estate_church_innovator_invitations = {
 # Gor Burad Steam Barons
 estate_burghers_steam_barons_industry = {
 	icon = privilege_technology
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9485,7 +9633,6 @@ estate_burghers_steam_barons_sponsorship_of_borborduz = {
 
 estate_burghers_steam_barons_industry_encouraged = {
 	icon = privilege_dev_cost
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9516,7 +9663,6 @@ estate_burghers_steam_barons_industry_encouraged = {
 
 estate_burghers_steam_barons_suppressing_the_mages = {
 	icon = privilege_decentralized
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9551,7 +9697,6 @@ estate_burghers_steam_barons_suppressing_the_mages = {
 
 estate_burghers_steam_barons_suppressing_the_artificers = {
 	icon = privilege_decentralized
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9584,7 +9729,6 @@ estate_burghers_steam_barons_suppressing_the_artificers = {
 
 estate_burghers_steam_barons_isolationism_enforced = {
 	icon = privilege_banned_imports
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9613,7 +9757,6 @@ estate_burghers_steam_barons_isolationism_enforced = {
 
 estate_burghers_steam_barons_poach_barony_engineers = {
 	icon = privilege_ideas
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = -0.1
 	influence = -0.1
@@ -9649,7 +9792,6 @@ estate_burghers_steam_barons_poach_barony_engineers = {
 
 estate_burghers_steam_barons_on_monarchs_council = {
 	icon = privilege_reform_progress
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -9685,7 +9827,6 @@ estate_burghers_steam_barons_on_monarchs_council = {
 
 estate_burghers_steam_barons_independent_governance = {
 	icon = privilege_goods_produced
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 
 	loyalty = 0.1
 	influence = 0.1
@@ -10206,7 +10347,7 @@ estate_burghers_empkeios_slaver_guilds = {
 	loyalty = 0.1
 	influence = 0.2
 	max_absolutism = -10
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 	is_valid = {
 		has_country_flag = G53_slaver_guilds_flag
 		any_owned_province = {
@@ -11080,6 +11221,9 @@ estate_nobles_sunijalla_council_of_lords = {
 			nobles_loyalty_modifier = 0.05
 		}
 	}
+	ai_will_do = {
+		factor = 10
+	}
 }
 
 estate_nobles_sunijalla_unified_aristocracy = {
@@ -11110,6 +11254,9 @@ estate_nobles_sunijalla_unified_aristocracy = {
 	
 	benefits = {
 		production_efficiency = 0.10
+	}
+	ai_will_do = {
+		factor = 10
 	}
 }
 
@@ -11163,6 +11310,9 @@ estate_nobles_sunijalla_rule_of_one = {
 	benefits = {
 		diplomatic_annexation_cost = -0.20
 		liberty_desire = -20
+	}
+	ai_will_do = {
+		factor = 10
 	}
 }
 
@@ -11432,6 +11582,12 @@ estate_nobility_overreliance_on_mercenaries = {
 	}
 	can_revoke = {
 		army_professionalism = 0.2
+		custom_trigger_tooltip = {
+			tooltip = L68_dont_revoke_mercs_till
+			NOT = {
+				has_country_flag = L68_dont_revoke_mercs
+			}
+		}
 	}
 	on_revoked = {
 	}
@@ -11443,6 +11599,17 @@ estate_nobility_overreliance_on_mercenaries = {
 	benefits = {
 		mercenary_manpower = 0.25
 		merc_maintenance_modifier = -0.25
+	}
+	conditional_modifier = {
+		trigger = {
+			has_country_flag = L68_dont_revoke_mercs
+		}
+		modifier = {
+			global_manpower_modifier = 0.10 
+			mercenary_cost = -0.05
+			mercenary_manpower = -0.05
+			merc_maintenance_modifier = 0.05
+		}
 	}
 	ai_will_do = {
 		factor = -300
@@ -11786,16 +11953,27 @@ estate_burghers_merchants_of_narasad = {
 		has_estate_privilege = estate_burghers_merchants_of_narasad
 	}
 	can_revoke = {
-		treasury = 1000
+		if = {
+			limit = {
+				has_country_flag = L68_choose_sack
+			}
+			treasury = 800
+		}
+		else = {
+			treasury = 1000
+		}	
 	}
 	on_revoked = {
 		if = {
-			limit = { NOT = { has_country_flag = karassk_narasad_purge } }
+			limit = {  
+				NOT = { has_country_flag = L68_choose_sack }
+			}
 			add_treasury = -1000
 		}
 		else = {
-			reduce_estate_burghers_loyalty_effect = yes
-		}
+			add_treasury = -800
+		} 
+		reduce_estate_burghers_loyalty_effect = yes
 	}
 	penalties = {
 		interest = 1
@@ -11956,6 +12134,9 @@ estate_mages_organization_orda_aldresia = { #Orda Aldresia
 		assault_fort_ability = 0.5
 		may_recruit_female_generals = yes
 	}
+	ai_will_do = {
+		factor = 5
+	}
 }
 
 estate_mages_form_iii = { #Orda Aldresia
@@ -12014,6 +12195,9 @@ estate_mages_archaic_traditions = { #Orda Aldresia
 	}
 	penalties = {
 		mil_tech_cost_modifier = 0.1
+	}
+	ai_will_do = {
+		factor = 0
 	}
 }
 
@@ -12142,6 +12326,14 @@ estate_church_naga_mutation = {
 		}
 		modifier = {
 			technology_cost = -0.05
+		}
+	}
+	conditional_modifier = {
+		trigger = {
+			has_country_flag = L68_no_naga 
+		}
+		modifier = {
+			church_loyalty_modifier = -0.05
 		}
 	}
 	ai_will_do = {
@@ -12661,6 +12853,15 @@ estate_church_khateshala_mutation = {
 		}
 		modifier = {
 			governing_capacity = 25
+		}
+	}
+	conditional_modifier = {
+		trigger = {
+			has_country_flag = L68_no_naga 
+		}
+		modifier = {
+			morale_damage_received = -0.05
+			missionaries = 1
 		}
 	}
 	ai_will_do = {
@@ -14116,6 +14317,7 @@ estate_nobles_oberons_watchful_eye = {
 	loyalty = 0.10
 	influence = 0.10
 	max_absolutism = -30
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes} modifier = { max_absolutism = 6 } }
 
 	is_valid = {
 		tag = I30
@@ -14133,6 +14335,9 @@ estate_nobles_oberons_watchful_eye = {
 	benefits = {
 		core_creation = -0.10
 	}
+	ai_will_do = {
+		factor = 0
+	}
 }
 
 estate_nobles_oberons_iron_rule = {
@@ -14140,6 +14345,7 @@ estate_nobles_oberons_iron_rule = {
 	loyalty = 0.10
 	influence = 0.10
 	max_absolutism = -30
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes} modifier = { max_absolutism = 6 } }
 
 	is_valid = {
 		tag = I30
@@ -14162,6 +14368,9 @@ estate_nobles_oberons_iron_rule = {
 		reform_progress_growth = -0.33
 		legitimacy = -3
 	}
+	ai_will_do = {
+		factor = 0
+	}
 }
 
 
@@ -14170,6 +14379,7 @@ estate_nobles_factionalist_commanders = {
 	loyalty = -0.15
 	influence = 0.15
 	max_absolutism = -30
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes} modifier = { max_absolutism = 6 } }
 
 	is_valid = {
 		OR = {
@@ -14193,6 +14403,10 @@ estate_nobles_factionalist_commanders = {
 		free_leader_pool = -2
 		heir_chance = -100
 	}
+	ai_will_do = {
+		factor = 5
+	}
+
 }
 
 estate_nobles_knighthood_of_the_spares = {
@@ -14200,6 +14414,7 @@ estate_nobles_knighthood_of_the_spares = {
 	loyalty = 0.10
 	influence = 0.10
 	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 
 	is_valid = {
 		OR = {
@@ -14222,6 +14437,9 @@ estate_nobles_knighthood_of_the_spares = {
 		ae_impact = -0.05
 		improve_relation_modifier = 0.10
 	}
+	ai_will_do = {
+		factor = 5
+	}
 }
 
 estate_nobles_lead_from_the_front = {
@@ -14229,6 +14447,7 @@ estate_nobles_lead_from_the_front = {
 	loyalty = -0.05
 	Influence = 0.10
 	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 
 	is_valid = {
 		OR = {
@@ -14251,6 +14470,9 @@ estate_nobles_lead_from_the_front = {
 		leader_land_fire = 1
 		leader_land_manuever = 1
 		general_cost = -0.20
+	}
+	ai_will_do = {
+		factor = 5
 	}
 }
 
@@ -14784,7 +15006,6 @@ estate_nobility_covenblad_black_tree = {
 	icon = privilege_covenblad_black_tree
 	land_share = 5
 	max_absolutism = 5
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	loyalty = 0.05
 	influence = 0.05
 	is_valid = { is_or_was_tag = { tag = Z37 } }
@@ -15008,7 +15229,7 @@ estate_nobility_covenblad_black_tree = {
 estate_nobility_covenblad_young_dragon = {
 	icon = privilege_covenblad_young_dragon
 	land_share = 5
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	max_absolutism = 0
 	loyalty = -0.05
 	is_valid = { is_or_was_tag = { tag = Z37 } }
 	can_select = {
@@ -15118,7 +15339,7 @@ estate_nobility_covenblad_burning_sword = {
 
 estate_nobility_covenblad_silver_reliquary = {
 	icon = privilege_covenblad_silver_reliquary
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	max_absolutism = 0
 	is_valid = { is_or_was_tag = { tag = Z37 } }
 	influence = 0.05
 	loyalty = 0.05
@@ -16047,6 +16268,10 @@ estate_monstrous_tribes_two_clans_one_boss = {
 		diplomatic_upkeep = 2
 		reduced_liberty_desire = 5
 	}
+	ai_will_do = {
+		factor = 10
+	}
+
 }
 
 estate_monstrous_tribes_six_clans_one_boss = {
@@ -16060,6 +16285,9 @@ estate_monstrous_tribes_six_clans_one_boss = {
 		reform_progress_growth = 0.30
 		diplomatic_upkeep = 2
 		reduced_liberty_desire = 10
+	}
+	ai_will_do = {
+		factor = 10
 	}
 }
 
@@ -16603,7 +16831,6 @@ estate_mages_warlock_pact_night_coven = {
 estate_nobles_ironblood_officer_corp = { #gophira
 	icon = privilege_promote_purbias
 	max_absolutism = 0
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	is_valid = {
 		OR = {
 			was_tag = G74
@@ -16905,6 +17132,7 @@ estate_nobles_rosande_noble_slaveowners = {
 	influence = 0.1
 	land_share = 0
 	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 
 	can_select = {
 		has_country_flag = unlocked_estate_rosande_slaveowners
@@ -17290,7 +17518,6 @@ estate_mages_az_an_land_reallocation = {
 rezankand_estate_church_new_exemplars = {
 	icon = privilege_new_world_mission
 	max_absolutism = 0
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	loyalty = 0.1
 	influence = 0.05
 	is_valid = {
@@ -18408,7 +18635,6 @@ estate_church_rayaz_imperial_advisors = {
 	max_absolutism = -10
 	conditional_modifier = { trigger = { has_country_flag = estate_church_no_absolutism_cost } modifier = { max_absolutism = 10 } }
 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes NOT = { has_country_flag = estate_church_no_absolutism_cost } } modifier = { max_absolutism = 2 } }
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	influence = 0.1
 	loyalty = 0.05
 	is_valid = { 
@@ -18492,7 +18718,72 @@ estate_mages_fifth_family = {
     }
     benefits = {
     }
+	ai_will_do = {
+		factor = 5
+	}
 }
+
+# Salla Myna MT
+estate_adventurers_salla_myna_ennoblement_of_hawk_riders = {
+	icon = privilege_royal_authority
+	max_absolutism = -5
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	loyalty = 0.05
+	land_share = 5
+	influence = 0.05
+	is_valid = { has_country_flag = estate_adventurers_salla_myna_ennoblement_of_hawk_riders_flag }
+	can_select = { has_estate = estate_nobles }
+	on_granted = {
+		hidden_effect = {
+			every_owned_province = { 
+				I27_se_apply_aviary_adjacency_mods = yes
+			}
+		}
+		custom_tooltip = I27_ennoblement_of_hawk_riders_tt
+	}
+	on_revoked = {	
+		custom_tooltip = I27_ennoblement_of_hawk_riders_tt		
+	}
+	on_revoked_province = {
+		remove_province_modifier = I27_ennoblement_of_hawk_riders_land_grants_mod
+	}
+	penalties = { 
+		nobles_loyalty_modifier = -0.05		
+	}
+	benefits = { }
+	ai_will_do = {
+		factor = 1
+	}
+	modifier_by_land_ownership = {
+		special_unit_forcelimit = 1
+	}
+}
+
+estate_burghers_salla_myna_well_fed_hawks = {
+	icon = privilege_monopoly_of_goods_livestock
+	max_absolutism = -5
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	loyalty = 0.00
+	land_share = 0
+	influence = 0.05
+	is_valid = { has_country_flag = estate_burghers_salla_myna_well_fed_hawks_flag }
+	on_granted = {
+		custom_tooltip = I27_well_fed_hawks_tt
+		hidden_effect = { every_owned_province = { I27_se_apply_aviary_adjacency_mods = yes } }
+	}
+	on_revoked = {
+		every_owned_province = {
+			I27_se_remove_well_fed_hawks_mods = yes
+		}
+	}
+	penalties = { 
+	}
+	benefits = { }
+	ai_will_do = {
+		factor = 1
+	}
+}
+
 
 #Frozenmaw tolerance privilege
 estate_monstrous_tribes_other_believers = {
@@ -19137,7 +19428,6 @@ oasis_of_water_dreams_privilege = {
 				add_province_modifier = {
 					name = oasis_of_water_dreams_fmk_mod3
 					duration = -1
-					hidden = yes
 				}
 			}
 			else_if = {
@@ -19152,14 +19442,12 @@ oasis_of_water_dreams_privilege = {
 				add_province_modifier = {
 					name = oasis_of_water_dreams_fmk_mod2
 					duration = -1
-					hidden = yes
 				}
 			}
 			else = {
 				add_province_modifier = {
 					name = oasis_of_water_dreams_fmk_mod1
 					duration = -1
-					hidden = yes
 				}
 			}
 		}
@@ -19258,6 +19546,7 @@ estate_adventurers_rangers_ranger_primacy = {
 	max_absolutism = 5
 	is_valid = {
 		primary_culture = wood_elf
+		NOT = { has_country_flag = deepwoods_rangers_disabled }
 	}
 	on_granted = {
 		add_country_modifier = {
@@ -19293,6 +19582,7 @@ estate_adventurers_rangers_call_the_hunt = {
 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	is_valid = {
 		primary_culture = wood_elf
+		NOT = { has_country_flag = deepwoods_rangers_disabled }
 	}
 	can_select = { }
 	can_revoke = { }
@@ -19327,6 +19617,7 @@ estate_adventurers_rangers_ayeth_strategy = {
 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	is_valid = { 
 		primary_culture = wood_elf
+		NOT = { has_country_flag = deepwoods_rangers_disabled }
 	}
 	can_select = {
 		any_owned_province = {
@@ -19391,6 +19682,7 @@ estate_adventurers_rangers_scotha_strategy = {
 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	is_valid = { 
 		primary_culture = wood_elf
+		NOT = { has_country_flag = deepwoods_rangers_disabled }
 	}
 	can_select = {
 		any_owned_province = {
@@ -19459,6 +19751,7 @@ estate_mages_rangers_drennen_strategy = {
 	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
 	is_valid = { 
 		primary_culture = wood_elf
+		NOT = { has_country_flag = deepwoods_rangers_disabled }
 	}
 	can_select = {
 		any_owned_province = {
@@ -19528,11 +19821,13 @@ estate_mages_prelude_to_greatness = {
 	mechanics = {
 		exempt_from_seize_land
 	}
+
 }
 
 estate_burghers_committe_of_urban_development = {
 	icon = privilege_development_efficiency
 	max_absolutism = -10
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 2 } }
 	loyalty = 0.1
 	influence = 0.1
 	land_share = 0
@@ -19803,6 +20098,8 @@ estate_church_J81_outsider_guilds = {
 	loyalty = 0.1
 	influence = 0.25
 	max_absolutism = -10
+	conditional_modifier = { trigger = { has_country_flag = estate_church_no_absolutism_cost } modifier = { max_absolutism = 10 } }
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes NOT = { has_country_flag = estate_church_no_absolutism_cost } } modifier = { max_absolutism = 2 } }
 	is_valid = {
 		is_or_was_tag = { tag = J81 } #Parahechend
 		has_country_flag = J81_enable_outsider_guilds_flag
@@ -19884,12 +20181,12 @@ estate_church_J81_outsider_guilds = {
 	}
 }
 
-estate_mages_hydromancers_guild = {
+estate_mages_organization_hydromancers_guild = {
 	icon = privilege_cast_spell
 	loyalty = 0.1
 	influence = 0.1
 	can_select = {
-		always = no
+		can_pay_for_organization_swap = { estate = mages }
 	}
 	is_valid = {
 		is_or_was_tag = { tag = S15 }
@@ -19897,6 +20194,9 @@ estate_mages_hydromancers_guild = {
 	}
 	can_revoke = {
 		always = no
+	}
+	on_granted = {
+		pay_for_organization_swap = { organization = hydromancers_guild }
 	}
 	benefits = {
 		production_efficiency = 0.1
@@ -19982,8 +20282,6 @@ z22_military_demonopolisation = {
 	}
 
 	loyalty = -0.1
-
-	max_absolutism = -5
 
 	conditional_modifier = { 
 		trigger = { 
@@ -20245,7 +20543,7 @@ z22_steady_iteration_privilege = {
 	}
 }
 
-z22_giesadh_alliances = {	#this will be a bit ugly sorry x
+z22_giesadh_league_members = {	#this will be a bit ugly sorry x
 	icon = estate_burghers_fund_karimi
 
 	is_valid = {
@@ -20276,325 +20574,325 @@ z22_giesadh_alliances = {	#this will be a bit ugly sorry x
 	}
 
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 1 } NOT = { check_variable = { which = GiesadhNum value = 2 } } }
-		modifier = { diplomatic_upkeep = 1 trade_steering = 0.025 global_manpower = 0.5 global_sailors = 500 land_forcelimit = 0.5 naval_forcelimit = 1 transfer_trade_power_reasons = 5 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal  = { which = GiesadhNum value = 1 } }
+		modifier = { trade_steering = 0.025 global_manpower = 0.5 global_sailors = 500 naval_forcelimit = 1 monthly_vic_league_dip_power = 0.04 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 2 } NOT = { check_variable = { which = GiesadhNum value = 3 } } }
-		modifier = { diplomatic_upkeep = 2 trade_steering = 0.05 global_manpower = 1 global_sailors = 1000 land_forcelimit = 1 naval_forcelimit = 2 transfer_trade_power_reasons = 10 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 2 } }
+		modifier = { trade_steering = 0.05 global_manpower = 1 global_sailors = 1000 naval_forcelimit = 2 monthly_vic_league_dip_power = 0.08 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 3 } NOT = { check_variable = { which = GiesadhNum value = 4 } } }
-		modifier = { diplomatic_upkeep = 3 trade_steering = 0.075 global_manpower = 1.5 global_sailors = 1500 land_forcelimit = 1.5 naval_forcelimit = 3 transfer_trade_power_reasons = 15 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 3 } }
+		modifier = { trade_steering = 0.075 global_manpower = 1.5 global_sailors = 1500 naval_forcelimit = 3 monthly_vic_league_dip_power = 0.12 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 4 } NOT = { check_variable = { which = GiesadhNum value = 5 } } }
-		modifier = { diplomatic_upkeep = 4 trade_steering = 0.1 global_manpower = 2 global_sailors = 2000 land_forcelimit = 2 naval_forcelimit = 4 transfer_trade_power_reasons = 20 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 4 } }
+		modifier = { trade_steering = 0.1 global_manpower = 2 global_sailors = 2000 naval_forcelimit = 4 monthly_vic_league_dip_power = 0.16 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 5 } NOT = { check_variable = { which = GiesadhNum value = 6 } } }
-		modifier = { diplomatic_upkeep = 5 trade_steering = 0.125 global_manpower = 2.5 global_sailors = 2500 land_forcelimit = 2.5 naval_forcelimit = 5 transfer_trade_power_reasons = 25 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 5 } }
+		modifier = { trade_steering = 0.125 global_manpower = 2.5 global_sailors = 2500 naval_forcelimit = 5 monthly_vic_league_dip_power = 0.2 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 6 } NOT = { check_variable = { which = GiesadhNum value = 7 } } }
-		modifier = { diplomatic_upkeep = 6 trade_steering = 0.15 global_manpower = 3 global_sailors = 3000 land_forcelimit = 3 naval_forcelimit = 6 transfer_trade_power_reasons = 30 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 6 } }
+		modifier = { trade_steering = 0.15 global_manpower = 3 global_sailors = 3000 naval_forcelimit = 6 monthly_vic_league_dip_power = 0.24 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 7 } NOT = { check_variable = { which = GiesadhNum value = 8 } } }
-		modifier = { diplomatic_upkeep = 7 trade_steering = 0.175 global_manpower = 3.5 global_sailors = 3500 land_forcelimit = 3.5 naval_forcelimit = 7 transfer_trade_power_reasons = 35 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 7 } }
+		modifier = { trade_steering = 0.175 global_manpower = 3.5 global_sailors = 3500 naval_forcelimit = 7 monthly_vic_league_dip_power = 0.28 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 8 } NOT = { check_variable = { which = GiesadhNum value = 9 } } }
-		modifier = { diplomatic_upkeep = 8 trade_steering = 0.2 global_manpower = 4 global_sailors = 4000 land_forcelimit = 4 naval_forcelimit = 8 transfer_trade_power_reasons = 40 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 8 } }
+		modifier = { trade_steering = 0.2 global_manpower = 4 global_sailors = 4000 naval_forcelimit = 8 monthly_vic_league_dip_power = 0.32 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 9 } NOT = { check_variable = { which = GiesadhNum value = 10 } } }
-		modifier = { diplomatic_upkeep = 9 trade_steering = 0.225 global_manpower = 4.5 global_sailors = 4500 land_forcelimit = 4.5 naval_forcelimit = 9 transfer_trade_power_reasons = 45 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 9 } }
+		modifier = { trade_steering = 0.225 global_manpower = 4.5 global_sailors = 4500 naval_forcelimit = 9 monthly_vic_league_dip_power = 0.36 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 10 } NOT = { check_variable = { which = GiesadhNum value = 11 } } }
-		modifier = { diplomatic_upkeep = 10 trade_steering = 0.25 global_manpower = 5 global_sailors = 5000 land_forcelimit = 5 naval_forcelimit = 10 transfer_trade_power_reasons = 50 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 10 } }
+		modifier = { trade_steering = 0.25 global_manpower = 5 global_sailors = 5000 naval_forcelimit = 10 monthly_vic_league_dip_power = 0.4 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 11 } NOT = { check_variable = { which = GiesadhNum value = 12 } } }
-		modifier = { diplomatic_upkeep = 11 trade_steering = 0.275 global_manpower = 5.5 global_sailors = 5500 land_forcelimit = 5.5 naval_forcelimit = 11 transfer_trade_power_reasons = 55 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 11 } }
+		modifier = { trade_steering = 0.275 global_manpower = 5.5 global_sailors = 5500 naval_forcelimit = 11 monthly_vic_league_dip_power = 0.44 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 12 } NOT = { check_variable = { which = GiesadhNum value = 13 } } }
-		modifier = { diplomatic_upkeep = 12 trade_steering = 0.3 global_manpower = 6 global_sailors = 6000 land_forcelimit = 6 naval_forcelimit = 12 transfer_trade_power_reasons = 60 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 12 } }
+		modifier = { trade_steering = 0.3 global_manpower = 6 global_sailors = 6000 naval_forcelimit = 12 monthly_vic_league_dip_power = 0.48 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 13 } NOT = { check_variable = { which = GiesadhNum value = 14 } } }
-		modifier = { diplomatic_upkeep = 13 trade_steering = 0.325 global_manpower = 6.5 global_sailors = 6500 land_forcelimit = 6.5 naval_forcelimit = 13 transfer_trade_power_reasons = 65 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 13 } }
+		modifier = { trade_steering = 0.325 global_manpower = 6.5 global_sailors = 6500 naval_forcelimit = 13 monthly_vic_league_dip_power = 0.52 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 14 } NOT = { check_variable = { which = GiesadhNum value = 15 } } }
-		modifier = { diplomatic_upkeep = 14 trade_steering = 0.35 global_manpower = 7 global_sailors = 7000 land_forcelimit = 7 naval_forcelimit = 14 transfer_trade_power_reasons = 70 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 14 } }
+		modifier = { trade_steering = 0.35 global_manpower = 7 global_sailors = 7000 naval_forcelimit = 14 monthly_vic_league_dip_power = 0.56 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 15 } NOT = { check_variable = { which = GiesadhNum value = 16 } } }
-		modifier = { diplomatic_upkeep = 15 trade_steering = 0.375 global_manpower = 7.5 global_sailors = 7500 land_forcelimit = 7.5 naval_forcelimit = 15 transfer_trade_power_reasons = 75 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 15 } }
+		modifier = { trade_steering = 0.375 global_manpower = 7.5 global_sailors = 7500 naval_forcelimit = 15 monthly_vic_league_dip_power = 0.6 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 16 } NOT = { check_variable = { which = GiesadhNum value = 17 } } }
-		modifier = { diplomatic_upkeep = 16 trade_steering = 0.4 global_manpower = 8 global_sailors = 8000 land_forcelimit = 8 naval_forcelimit = 16 transfer_trade_power_reasons = 80 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 16 } }
+		modifier = { trade_steering = 0.4 global_manpower = 8 global_sailors = 8000 naval_forcelimit = 16 monthly_vic_league_dip_power = 0.64 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 17 } NOT = { check_variable = { which = GiesadhNum value = 18 } } }
-		modifier = { diplomatic_upkeep = 17 trade_steering = 0.425 global_manpower = 8.5 global_sailors = 8500 land_forcelimit = 8.5 naval_forcelimit = 17 transfer_trade_power_reasons = 85 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 17 } }
+		modifier = { trade_steering = 0.425 global_manpower = 8.5 global_sailors = 8500 naval_forcelimit = 17 monthly_vic_league_dip_power = 0.68 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 18 } NOT = { check_variable = { which = GiesadhNum value = 19 } } }
-		modifier = { diplomatic_upkeep = 18 trade_steering = 0.45 global_manpower = 9 global_sailors = 9000 land_forcelimit = 9 naval_forcelimit = 18 transfer_trade_power_reasons = 90 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 18 } }
+		modifier = { trade_steering = 0.45 global_manpower = 9 global_sailors = 9000 naval_forcelimit = 18 monthly_vic_league_dip_power = 0.72 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 19 } NOT = { check_variable = { which = GiesadhNum value = 20 } } }
-		modifier = { diplomatic_upkeep = 19 trade_steering = 0.475 global_manpower = 9.5 global_sailors = 9500 land_forcelimit = 9.5 naval_forcelimit = 19 transfer_trade_power_reasons = 95 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 19 } }
+		modifier = { trade_steering = 0.475 global_manpower = 9.5 global_sailors = 9500 naval_forcelimit = 19 monthly_vic_league_dip_power = 0.76 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 20 } NOT = { check_variable = { which = GiesadhNum value = 21 } } }
-		modifier = { diplomatic_upkeep = 20 trade_steering = 0.5 global_manpower = 10 global_sailors = 10000 land_forcelimit = 10 naval_forcelimit = 20 transfer_trade_power_reasons = 100 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 20 } }
+		modifier = { trade_steering = 0.5 global_manpower = 10 global_sailors = 10000 naval_forcelimit = 20 monthly_vic_league_dip_power = 0.8 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 21 } NOT = { check_variable = { which = GiesadhNum value = 22 } } }
-		modifier = { diplomatic_upkeep = 21 trade_steering = 0.525 global_manpower = 10.5 global_sailors = 10500 land_forcelimit = 10.5 naval_forcelimit = 21 transfer_trade_power_reasons = 55 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 21 } }
+		modifier = { trade_steering = 0.525 global_manpower = 10.5 global_sailors = 10500 naval_forcelimit = 21 monthly_vic_league_dip_power = 0.84 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 22 } NOT = { check_variable = { which = GiesadhNum value = 23 } } }
-		modifier = { diplomatic_upkeep = 22 trade_steering = 0.55 global_manpower = 11 global_sailors = 11000 land_forcelimit = 11 naval_forcelimit = 22 transfer_trade_power_reasons = 60 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 22 } }
+		modifier = { trade_steering = 0.55 global_manpower = 11 global_sailors = 11000 naval_forcelimit = 22 monthly_vic_league_dip_power = 0.88 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 23 } NOT = { check_variable = { which = GiesadhNum value = 24 } } }
-		modifier = { diplomatic_upkeep = 23 trade_steering = 0.575 global_manpower = 11.5 global_sailors = 11500 land_forcelimit = 11.5 naval_forcelimit = 23 transfer_trade_power_reasons = 65 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 23 } }
+		modifier = { trade_steering = 0.575 global_manpower = 11.5 global_sailors = 11500 naval_forcelimit = 23 monthly_vic_league_dip_power = 0.92 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 24 } NOT = { check_variable = { which = GiesadhNum value = 25 } } }
-		modifier = { diplomatic_upkeep = 24 trade_steering = 0.6 global_manpower = 12 global_sailors = 12000 land_forcelimit = 12 naval_forcelimit = 24 transfer_trade_power_reasons = 70 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 24 } }
+		modifier = { trade_steering = 0.6 global_manpower = 12 global_sailors = 12000 naval_forcelimit = 24 monthly_vic_league_dip_power = 0.96 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 25 } NOT = { check_variable = { which = GiesadhNum value = 26 } } }
-		modifier = { diplomatic_upkeep = 25 trade_steering = 0.625 global_manpower = 12.5 global_sailors = 12500 land_forcelimit = 12.5 naval_forcelimit = 25 transfer_trade_power_reasons = 75 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 25 } }
+		modifier = { trade_steering = 0.625 global_manpower = 12.5 global_sailors = 12500 naval_forcelimit = 25 monthly_vic_league_dip_power = 1 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 26 } NOT = { check_variable = { which = GiesadhNum value = 27 } } }
-		modifier = { diplomatic_upkeep = 26 trade_steering = 0.65 global_manpower = 13 global_sailors = 13000 land_forcelimit = 13 naval_forcelimit = 26 transfer_trade_power_reasons = 80 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 26 } }
+		modifier = { trade_steering = 0.65 global_manpower = 13 global_sailors = 13000 naval_forcelimit = 26 monthly_vic_league_dip_power = 1.04 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 27 } NOT = { check_variable = { which = GiesadhNum value = 28 } } }
-		modifier = { diplomatic_upkeep = 27 trade_steering = 0.675 global_manpower = 13.5 global_sailors = 13500 land_forcelimit = 13.5 naval_forcelimit = 27 transfer_trade_power_reasons = 85 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 27 } }
+		modifier = { trade_steering = 0.675 global_manpower = 13.5 global_sailors = 13500 naval_forcelimit = 27 monthly_vic_league_dip_power = 1.08 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 28 } NOT = { check_variable = { which = GiesadhNum value = 29 } } }
-		modifier = { diplomatic_upkeep = 28 trade_steering = 0.7 global_manpower = 14 global_sailors = 14000 land_forcelimit = 14 naval_forcelimit = 28 transfer_trade_power_reasons = 90 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 28 } }
+		modifier = { trade_steering = 0.7 global_manpower = 14 global_sailors = 14000 naval_forcelimit = 28 monthly_vic_league_dip_power = 1.12 }
 	}
 	conditional_modifier = {
-		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 29 } NOT = { check_variable = { which = GiesadhNum value = 30 } } }
-		modifier = { diplomatic_upkeep = 29 trade_steering = 0.725 global_manpower = 14.5 global_sailors = 14500 land_forcelimit = 14.5 naval_forcelimit = 29 transfer_trade_power_reasons = 145 }
+		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } is_variable_equal = { which = GiesadhNum value = 29 } }
+		modifier = { trade_steering = 0.725 global_manpower = 14.5 global_sailors = 14500 naval_forcelimit = 29 monthly_vic_league_dip_power = 1.16 }
 	}
 	conditional_modifier = {
 		trigger = { NOT = { has_global_flag = z22_giseadh_modifiers_tier_2 } check_variable = { which = GiesadhNum value = 30 } }
-		modifier = { diplomatic_upkeep = 30 trade_steering = 0.75 global_manpower = 15 global_sailors = 15000 land_forcelimit = 15 naval_forcelimit = 30 transfer_trade_power_reasons = 150 }
+		modifier = { trade_steering = 0.75 global_manpower = 15 global_sailors = 15000 naval_forcelimit = 30 monthly_vic_league_dip_power = 1.2 }
 	}
 
 	conditional_modifier = { #Modifier for when the bonuses are upgraded
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 1 } NOT = { check_variable = { which = GiesadhNum value = 2 } } }
-		modifier = { diplomatic_upkeep = 1 trade_steering = 0.05 global_manpower = 1 global_sailors = 1000 land_forcelimit = 1 naval_forcelimit = 2 transfer_trade_power_reasons = 10 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 1 } }
+		modifier = { trade_steering = 0.05 global_manpower = 1 global_sailors = 1000 naval_forcelimit = 2 monthly_vic_league_dip_power = 0.04 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 2 } NOT = { check_variable = { which = GiesadhNum value = 3 } } }
-		modifier = { diplomatic_upkeep = 2 trade_steering = 0.1 global_manpower = 2 global_sailors = 2000 land_forcelimit = 2 naval_forcelimit = 4 transfer_trade_power_reasons = 20 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 2 } }
+		modifier = { trade_steering = 0.1 global_manpower = 2 global_sailors = 2000 naval_forcelimit = 4 monthly_vic_league_dip_power = 0.08 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 3 } NOT = { check_variable = { which = GiesadhNum value = 4 } } }
-		modifier = { diplomatic_upkeep = 3 trade_steering = 0.15 global_manpower = 3 global_sailors = 3000 land_forcelimit = 3 naval_forcelimit = 6 transfer_trade_power_reasons = 30 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 3 } }
+		modifier = { trade_steering = 0.15 global_manpower = 3 global_sailors = 3000 naval_forcelimit = 6 monthly_vic_league_dip_power = 0.12 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 4 } NOT = { check_variable = { which = GiesadhNum value = 5 } } }
-		modifier = { diplomatic_upkeep = 4 trade_steering = 0.2 global_manpower = 4 global_sailors = 4000 land_forcelimit = 4 naval_forcelimit = 8 transfer_trade_power_reasons = 40 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 4 } }
+		modifier = { trade_steering = 0.2 global_manpower = 4 global_sailors = 4000 naval_forcelimit = 8 monthly_vic_league_dip_power = 0.16 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 5 } NOT = { check_variable = { which = GiesadhNum value = 6 } } }
-		modifier = { diplomatic_upkeep = 5 trade_steering = 0.25 global_manpower = 5 global_sailors = 5000 land_forcelimit = 5 naval_forcelimit = 10 transfer_trade_power_reasons = 50 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 5 } }
+		modifier = { trade_steering = 0.25 global_manpower = 5 global_sailors = 5000 naval_forcelimit = 10 monthly_vic_league_dip_power = 0.2 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 6 } NOT = { check_variable = { which = GiesadhNum value = 7 } } }
-		modifier = { diplomatic_upkeep = 6 trade_steering = 0.3 global_manpower = 6 global_sailors = 6000 land_forcelimit = 6 naval_forcelimit = 12 transfer_trade_power_reasons = 60 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 6 } }
+		modifier = { trade_steering = 0.3 global_manpower = 6 global_sailors = 6000 naval_forcelimit = 12 monthly_vic_league_dip_power = 0.24 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 7 } NOT = { check_variable = { which = GiesadhNum value = 8 } } }
-		modifier = { diplomatic_upkeep = 7 trade_steering = 0.35 global_manpower = 7 global_sailors = 7000 land_forcelimit = 7 naval_forcelimit = 14 transfer_trade_power_reasons = 70 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 7 } }
+		modifier = { trade_steering = 0.35 global_manpower = 7 global_sailors = 7000 naval_forcelimit = 14 monthly_vic_league_dip_power = 0.28 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 8 } NOT = { check_variable = { which = GiesadhNum value = 9 } } }
-		modifier = { diplomatic_upkeep = 8 trade_steering = 0.4 global_manpower = 8 global_sailors = 8000 land_forcelimit = 8 naval_forcelimit = 16 transfer_trade_power_reasons = 80 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 8 } }
+		modifier = { trade_steering = 0.4 global_manpower = 8 global_sailors = 8000 naval_forcelimit = 16 monthly_vic_league_dip_power = 0.32 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 9 } NOT = { check_variable = { which = GiesadhNum value = 10 } } }
-		modifier = { diplomatic_upkeep = 9 trade_steering = 0.45 global_manpower = 9 global_sailors = 9000 land_forcelimit = 9 naval_forcelimit = 18 transfer_trade_power_reasons = 90 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 9 } }
+		modifier = { trade_steering = 0.45 global_manpower = 9 global_sailors = 9000 naval_forcelimit = 18 monthly_vic_league_dip_power = 0.36 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 10 } NOT = { check_variable = { which = GiesadhNum value = 11 } } }
-		modifier = { diplomatic_upkeep = 10 trade_steering = 0.5 global_manpower = 10 global_sailors = 10000 land_forcelimit = 10 naval_forcelimit = 20 transfer_trade_power_reasons = 100 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 10 } }
+		modifier = { trade_steering = 0.5 global_manpower = 10 global_sailors = 10000 naval_forcelimit = 20 monthly_vic_league_dip_power = 0.4 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 11 } NOT = { check_variable = { which = GiesadhNum value = 12 } } }
-		modifier = { diplomatic_upkeep = 11 trade_steering = 0.55 global_manpower = 11 global_sailors = 11000 land_forcelimit = 11 naval_forcelimit = 22 transfer_trade_power_reasons = 110 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 11 } }
+		modifier = { trade_steering = 0.55 global_manpower = 11 global_sailors = 11000 naval_forcelimit = 22 monthly_vic_league_dip_power = 0.44 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 12 } NOT = { check_variable = { which = GiesadhNum value = 13 } } }
-		modifier = { diplomatic_upkeep = 12 trade_steering = 0.6 global_manpower = 12 global_sailors = 12000 land_forcelimit = 12 naval_forcelimit = 24 transfer_trade_power_reasons = 120 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 12 } }
+		modifier = { trade_steering = 0.6 global_manpower = 12 global_sailors = 12000 naval_forcelimit = 24 monthly_vic_league_dip_power = 0.48 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 13 } NOT = { check_variable = { which = GiesadhNum value = 14 } } }
-		modifier = { diplomatic_upkeep = 13 trade_steering = 0.65 global_manpower = 13 global_sailors = 13000 land_forcelimit = 13 naval_forcelimit = 26 transfer_trade_power_reasons = 130 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 13 } }
+		modifier = { trade_steering = 0.65 global_manpower = 13 global_sailors = 13000 naval_forcelimit = 26 monthly_vic_league_dip_power = 0.52 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 14 } NOT = { check_variable = { which = GiesadhNum value = 15 } } }
-		modifier = { diplomatic_upkeep = 14 trade_steering = 0.7 global_manpower = 14 global_sailors = 14000 land_forcelimit = 14 naval_forcelimit = 28 transfer_trade_power_reasons = 140 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 14 } }
+		modifier = { trade_steering = 0.7 global_manpower = 14 global_sailors = 14000 naval_forcelimit = 28 monthly_vic_league_dip_power = 0.56 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 15 } NOT = { check_variable = { which = GiesadhNum value = 16 } } }
-		modifier = { diplomatic_upkeep = 15 trade_steering = 0.75 global_manpower = 15 global_sailors = 15000 land_forcelimit = 15 naval_forcelimit = 30 transfer_trade_power_reasons = 150 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 15 } }
+		modifier = { trade_steering = 0.75 global_manpower = 15 global_sailors = 15000 naval_forcelimit = 30 monthly_vic_league_dip_power = 0.6 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 16 } NOT = { check_variable = { which = GiesadhNum value = 17 } } }
-		modifier = { diplomatic_upkeep = 16 trade_steering = 0.8 global_manpower = 16 global_sailors = 16000 land_forcelimit = 16 naval_forcelimit = 32 transfer_trade_power_reasons = 160 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 16 } }
+		modifier = { trade_steering = 0.8 global_manpower = 16 global_sailors = 16000 naval_forcelimit = 32 monthly_vic_league_dip_power = 0.64 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 17 } NOT = { check_variable = { which = GiesadhNum value = 18 } } }
-		modifier = { diplomatic_upkeep = 17 trade_steering = 0.85 global_manpower = 17 global_sailors = 17000 land_forcelimit = 17 naval_forcelimit = 34 transfer_trade_power_reasons = 170 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 17 } }
+		modifier = { trade_steering = 0.85 global_manpower = 17 global_sailors = 17000 naval_forcelimit = 34 monthly_vic_league_dip_power = 0.68 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 18 } NOT = { check_variable = { which = GiesadhNum value = 19 } } }
-		modifier = { diplomatic_upkeep = 18 trade_steering = 0.9 global_manpower = 18 global_sailors = 18000 land_forcelimit = 18 naval_forcelimit = 36 transfer_trade_power_reasons = 180 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 18 } }
+		modifier = { trade_steering = 0.9 global_manpower = 18 global_sailors = 18000 naval_forcelimit = 36 monthly_vic_league_dip_power = 0.72 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 19 } NOT = { check_variable = { which = GiesadhNum value = 20 } } }
-		modifier = { diplomatic_upkeep = 19 trade_steering = 0.95 global_manpower = 19 global_sailors = 19000 land_forcelimit = 19 naval_forcelimit = 38 transfer_trade_power_reasons = 190 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 19 } }
+		modifier = { trade_steering = 0.95 global_manpower = 19 global_sailors = 19000 naval_forcelimit = 38 monthly_vic_league_dip_power = 0.76 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 20 } NOT = { check_variable = { which = GiesadhNum value = 21 } } }
-		modifier = { diplomatic_upkeep = 20 trade_steering = 1 global_manpower = 20 global_sailors = 20000 land_forcelimit = 20 naval_forcelimit = 40 transfer_trade_power_reasons = 200 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 20 } }
+		modifier = { trade_steering = 1 global_manpower = 20 global_sailors = 20000 naval_forcelimit = 40 monthly_vic_league_dip_power = 0.8 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 21 } NOT = { check_variable = { which = GiesadhNum value = 22 } } }
-		modifier = { diplomatic_upkeep = 21 trade_steering = 1.05 global_manpower = 21 global_sailors = 21000 land_forcelimit = 21 naval_forcelimit = 42 transfer_trade_power_reasons = 210 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 21 } }
+		modifier = { trade_steering = 1.05 global_manpower = 21 global_sailors = 21000 naval_forcelimit = 42 monthly_vic_league_dip_power = 0.84 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 22 } NOT = { check_variable = { which = GiesadhNum value = 23 } } }
-		modifier = { diplomatic_upkeep = 22 trade_steering = 1.1 global_manpower = 22 global_sailors = 22000 land_forcelimit = 22 naval_forcelimit = 44 transfer_trade_power_reasons = 220 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 22 } }
+		modifier = { trade_steering = 1.1 global_manpower = 22 global_sailors = 22000 naval_forcelimit = 44 monthly_vic_league_dip_power = 0.88 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 23 } NOT = { check_variable = { which = GiesadhNum value = 24 } } }
-		modifier = { diplomatic_upkeep = 23 trade_steering = 1.15 global_manpower = 23 global_sailors = 23000 land_forcelimit = 23 naval_forcelimit = 46 transfer_trade_power_reasons = 230 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 23 } }
+		modifier = { trade_steering = 1.15 global_manpower = 23 global_sailors = 23000 naval_forcelimit = 46 monthly_vic_league_dip_power = 0.92 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 24 } NOT = { check_variable = { which = GiesadhNum value = 25 } } }
-		modifier = { diplomatic_upkeep = 24 trade_steering = 1.2 global_manpower = 24 global_sailors = 24000 land_forcelimit = 24 naval_forcelimit = 48 transfer_trade_power_reasons = 240 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 24 } }
+		modifier = { trade_steering = 1.2 global_manpower = 24 global_sailors = 24000 naval_forcelimit = 48 monthly_vic_league_dip_power = 0.96 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 25 } NOT = { check_variable = { which = GiesadhNum value = 26 } } }
-		modifier = { diplomatic_upkeep = 25 trade_steering = 1.25 global_manpower = 25 global_sailors = 25000 land_forcelimit = 25 naval_forcelimit = 50 transfer_trade_power_reasons = 250 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 25 } }
+		modifier = { trade_steering = 1.25 global_manpower = 25 global_sailors = 25000 naval_forcelimit = 50 monthly_vic_league_dip_power = 1 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 26 } NOT = { check_variable = { which = GiesadhNum value = 27 } } }
-		modifier = { diplomatic_upkeep = 26 trade_steering = 1.3 global_manpower = 26 global_sailors = 26000 land_forcelimit = 26 naval_forcelimit = 52 transfer_trade_power_reasons = 260 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 26 } }
+		modifier = { trade_steering = 1.3 global_manpower = 26 global_sailors = 26000 naval_forcelimit = 52 monthly_vic_league_dip_power = 1.04 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 27 } NOT = { check_variable = { which = GiesadhNum value = 28 } } }
-		modifier = { diplomatic_upkeep = 27 trade_steering = 1.35 global_manpower = 27 global_sailors = 27000 land_forcelimit = 27 naval_forcelimit = 54 transfer_trade_power_reasons = 270 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 27 } }
+		modifier = { trade_steering = 1.35 global_manpower = 27 global_sailors = 27000 naval_forcelimit = 54 monthly_vic_league_dip_power = 1.08 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 28 } NOT = { check_variable = { which = GiesadhNum value = 29 } } }
-		modifier = { diplomatic_upkeep = 28 trade_steering = 1.4 global_manpower = 28 global_sailors = 28000 land_forcelimit = 28 naval_forcelimit = 56 transfer_trade_power_reasons = 280 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 28 } }
+		modifier = { trade_steering = 1.4 global_manpower = 28 global_sailors = 28000 naval_forcelimit = 56 monthly_vic_league_dip_power = 1.12 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 29 } NOT = { check_variable = { which = GiesadhNum value = 30 } } }
-		modifier = { diplomatic_upkeep = 29 trade_steering = 1.45 global_manpower = 29 global_sailors = 29000 land_forcelimit = 29 naval_forcelimit = 58 transfer_trade_power_reasons = 290 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 29 } }
+		modifier = { trade_steering = 1.45 global_manpower = 29 global_sailors = 29000 naval_forcelimit = 58 monthly_vic_league_dip_power = 1.16 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 30 } NOT = { check_variable = { which = GiesadhNum value = 31 } } }
-		modifier = { diplomatic_upkeep = 30 trade_steering = 1.5 global_manpower = 30 global_sailors = 30000 land_forcelimit = 30 naval_forcelimit = 60 transfer_trade_power_reasons = 300 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 30 } }
+		modifier = { trade_steering = 1.5 global_manpower = 30 global_sailors = 30000 naval_forcelimit = 60 monthly_vic_league_dip_power = 1.2 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 31 } NOT = { check_variable = { which = GiesadhNum value = 32 } } }
-		modifier = { diplomatic_upkeep = 31 trade_steering = 1.55 global_manpower = 31 global_sailors = 31000 land_forcelimit = 31 naval_forcelimit = 62 transfer_trade_power_reasons = 310 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 31 } }
+		modifier = { trade_steering = 1.55 global_manpower = 31 global_sailors = 31000 naval_forcelimit = 62 monthly_vic_league_dip_power = 1.24 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 32 } NOT = { check_variable = { which = GiesadhNum value = 33 } } }
-		modifier = { diplomatic_upkeep = 32 trade_steering = 1.6 global_manpower = 32 global_sailors = 32000 land_forcelimit = 32 naval_forcelimit = 64 transfer_trade_power_reasons = 320 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 32 } }
+		modifier = { trade_steering = 1.6 global_manpower = 32 global_sailors = 32000 naval_forcelimit = 64 monthly_vic_league_dip_power = 1.28 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 33 } NOT = { check_variable = { which = GiesadhNum value = 34 } } }
-		modifier = { diplomatic_upkeep = 33 trade_steering = 1.65 global_manpower = 33 global_sailors = 33000 land_forcelimit = 33 naval_forcelimit = 66 transfer_trade_power_reasons = 330 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 33 } }
+		modifier = { trade_steering = 1.65 global_manpower = 33 global_sailors = 33000 naval_forcelimit = 66 monthly_vic_league_dip_power = 1.32 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 34 } NOT = { check_variable = { which = GiesadhNum value = 35 } } }
-		modifier = { diplomatic_upkeep = 34 trade_steering = 1.7 global_manpower = 34 global_sailors = 34000 land_forcelimit = 34 naval_forcelimit = 68 transfer_trade_power_reasons = 340 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 34 } }
+		modifier = { trade_steering = 1.7 global_manpower = 34 global_sailors = 34000 naval_forcelimit = 68 monthly_vic_league_dip_power = 1.36 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 35 } NOT = { check_variable = { which = GiesadhNum value = 36 } } }
-		modifier = { diplomatic_upkeep = 35 trade_steering = 1.75 global_manpower = 35 global_sailors = 35000 land_forcelimit = 35 naval_forcelimit = 70 transfer_trade_power_reasons = 350 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 35 } }
+		modifier = { trade_steering = 1.75 global_manpower = 35 global_sailors = 35000 naval_forcelimit = 70 monthly_vic_league_dip_power = 1.4 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 36 } NOT = { check_variable = { which = GiesadhNum value = 37 } } }
-		modifier = { diplomatic_upkeep = 36 trade_steering = 1.8 global_manpower = 36 global_sailors = 36000 land_forcelimit = 36 naval_forcelimit = 72 transfer_trade_power_reasons = 360 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 36 } }
+		modifier = { trade_steering = 1.8 global_manpower = 36 global_sailors = 36000 naval_forcelimit = 72 monthly_vic_league_dip_power = 1.44 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 37 } NOT = { check_variable = { which = GiesadhNum value = 38 } } }
-		modifier = { diplomatic_upkeep = 37 trade_steering = 1.85 global_manpower = 37 global_sailors = 37000 land_forcelimit = 37 naval_forcelimit = 74 transfer_trade_power_reasons = 370 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 37 } }
+		modifier = { trade_steering = 1.85 global_manpower = 37 global_sailors = 37000 naval_forcelimit = 74 monthly_vic_league_dip_power = 1.48 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 38 } NOT = { check_variable = { which = GiesadhNum value = 39 } } }
-		modifier = { diplomatic_upkeep = 38 trade_steering = 1.9 global_manpower = 38 global_sailors = 38000 land_forcelimit = 38 naval_forcelimit = 76 transfer_trade_power_reasons = 380 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 38 } }
+		modifier = { trade_steering = 1.9 global_manpower = 38 global_sailors = 38000 naval_forcelimit = 76 monthly_vic_league_dip_power = 1.52 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 39 } NOT = { check_variable = { which = GiesadhNum value = 40 } } }
-		modifier = { diplomatic_upkeep = 39 trade_steering = 1.95 global_manpower = 39 global_sailors = 39000 land_forcelimit = 39 naval_forcelimit = 78 transfer_trade_power_reasons = 390 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 39 } }
+		modifier = { trade_steering = 1.95 global_manpower = 39 global_sailors = 39000 naval_forcelimit = 78 monthly_vic_league_dip_power = 1.56 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 40 } NOT = { check_variable = { which = GiesadhNum value = 41 } } }
-		modifier = { diplomatic_upkeep = 40 trade_steering = 2 global_manpower = 40 global_sailors = 40000 land_forcelimit = 40 naval_forcelimit = 80 transfer_trade_power_reasons = 400 } #we hit the trade steering cap here
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 40 } }
+		modifier = { trade_steering = 2 global_manpower = 40 global_sailors = 40000 naval_forcelimit = 80 monthly_vic_league_dip_power = 1.6 } #we hit the trade steering cap here
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 41 } NOT = { check_variable = { which = GiesadhNum value = 42 } } }
-		modifier = { diplomatic_upkeep = 41 trade_steering = 2 global_manpower = 41 global_sailors = 41000 land_forcelimit = 41 naval_forcelimit = 82 transfer_trade_power_reasons = 410 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 41 } }
+		modifier = { trade_steering = 2 global_manpower = 41 global_sailors = 41000 naval_forcelimit = 82 monthly_vic_league_dip_power = 1.64 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 42 } NOT = { check_variable = { which = GiesadhNum value = 43 } } }
-		modifier = { diplomatic_upkeep = 42 trade_steering = 2 global_manpower = 42 global_sailors = 42000 land_forcelimit = 42 naval_forcelimit = 82 transfer_trade_power_reasons = 420 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 42 } }
+		modifier = { trade_steering = 2 global_manpower = 42 global_sailors = 42000 naval_forcelimit = 84 monthly_vic_league_dip_power = 1.68 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 43 } NOT = { check_variable = { which = GiesadhNum value = 44 } } }
-		modifier = { diplomatic_upkeep = 43 trade_steering = 2 global_manpower = 43 global_sailors = 43000 land_forcelimit = 43 naval_forcelimit = 82 transfer_trade_power_reasons = 430 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 43 } }
+		modifier = { trade_steering = 2 global_manpower = 43 global_sailors = 43000 naval_forcelimit = 86 monthly_vic_league_dip_power = 1.72 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 44 } NOT = { check_variable = { which = GiesadhNum value = 45 } } }
-		modifier = { diplomatic_upkeep = 44 trade_steering = 2 global_manpower = 44 global_sailors = 44000 land_forcelimit = 44 naval_forcelimit = 82 transfer_trade_power_reasons = 440 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 44 } }
+		modifier = { trade_steering = 2 global_manpower = 44 global_sailors = 44000 naval_forcelimit = 88 monthly_vic_league_dip_power = 1.76 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 45 } NOT = { check_variable = { which = GiesadhNum value = 46 } } }
-		modifier = { diplomatic_upkeep = 45 trade_steering = 2 global_manpower = 45 global_sailors = 45000 land_forcelimit = 45 naval_forcelimit = 82 transfer_trade_power_reasons = 450 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 45 } }
+		modifier = { trade_steering = 2 global_manpower = 45 global_sailors = 45000 naval_forcelimit = 90 monthly_vic_league_dip_power = 1.8 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 46 } NOT = { check_variable = { which = GiesadhNum value = 47 } } }
-		modifier = { diplomatic_upkeep = 46 trade_steering = 2 global_manpower = 46 global_sailors = 46000 land_forcelimit = 46 naval_forcelimit = 82 transfer_trade_power_reasons = 460 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 46 } }
+		modifier = { trade_steering = 2 global_manpower = 46 global_sailors = 46000 naval_forcelimit = 92 monthly_vic_league_dip_power = 1.84 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 47 } NOT = { check_variable = { which = GiesadhNum value = 48 } } }
-		modifier = { diplomatic_upkeep = 47 trade_steering = 2 global_manpower = 47 global_sailors = 47000 land_forcelimit = 47 naval_forcelimit = 82 transfer_trade_power_reasons = 470 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 47 } }
+		modifier = { trade_steering = 2 global_manpower = 47 global_sailors = 47000 naval_forcelimit = 94 monthly_vic_league_dip_power = 1.88 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 48 } NOT = { check_variable = { which = GiesadhNum value = 49 } } }
-		modifier = { diplomatic_upkeep = 48 trade_steering = 2 global_manpower = 48 global_sailors = 48000 land_forcelimit = 48 naval_forcelimit = 82 transfer_trade_power_reasons = 480 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 48 } }
+		modifier = { trade_steering = 2 global_manpower = 48 global_sailors = 48000 naval_forcelimit = 96 monthly_vic_league_dip_power = 1.92 }
 	}
 	conditional_modifier = {
-		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 49 } NOT = { check_variable = { which = GiesadhNum value = 50 } } }
-		modifier = { diplomatic_upkeep = 49 trade_steering = 2 global_manpower = 49 global_sailors = 49000 land_forcelimit = 49 naval_forcelimit = 82 transfer_trade_power_reasons = 490 }
+		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 is_variable_equal = { which = GiesadhNum value = 49 } }
+		modifier = { trade_steering = 2 global_manpower = 49 global_sailors = 49000 naval_forcelimit = 98 monthly_vic_league_dip_power = 1.96 }
 	}
 	conditional_modifier = {
 		trigger = { has_global_flag = z22_giseadh_modifiers_tier_2 check_variable = { which = GiesadhNum value = 50 } }
-		modifier = { diplomatic_upkeep = 50 trade_steering = 2 global_manpower = 50 global_sailors = 50000 land_forcelimit = 50 naval_forcelimit = 82 transfer_trade_power_reasons = 500 }
+		modifier = { trade_steering = 2 global_manpower = 50 global_sailors = 50000 naval_forcelimit = 100 monthly_vic_league_dip_power = 2 }
 	}	#	If you get more than 50 allies congrats bozo I'm not accounting for your madness xoxo
 
 	on_granted = {
@@ -20643,137 +20941,137 @@ z22_league_dividends = {
 	}
 
 	conditional_modifier = {	#this shit ugly, it's intended to give +1 merchant and some compensation for not being allowed colonies per former colony/aelantiri ally with over 10 provinces
-		trigger = {	any_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } } }
+		trigger = {	any_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10 } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 1 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 1 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10 }
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 2	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 2	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 2 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 2 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 3	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 3	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 3 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 3 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 4	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 4	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 4 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 4 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 5	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 5	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 5 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 5 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 6	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 6	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 6 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 6 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 7	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 7	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 7 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 7 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 8	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 8	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 8 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 8 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 9	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 9	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 9 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 9 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 10	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 10	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 10 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 10 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 11	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } } } }
+		trigger = {	calc_true_if = { amount = 11	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10 } } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 11 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 11 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 12	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 12	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 12 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 12 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 13	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 13	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 13 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 13 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 14	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 14	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 14 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 14 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
 	conditional_modifier = {
-		trigger = {	calc_true_if = { amount = 15	all_ally = { is_former_colony_or_ally_in_aelantir = yes num_of_owned_provinces_with = { value = 10 is_core = PREV } }	} }
+		trigger = {	calc_true_if = { amount = 15	all_subject_country = { is_vic_league_member_in_aelantir = yes num_of_cities = 10	} } }
 		modifier = { merchants = 1 trade_range_modifier = 0.3 }
 	}
 	influence_scaled_conditional_modifier = {
-		trigger = { calc_true_if = { amount = 15 all_ally = { is_former_colony_or_ally_in_aelantir = yes } } }
+		trigger = { calc_true_if = { amount = 15 all_subject_country = { is_vic_league_member_in_aelantir = yes } } }
 		modifier = { global_trade_power = 0.1 global_tariffs = -0.1 land_forcelimit_modifier = 0.05 naval_forcelimit_modifier = 0.05 transfer_trade_power_reasons = 10	}
 	}
 
@@ -20789,6 +21087,1435 @@ z22_league_dividends = {
 
 	}
 
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+estate_monstrous_tribes_supplement_levies = {
+	icon = privilege_one_faith_one_culture
+	influence = -0.05
+	loyalty = 0.05
+	is_valid = {
+		religion = shadow_pact
+	}
+	can_select = {
+		has_country_flag = shadow_warriors_levies_1
+	}
+	on_granted = {
+		add_corruption = 1
+		if = {
+			limit = { has_country_flag = shadow_warriors_levies_2_2 }
+			add_country_modifier = {
+				name = shadow_warriors_levies_2_2
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = shadow_warriors_levies_2_1 }
+			add_country_modifier = {
+				name = shadow_warriors_levies_2_1
+				duration = -1
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = shadow_warriors_levies_1
+				duration = -1
+			}
+		}
+	}
+	on_granted_province = {
+	}
+	on_revoked = {
+		remove_country_modifier = shadow_warriors_levies_1
+		remove_country_modifier = shadow_warriors_levies_2_1
+		remove_country_modifier = shadow_warriors_levies_2_2
+	}
+	on_revoked_province = {
+	}
+	on_invalid = {
+	}
+	on_invalid_province = {
+	}
+	penalties = {
+		yearly_corruption = 0.1
+	}
+	benefits = {
+	}
+	conditional_modifier = {
+		trigger = { has_country_flag = shadow_warriors_levies_2_1 }
+		modifier = {
+			stability_cost_modifier = -0.15
+		}
+	}
+	conditional_modifier = {
+		trigger = { has_country_flag = shadow_warriors_levies_2_2 }
+		modifier = {
+			global_unrest = 2
+		}
+	}
+	cooldown_years = 10
+	ai_will_do = {
+		factor = 10
+#		modifier = {
+#			factor = 0
+#			
+#		}
+	}
+}
+
+
+#karassk stuff
+estate_burghers_khair_families_our_land = {
+	icon = privilege_recruit_minister
+	influence = 0.05
+	loyalty = 0.05
+	is_valid = { 
+		has_country_flag = L68_our_land_unlock
+	}
+	can_select = {
+		has_country_flag = L68_our_land_unlock
+	}
+	can_revoke = {
+		always = no
+	}
+	on_granted = {
+		custom_tooltip = estate_burghers_khair_families_our_land_non_cult_tt
+		if = {
+			limit = {
+				has_country_flag = L68_our_land_cult_upg
+			}
+			custom_tooltip = estate_burghers_khair_families_our_land_cult_tt
+		}
+	}
+	on_granted_province = {
+		if = {
+			limit = { fast_has_pop_of_race = { race = human } }
+
+			if = {
+				limit = {
+					has_port = yes
+					has_human_minority_trigger = yes
+				}
+				if = {
+					limit = {
+						owner = {
+							medium_tolerance_human_race_trigger = yes
+						}
+					}
+					add_province_modifier = { name = L68_khair_families_our_land_goods_co duration = -1 }
+					remove_province_modifier = L68_khair_families_our_land_goods_notco
+				}
+				else = {
+					add_province_modifier = { name = L68_khair_families_our_land_goods_notco duration = -1 }
+					remove_province_modifier = L68_khair_families_our_land_goods_co
+				}
+			}
+			else_if = {
+				limit = {
+					owner = { has_country_flag = L68_our_land_cult_upg }
+					has_human_majority_trigger = yes
+				}
+				
+				if = {
+					limit = {
+						owner = {
+							medium_tolerance_human_race_trigger = yes
+						}
+					}
+					add_province_modifier = { name = L68_khair_families_our_land_cult_co duration = -1 }
+					remove_province_modifier = L68_khair_families_our_land_cult_notco
+				}
+				else = {
+					add_province_modifier = { name = L68_khair_families_our_land_cult_notco duration = -1 }
+					remove_province_modifier = L68_khair_families_our_land_cult_co
+				}
+					
+			}
+		}
+	}
+	
+	on_revoked = {
+		custom_tooltip = estate_burghers_khair_families_our_land_non_cult_tt
+		if = {
+			limit = {
+				has_country_flag = L68_our_land_cult_upg
+			}
+			custom_tooltip = estate_burghers_khair_families_our_land_cult_tt
+		}
+	}
+
+	on_revoked_province = {
+		remove_province_modifier = L68_khair_families_our_land_goods_co
+		remove_province_modifier = L68_khair_families_our_land_goods_notco
+		remove_province_modifier = L68_khair_families_our_land_cult_co
+		remove_province_modifier = L68_khair_families_our_land_cult_notco
+	}
+	on_invalid = {
+	}
+	on_invalid_province = {
+		if = {
+			limit = {
+				OR = {
+					has_province_modifier = L68_khair_families_our_land_goods_co
+					has_province_modifier = L68_khair_families_our_land_goods_notco
+					has_province_modifier = L68_khair_families_our_land_cult_co
+					has_province_modifier = L68_khair_families_our_land_cult_notco
+				}
+			}
+			remove_province_modifier = L68_khair_families_our_land_goods_co
+			remove_province_modifier = L68_khair_families_our_land_goods_notco
+			remove_province_modifier = L68_khair_families_our_land_cult_co
+			remove_province_modifier = L68_khair_families_our_land_cult_notco
+		}
+	}
+	penalties = {
+		yearly_corruption = 0.05
+	}
+	benefits = {
+		burghers_privilege_slots = 1
+	}
+	
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+estate_burghers_khair_families_the_right_to_teach = {
+	icon = privilege_recruit_minister
+	influence = 0.05
+	loyalty = 0.05
+	is_valid = { 
+		has_country_flag = L68_right_to_teach_unlock
+	}
+	can_select = {
+		has_country_flag = L68_right_to_teach_unlock
+	}
+	can_revoke = {
+		always = no
+	}
+
+	on_granted = {
+		set_country_flag = disabled_expelling_human_flag
+		set_country_flag = disabled_purging_human_flag
+		custom_tooltip = estate_burghers_khair_families_the_right_to_teach_tt
+	}
+
+	on_granted_province = {
+		if = {
+			limit = { fast_has_pop_of_race = { race = human } }
+
+			if = {
+				limit = {
+					owner = {
+						medium_tolerance_human_race_trigger = yes
+					}
+				}
+				add_province_modifier = { name = L68_khair_families_right_to_teach_co duration = -1 }
+				remove_province_modifier = L68_khair_families_right_to_teach_notco
+			}
+			else = {
+				add_province_modifier = { name = L68_khair_families_right_to_teach_notco duration = -1 }
+				remove_province_modifier = L68_khair_families_right_to_teach_co
+			}
+		}
+		
+	}
+	
+	on_revoked = {
+		clr_country_flag = disabled_expelling_human_flag
+		clr_country_flag = disabled_purging_human_flag
+		custom_tooltip = estate_burghers_khair_families_the_right_to_teach_tt
+	}
+
+	on_revoked_province = {
+		remove_province_modifier = L68_khair_families_right_to_teach_co
+		remove_province_modifier = L68_khair_families_right_to_teach_notco
+	}
+	on_invalid = {
+	}
+	on_invalid_province = {
+		if = {
+			limit = {
+				OR = {
+					has_province_modifier = L68_khair_families_right_to_teach_co
+					has_province_modifier = L68_khair_families_right_to_teach_notco
+				}
+			}
+			remove_province_modifier = L68_khair_families_right_to_teach_co
+			remove_province_modifier = L68_khair_families_right_to_teach_notco
+		}
+	}
+	penalties = {
+		yearly_corruption = 0.05
+	}
+	benefits = {
+		promote_culture_cost = -0.25
+		burghers_privilege_slots = 1
+	}
+	
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+estate_burghers_khair_families_iysashlagila_management = {
+	icon = privilege_recruit_minister
+	influence = 0.05
+	loyalty = 0.05
+	is_valid = { 
+		has_country_flag = L68_iysashlagila_management_un
+	}
+	can_select = {
+		has_country_flag = L68_iysashlagila_management_un
+	}
+
+	on_granted = {
+		custom_tooltip = estate_burghers_khair_families_iysashlagila_management_tt
+		simple_dynamic_effect = {
+            first_custom_tooltip  = estate_burghers_khair_families_iysashlagila_management_merccoexp_tt
+            first_limit = "medium_tolerance_human_race_trigger = yes"
+            first_effect = "custom_tooltip = estate_burghers_khair_families_iysashlagila_management_mercco_tt"
+            second_custom_tooltip = estate_burghers_khair_families_iysashlagila_management_mercnotcoexp_tt
+            second_limit = "NOT = { medium_tolerance_human_race_trigger = yes }"
+            second_effect = "custom_tooltip = estate_burghers_khair_families_iysashlagila_management_mercnotco_tt"
+        }
+	}
+	can_revoke = {
+		always = no
+	}
+
+	on_granted_province = {
+		if = {
+			limit = { fast_has_pop_of_race = { race = human } }
+
+			if = {
+				limit = {
+					owner = {
+						medium_tolerance_human_race_trigger = yes
+					}
+				}
+				add_province_modifier = { name = L68_khair_families_iysashlagila_management_lanforce_co duration = -1 }
+				remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_notco
+			}
+			else = {
+				add_province_modifier = { name = L68_khair_families_iysashlagila_management_lanforce_notco duration = -1 }
+				remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_co
+			}
+
+			if = {
+				limit = { has_human_majority_trigger = yes }
+				add_province_modifier = { name = L68_khair_families_iysashlagila_management_maj_man_debuff duration = -1 }
+			}
+		}
+	}
+	
+	on_revoked = {
+		custom_tooltip = estate_burghers_khair_families_iysashlagila_management_tt
+	}
+
+	on_revoked_province = {
+		remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_co
+		remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_notco
+		remove_province_modifier = L68_khair_families_iysashlagila_management_maj_man_debuff
+	}
+	on_invalid = {
+	}
+	on_invalid_province = {
+		if = {
+			limit = {
+				OR = {
+					has_province_modifier = L68_khair_families_iysashlagila_management_lanforce_co
+					has_province_modifier = L68_khair_families_iysashlagila_management_lanforce_notco
+					has_province_modifier = L68_khair_families_iysashlagila_management_maj_man_debuff
+				}
+			}
+			remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_co
+			remove_province_modifier = L68_khair_families_iysashlagila_management_lanforce_notco
+			remove_province_modifier = L68_khair_families_iysashlagila_management_maj_man_debuff
+		}
+	}
+	penalties = {
+		yearly_corruption = 0.05
+	}
+	benefits = {
+		mercenary_manpower = 0.20
+		mercenary_discipline = 0.025 
+		mercenary_cost = -0.1
+		burghers_privilege_slots = 1
+	}
+	
+	conditional_modifier = {
+		trigger = {
+			medium_tolerance_human_race_trigger = yes
+		}
+		modifier = {
+			mercenary_manpower = 0.20
+			mercenary_discipline = 0.025 
+			mercenary_cost = -0.1 
+		}
+	}
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+estate_burghers_khair_families_human_ships_halfling_sailors = {
+	icon = privilege_recruit_minister
+	influence = 0.05
+	loyalty = 0.05
+	is_valid = { 
+		has_country_flag = L68_human_ships_halfling_sailors_un
+	}
+	can_select = {
+		has_country_flag = L68_human_ships_halfling_sailors_un
+	}
+	can_revoke = {
+		always = no
+	}
+
+	on_granted = {
+		custom_tooltip = estate_burghers_khair_families_human_ships_halfling_sailors_tt
+	}
+
+	on_granted_province = {
+		if = {
+			limit = { fast_has_pop_of_race = { race = human } }
+
+			
+			if = {
+				limit = {
+					has_port = yes
+					has_human_minority_trigger = yes
+				}
+
+				if = {
+					limit = {
+						owner = {
+							medium_tolerance_human_race_trigger = yes
+						}
+					}
+					add_province_modifier = { name = L68_human_ships_halfling_sailors_ships_co duration = -1 }
+					remove_province_modifier = L68_human_ships_halfling_sailors_ships_notco
+				}
+				else = {
+					add_province_modifier = { name = L68_human_ships_halfling_sailors_ships_notco duration = -1 }
+					remove_province_modifier = L68_human_ships_halfling_sailors_ships_co
+				}
+			}
+			else_if = {
+				limit = {
+					has_human_majority_trigger = yes
+				}
+				add_province_modifier = { name = L68_human_ships_halfling_sailors_maj_trade_debuff duration = -1 }
+			}
+		}
+	}
+	
+	on_revoked = {
+		custom_tooltip = estate_burghers_khair_families_human_ships_halfling_sailors_tt
+	}
+
+	on_revoked_province = {
+		remove_province_modifier = L68_human_ships_halfling_sailors_ships_notco
+		remove_province_modifier = L68_human_ships_halfling_sailors_ships_co
+		remove_province_modifier =  L68_human_ships_halfling_sailors_maj_trade_debuff
+	}
+	on_invalid = {
+	}
+	on_invalid_province = {
+		if = {
+			limit = {
+				OR = {
+					has_province_modifier = L68_human_ships_halfling_sailors_ships_notco
+					has_province_modifier = L68_human_ships_halfling_sailors_ships_co
+					has_province_modifier = L68_human_ships_halfling_sailors_maj_trade_debuff
+				}
+			}
+			remove_province_modifier = L68_human_ships_halfling_sailors_ships_notco
+			remove_province_modifier = L68_human_ships_halfling_sailors_ships_co
+			remove_province_modifier =  L68_human_ships_halfling_sailors_maj_trade_debuff
+		}
+	}
+	penalties = {
+		yearly_corruption = 0.05
+	}
+	benefits = {
+		burghers_privilege_slots = 1
+		global_ship_trade_power = 0.33
+		max_flagships = 1
+	}
+	
+	conditional_modifier = {
+		trigger = {
+			medium_tolerance_human_race_trigger = yes
+		}
+		modifier = {
+			global_ship_trade_power = 0.33
+			max_flagships = 1
+		}
+		
+	}
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+#Spiked Log
+estate_monstrous_tribes_the_fallen_veil = {
+	icon = privilege_grant_autonomy
+	loyalty = 0.05
+	influence = 0.1
+	is_valid = { has_estate_privilege = estate_monstrous_tribes_the_fallen_veil }
+	can_revoke = { always = no }
+	
+	benefits = {
+		reform_progress_growth = 0.15
+		monthly_splendor = 1
+	}
+	ai_will_do = {
+		factor = 10
+	}
+
+}
+
+estate_monstrous_tribes_the_open_forest = {
+	icon = privilege_grant_autonomy
+	loyalty = 0.05
+	influence = 0.1
+	is_valid = { has_estate_privilege = estate_monstrous_tribes_the_open_forest }
+	can_revoke = { always = no }
+	
+	benefits = {
+		reform_progress_growth = 0.30
+		monthly_splendor = 2
+		global_institution_spread = 0.05
+	}
+	ai_will_do = {
+		factor = 10
+	}
+}
+
+estate_burghers_marketplace_of_ideas = {
+	icon = privilege_better_integration
+	loyalty = 0.05
+	influence = 0.1
+	is_valid = { 
+		has_country_flag = spiked_log_marketplace_of_ideas_unlocked
+	}
+	benefits = {
+		monthly_splendor = 2
+		global_institution_spread = 0.2
+	}
+	on_granted = {
+		increase_free_state_action = { action = focus }
+	}
+	on_revoked = {
+		decrease_free_state_action = { action = focus }
+	}
+	on_invalid = {
+		decrease_free_state_action = { action = focus }
+	}
+	
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+#Yudunyovi
+estate_church_ustiqlik_caretaking = {
+	icon = privilege_monopoly_of_goods_livestock
+	loyalty = 0.1
+	influence = 0.2
+	
+	is_valid = {
+		religion = yudunyovi
+	}
+
+	can_select = {
+		NOT = { has_estate_privilege = estate_orachov_ustiqlik_beneration }
+	}
+
+	on_granted = {
+		custom_tooltip = estate_church_ustiqlik_caretaking_tt
+	}
+
+	on_granted_province = {
+		if = {
+			limit = {
+				religion = yudunyovi
+				superregion = forbidden_lands_superregion
+				NOT = { region = yyl_moista_region }
+				development = 20
+				has_tax_building_trigger = yes
+			}
+			add_province_modifier = {
+				name = yudunyovi_powerful_ustiqlik
+				duration = -1
+			}
+		}
+	}
+
+	on_revoked_province = {
+		remove_province_modifier = yudunyovi_powerful_ustiqlik
+	}
+
+	on_invalid_province = {
+		remove_province_modifier = yudunyovi_powerful_ustiqlik
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+#Deranne
+estate_nobles_deranne_rogue_vassal = {
+	icon = privilege_lorentish_duchies
+	loyalty = -0.05
+	influence = 0
+	max_absolutism = -5
+
+	can_select = {
+		always = no
+	}
+
+	can_revoke = {
+		always = no
+	}
+
+	penalties = {
+		development_cost = 0.10
+		all_estate_loyalty_equilibrium = -0.05
+		prestige = -1
+	}
+
+	is_valid = {
+		has_country_flag = deranne_rogue_vassal_flag
+	}
+
+	ai_will_do = {
+		factor = 100
+	}
+	
+}
+
+estate_nobles_deranne_lorentish_resistance = {
+	icon = privilege_bloody_rose
+	loyalty = -0.1
+	influence = 0.1
+
+	can_select = {
+		always = no
+	}
+
+	can_revoke = {
+		always = no
+	}
+
+	on_granted = {
+		every_owned_province = {
+			limit = { culture = high_lorentish }
+			add_province_modifier = {
+				name = deranne_lorentish_resistance
+				duration = -1
+			}
+		}
+	}
+
+	penalties = {
+		legitimacy = -2
+		promote_culture_cost = 0.25
+	}
+
+	is_valid = {
+		has_country_flag = deranne_lorentish_resistance_flag_1
+	}
+
+	ai_will_do = {
+		factor = -100
+	}
+}
+
+estate_nobles_deranne_lorentish_resistance_2 = {
+	icon = privilege_bloody_rose
+
+	loyalty = -0.05
+	influence = 0.05
+	land_share = 0
+	max_absolutism = 0
+
+	can_select = {
+		always = no
+	}
+
+	on_granted = {
+		every_owned_province = {
+			limit = { culture = high_lorentish }
+			add_province_modifier = {
+				name = deranne_lorentish_resistance_2
+				duration = -1
+			}
+		}
+	}
+
+	penalties = {
+		legitimacy = -1
+		promote_culture_cost = 0.1
+	}
+
+	on_revoked = {
+		clr_country_flag = deranne_lorentish_resistance_flag_2
+		every_owned_province = {
+			limit = { has_province_modifier = deranne_lorentish_resistance_2 }
+			remove_province_modifier = deranne_lorentish_resistance_2
+		}
+	}
+
+	is_valid = {
+		has_country_flag = deranne_lorentish_resistance_flag_2
+	}
+
+	cooldown_years = 10
+	on_cooldown_expires = {
+		remove_estate_privilege = estate_nobles_deranne_lorentish_resistance_2
+	}
+
+	ai_will_do = {
+		factor = -100
+	}
+}
+
+estate_burghers_deranne_compromise_with_priestess = {
+	icon = privilege_religious_diplomats
+	loyalty = 0
+	influence = 0
+	max_absolutism = -5
+
+	can_select = {
+		always = no
+	}
+
+	can_revoke = {
+		always = yes
+	}
+
+	cooldown_years = 50
+	on_cooldown_expires = {
+		remove_estate_privilege = estate_burghers_deranne_compromise_with_priestess
+	}
+
+	on_granted = {
+		every_owned_province = {
+			limit = { region = fahvanosy_region }
+			add_province_modifier = {
+				name = deranne_influence_sisterhood_2
+				duration = -1
+			}
+		}
+	}
+
+	on_revoked = {
+		every_owned_province = {
+			limit = { region = fahvanosy_region }
+			remove_province_modifier = deranne_influence_sisterhood_2
+		}
+		clr_country_flag = deranne_compromise_flag
+	}
+
+	is_valid = {
+		has_country_flag = deranne_compromise_flag
+	}
+
+	ai_will_do = {
+		factor = -100
+	}
+}
+
+estate_church_deranne_seaflower_skalds = {
+	icon = privilege_missionary
+	loyalty = 0.05
+	influence = 0.1
+
+	can_select = {
+		always = yes
+	}
+
+	can_revoke = {
+		always = yes
+	}
+
+	benefits = {
+		mages_loyalty_modifier = 0.05
+		mages_influence_modifier = 0.10	
+		tolerance_own = 1
+		prestige_decay = -0.005
+	}
+
+	on_granted = {
+		custom_tooltip = deranne_traditions_of_old.tt
+	}
+	
+	is_valid = {
+		mission_completed = deranne_traditions_of_old
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+deranne_estate_nobles_power_and_grace = {
+	icon = privilege_coup_detat
+
+	loyalty = 0.05
+	influence = 0.1
+	land_share = 0
+	max_absolutism = 0
+
+	can_select = {
+		always = no
+	}
+
+	can_revoke = {
+		always = no
+	}
+
+	on_granted = {
+		every_owned_province = {
+			limit = {
+				culture = moon_elf
+				region = lencenor_region
+			}
+			add_province_modifier = {
+				name = deranne_power_and_grace_modifier
+				duration = -1
+			}
+		}
+	}
+
+	benefits = {
+		improve_relation_modifier = 0.10
+		advisor_cost = -0.05
+	}
+
+	is_valid = {
+		mission_completed = deranne_power_and_grace
+		NOT = { mission_completed = deranne_seaflower_blossom }
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+deranne_estate_nobles_court_of_lencenor = {
+	icon = privilege_coup_detat
+
+	loyalty = 0.05
+	influence = 0.1
+	land_share = 0
+	max_absolutism = 0
+
+	can_select = {
+		always = no
+	}
+
+	can_revoke = {
+		always = no
+	}
+
+	on_granted = {
+		every_owned_province = {
+			limit = {
+				culture = moon_elf
+				region = lencenor_region
+			}
+			remove_province_modifier = deranne_power_and_grace_modifier
+			add_province_modifier = {
+				name = deranne_power_and_grace_modifier_2 
+				duration = -1
+			}
+		}
+	}
+
+	benefits = {
+		improve_relation_modifier = 0.15
+		advisor_cost = -0.10
+		prestige = 1
+		idea_cost = -0.05
+	}
+
+	is_valid = {
+		mission_completed = deranne_seaflower_blossom
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+estate_burghers_deranne_dalairey_lumber = {
+	icon = privilege_heavy_ship
+	loyalty = 0
+	influence = 0.05
+
+	can_select = {
+		mission_completed = deranne_dalairey_lumber
+	}
+	
+	can_revoke = {
+		always = yes
+	}
+	on_granted = {
+		deranne_add_lumber_buff_on_wharf_constructed_effect = yes
+		custom_tooltip = deranne_dalairey_lumber.tt
+	}
+
+	on_revoked = {
+		remove_country_modifier = deranne_lumber_modifier_1 
+		remove_country_modifier = deranne_lumber_modifier_2
+		remove_country_modifier = deranne_lumber_modifier_3
+		remove_country_modifier = deranne_lumber_modifier_4
+	}
+
+	is_valid = {
+		mission_completed = deranne_dalairey_lumber
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+deranne_estate_burghers_dtc_merchant_fleets = {
+	icon = privilege_fluyt_cargo_space
+
+	loyalty = 0.10
+	influence = 0.10
+	land_share = 0.05
+
+	can_select = {
+		mission_completed = deranne_merchants_of_the_seaflower
+	}
+
+	can_revoke = {
+		always = yes
+	}
+
+	modifier_by_land_ownership = {
+		trade_efficiency = 0.35
+		ship_trade_power_modifier = 0.40
+		mercantilism_cost = -0.25
+		global_tax_modifier = -0.20
+	}
+
+	mechanics = {
+		exempt_from_seize_land
+	}
+
+	is_valid = {
+		mission_completed = deranne_merchants_of_the_seaflower
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+deranne_estate_burghers_dtc_dominance_aelantir = {
+	icon = privilege_monopoly
+
+	loyalty = 0
+	influence = 0
+	land_share = 0
+
+	can_revoke = {
+		always = no
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_aelantir_1_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_trade_power = 0.10
+			global_tariffs = 0.10
+		}
+	}
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_aelantir_2_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_trade_power = 0.15
+			global_tariffs = 0.15
+		}
+	}
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_aelantir_3_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_trade_power = 0.20
+			global_tariffs = 0.20
+			merchants = 1
+		}
+	}
+
+	is_valid = {
+		has_country_flag = deranne_aelantir_dominance_1_enabled
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+deranne_estate_burghers_dtc_dominance_sarhal = {
+	icon = privilege_monopoly
+
+	loyalty = 0
+	influence = 0
+	land_share = 0
+
+
+	can_revoke = {
+		always = no
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_sarhal_1_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_ship_trade_power = 0.10
+			trade_company_governing_cost = -0.10
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_sarhal_2_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_ship_trade_power = 0.15
+			trade_company_governing_cost = -0.15
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_flag = deranne_dominance_sarhal_3_flag
+		}
+		modifier = {
+			burghers_privilege_slots = 1
+			global_ship_trade_power = 0.20
+			trade_company_governing_cost = -0.20
+			merchants = 1
+		}
+	}
+
+	is_valid = {
+		has_country_flag = deranne_sarhal_dominance_1_enabled
+	}
+
+	ai_will_do = {
+		factor = 1
+	}
+}
+
+estate_nobility_patrons_of_the_lodges = {
+	icon = privilege_patrons_of_the_lodges
+
+	is_valid = {
+		NOT = {
+			religion = shadow_pact
+		}
+		OR = {
+			culture_group = inyaswarosa
+			culture = cyazizeta_lizardfolk
+		}
+	}
+ 
+	can_select = {
+		always = yes
+	}
+
+	can_revoke = {
+		always = no
+	}
+
+	influence = 0.05
+
+	
+	on_granted_province = {
+	
+	}
+
+	benefits = {
+		has_banners = yes
+	}
+
+	conditional_modifier = {
+		trigger = {
+			OR = {
+				accepted_culture = cyazizeta_lizardfolk  #the reason for the gaint tigger blocks is becasue it looks awful on estate screen to have mutiple copies of the same modifer
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+			NOT = {
+				calc_true_if = {
+					amount = 2
+					accepted_culture = cyazizeta_lizardfolk  
+					accepted_culture = tanizu
+					accepted_culture = kombedak
+					accepted_culture = antmvura
+					accepted_culture = umsozidak
+					accepted_culture = wakoodak
+				}
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.05
+		}
+	}
+
+	conditional_modifier = {
+		trigger = {
+			calc_true_if = {
+				amount = 2
+				accepted_culture = cyazizeta_lizardfolk  
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+			NOT = {
+				calc_true_if = {
+					amount = 3
+					accepted_culture = cyazizeta_lizardfolk  
+					accepted_culture = tanizu
+					accepted_culture = kombedak
+					accepted_culture = antmvura
+					accepted_culture = umsozidak
+					accepted_culture = wakoodak
+				}
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.10 
+		}
+	}
+
+	conditional_modifier = {
+		trigger = {
+			calc_true_if = {
+				amount = 3
+				accepted_culture = cyazizeta_lizardfolk  
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+			NOT = {
+				calc_true_if = {
+					amount = 4
+					accepted_culture = cyazizeta_lizardfolk  
+					accepted_culture = tanizu
+					accepted_culture = kombedak
+					accepted_culture = antmvura
+					accepted_culture = umsozidak
+					accepted_culture = wakoodak
+				}
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.15 
+		}
+	}
+
+	conditional_modifier = {
+		trigger = {
+			calc_true_if = {
+				amount = 4
+				accepted_culture = cyazizeta_lizardfolk 
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+			NOT = {
+				calc_true_if = {
+					amount = 5
+					accepted_culture = cyazizeta_lizardfolk  
+					accepted_culture = tanizu
+					accepted_culture = kombedak
+					accepted_culture = antmvura
+					accepted_culture = umsozidak
+					accepted_culture = wakoodak
+				}
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.2 
+		}
+	}
+
+	conditional_modifier = {
+		trigger = {
+			calc_true_if = {
+				amount = 5
+				accepted_culture = cyazizeta_lizardfolk 
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+			NOT = {
+				AND = {
+					accepted_culture = cyazizeta_lizardfolk 
+					accepted_culture = tanizu
+					accepted_culture = kombedak
+					accepted_culture = antmvura
+					accepted_culture = umsozidak
+					accepted_culture = wakoodak
+				}
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.25 
+		}
+	}
+
+	conditional_modifier = {
+		trigger = {
+			AND = {
+				accepted_culture = cyazizeta_lizardfolk 
+				accepted_culture = tanizu
+				accepted_culture = kombedak
+				accepted_culture = antmvura
+				accepted_culture = umsozidak
+				accepted_culture = wakoodak
+			}
+		}
+		modifier = {
+			amount_of_banners = 0.30 
+		}
+	}
+
+	conditional_modifier = { #note this and simular looking blocks below do not add bonuses to the nation it just look nicer then having something in the modifer screen
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv1
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.05
+		}
+	}
+	
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv2
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.05
+			land_morale = 0.05
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv3
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.05
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv4
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.05
+			morale_damage_received = -0.05
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv5
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv6
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_tanizu
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			cavalry_shock = 0.25
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_kombedak
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			reinforce_cost_modifier = -0.33
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_antmvura
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			drill_decay_modifier = -0.25
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_umsozidak
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			infantry_shock = 0.15
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_wakoodak
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			discipline = 0.05
+		}
+	}
+
+	conditional_modifier = { 
+		trigger = {
+			has_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_cyazizeta_lizardfolk
+		}
+		modifier = {
+			is_banner_modifier = yes
+			regiment_manpower_usage = -0.1
+			land_morale = 0.10
+			morale_damage_received = -0.1
+			fire_damage_received = -0.075
+   			shock_damage_received = -0.075
+		}
+	}
+
+	penalties = {
+		
+	}
+
+	on_granted = {
+		custom_tooltip = estate_nobility_patrons_of_the_lodges_tt
+	}
+
+	on_revoked = {
+		custom_tooltip = estate_nobility_patrons_of_the_lodges_tt
+		hidden_effect = {
+			remove_country_modifier = shifter_sub_type_aquatic
+			remove_country_modifier = shifter_sub_type_mammalian
+			remove_country_modifier = shifter_sub_type_reptilian
+			remove_country_modifier = shifter_sub_type_avian
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv1
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv2
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv3
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv4
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv5
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv6
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_tanizu
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_wakoodak
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_antmvura
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_kombedak
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_cyazizeta_lizardfolk
+			remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_umsozidak
+		}
+	}
+
+	on_invalid = {
+		remove_country_modifier = shifter_sub_type_aquatic
+		remove_country_modifier = shifter_sub_type_mammalian
+		remove_country_modifier = shifter_sub_type_reptilian
+		remove_country_modifier = shifter_sub_type_avian
+		remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv1
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv2
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv3
+		remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv4
+    	remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv5
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv6
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_tanizu
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_wakoodak
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_antmvura
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_kombedak
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_cyazizeta_lizardfolk
+        remove_country_modifier = hidden_shifter_amount_of_lodges_modifer_lv7_umsozidak
+	}
+
+	on_invalid_province = {
+		
+	}
 	ai_will_do = {
 		factor = 10
 	}
