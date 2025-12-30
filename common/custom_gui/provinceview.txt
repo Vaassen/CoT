@@ -528,10 +528,6 @@ custom_window = { #Window for the UI when building UI is open and no monument
 custom_window = { #Window for the UI when building UI is open and there is a monument
     name = province_button_window_with_monument
     potential = {
-		has_great_project = {
-			type = any
-			tier = 0
-		}
 		owner = {
 			OR = {
 				tag = FROM
@@ -634,7 +630,21 @@ custom_button = { #Merfolk Settlements
 			}
 			else_if = {
 				limit = { region = ishyamtumu_region }
-				NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 1 } } }
+				if = {
+					limit = {
+						5631 = {
+							has_great_project = {
+								type = izmeri_the_black_stone_city
+								tier = 3
+							}
+							owner = { can_use_izmeri_the_black_stone_city = yes }
+						}
+					}
+					NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 2 } } }
+				}						
+				else = {
+					NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 1 } } }
+				}
 			}
 			else_if = {
 				limit = { region = ringlet_isles_region }
@@ -1741,6 +1751,42 @@ custom_button = { #Golden Tremor Negeal Button
 	}
 }
 
+custom_button = { #Umbral Covenant Spire Explode Button
+	name = S90_spire_explode_button
+	tooltip = S90_spire_explode_tt
+	potential = { 
+		FROM = { has_country_flag = S90_spire_secrets_complete }
+		OR = {
+			province_id = 5921
+			province_id = 5763
+			province_id = 5863
+			province_id = 5585
+			province_id = 5971
+			province_id = 6032
+		}
+		NOT = { 
+			has_province_flag = S90_spire_exploded
+		}
+	}
+	trigger = {
+	}
+	effect = {
+		FROM = {
+			change_mana = { amount = 300 }
+		}
+		trigger_switch = {
+			on_trigger = province_id
+			5921 = { destroy_great_project = { type = khus_an_zhyani } }
+			5763 = { destroy_great_project = { type = kazakesh } }
+			5863 = { destroy_great_project = { type = kuiika_gamyi } }
+			5585 = { destroy_great_project = { type = kuvunika_citadel } }
+			5971 = { destroy_great_project = { type = khaga_yatsa } }
+			6032 = { destroy_great_project = { type = arskitse } }
+		}
+		set_province_flag = S90_spire_exploded 
+	}
+}
+
 custom_button = { #Jungle Fortress for Bibyobi
 	name = jungle_fortress_button
 	potential = {
@@ -1826,6 +1872,118 @@ custom_button = { #Spiked Log - Install Spiky Traps
 		custom_tooltip = spiked_log_spiky_trap_removal_conditions_tt
 	}
 }
+custom_button = { #Endhuvi Traveling Society Button
+	name = R36_traveling_society_button
+	tooltip = R36_traveling_society_button_tt
+	potential = {
+		FROM = { has_country_flag = R36_enable_traveling_society_button_flag }
+		is_part_of_kharunyana_river = yes
+		NOT = { region = nomsyulhan_region }
+		owned_by = FROM	
+	}
+	trigger = {
+		event_target:endhuvi_cinnabar_lotus_province = { owned_by = FROM }
+		is_core = FROM
+		FROM = { NOT = { has_country_modifier = R36_traveling_society_button_cooldown } }
+	}
+	effect = {
+		FROM = {
+			event_target:endhuvi_cinnabar_lotus_province = {
+				remove_province_modifier = R36_cinnabar_lotus_society_barge_3
+				if = {
+					limit = { NOT = { has_province_flag = R36_traveling_society_button_used_for_first_time } }
+					set_province_flag = R36_traveling_society_button_used_for_first_time
+					add_base_tax = 1
+					add_base_production = 1
+					add_base_manpower = 1
+				}
+			}
+		}
+		add_permanent_province_modifier = {
+			name = R36_cinnabar_lotus_society_barge_3
+			duration = -1
+		}
+		save_global_event_target_as = endhuvi_cinnabar_lotus_province
+		FROM = {
+			hidden_effect = { country_event = { id = flavour_endhuvi.102 } }
+			add_country_modifier = {
+				name = R36_traveling_society_button_cooldown
+				duration = 5475
+			}
+		}
+		custom_tooltip = R36_traveling_society_button_effect_tt
+	}
+}
+
+custom_button = { #Centaur Nomadism Move Capital Button
+	name = IW_move_capital_button
+	tooltip = IW_move_capital_button
+	potential = {
+		owned_by = FROM
+		FROM = { has_government_attribute = centaur_nomadism_attribute }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = IW_not_capital_tt
+			NOT = { is_capital_of = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = nomadic_capital_just_moved_tt
+			FROM = { NOT = { has_country_modifier = nomadic_capital_just_moved } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = IW_adm_power_trigger_tt
+			FROM = { 
+				variable_arithmetic_trigger = {
+					export_to_variable = {
+						which = current_adm
+						value = trigger_value:adm_power
+					}
+					check_variable = {
+						which = current_adm
+						which = nzoc_cost
+					}
+				}
+			}
+		}
+		controlled_by = FROM
+		is_state_core = FROM
+		custom_trigger_tooltip = {
+			tooltip = IW_no_enemies_nearby_tt
+			FROM = {
+				all_war_enemy_countries = {
+					ROOT = {
+						NOT = {
+							num_of_units_in_province = {
+								amount = 1
+								who = PREV
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		FROM = { 
+			set_capital = ROOT
+			custom_tooltip = IW_adm_power_effect_tt
+			hidden_effect = {
+				var_effect = {
+					var = nzoc_cost
+					effect = "add_adm_power"
+					sign = -
+				}
+			}
+			add_country_modifier = {
+				name = nomadic_capital_just_moved
+				duration = 1095 #3 years
+			}
+		}
+		custom_tooltip = IW_move_capital_button_tt
+	}
+}
+
 #################################
 # Anbennar Province UI Expanded #
 #################################
