@@ -110,23 +110,13 @@ I55_1_necro_missions = {
 				limit = { is_ruler_necromancy_level_3 = no }
 				ruler_is_advancing_necromancy = yes
 			}
-
-			all_owned_province = {
-				OR = {
-					has_state_edict = edict_advancement_effort
-					NOT = {
-						has_terrain = hills
-						has_terrain = highlands
-						has_terrain = mountain
-					}
-				}
-			}
 		}
 
 		effect = {
 			5025 = { #Loethatsvi
 				change_province_name = "Loethrklerd"
 				change_culture = ROOT
+				change_religion = ROOT
 				
 				tooltip = { kill_units = { who = ROOT } }
 				custom_tooltip = I55_unchained_sacrifice_tt
@@ -138,12 +128,12 @@ I55_1_necro_missions = {
 						name = I55_tomb_of_the_unchained
 						duration = -1
 					}
-					ROOT = { set_variable = { bh_undead_cavalry_var = 0 } }
+					ROOT = { set_variable = { bh_undead_infantry_var = 0 } }
 					while = {
 						limit = { units_in_province = ROOT }
 						ROOT = { 
 							increase_magic_experience = { unmodified_amount = 5 }
-							change_variable = { bh_undead_cavalry_var = 1 }
+							change_variable = { bh_undead_infantry_var = 1 }
 						}
 						kill_units = { who = ROOT amount = 1 }
 					}
@@ -186,6 +176,7 @@ I55_2_missions = {
 			country_event = {
 				id = irdaeos_worship.104 #Shaman Communion
 			}
+			hidden_effect = { country_event = { id = black_herd_events.10 } } #Here's a consort to kill
 		} 
 	}
 
@@ -222,6 +213,19 @@ I55_2_missions = {
 
 		effect = {
 			custom_tooltip = I55_ogre_spy_tt
+			if = {
+				limit = {
+					has_spy_network_in = { who = I90 value = 30 } #Maghargma
+					NOT = { has_spy_network_in = { who = I90 value = 50 } } #Maghargma
+				}
+				custom_tooltip = I55_maghargma_spy_30_yes_tt
+			}
+			else = { custom_tooltip = I55_maghargma_spy_30_no_tt }
+			if = {
+				limit = { has_spy_network_in = { who = I90 value = 50 } } #Maghargma
+				custom_tooltip = I55_maghargma_spy_50_yes_tt
+			}
+			else = { custom_tooltip = I55_maghargma_spy_50_no_tt }
 			country_event = {
 				id = black_herd_events.1 #Leaflets of the Glutton King
 			}
@@ -239,17 +243,25 @@ I55_2_missions = {
 							name = I55_umbral_disrupters
 							duration = 3650 #10 Years
 						}
-					}
-					else_if = {
-						limit = {
-							has_spy_network_from = {
-								who = ROOT
-								value = 5
+						if = {
+							limit = { tag = I90 } #Maghargma
+							if = {
+								limit = { has_spy_network_from = { who = ROOT value = 50 } }
+								every_subject_country = {
+									add_country_modifier = {
+										name = I55_umbral_disrupters
+										duration = 3650 #10 Years
+									}
+								}
 							}
-						}
-						add_country_modifier = {
-							name = I55_shadowy_disrupters
-							duration = 3650 #10 Years
+							else = {
+								every_subject_country = {
+									add_country_modifier = {
+										name = I55_shadowy_disrupters
+										duration = 3650 #10 Years
+									}
+								}
+							}
 						}
 					}
 				}
@@ -294,7 +306,8 @@ I55_2_necro_missions = {
 					NOT = {
 						AND = {
 							is_capital_of = ROOT
-							num_of_buildings_in_province = 5
+							num_of_buildings_in_province = 3
+							development = 15
 						}
 					}
 				}
@@ -325,7 +338,8 @@ I55_2_necro_missions = {
 			NOT = { exists = I90 } #Maghargma
 			5037 = { #Maghargma
 				is_capital_of = ROOT
-				num_of_buildings_in_province = 5
+				num_of_buildings_in_province = 3
+				development = 15
 			}
 			adm_tech = 4
 			dip_tech = 4
@@ -351,7 +365,7 @@ I55_2_necro_missions = {
 		provinces_to_highlight = {
 			region = ogre_valley_region
 			NOT = {
-				has_province_modifier = province_razed
+				anb_has_been_razed = yes
 				anb_has_been_exploited = yes
 			}
 		}
@@ -368,7 +382,7 @@ I55_2_necro_missions = {
 			ogre_valley_region = {
 				type = all
 				OR = {
-					has_province_modifier = province_razed
+					anb_has_been_razed = yes
 					anb_has_been_exploited = yes
 				}
 			}
@@ -462,7 +476,7 @@ I55_3_missions = {
 						AND = {
 							owned_by = ROOT
 							OR = {
-								has_province_modifier = province_razed
+								anb_has_been_razed = yes
 								anb_has_been_exploited = yes
 							}
 						}
@@ -490,11 +504,14 @@ I55_3_missions = {
 				type = all
 				owned_by = ROOT
 				OR = {
-					has_province_modifier = province_razed
+					anb_has_been_razed = yes
 					anb_has_been_exploited = yes
 				}
 			}
-			has_won_war_against = { who = I90 } #Maghargma
+			if = {
+				limit = { exists = I90 } #Maghargma
+				has_won_war_against = { who = I90 } #Maghargma
+			}
 			army_strength = {
 				who = I90 #Maghargma
 				value = 1
@@ -583,12 +600,14 @@ I55_3_necro_missions = {
 		effect = {
 			5005 = { #Levilkhar
 				change_culture = ROOT
+				change_religion = ROOT
 				change_trade_goods = damestear
 				set_province_flag = permanent_damestear
 				custom_tooltip = I55_permanent_damestear_tt
 				add_province_modifier = {
 					name = I55_deposit_divination_double_mod
 					duration = -1
+					desc = I55_deposit_divination_double_mod_tt
 				}
 				hidden_effect = { remove_province_modifier = divination_1_deposit_divination_local_mod }
 			}
@@ -625,7 +644,7 @@ I55_3_necro_missions = {
 			}
 			used_estate_action_amount = {
 				estate_action = RECRUIT_COURT_MAGE
-				amount = 4
+				amount = 1
 			}
 		}
 
@@ -665,7 +684,7 @@ I55_3_necro_missions = {
 			is_ruler_necromancy_level_3 = yes
 			at_least_magic_project_level = { project = lichdom level = 2 }
 			is_advancing_lichdom = yes
-			army_size_percentage = 1
+			army_size_percentage = 0.5
 		}
 
 		effect = {
@@ -962,6 +981,7 @@ I55_4_missions = {
 					cost = 0
 				}
 			}
+			custom_tooltip = " " #To space out the effects
 			add_government_reform = I55_magocratic_caehnate
 			custom_tooltip = I55_ku_warn_tt
 		}
@@ -1002,7 +1022,7 @@ I55_5_missions = {
 				}
 			}
 			has_estate_privilege = estate_mages_reduced_research_regulations
-			has_adm_advisor_for_duration = { duration = 180 } #6 months
+			has_adm_advisor = yes
 		}
 
 		effect = {
