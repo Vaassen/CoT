@@ -523,10 +523,9 @@ mother_akasik_province = {
 	if = {
 		limit = {
 			owns = $prov$
-			religion = mother_akasik
 			$prov$ = {
-				has_owner_religion = yes
 			[[gained]
+				religion = mother_akasik
 				NOT = { has_province_flag = akasik_controlled }
 			]
 			[[lost]
@@ -561,32 +560,38 @@ mother_akasik_mountain_control_check = {
 		limit = {
 			region = akasik_region
 			has_terrain = mountain
-			religion = mother_akasik
-			owner = { religion = mother_akasik }
-			NOT = { has_province_flag = akasik_controlled }
 		}
-		REB = { change_variable = { akasik_mountains = 1 } }
-		set_province_flag = akasik_controlled
-		clr_province_flag = not_akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
+		if = {
+			limit = {
+				religion = mother_akasik
+				owner = { religion = mother_akasik }
+				NOT = { has_province_flag = akasik_controlled }
+			}
+			REB = { change_variable = { akasik_mountains = 1 } }
+			set_province_flag = akasik_controlled
+			clr_province_flag = not_akasik_controlled
+			every_country = {
+				limit = { religion = mother_akasik }
+				country_event = { id = mother_akasik.3 }
+			}
 		}
-	}
-	else_if = {
-		limit = {
-			region = akasik_region
-			has_terrain = mountain
-			NOT = { religion = mother_akasik }
-			NOT = { owner = { religion = mother_akasik } }
-			NOT = { has_province_flag = not_akasik_controlled }
-		}
-		REB = { subtract_variable = { akasik_mountains = 1 } }
-		set_province_flag = not_akasik_controlled
-		clr_province_flag = akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
+		if = { # cannot be else_if or the country_event will fail to fire
+			limit = {
+				NOT = {
+					AND = {
+						religion = mother_akasik
+						owner = { religion = mother_akasik }
+					}
+				}
+				NOT = { has_province_flag = not_akasik_controlled }
+			}
+			REB = { subtract_variable = { akasik_mountains = 1 } }
+			set_province_flag = not_akasik_controlled
+			clr_province_flag = akasik_controlled
+			every_country = {
+				limit = { religion = mother_akasik }
+				country_event = { id = mother_akasik.3 }
+			}
 		}
 	}
 }
@@ -2517,16 +2522,56 @@ remove_zaradyrra_festival_buff = {
 	remove_country_modifier = zaradyrra_smithing_rising
 }
 
+# This way you only need to worry about giving a value to 1 input parameter, either claw_strength or canvas_strength
 ashhana_blood_curse_add_control_by_source = {
-	change_variable = {
-		which = $source$_strength
-		value = $amount$
-	}
+[[claw_strength]
 	add_government_power = {
 		mechanic_type = ashhana_blood_curse_mechanic
 		power_type = ashhana_blood_curse_control
-		value = $amount$
+		value = $claw_strength$
 	}
+	ashhana_blood_curse_add_faction_strength = {
+		claw_strength = $claw_strength$
+	}
+	]
+[[canvas_strength]
+	add_government_power = {
+		mechanic_type = ashhana_blood_curse_mechanic
+		power_type = ashhana_blood_curse_control
+		value = $canvas_strength$
+	}
+	ashhana_blood_curse_add_faction_strength = {
+		canvas_strength = $canvas_strength$
+	}
+	]
+}
+
+# This is a separate effect so we can use canvas_minus_claw to track the difference for the custom GUI
+ashhana_blood_curse_add_faction_strength = {
+[[claw_strength]
+	change_variable = {
+		which = claw_strength
+		value = $claw_strength$
+	}
+	hidden_effect = {
+		subtract_variable = {
+			which = canvas_minus_claw
+			value = $claw_strength$
+		}
+	}
+	]
+[[canvas_strength]
+	change_variable = {
+		which = canvas_strength
+		value = $canvas_strength$
+	}
+	hidden_effect = {
+		change_variable = {
+			which = canvas_minus_claw
+			value = $canvas_strength$
+		}
+	}
+	]
 }
 
 ashhana_blood_curse_control_from_performance = {
@@ -2535,14 +2580,12 @@ ashhana_blood_curse_control_from_performance = {
 			has_reform = festivals_of_blood
 		}
 		ashhana_blood_curse_add_control_by_source = {
-			source = claw
-			amount = 5
+			claw_strength = 5
 		}
 	}
 	else = {
 		ashhana_blood_curse_add_control_by_source = {
-			source = canvas
-			amount = 5
+			canvas_strength = 5
 		}
 	}
 }
@@ -2555,8 +2598,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_control_by_source = {
-			source = canvas
-			amount = 0.05
+			canvas_strength = 0.05
 		}
 	}
 	if = {
@@ -2566,8 +2608,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_control_by_source = {
-			source = canvas
-			amount = 0.05
+			canvas_strength = 0.05
 		}
 	}
 	if = {
@@ -2577,8 +2618,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_control_by_source = {
-			source = canvas
-			amount = 0.05
+			canvas_strength = 0.05
 		}
 	}
 	if = {
@@ -2586,8 +2626,7 @@ ashhana_blood_curse_monthly_control = {
 			ai = yes
 		}
 		ashhana_blood_curse_add_control_by_source = {
-			source = canvas
-			amount = 0.1
+			canvas_strength = 0.1
 		}
 	}
 }
@@ -2868,6 +2907,10 @@ ashhana_agony_of_expression_disaster_revolt_spawn = {
 		add_dip_power = 300
 		add_mil_power = 300
 		add_army_tradition = 50
+		add_country_modifier = { # Give them a +10 FL buff and some inf cost discount to help compete with the Ashhana Tribe reform
+			name = ashhana_revolt_buff
+			duration = -1
+		}
 		
 		capital_scope = {
 			build_to_forcelimit = {
@@ -2875,9 +2918,855 @@ ashhana_agony_of_expression_disaster_revolt_spawn = {
 				cavalry = 0.1
 			}
 		}
+		declare_war_with_cb = {
+			casus_belli = cb_ashhana_freedom_of_expression
+			who = ROOT
+		}
 	}
-	declare_war_with_cb = {
-		casus_belli = cb_ashhana_freedom_of_expression
-		who = $tag$
+}
+form_jadd_empire_effect = {
+	change_tag = F51
+	hidden_effect = { restore_country_name = yes }
+	set_government_rank_scripted_effect = { rank = 3 }
+	add_prestige = 50
+	if = {
+		limit = { has_custom_ideas = no }
+		country_event = { id = ideagroups.1 } #Swap Ideas
 	}
+	add_country_modifier = {
+		name = "centralization_modifier"
+		duration = 7300
+	}
+	hidden_effect = {
+		every_owned_province = {
+			limit = {
+				is_part_of_hre = yes
+			}
+			set_in_empire = no
+		}
+		set_country_flag = formed_jadd_empire_flag
+	}
+}
+bulwar_sarhal_monastery_add_hidden_mod = {
+	hidden_effect = {
+		[[1]
+			$scope$ = {
+				add_province_modifier = {
+					name = bulwar_general_monastery_system_hidden_1_region
+					duration = -1
+					hidden = yes
+				}
+				set_province_flag = bulwar_general_monastery_system_hidden_1_region
+			}
+		]
+		[[2]
+			$scope$ = {
+				add_province_modifier = {
+					name = bulwar_general_monastery_system_hidden_2_region
+					duration = -1
+					hidden = yes
+				}
+				set_province_flag = bulwar_general_monastery_system_hidden_2_region
+			}
+		]
+		[[3]
+			$scope$ = {
+				if = {
+					limit = { has_port = yes }
+					add_province_modifier = {
+						name = bulwar_general_monastery_system_hidden_3_region_coast
+						duration = -1
+						hidden = yes
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = bulwar_general_monastery_system_hidden_3_region_land
+						duration = -1
+						hidden = yes
+					}
+				}
+				set_province_flag = bulwar_general_monastery_system_hidden_3_region
+			}
+		]
+	}
+}
+bulwar_sarhal_monastery_remove_hidden_mod = {
+	hidden_effect = {
+		[[1]
+			$scope$ = {
+				remove_province_modifier = bulwar_general_monastery_system_hidden_1_region
+				clr_province_flag = bulwar_general_monastery_system_hidden_1_region
+			}
+		]
+		[[2]
+			$scope$ = {
+				remove_province_modifier = bulwar_general_monastery_system_hidden_2_region
+				clr_province_flag = bulwar_general_monastery_system_hidden_2_region
+			}
+		]
+		[[3]
+			$scope$ = {
+				clr_province_flag = bulwar_general_monastery_system_hidden_3_region
+				if = {
+					limit = { has_port = yes }
+					remove_province_modifier = bulwar_general_monastery_system_hidden_3_region_coast
+				}
+				else = {
+					remove_province_modifier = bulwar_general_monastery_system_hidden_3_region_land
+				}
+			}
+		]
+	}
+}
+bulwar_sarhal_temple_monastery_owner_change = {
+	#Temples
+	if = {
+		limit = { has_province_flag = bulwar_general_temple_system_region_flag }
+		add_province_modifier = {
+			name = bulwar_general_temple_system_region
+			duration = -1
+			hidden = yes
+		}
+	}
+	#Monasteries
+	if = {
+		limit = { has_province_flag = bulwar_general_monastery_system_hidden_1_region }
+		add_province_modifier = {
+			name = bulwar_general_monastery_system_hidden_1_region
+			duration = -1
+			hidden = yes
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = bulwar_general_monastery_system_hidden_2_region }
+		add_province_modifier = {
+			name = bulwar_general_monastery_system_hidden_2_region
+			duration = -1
+			hidden = yes
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = bulwar_general_monastery_system_hidden_3_region }
+		if = {
+			limit = { has_port = yes }
+			add_province_modifier = {
+				name = bulwar_general_monastery_system_hidden_3_region_coast
+				duration = -1
+				hidden = yes
+			}
+		}
+		else = {
+			add_province_modifier = {
+				name = bulwar_general_monastery_system_hidden_3_region_land
+				duration = -1
+				hidden = yes
+			}
+		}
+	}
+}
+bulwar_sarhal_monastery_clear = { #There is option to give away it to vassal before changing religion to keep modifier
+	if = {
+		limit = { 5505 = { has_province_modifier = bulwar_sarhal_temple_system_dakmender } }
+		5505 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_dakmender
+		}
+		telekenid_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5585 = { has_province_modifier = bulwar_sarhal_temple_system_kuvunika } }
+		5585 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_kuvunika
+		}
+		bamaliwuni_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5650 = { has_province_modifier = bulwar_sarhal_temple_system_shalazar } }
+		5650 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_shalazar
+		}
+		odu_kherass_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 483 = { has_province_modifier = bulwar_sarhal_temple_system_deshwimat } }
+		483 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_deshwimat
+		}
+		gol_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5481 = { has_province_modifier = bulwar_sarhal_temple_system_niramit } }
+		5481 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_niramit
+		}
+		khetapera_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5710 = { has_province_modifier = bulwar_sarhal_temple_system_kunolo } }
+		5710 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_kunolo
+		}
+		dao_nako_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 400 = { has_province_modifier = bulwar_sarhal_temple_system_khasa } }
+		400 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_khasa
+		}
+		akasik_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 475 = { has_province_modifier = bulwar_sarhal_temple_system_kheterat } }
+		475 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_kheterat
+		}
+		kheterata_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5529 = { has_province_modifier = bulwar_sarhal_temple_system_yetmesira } }
+		5529 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_yetmesira
+		}
+		yetefesefi_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5590 = { has_province_modifier = bulwar_sarhal_temple_system_mewojala } }
+		5590 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_mewojala
+		}
+		denibari_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5813 = { has_province_modifier = bulwar_sarhal_temple_system_sigilan } }
+		5813 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_sigilan
+		}
+		janama_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5434 = { has_province_modifier = bulwar_sarhal_temple_system_coburakaz } }
+		5434 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_coburakaz
+		}
+		far_salahad_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5631 = { has_province_modifier = bulwar_sarhal_temple_system_cyamutaka } }
+		5631 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_cyamutaka
+		}
+		ishyamtumu_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5728 = { has_province_modifier = bulwar_sarhal_temple_system_fojara } }
+		5728 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_fojara
+		}
+		kubaci_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { 5590 = { has_province_modifier = bulwar_sarhal_temple_system_kvangraak } }
+		5590 = {
+			remove_province_modifier = bulwar_sarhal_temple_system_kvangraak
+		}
+		denibari_region = {
+			remove_province_modifier = bulwar_general_temple_system_region
+			clr_province_flag = bulwar_general_temple_system_region_flag
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.330 }
+		clr_global_flag = bulwar_monastery_exist.330
+		if = {
+			limit = { 6659 = { has_province_modifier = bulwar_sarhal_monastery_system_3_area_jezarpizu } }
+			bedaphire_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_jezarpizu
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = telekenid_region 3 = yes}
+		}
+		else = {
+			bedaphire_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_jezarpizu
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = telekenid_region 2 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.331 }
+		clr_global_flag = bulwar_monastery_exist.331
+		if = {
+			limit = { 5671 = { has_province_modifier = bulwar_sarhal_monastery_system_2_area_gyumneba } }
+			umsozandin_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_gyumneba
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = bamaliwuni_region 2 = yes}
+		}
+		else = {
+			umsozandin_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_gyumneba
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = bamaliwuni_region 3 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.332 }
+		clr_global_flag = bulwar_monastery_exist.332
+		sut_ra_thon_area = {
+			remove_province_modifier = bulwar_sarhal_monastery_system_2_area_gylgyra
+		}
+		bulwar_sarhal_monastery_remove_hidden_mod = { scope = odu_kherass_region 2 = yes}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.333 }
+		clr_global_flag = bulwar_monastery_exist.333
+		if = {
+			limit = { 5466 = { has_province_modifier = bulwar_sarhal_monastery_system_3_area_mazu_makhara } }
+			siniwix_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_mazu_makhara
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = gol_region 3 = yes}
+		}
+		else = {
+			siniwix_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_1_area_mazu_makhara
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = gol_region 1 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.334 }
+		clr_global_flag = bulwar_monastery_exist.334
+		if = {
+			limit = { 6125 = { has_province_modifier = bulwar_sarhal_monastery_system_1_area_zerkis } }
+			zerkis_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_1_area_zerkis
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = khetapera_region 3 = yes}
+		}
+		else = {
+			zerkis_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_zerkis
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = khetapera_region 2 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.335 }
+		clr_global_flag = bulwar_monastery_exist.335
+		if = {
+			limit = { 5808 = { has_province_modifier = bulwar_sarhal_monastery_system_2_area_junansuar } }
+			mojobaa_kulan_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_junansuar
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = dao_nako_region 2 = yes}
+		}
+		else = {
+			mojobaa_kulan_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_junansuar
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = dao_nako_region 3 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.336 }
+		clr_global_flag = bulwar_monastery_exist.336
+		if = {
+			limit = { 407 = { has_province_modifier = bulwar_sarhal_monastery_system_3_area_bhetu } }
+			ekha_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_bhetu
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = akasik_region 3 = yes}
+		}
+		else = {
+			ekha_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_bhetu
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = akasik_region 2 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.337 }
+		clr_global_flag = bulwar_monastery_exist.337
+		mothers_delta_area = {
+			remove_province_modifier = bulwar_sarhal_monastery_system_1_area_anarat
+		}
+		bulwar_sarhal_monastery_remove_hidden_mod = { scope = kheterata_region 1 = yes}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.338 }
+		clr_global_flag = bulwar_monastery_exist.338
+		if = {
+			limit = { 5519 = { has_province_modifier = bulwar_sarhal_monastery_system_2_area_enikmesiki } }
+			berfan_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_2_area_enikmesiki
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = yetefesefi_region 2 = yes}
+		}
+		else = {
+			berfan_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_1_area_enikmesiki
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = yetefesefi_region 1 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.339 }
+		clr_global_flag = bulwar_monastery_exist.339
+		kidfan_area = {
+			remove_province_modifier = bulwar_sarhal_monastery_system_3_area_yikikakeli
+		}
+		bulwar_sarhal_monastery_remove_hidden_mod = { scope = denibari_region 3 = yes}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.340 }
+		clr_global_flag = bulwar_monastery_exist.340
+		if = {
+			limit = { 5789 = { has_province_modifier = bulwar_sarhal_monastery_system_1_area_zirrbit } }
+			xoruku_xugu_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_1_area_zirrbit
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = janama_region 1 = yes}
+		}
+		else = {
+			xoruku_xugu_area = {
+				remove_province_modifier = bulwar_sarhal_monastery_system_3_area_zirrbit
+			}
+			bulwar_sarhal_monastery_remove_hidden_mod = { scope = janama_region 3 = yes}
+		}
+	}
+	if = {
+		limit = { has_global_flag = bulwar_monastery_exist.341 }
+		clr_global_flag = bulwar_monastery_exist.341
+		aakeiritki_area = {
+			remove_province_modifier = bulwar_sarhal_monastery_system_1_area_sprigi_twani
+		}
+		bulwar_sarhal_monastery_remove_hidden_mod = { scope = shadow_swamp_region 1 = yes}
+	}
+}
+
+anb_sarhal_cultural_union = { #Might need an update if there's new cultures in the future
+	[[mengi]
+		custom_tooltip = anb_sarhal_cultural_union_mengi_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = yeteferen
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = metobesebi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = talilibeti
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ofehibi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = sitewosi
+				free = yes
+			}
+		}
+	]
+	[[inyaswarosa]
+		custom_tooltip = anb_sarhal_cultural_union_inyaswarosa_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = tanizu
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = kombedak
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = antmvura
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = umsozidak
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = wakoodak
+				free = yes
+			}
+		}
+	]
+	[[lizardfolk]
+		custom_tooltip = anb_sarhal_cultural_union_lizardfolk_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = cyazizeta_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = rhada_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = irikin_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ahzdara_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ashhana_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = mashkay_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = arraskay_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = draktaya_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ichiadza_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = shagatyn_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = adzalanas_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = hishakaya_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = itayzemby_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = karshyray_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = shagashay_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = shyashkay_lizardfolk
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = skarakara_lizardfolk
+				free = yes
+			}
+		}
+	]
+	[[baashidi]
+		custom_tooltip = anb_sarhal_cultural_union_baashidi_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ashamadi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = dhebiji
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = suhratbi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = guryadagga
+				free = yes
+			}
+		}
+	]
+	[[halfling]
+		custom_tooltip = anb_sarhal_cultural_union_halfling_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = mazava
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = mboala
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = fomarati
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = zohebidi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = amezatany
+				free = yes
+			}
+		}
+	]
+	[[irsukuba]
+		custom_tooltip = anb_sarhal_cultural_union_irsukuba_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ikilshebe
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = gumzemo
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = kudemtu
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = echenka
+				free = yes
+			}
+		}
+	]
+	[[vurebindu]
+		custom_tooltip = anb_sarhal_cultural_union_vurebindu_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = zuvunwa
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = kuivanhi
+				free = yes
+			}
+		}
+	]
+	[[kheteratan]
+		custom_tooltip = anb_sarhal_cultural_union_kheteratan_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = horakheti
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = hapremiti
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = tijarikheti
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = irsmahapan
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = shasouran
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = korosheshi
+				free = yes
+			}
+		}
+	]
+	[[west_sarhaly]
+		custom_tooltip = anb_sarhal_cultural_union_west_sarhaly_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = mantimatu
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = jiromji
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = ndurubu
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = tamajoba
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = taafi
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = binwarji
+				free = yes
+			}
+		}
+	]
+	[[gnollish]
+		custom_tooltip = anb_sarhal_cultural_union_gnollish_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = windhowler_gnoll
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = pyreclaw_gnoll
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = fieldstalker_gnoll
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = sandfang_gnoll
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = seascourge_gnoll
+				free = yes
+			}
+		}
+	]
+	[[bulwari]
+		custom_tooltip = anb_sarhal_cultural_union_bulwari_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = brasanni
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = sadnatu
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = zanite
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = surani
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = maqeti
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = masnsih
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = gelkar
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = bahari
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = kuzarami
+				free = yes
+			}
+		}
+	]
+	[[elven]
+		custom_tooltip = anb_sarhal_cultural_union_elven_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = desert_elf
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = sun_elf
+				free = yes
+			}
+		}
+	]
+	[[harpy]
+		custom_tooltip = anb_sarhal_cultural_union_harpy_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = nzeri_harpy
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = naleni_harpy
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = firanyan_harpy
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = siadunan_harpy
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = stonewing_harpy
+				free = yes
+			}
+		}
+	]
+	[[akasi]
+		custom_tooltip = anb_sarhal_cultural_union_akasi_tt
+		hidden_effect = {
+			anb_add_accepted_culture_or_dip_power = {
+				culture = desha
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = khasani
+				free = yes
+			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = far_akasi
+				free = yes
+			}
+		}
+	]
 }
