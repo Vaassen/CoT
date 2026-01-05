@@ -644,6 +644,22 @@ declarewar = {
 			always = no
 		}
 	}
+	
+	condition = {
+		tooltip = NO_VIC_AGAINST_LEADER_ALLY
+		potential = { 
+			is_subject_of_type = vic_league_member
+			overlord = {
+				OR = {
+					alliance_with = FROM
+					has_guaranteed = FROM
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 
 	pre_effect = {
 		if = { #Caergaraen
@@ -1475,18 +1491,18 @@ declarewar = {
 		}
 		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
 
-		#Accretive Path - Rusted Blades
+		#Accretive Path - Rusted Blades. Remove modifiers if at war.
 		if = {
 			limit = {
 				has_country_flag = ap_rustedblades_happened
 			}
 			remove_country_modifier = ap_rustedblades_quietmarch
+			remove_country_modifier = ap_rustedblades_productivemarch 
+			remove_country_modifier = ap_rustedblades_recruitmentmarch 
+			remove_country_modifier = ap_rustedblades_caravanmarch 
+			remove_country_modifier = ap_rustedblades_religiousmarch 
+			remove_country_modifier = ap_rustedblades_surveillancemarch 
 			remove_country_modifier = ap_rustedblades_sharpenedchi
-			remove_country_modifier = ap_rustedblades_productivemarch
-			remove_country_modifier = ap_rustedblades_recruitmentmarch
-			remove_country_modifier = ap_rustedblades_caravanmarch
-			remove_country_modifier = ap_rustedblades_religiousmarch
-			remove_country_modifier = ap_rustedblades_surveillancemarch
 			clr_country_flag = ap_rustedblades_happened
 		}
 		FROM = {
@@ -1495,16 +1511,49 @@ declarewar = {
 					has_country_flag = ap_rustedblades_happened
 				}
 				remove_country_modifier = ap_rustedblades_quietmarch
+				remove_country_modifier = ap_rustedblades_productivemarch 
+				remove_country_modifier = ap_rustedblades_recruitmentmarch 
+				remove_country_modifier = ap_rustedblades_caravanmarch 
+				remove_country_modifier = ap_rustedblades_religiousmarch 
+				remove_country_modifier = ap_rustedblades_surveillancemarch 
 				remove_country_modifier = ap_rustedblades_sharpenedchi
-				remove_country_modifier = ap_rustedblades_productivemarch
-				remove_country_modifier = ap_rustedblades_recruitmentmarch
-				remove_country_modifier = ap_rustedblades_caravanmarch
-				remove_country_modifier = ap_rustedblades_religiousmarch
-				remove_country_modifier = ap_rustedblades_surveillancemarch
 				clr_country_flag = ap_rustedblades_happened
 			}
 		}
-		
+		if = {
+			limit = {
+				tag = S90
+			}
+			if = {
+				limit = {
+					has_country_flag = S90_communion_flag
+					NOT = {
+						has_country_modifier = S90_communion_cd
+					}
+				}
+				add_country_modifier = {
+					name = S90_communion
+					duration = 1825
+				}
+				add_country_modifier = {
+					name = S90_communion_cd
+					duration = 3650
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = S90_incensed_to_rage
+					NOT = {
+						has_country_modifier = S90_incensed_to_rage_cd
+					}
+				}
+				add_stability = 1
+				add_country_modifier = {
+					name = S90_incensed_to_rage_cd
+					duration = 3650
+				}
+			}
+		}
 		if = { #Vic League
 			limit = {
 				OR = {
@@ -1546,6 +1595,41 @@ declarewar = {
 				chance = 10
 				set_country_flag = yingzhen_assassinated_once
 				country_event = { id = haless.742 days = 1 random = 364 }
+			}
+		}
+
+		if = { #Ashhana Lizardfolk gain Control
+			limit = {
+				has_government_mechanic = ashhana_blood_curse_mechanic
+			}
+			#Upon declaring war, gain +4 Control and Claw Strength
+			#When you have the War as Art reform, gain 8 Control and Claw Strength
+			if = {
+				limit = {
+					has_reform = war_as_art
+				}
+				ashhana_blood_curse_add_control_by_source = {
+					claw_strength = 4
+				}
+			}
+			else = {
+				ashhana_blood_curse_add_control_by_source = {
+					claw_strength = 2
+				}
+			}
+		}
+
+		if = { #umbral covenant CONSEQUENCES
+			limit = {
+				tag = S90
+				FROM = {
+					tag = S70
+				}
+			}
+			S90 = {
+				country_event = {
+					id = flavor_umbral_covenant.250
+				}
 			}
 		}
 	}
@@ -3073,13 +3157,24 @@ annexationaction = {
     }	
 	
 	condition = {
-		tooltip = vic_league_annex_conditions
+		tooltip = vic_league_annex_conditions_year
 		potential = {
 			FROM = { is_subject_of_type = vic_league_member }
 		}
 		allow = {
 			FROM = {
 				had_country_flag = { flag = vic_league_duration_tracker days = 9125 }
+			}
+		}
+	}
+	
+	condition = {
+		tooltip = vic_league_annex_conditions_other
+		potential = {
+			FROM = { is_subject_of_type = vic_league_member }
+		}
+		allow = {
+			FROM = {
 				NOT = { liberty_desire = 10 }
 				has_opinion = {
 					who = ROOT
@@ -3555,6 +3650,24 @@ callaction = {
 			}
 		}
 	}
+	
+	condition = { #Vic League
+		tooltip = NO_VIC_AGAINST_FELLOW_VIC_MEMBER
+		potential = {
+			FROM = {
+				is_subject_of_type = vic_league_member
+				overlord = {
+					OR = {
+						war_with = ROOT
+						any_subject_country = { war_with = ROOT }
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 
 ### effect
 	effect = {
@@ -3862,6 +3975,22 @@ insultaction = {
 				value = 2
 			}
 		}
+		if = {
+			limit = {
+				has_country_flag = S90_incorporeal_accompaniment_active
+				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } NOT = { has_country_modifier = S90_insult_cd } }
+			}
+			FROM = {
+				add_country_modifier = {
+					name = S90_incorporeal_accompaniment
+					duration = 1825
+				}
+				add_country_modifier = {
+					name = S90_insult_cd 
+					duration = 3650
+				}
+			}
+		}
 	}
 }
 
@@ -4144,18 +4273,39 @@ requestpeace = {
 			}
 		}
 	}
+	
+	condition = { #Ashhana blood curse revolt requires 100% warscore to finish
+		tooltip = ASHHANA_DISASTER_CANT_PEACE_tt
+		potential = {
+			is_in_war = { casus_belli = cb_ashhana_freedom_of_expression }
+			FROM = { is_in_war = { casus_belli = cb_ashhana_freedom_of_expression } }
+		}
+		allow = {
+			always = no
+		}
+	}
+	condition = { #umbral covenant
+		tooltip = S90_soul_of_the_world_no_peace_tt
+		potential = {
+			tag = S90
+			has_country_flag = S90_soul_of_the_world
+		}
+		allow = {
+			always = no
+        }
+	}
 }
 
 support_heir = {
-    condition = {
-        tooltip = cannot_support_heir_TT
-        potential = {
-            NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+	condition = {
+		tooltip = cannot_support_heir_TT
+		potential = {
+			NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+		}
+		allow = {
+			always = no
         }
-        allow = {
-            always = no
-        }
-    }
+	}
 }
 
 break_alliance = {
@@ -4298,6 +4448,34 @@ giftaction = {
 				value = 10
 			}
 		}
+		#Ashhana tribes with the Spread the Cure reform gain 1 Control and Canvas Strength when sending a gfit
+		#worth 10 opinion, but only once every 5 years per nation
+		if = {
+			limit = {
+				has_reform = spread_the_cure
+				FROM = {
+					primary_culture = ashhana_lizardfolk
+					has_10_opinion_sent_gift = {
+						target = ROOT
+					}
+					NOT = {
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = opinion_ashhana_spread_the_cure
+						}
+					}
+				}
+			}
+			FROM = {
+				add_opinion = {
+					who = root
+					modifier = opinion_ashhana_spread_the_cure
+				}
+			}
+			ashhana_blood_curse_add_control_by_source = {
+				canvas_strength = 1
+			}
+		}
 	}
 }
 
@@ -4334,6 +4512,14 @@ trade_favors_for_men = {
 			}
 			dt_change_aspire_compassion_modifier = yes
 		}
+
+		if = {
+			limit = {
+				has_country_flag = S50_enhanced_favors
+			}
+			set_country_flag = S50_traded_favors_for_manpower
+			add_army_tradition = 5
+		}
 	}
 }
 
@@ -4345,6 +4531,14 @@ trade_favors_for_gold = {
 				has_church_aspect = aspire_compassion_aspect_mil
 			}
 			dt_change_aspire_compassion_modifier = yes
+		}
+
+		if = {
+			limit = {
+				has_country_flag = S50_enhanced_favors
+			}
+			set_country_flag = S50_traded_favors_for_crowns
+			add_mil_power = 50
 		}
 	}
 }
@@ -4361,6 +4555,22 @@ trade_favors_for_sailors = {
 	}
 }
 
+knowledge_sharing = {
+	effect = {
+		if = { 
+			limit = { 
+				tag = I27 
+				mission_completed = I27_new_thoughts 
+				FROM = { 
+					primary_culture = wood_elf 
+					capital_scope = { superregion = deepwoods_superregion } 
+				} 
+			}
+			add_favors = { who = FROM amount = 25 }
+			FROM = { add_country_modifier = { name = I27_faster_embracement_mod duration = 1825 } }
+		}
+	}
+}
 support_independence_action = {
 	condition = {
 		tooltip = vic_league_no_external_support
