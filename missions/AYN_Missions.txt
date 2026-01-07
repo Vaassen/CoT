@@ -44,7 +44,7 @@ AYN_Branch_1 = {
 		provinces_to_highlight = { } 
 
 		trigger = {
-			check_variable = { which = qeyikul_fight_count_variable value = 4 }
+			check_variable = { which = qeyikul_reputation_variable value = 4 }
 			mil_tech = 4
 			has_mil_advisor = yes
 		} 
@@ -54,15 +54,11 @@ AYN_Branch_1 = {
 				name = AYN_Qeyikul_Tactics
 				duration = 18250
 			}
-			custom_tooltip = AYN_military_innovations_mod_refresh_tt
 			if = {
-				limit = { check_variable = { which = qeyikul_fight_count_variable value = 5 } }
-				set_country_flag = AYN_Jinnakah_regain_qeyikul_tactics
-				country_event = { # clears country flag
-					id = flavour_AYN.100
-					days = 18250
-				}
+				limit = { check_variable = { which = qeyikul_reputation_variable value = 5 } }
+				custom_tooltip = AYN_military_innovations_mod_refresh_yes_tt
 			}
+			else = { custom_tooltip = AYN_military_innovations_mod_refresh_no_tt }
 		} 
 	}
 
@@ -216,8 +212,10 @@ AYN_Branch_2 = {
 						}
 					}
 				}
+				custom_tooltip = AYN_ardimyan_prosperity_yes_tt
 				add_tribal_development_scaling = { key = 1.5 }
 			}
+			else = { custom_tooltip = AYN_ardimyan_prosperity_no_tt }
 		} 
 	}
 }
@@ -277,13 +275,14 @@ AYN_Branch_3 = {
 		} 
 
 		effect = {
-			country_event = {
-				id = flavour_AYN.101
-			}
 			add_country_modifier = {
 				name = AYN_expand_diplo_1
 				duration = 18250
 			}
+			country_event = {
+				id = flavour_AYN.101
+			}
+			custom_tooltip = AYN_event_insight_meeting_of_tribes
 		} 
 	}
 
@@ -310,6 +309,23 @@ AYN_Branch_3 = {
 				}
 				NOT = {
 					num_of_allies = 1
+					if = {
+						limit = { has_dlc = Dharma }
+						all_country = {
+							culture = guryadagga
+							has_opinion_modifier = {
+								who = ROOT
+								modifier = scornfully_insulted
+							}
+						}
+					}
+					else = {
+						all_country = {
+							culture = guryadagga
+							has_been_insulted_by_root = yes
+						}
+					}
+					prestige = 0
 				}
 			}
 		} 
@@ -336,11 +352,23 @@ AYN_Branch_3 = {
 			}
 			else = { custom_tooltip = BONUS_REWARD_NO }
 			tooltip = {
-				ROOT = { vassalize = S85 }
-				S85 = {
-					add_country_modifier = {
-						name = AYN_20_less_lib_desire
-						duration = -1
+				if = {
+					limit = { NOT = { tag = S85 } }
+					ROOT = { vassalize = S85 }
+					S85 = {
+						add_country_modifier = {
+							name = AYN_20_less_lib_desire
+							duration = -1
+						}
+					}
+				}
+				else = {
+					ROOT = { vassalize = S86 }
+					S86 = {
+						add_country_modifier = {
+							name = AYN_20_less_lib_desire
+							duration = -1
+						}
 					}
 				}
 			}
@@ -432,7 +460,12 @@ AYN_Branch_3 = {
 
 		effect = {
 			custom_tooltip = AYN_every_loyal_vassal_TD_tt
-			custom_tooltip = AYN_against_world_refresh_tt
+			if = {
+				limit = { has_country_modifier = AYN_against_the_world }
+				custom_tooltip = AYN_against_world_refresh_yes_tt
+			}
+			else = { custom_tooltip = AYN_against_world_refresh_no_tt }
+			
 			hidden_effect = {
 				if = {
 					limit = { NOT = { tag = S85 } S85 = { NOT = { liberty_desire = 50 } } }
@@ -701,9 +734,113 @@ S86_Missions_4 = {
 		required_missions = { AYN_4_1 } 
 		provinces_to_highlight = { } 
 
-		trigger = { } 
+		trigger = {
+			capital = 6568
+			land_maintenance = 1
+			manpower = 5
+			6683 = {
+				owner = {
+					NOT = {
+						has_opinion = {
+							who = ROOT
+							value = -75
+						}
+					}
+				}
+			}
+		} 
 
-		effect = { } 
+		effect = {
+			custom_tooltip = S86_every_none_island_province_gets_raided_tt
+			tooltip = {
+				6683 = { S86_get_raided_lol = yes }
+			}
+			custom_tooltip = S86_ships_needed_to_raid_islands_tt
+			if = {
+				limit = {
+					any_province = {
+						area = baashi_badda_area
+						owner = { ai = no }
+					}
+				}
+				custom_tooltip = S86_raid_human_can_fight_tt
+			}
+			hidden_effect = {
+				if = {
+					limit = {
+						any_province = {
+							area = baashi_badda_area
+							owner = { ai = yes }
+							is_island = no
+						}
+					}
+					every_province = {
+						limit = {
+							area = baashi_badda_area
+							owner = { ai = yes }
+							is_island = no
+						}
+						S86_get_raided_lol = yes
+					}
+					if = {
+						limit = {
+							any_province = {
+								area = baashi_badda_area
+								owner = { ai = no }
+								is_island = no
+							}
+						}
+						random_province = {
+							limit = {
+								area = baashi_badda_area
+								owner = { ai = no }
+							}
+							owner = {
+								country_event = {
+									id = flavour_AYN.300
+								}
+							}
+						}
+					}
+
+				}
+
+				if = { # Two islands
+					limit = {
+						navy_size = 4
+					}
+					every_province = {
+						limit = {
+							area = baashi_badda_area
+							owner = { ai = yes }
+							is_island = yes
+						}
+						S86_get_raided_lol = yes
+					}
+					if = {
+						limit = {
+							any_province = {
+								area = baashi_badda_area
+								owner = { ai = no }
+								is_island = yes
+							}
+						}
+						random_province = {
+							limit = {
+								area = baashi_badda_area
+								owner = { ai = no }
+							}
+							owner = {
+								country_event = {
+									id = flavour_AYN.300
+								}
+							}
+						}
+					}
+
+				}
+			}
+		} 
 	}
 }
 
@@ -720,9 +857,23 @@ S86_Missions_5 = {
 		required_missions = { AYN_4_1 } 
 		provinces_to_highlight = { } 
 
-		trigger = { } 
+		trigger = {
+			OR = {
+				land_forcelimit = 10
+				army_size = 7
+			}
+			is_in_deficit = no
+			any_country = {
+				is_subject_of = ROOT
+			}
+		} 
 
-		effect = { } 
+		effect = {
+			add_country_modifier = {
+				name = S86_defectors_blood
+				duration = -1
+			}
+		} 
 	}
 
 	S86_5_3 = {
@@ -734,9 +885,28 @@ S86_Missions_5 = {
 		}
 		provinces_to_highlight = { } 
 
-		trigger = { } 
+		trigger = {
+			check_variable = {
+				which = genie_cult_power_counter
+				value = 4
+			}
+			is_at_war = yes
+			capital_scope = {
+				has_siege = yes
+				OR = {
+					has_building = native_palisade
+					has_building = native_great_trail
+				}
+			}
+		} 
 
-		effect = { } 
+		effect = {
+			subtract_variable = {
+				which = genie_cult_power_counter
+				value = 2
+			}
+			set_country_flag = S86_unqiue_genie_cult_unlock_fl
+		} 
 	}
 }
 
@@ -974,9 +1144,8 @@ AYN_Branch_4_Low = {
 				name = AYN_chosen_of_ardimya
 				duration = -1
 			}
-			custom_tooltip = AYN_chosen_of_ardimya_no_modifier_desc_tt
+			custom_tooltip = AYN_chosen_of_ardimya_modifier_desc_tt
 			set_country_flag = genie_cult_extra_gain_chance_10
-
 			custom_tooltip = AYN_chosen_of_ardimya_mana_gain_tt
 			if = {
 				limit = {
@@ -989,8 +1158,10 @@ AYN_Branch_4_Low = {
 						value = 2
 					}
 				}
+				custom_tooltip = AYN_chosen_of_ardimya_yes_tt
 				set_country_flag = genie_cult_mana_gain
 			}
+			else = { custom_tooltip = AYN_chosen_of_ardimya_no_tt }
 		} 
 	}
 }
