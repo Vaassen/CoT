@@ -115,25 +115,24 @@ pashaine_1 = {
 			custom_tooltip = pashaine_standing_side_by_side_adv_reward_tt
 			custom_tooltip = " " #Linebreak
 
-			#Uncommnet this when magic rework is in along with the desired effects
-			#custom_tooltip = pashaine_standing_side_by_side_mage_tt
-			#if = {
-			#	limit = {
-			#		estate_loyalty = {
-			#			estate = estate_mages
-			#			loyalty = 80
-			#		}
-			#	}
-			#	custom_tooltip = BONUS_REWARD_YES
-			#	hidden_effect = {
-			#		#MAGICREWORK PLACEHOLDER - Next magic cast is free
-			#	}
-			#}
-			#else = { custom_tooltip = BONUS_REWARD_NO }
-			#tooltip = {
-			#	#MAGICREWORK PLACEHOLDER - Next magic cast is free
-			#}
-			#custom_tooltip = " " #Linebreak
+			custom_tooltip = pashaine_standing_side_by_side_mage_tt
+			if = {
+				limit = {
+					estate_loyalty = {
+						estate = estate_mages
+						loyalty = 80
+					}
+				}
+				custom_tooltip = BONUS_REWARD_YES
+				hidden_effect = {
+					make_spell_school_half_off = { school = all next_cast = yes }
+				}
+			}
+			else = { custom_tooltip = BONUS_REWARD_NO }
+			tooltip = {
+				make_spell_school_half_off = { school = all next_cast = yes }
+			}
+			custom_tooltip = " " #Linebreak
 			custom_tooltip = court_and_country_disabled_tt
 			set_country_flag = court_and_country_disabled
 			set_country_flag = pashaine_prelude_to_greatness_start
@@ -204,10 +203,10 @@ pashaine_1 = {
 				first_limit = "has_idea_group = humanist_ideas"
 				first_effect = "add_country_modifier = { name = pashaine_welcoming_luna duration = 18250 }"
 				second_custom_tooltip = pashaine_corinite_question_rc_tt
-				second_limit = "religion = regent_court"
+				second_limit = "religion = regent_court NOT = { has_idea_group = humanist_ideas }"
 				second_effect = "add_country_modifier = { name = pashaine_loyal_luna duration = 18250 }"
 				third_custom_tooltip = pashaine_corinite_question_corinite_tt
-				third_limit = "religion = corinite"
+				third_limit = "religion = corinite NOT = { has_idea_group = humanist_ideas }"
 				third_effect = "add_country_modifier = { name = pashaine_zealous_luna duration = 18250 }"
 			}
 		} 
@@ -220,29 +219,43 @@ pashaine_1 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			OR = {  
-				custom_trigger_tooltip = {
-					tooltip = obj_religious_league_war_on_winning_side_tooltip
-					has_country_flag = religious_league_war_on_winning_side
-				}
-				AND = {
-					has_global_flag = peace_of_esmaria
-					hre_religion_treaty = yes
-					diplomatic_reputation = 6
-				}
-				AND = {
-					hre_religion_locked = yes
+			if = {
+				limit = { hre_size = 1 }
+				OR = {  
 					custom_trigger_tooltip = {
-						tooltip = pashaine_lost_league_tt
-						NOT = { has_country_flag = religious_league_war_on_winning_side }
+						tooltip = obj_religious_league_war_on_winning_side_tooltip
+						has_country_flag = religious_league_war_on_winning_side
 					}
-					diplomatic_reputation = 9
-					prestige = 50
+					AND = {
+						has_global_flag = peace_of_esmaria
+						hre_religion_treaty = yes
+						diplomatic_reputation = 6
+					}
+					AND = {
+						hre_religion_locked = yes
+						custom_trigger_tooltip = {
+							tooltip = pashaine_lost_league_tt
+							NOT = { has_country_flag = religious_league_war_on_winning_side }
+						}
+						diplomatic_reputation = 9
+						prestige = 50
+					}
 				}
+			}
+			else = {
+				adm_power = 100
+				dip_power = 100
+				mil_power = 100
 			}
 		} 
 
-		effect = {  
+		effect = {
+			if = {
+				limit = { NOT = { hre_size = 1 } }
+				add_adm_power = -100
+				add_dip_power = -100
+				add_mil_power = -100
+			}
 			complex_dynamic_effect = {
 				first_custom_tooltip = pashaine_won_league_reward_tt
 				first_limit = "has_country_flag = religious_league_war_on_winning_side"
@@ -1327,49 +1340,57 @@ pashaine_5 = {
 
 		trigger = {  
 			diplomatic_reputation = 4
-			OR = {
-				emperor = {
-					has_opinion = {
-						who = ROOT
-						value = 150
-					}
-				}
-				AND = {
-					is_rival = emperor
-					emperor = { NOT = { prestige = ROOT } }
-				}
-			}
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = pashaine_prepare_legislation_elector_1_tt
-					is_elector = yes
-					calc_true_if = {
-						all_known_country = {
-							is_elector = yes
-							has_opinion = {
-								who = ROOT
-								value = 150
-							}
+			if = {
+				limit = { hre_size = 1 }
+				OR = {
+					emperor = {
+						has_opinion = {
+							who = ROOT
+							value = 150
 						}
-						amount = 3
+					}
+					AND = {
+						is_rival = emperor
+						emperor = { NOT = { prestige = ROOT } }
 					}
 				}
-				custom_trigger_tooltip = {
-					tooltip = pashaine_prepare_legislation_elector_2_tt
-					all_known_country = {
-						OR = {
-							NOT = { is_elector = yes }
-							OR = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = pashaine_prepare_legislation_elector_1_tt
+						is_elector = yes
+						calc_true_if = {
+							all_known_country = {
+								is_elector = yes
 								has_opinion = {
 									who = ROOT
 									value = 150
 								}
-								humiliated_by = ROOT
-								has_been_eclipsed_by = ROOT
+							}
+							amount = 3
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = pashaine_prepare_legislation_elector_2_tt
+						all_known_country = {
+							OR = {
+								NOT = { is_elector = yes }
+								OR = {
+									has_opinion = {
+										who = ROOT
+										value = 150
+									}
+									humiliated_by = ROOT
+									has_been_eclipsed_by = ROOT
+								}
 							}
 						}
 					}
 				}
+			}
+			else = {
+				adm_power = 100
+				dip_power = 100
+				dip_power = 100
 			}
 		} 
 
@@ -1378,6 +1399,14 @@ pashaine_5 = {
 			country_event = { #The Chancellor Of The Empire
 				id = flavour_pashaine.3 
 				days = 365 #1 year
+			}
+			if = {
+				limit = { 
+					NOT = { hre_size = 1 }
+				}
+				add_adm_power = -100
+				add_dip_power = -100
+				add_dip_power = -100
 			}
 		} 
 	}
@@ -1500,7 +1529,7 @@ pashaine_1_post_prelude = {
 
 		effect = {  
 			if = {
-				limit { NOT = { religion = ravelian } }
+				limit = { NOT = { religion = ravelian } }
 				change_religion = ravelian
 				convert_all_lodges_and_societies = yes
 				hidden_effect = {
@@ -1580,7 +1609,7 @@ pashaine_1_post_prelude = {
 				loyalty = 50
 			}
 			NOT = {
-				num_of_estate_privileges {
+				num_of_estate_privileges = {
 					estate = estate_artificers
 					value = 3
 				}
@@ -1764,7 +1793,11 @@ pashaine_2_post_prelude = {
 					has_building = fort_18th
 				}
 			}
-			capital_scope = { higher_development_than = 8 }
+			capital_scope = { 
+				higher_development_than = 8 #Anbenncost
+				has_any_ongoing_construction = no
+				has_siege = no
+			}
 			treasury = 3500
 		} 
 
@@ -1803,6 +1836,7 @@ pashaine_2_post_prelude = {
 					destroy_great_project = {
 						type = imperial_palace_anbenncost
 					}
+					set_province_flag = imperial_palace_destroyed_flag
 				}
 				capital_scope = {
 					set_province_flag = palace_of_unity
@@ -1907,10 +1941,24 @@ pashaine_3_post_prelude = {
 
 		trigger = {  
 			pashaine_clue_check = { amount = 6 }
-			has_country_modifier = pashaine_careful_maneouvering
+			if = {
+				limit = { hre_size = 1 }
+				has_country_modifier = pashaine_careful_maneouvering
+			}
+			else = {
+				adm_power = 300
+				dip_power = 300
+				mil_power = 300
+			}
 		} 
 
-		effect = {  
+		effect = {
+			if = {
+				limit = { NOT = { hre_size = 1 } }
+				add_adm_power = -300
+				add_dip_power = -300
+				add_mil_power = -300
+			}  
 			country_event = { id = flavour_pashaine.18 }
 			custom_tooltip = pashaine_empire_war_warning_tt
 		} 
@@ -2089,15 +2137,17 @@ pashaine_4_post_prelude = {
 				every_owned_province = {
 					limit = {
 						OR = {
-							has_production_building_trigger = yes
-							has_building = weapons
-							base_production = 8
+							AND = {
+								has_production_building_trigger = yes
+								has_building = weapons
+								base_production = 8
+							}
+							province_id = 303 #Ironhill
 						}
-						province_id = 303 #Ironhill
 					}
 					add_province_modifier = {
 						name = pashaine_supplying_the_guards
-						duration = -1
+						duration = 9125 #25 years
 					}
 				}
 			}
@@ -2280,8 +2330,12 @@ pashaine_5_post_prelude = {
 					}
 				}
 			}
-			has_estate_privilege = estate_burghers_exclusive_trade_rights
-			has_estate_privilege = estate_burghers_development_of_cities
+			if = { limit = { has_dlc = "Emperor" }
+				has_estate_privilege = estate_burghers_exclusive_trade_rights
+			}
+			if = { limit = { has_dlc = "Domination" }
+				has_estate_privilege = estate_burghers_development_of_cities
+			}
 		} 
 
 		effect = {
@@ -2426,9 +2480,17 @@ pashaine_5_post_prelude = {
 						}
 						country_event = { id = flavour_pashaine.25 }
 					}
-					else = {
-						country_event = { id = flavour_pashaine.26 }
+					else_if = {
+						limit = {
+							5430 = {
+								owner = { 
+									has_100_opinion_improved_relation = { target = ROOT }
+								}
+							}
+						}
+						country_event = { id = flavour_pashaine.25 }
 					}
+					else = { country_event = { id = flavour_pashaine.26 } }
 				}
 			}
 			else = {
@@ -2589,30 +2651,6 @@ pashaine_1_post_unity = {
 		} 
 
 		effect = {
-			#So that they become free
-			anb_remove_accepted_culture = { culture = anbenncoster }
-			anb_remove_accepted_culture = { culture = half_elf }
-			anb_remove_accepted_culture = { culture = west_damerian }
-			anb_remove_accepted_culture = { culture = east_damerian }
-			anb_remove_accepted_culture = { culture = pearlsedger }
-			anb_remove_accepted_culture = { culture = crownsman }
-			anb_remove_accepted_culture = { culture = vernman }
-			anb_remove_accepted_culture = { culture = exwesser }
-			anb_remove_accepted_culture = { culture = arbarani }
-			anb_remove_accepted_culture = { culture = esmari }
-			anb_remove_accepted_culture = { culture = arannese }
-			anb_remove_accepted_culture = { culture = uelairey }
-			anb_remove_accepted_culture = { culture = aldresian }
-			anb_remove_accepted_culture = { culture = telgeiran }
-			anb_remove_accepted_culture = { culture = pashainey }
-			anb_remove_accepted_culture = { culture = havoric }
-			anb_remove_accepted_culture = { culture = imperial_halfling }
-			anb_remove_accepted_culture = { culture = imperial_gnome }
-			anb_remove_accepted_culture = { culture = dovesworn_gnoll }
-			anb_remove_accepted_culture = { culture = moon_elf }
-			anb_remove_accepted_culture = { culture = silver_dwarf }
-			anb_remove_accepted_culture = { culture = wexonard }
-			anb_remove_accepted_culture = { culture = vertesker }
 
 			anb_imperial_cultural_union = yes
 			add_country_modifier = {
@@ -2645,14 +2683,18 @@ pashaine_1_post_unity = {
 					duration = -1
 				}
 			}
-			hidden_effect = {  
-				every_owned_province = {
-					limit = { has_building = university }
-					add_province_modifier = {
-						name = pashaine_market_of_ideas
-						duration = -1
-					}
-				}
+			hidden_effect = {
+				for = {
+					amount = 50
+					effect = "
+						random_owned_province = {
+						limit = { has_building = university }
+						add_province_modifier = {
+							name = pashaine_market_of_ideas
+							duration = -1
+						}
+					}"
+				}  
 			}
 			allow_double_radical_reforms = yes
 		} 
@@ -2736,9 +2778,8 @@ pashaine_2_post_unity = {
 				owned_by = ROOT
 				NOT = { local_autonomy_above_min = 10 }
 			}
-			if = {
-				limit = { A29 = { exists = yes } } #Busilar
-				A29 = {
+			A29 = { #Busilar
+				OR = {
 					if = {
 						limit = { 
 							any_subject_country = {
@@ -2758,11 +2799,11 @@ pashaine_2_post_unity = {
 						}
 					}
 					else = { has_been_insulted_by_root = yes }
+					NOT = { exists = yes }
 				}
 			}
-			if = {
-				limit = { A47 = { exists = yes } } #Eborthil
-				A47 = {
+			A47 = {  #Eborthil
+				OR = {
 					if = {
 						limit = { 
 							any_subject_country = {
@@ -2782,6 +2823,7 @@ pashaine_2_post_unity = {
 						}
 					}
 					else = { has_been_insulted_by_root = yes }
+					NOT = { exists = yes }
 				}
 			}
 		} 
@@ -3111,7 +3153,11 @@ pashaine_3_post_unity = {
 						province_id = 898
 						province_id = 284
 					}
-					NOT = { province_has_center_of_trade_of_level = 3 }
+					NOT = {
+						any_province_in_state = {
+							province_has_center_of_trade_of_level = 3
+						}
+					}
 				}
 			}
 		} 
@@ -3131,10 +3177,14 @@ pashaine_3_post_unity = {
 				is_prosperous = yes
 			}
 			898 = { #Aranthil
-				province_has_center_of_trade_of_level = 3
+				any_province_in_state = {
+					province_has_center_of_trade_of_level = 3
+				}
 			}
 			284 = { #Thanallen
-				province_has_center_of_trade_of_level = 3
+				any_province_in_state = {
+					province_has_center_of_trade_of_level = 3
+				}
 			}
 		} 
 
@@ -3289,6 +3339,8 @@ pashaine_4_post_unity = {
 					limit = { 
 						continent = europe
 						trade_goods = wool
+						has_production_manufactory_or_gold_trigger = yes
+						development = 15
 					}
 					change_trade_goods = cloth
 				}
@@ -3410,6 +3462,15 @@ pashaine_4_post_unity = {
 					}
 				}
 				AND = {
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								has_shipyard_building_trigger = yes
+								has_dock_building_trigger = yes
+								value = 75
+							}
+						}
+					}
 					owned_by = ROOT
 					has_port = yes
 					NOT = {
