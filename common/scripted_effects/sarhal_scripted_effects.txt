@@ -523,10 +523,9 @@ mother_akasik_province = {
 	if = {
 		limit = {
 			owns = $prov$
-			religion = mother_akasik
 			$prov$ = {
-				has_owner_religion = yes
 			[[gained]
+				religion = mother_akasik
 				NOT = { has_province_flag = akasik_controlled }
 			]
 			[[lost]
@@ -561,32 +560,38 @@ mother_akasik_mountain_control_check = {
 		limit = {
 			region = akasik_region
 			has_terrain = mountain
-			religion = mother_akasik
-			owner = { religion = mother_akasik }
-			NOT = { has_province_flag = akasik_controlled }
 		}
-		REB = { change_variable = { akasik_mountains = 1 } }
-		set_province_flag = akasik_controlled
-		clr_province_flag = not_akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
+		if = {
+			limit = {
+				religion = mother_akasik
+				owner = { religion = mother_akasik }
+				NOT = { has_province_flag = akasik_controlled }
+			}
+			REB = { change_variable = { akasik_mountains = 1 } }
+			set_province_flag = akasik_controlled
+			clr_province_flag = not_akasik_controlled
+			every_country = {
+				limit = { religion = mother_akasik }
+				country_event = { id = mother_akasik.3 }
+			}
 		}
-	}
-	else_if = {
-		limit = {
-			region = akasik_region
-			has_terrain = mountain
-			NOT = { religion = mother_akasik }
-			NOT = { owner = { religion = mother_akasik } }
-			NOT = { has_province_flag = not_akasik_controlled }
-		}
-		REB = { subtract_variable = { akasik_mountains = 1 } }
-		set_province_flag = not_akasik_controlled
-		clr_province_flag = akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
+		if = { # cannot be else_if or the country_event will fail to fire
+			limit = {
+				NOT = {
+					AND = {
+						religion = mother_akasik
+						owner = { religion = mother_akasik }
+					}
+				}
+				NOT = { has_province_flag = not_akasik_controlled }
+			}
+			REB = { subtract_variable = { akasik_mountains = 1 } }
+			set_province_flag = not_akasik_controlled
+			clr_province_flag = akasik_controlled
+			every_country = {
+				limit = { religion = mother_akasik }
+				country_event = { id = mother_akasik.3 }
+			}
 		}
 	}
 }
@@ -3764,4 +3769,34 @@ anb_sarhal_cultural_union = { #Might need an update if there's new cultures in t
 			}
 		}
 	]
+}
+
+form_adzalan_effect = {
+	change_tag = L87 #Adzalan
+	change_government = theocracy
+	add_government_reform = ashhana_realm_of_art
+	hidden_effect = { restore_country_name = yes }
+	increase_government_rank_scripted_effect = { rank = 2 }
+	if = {
+		limit = { has_custom_ideas = no }
+		country_event = { id = ideagroups.1 } #Swap Ideas
+	}
+	add_country_modifier = {
+		name = "centralization_modifier"
+		duration = 7300
+	}
+	hidden_effect = {
+		set_country_flag = adzalan_formed
+		clr_country_flag = ashhana_disaster_supporting_canvas
+		if = {
+			limit = { NOT = { has_global_flag = 333rdformed } }
+			every_country = {
+				limit = {
+					religion = anzalkatsa
+				}
+				country_event = { id = AnzalkatsaSchoolFightEvents.8 }
+			}
+			anb_lizardfolk_clash_change_variable_plus = yes
+		}
+	}
 }
