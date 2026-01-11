@@ -2495,6 +2495,8 @@ on_province_owner_change_government_effect = {
 
 on_province_religion_changed_effect = {
 	on_province_religion_converted_estate_privileges_effect = yes
+
+	mother_akasik_mountain_control_check = yes
 	
 	if = {
 		limit = {
@@ -3743,6 +3745,18 @@ on_battle_won_unit_effect = {
 			add_church_power = 1
 		}
 	}
+	if = {	#umbral covenant
+		limit = {
+			unit_owner = { tag = S90 }
+			is_ruler_commanding_unit = yes
+		}
+		S90 = {
+			change_variable = {
+				which = S90_vileone_battles
+				value = 1
+			}
+		}
+	}
 }
 
 on_battle_lost_unit_effect = { #this triggers on every unit present 
@@ -4550,6 +4564,47 @@ on_battle_won_country_effect = {
 			sign = +
 		}
 	}
+
+	if = { #umbral covenant casualties tracking and manpower recovery
+		limit = {
+			tag = S90
+			ai = no
+		}
+		change_variable = {
+			which = S90_casualties
+			which = land_units_killed
+		}
+		change_variable = {
+			which = S90_casualties
+			which = land_units_lost
+		}
+		if = {
+			limit = {
+				has_country_flag = S90_dark_resuscitation
+			}
+			set_variable = {
+				which = land_units_lost_S90
+				which = land_units_lost
+			}
+			divide_variable = {
+				which = land_units_lost_S90
+				value = 10
+			}
+			change_variable = {
+				which = S90_land_units_recovered_total
+				which = land_units_lost_S90
+			}
+			divide_variable = {
+				which = land_units_lost_S90
+				value = 1000
+			}
+			var_effect_granular = { 
+				effect = add_manpower 
+				var = land_units_lost_S90
+				sign = + 
+			}
+		}
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -4745,6 +4800,46 @@ on_battle_lost_country_effect = {
 
 		add_yezel_mora_misery_gov_power = {
 			var_amount = yezel_mora_misery_gain
+		}
+	}
+	if = { #umbral covenant casualties tracking and manpower recovery
+		limit = {
+			tag = S90
+			ai = no
+		}
+		change_variable = {
+			which = S90_casualties
+			which = land_units_killed
+		}
+		change_variable = {
+			which = S90_casualties
+			which = land_units_lost
+		}
+		if = {
+			limit = {
+				has_country_flag = S90_dark_resuscitation
+			}
+			set_variable = {
+				which = land_units_lost_S90
+				which = land_units_lost
+			}
+			divide_variable = {
+				which = land_units_lost_S90
+				value = 10
+			}
+			change_variable = {
+				which = S90_land_units_recovered_total
+				which = land_units_lost_S90
+			}
+			divide_variable = {
+				which = land_units_lost_S90
+				value = 1000
+			}
+			var_effect_granular = { 
+				effect = add_manpower 
+				var = land_units_lost_S90
+				sign = + 
+			}
 		}
 	}
 }
@@ -6753,6 +6848,17 @@ on_war_declaration_effect = {
 		FROM = { save_event_target_as = event_country }
 		I78 = { country_event = { id = flavour_wild_hunt.22 } }
 	}
+
+	#Great Storm starting Ruler liking Humans
+	if = {
+		limit = { 
+			has_ruler_flag = I80_caehn_vranulk
+			FROM = {
+				has_country_modifier = human_administration
+			}
+		}
+		add_stability = -2
+	}
 }
 
 remove_all_age_of_discovery_modifiers = {
@@ -6769,7 +6875,7 @@ remove_all_age_of_discovery_modifiers = {
 	# 		remove_country_modifier = eng_jousting_tournaments
 	# 	}
 	# }
-	
+
 	#Anbennar
 	if = {
 		limit = {
@@ -6794,6 +6900,17 @@ remove_all_age_of_discovery_modifiers = {
 			limit = { 1001 = { has_province_modifier = z22_last_homely_harbour } }
 			1001 = { remove_province_modifier = z22_last_homely_harbour }
 		}
+		if = { #Great Storm
+			limit = { has_country_modifier = I80_supremacy_of_the_malukhuga }
+			remove_country_modifier = I80_supremacy_of_the_malukhuga
+		}
+	}
+	if = {
+		limit = {
+			tag = I14
+			has_country_modifier = gor_vazumbrog_fighting_back
+		}
+		remove_country_modifier = gor_vazumbrog_fighting_back
 	}
 }
 remove_all_age_of_reformation_modifiers = {
@@ -8447,6 +8564,7 @@ on_mil_development_effect = {
 		}
 	}
 }
+
 on_development_effect = {
 	owner = {
 		change_variable = {
@@ -9394,6 +9512,17 @@ on_main_war_won_effect = {
 		add_splendor = 50
 		add_army_tradition = 5
 	}
+
+	if = {
+		limit = {
+			tag = S30
+			has_country_modifier = S30_conquest_2
+			FROM = {
+				has_reform = dakinshi_warlord_reform
+			}
+		}
+		add_treasury = 50
+	}
 }
 
 on_change_tag_effect = {
@@ -9644,6 +9773,15 @@ on_general_recruited_effect = {
 			}
 		}
 	}
+	if = {
+		limit = {
+			has_country_flag = S90_rise_from_shadow
+		}
+		capital_scope = {
+			mamluks_infantry = ROOT
+			mamluks_infantry = ROOT
+		}
+	}
 	accretive_path_gain_chi = { aspect = leadership_of_hero_monks category = mil amount = 15 }
 	#Molten Eternity
 	if = {
@@ -9788,6 +9926,18 @@ on_advisor_removed_effct_mil = {}
 on_advisor_removed_effct = {
 	on_advisor_removed_effct_$type$ = yes
 	#remove_country_modifier = zoroastrian_prophet_in_the_court
+
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = S50_shadow_pact_fortune_tellers
+				has_country_flag = S50_pack_leaders
+				has_country_flag = S50_sharp_tongues
+				has_country_flag = S50_diplomatic_liasons
+			}
+		}
+		S50_remove_advisor_modifiers_effect = yes
+	}
 }
 
 
@@ -9966,22 +10116,6 @@ on_government_change_effect = {
 		random_owned_province = {
 			limit = { has_province_modifier = home_of_consort }
 			remove_province_modifier = home_of_consort
-		}
-	}
-	if = {
-		limit = { 
-			owner = {
-				has_estate_privilege = artifice_invention_arcane_battery_capital_complex
-			}
-		}
-		FROM = { 
-			remove_province_modifier = artifice_arcane_battery_capital_complex
-		}
-		ROOT = {
-			add_province_modifier = {
-				name = artifice_arcane_battery_capital_complex
-				duration = -1
-			}
 		}
 	}
 	#if = {
@@ -12108,37 +12242,7 @@ on_province_owner_change_effect = {
 		}
 	}
 
-	if = {
-		limit = {
-			region = akasik_region
-			has_terrain = mountain
-			religion = mother_akasik
-			owner = { religion = mother_akasik }
-			NOT = { has_province_flag = akasik_controlled }
-		}
-		REB = { change_variable = { akasik_mountains = 1 } }
-		set_province_flag = akasik_controlled
-		clr_province_flag = not_akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
-		}
-	}
-	if = {
-		limit = {
-			region = akasik_region
-			has_terrain = mountain
-			NOT = { owner = { religion = mother_akasik } }
-			NOT = { has_province_flag = not_akasik_controlled }
-		}
-		REB = { subtract_variable = { akasik_mountains = 1 } }
-		set_province_flag = not_akasik_controlled
-		clr_province_flag = akasik_controlled
-		every_country = {
-			limit = { religion = mother_akasik }
-			country_event = { id = mother_akasik.3 }
-		}
-	}
+	mother_akasik_mountain_control_check = yes
 
 	if = {
 		limit = {
@@ -12178,6 +12282,33 @@ on_province_owner_change_effect = {
 				country_event = {
 					id = hre_event.101
 				}
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			OR = {
+				AND = {
+					province_id = 259
+					owner = { cannor_sponsor_of_aelant_exp_vg = yes }
+					exists = G97
+				}
+				# AND = {
+				#	province_id = 234
+				#	exists = G98
+				# 	owner = { cannor_sponsor_of_aelant_exp_csltc = yes } 
+				# }
+				AND = {
+					province_id = 264
+					owner = { is_or_was_tag = { tag = A95 } }
+					exists = H37
+				}
+			}
+		}
+		owner = {
+			country_event = {
+				id = aelantir_cannor_interaction.100
 			}
 		}
 	}
@@ -14768,6 +14899,19 @@ on_scorch_earth_effect = {
 		}
 		remove_province_modifier = karakhanbar_feyinfused_grove
 	}
+	if = {
+		limit = {
+			ROOT = {
+				tag = S90
+			}
+		}
+		S90 = {
+			change_variable = {
+				which = S90_scorch_count
+				value = 1
+			}
+		}
+	}
 }
 
 S53_won_battle_against_trolls = {
@@ -14844,6 +14988,44 @@ anb_on_exploit_effect = {
 	giberd_exploit_benonhill = yes
 	transmutative_path_lower_chi_wellspring_to_size_effect = yes
 	diggy_diggy_uesrennu = yes
+	if = { #umbral covenant
+		limit = {
+			owner = {
+				tag = S90
+			}
+		}
+		set_province_flag = S90_exploited_dev
+		S90 = {
+			change_variable = {
+				which = S90_exploit_count
+				value = 1
+			}
+		}
+		if = {
+			limit = {
+				S90 = {
+					has_country_flag = S90_extraction
+				}
+			}
+			S90 = {
+				change_mana = {
+					amount = 2
+				}
+			}
+		}
+	}
+	if = { #dbco
+		limit = {
+			owner = {
+				tag = S30
+				has_country_modifier = S30_convert_exploit
+			}
+		}
+		add_province_modifier = {
+			name = S30_local_convert
+			duration = 1825
+		}
+	}
 }
 on_province_owner_change_monuments = {
 	##### When monument changes owner #####
