@@ -162,9 +162,11 @@ on_startup = {
 		flavour_dogeater.0 #Dogeater Starting event
 		flavor_venomtooth.1 #Venomtooth Starting Event
 		flavour_deranne.1 #Deranne Starting event
+		flavour_great_storm.1 #Great Storm Starting event
 		yemotaferi.1 # Yemotaferi Starting Event
 		flavor_salla_elyn.11 #salla ellyn mt
 		flavor_ibekisedara.1 #Ibekisedara startup event
+		lake.512 #Zurka Qarshtuluu starting event
 
 		#Silver Families
 		silver_families.1		#Silmuna
@@ -2517,7 +2519,36 @@ on_war_won = {
 		set_country_flag = S98_khetist_war_won
 		clr_country_flag = S98_count_khetist_war
 	}
-	
+	###########
+	#Great Storm - War Resolution
+	if = { 
+		limit = { 
+			tag = I80
+		}	
+		if = { #Wild Hunt Resolution
+			limit = { has_country_flag = I80_big_war has_ever_humiliated = I78 FROM = { tag = I78 } }
+			country_event = {
+				id = flavour_great_storm.14
+			}
+			clr_country_flag = I80_big_war
+		}
+		if = { 
+			limit = { #Green Flame Leader Capture
+				has_country_flag = I80_food_poisoning 
+				I81 = {
+					any_core_province = { 
+						owned_by = I80
+					}
+					exists = no
+				}
+			}
+			country_event = {
+				id = flavour_great_storm.5 
+			}
+			clr_country_flag = I80_food_poisoning
+		}
+	}	
+
 	#####
 	#Infinite Self defeating the colonizers
 	if = {
@@ -2913,18 +2944,6 @@ on_battle_lost_country = {
 			which = land_units_lost
 		}
 	}
-
-	# Yemotaferi Troll Kill Counter
-	if = {
-		limit = { 
-			tag = S50
-			FROM = { has_country_modifier = troll_military }
-		}
-		change_variable = {
-			which = S50_trolls_killed
-			which = land_units_killed 
-		}
-	}
 	
 }
 
@@ -3292,8 +3311,8 @@ on_battle_won_country = {
 			FROM = { has_country_modifier = troll_military }
 		}
 		change_variable = {
-			which = S50_trolls_killed
-			which = land_units_killed
+			which = S50_troll_battles_won
+			which = 1
 		}
 	}
 
@@ -4455,6 +4474,25 @@ on_siege_lost_province =  {
 			id = holohana_events.41
 		}
 	}
+	#Great Storm
+	if = { 
+		limit = { 
+			FROM = {
+				has_country_flag = I80_storm_wake_flag
+				OR = {
+					has_cast_shock_and_awe = yes
+					has_cast_elemental_fury = yes
+				}
+			}
+		}
+		add_province_modifier = {
+			name = I80_storm_wake
+			duration = -1
+		}
+	}
+	else = {
+		remove_province_modifier = I80_storm_wake
+	}
 }
 
 # province
@@ -4729,6 +4767,15 @@ on_new_monarch = {
 		}
 		country_event = {
 			id = one_xia.4
+		}
+	}
+
+	#Great Storm Thing (Again. Of course)
+	if = {
+		limit = { has_ruler_flag = I80_emulant_heir }
+		add_ruler_modifier = {
+			name = I80_emulant
+			duration = 7300
 		}
 	}
 	if = { #Salla Elyn mt
@@ -22799,6 +22846,12 @@ on_post_dip_advisor_fired = {
 		remove_country_modifier = merfolk_advisor_nreformer_modifier
 		remove_country_modifier = merfolk_advisor_trader_modifier
 	}
+
+	if = { #Great Storm
+		limit = { has_country_modifier = I80_big_cat_government }
+		remove_country_modifier = I80_big_cat_government
+	}
+
 }
 
 # this = country
@@ -24407,6 +24460,38 @@ on_capital_moved = {
 		}
 	}
 
+	#Great Storm 
+	owner = {
+		if = {
+			limit = {
+				is_or_was_tag = { tag = I80 }
+			}
+			if = {
+				limit = { has_country_flag = I80_capital_mage_tower }
+				ROOT = {
+					add_building_construction = {
+						building = mage_tower
+						speed = 1
+						cost = 0.2
+					}
+				}
+				if = {
+					limit = { ROOT = { has_manufactory_trigger = yes } }
+					add_treasury = -100
+				}
+				clr_country_flag = I80_capital_mage_tower
+			}
+			if = { 
+				limit = { has_country_flag = I80_mage_movement } 
+				increase_magic_experience = { unmodified_amount = 25 }
+			}
+			if = { 
+				limit = { has_country_flag = I80_tirughuun_capital ROOT = { province_id = 5138 } }
+				clr_country_flag = I80_tirughuun_capital
+				increase_magic_experience = { unmodified_amount = 50 }
+			}		
+		}
+	}
 }
 
 #ROOT = province that was expanded in, FROM = country that did it
@@ -25124,6 +25209,14 @@ on_adm_exploited = {
 		}
 		set_province_flag = S61_exploited_adm_dev_flag
 	}
+	if = { #Dbco
+		limit = {
+			owner = {
+				tag = S30
+			}
+		}
+		set_province_flag = S30_exploit
+	}
 }
 
 on_dip_exploited = {
@@ -25280,10 +25373,13 @@ on_concentrate_development = {
 	if = {
 		limit = {
 			owner = {
-				tag = S90
+				OR = {
+					tag = S90
+					tag = S30
+				}
 			}
 		}
-		S90 = {
+		owner = {
 			change_variable = {
 				which = S90_concentrate
 				value = 1
@@ -25888,6 +25984,17 @@ on_core = { #ROOT - Province, #FROM - Country that gets the core
 			remove_random_development = yes
 			remove_random_development = yes
 		}
+	}
+	if = {
+		limit = {
+			FROM = {
+				tag = S30
+				has_country_modifier = S30_conquest
+			}
+			region = bamaliwuni_region
+		}
+		add_local_autonomy = -0.25
+		add_nationalism = -5
 	}
 }
 
