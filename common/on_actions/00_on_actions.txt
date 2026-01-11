@@ -167,6 +167,7 @@ on_startup = {
 		flavor_salla_elyn.11 #salla ellyn mt
 		flavor_ibekisedara.1 #Ibekisedara startup event
 		lake.512 #Zurka Qarshtuluu starting event
+		flavour_endhuvi.0 #Endhuvi intro
 
 		#Silver Families
 		silver_families.1		#Silmuna
@@ -1328,16 +1329,21 @@ on_war_won = {
 				}
 				humiliated_by = ROOT
 			}
+			add_treasury = -100
 			ROOT = {
 				add_mil_power = 50
 				add_dip_power = 50
 				add_adm_power = 50
 				add_war_exhaustion = -5
-				add_stability = 1
+				if = {
+						limit = { NOT = { stability = -2 } }
+						add_stability = 1
+				}
 				add_country_modifier = {
 					name = orc_clans_contribution
 					duration = 3650
 				}
+				add_treasury = 100
 			}
 			remove_opinion = {
 					WHO = ROOT
@@ -3209,8 +3215,8 @@ on_battle_won_country = {
 				FROM = { religion = regent_court }
 			}
 			change_variable = {
-				which = land_unit_casualties_rc
-				which = land_units_killed
+				which = battle_won_rc
+				value = 1
 			}
 		}
 		if = {
@@ -3218,8 +3224,8 @@ on_battle_won_country = {
 				FROM = { culture = green_orc }
 			}
 			change_variable = {
-				which = land_unit_casualties_go
-				which = land_units_killed
+				which = battle_won_go
+				value = 1
 			}
 		}
 	}
@@ -3312,7 +3318,7 @@ on_battle_won_country = {
 		}
 		change_variable = {
 			which = S50_troll_battles_won
-			which = 1
+			value = 1
 		}
 	}
 
@@ -5059,6 +5065,7 @@ on_monarch_death = {
 		golden_tremor_events.10 #Golden Tremor Starting Ruler Dies
 		molten_eternity.1 #Molten Eternity ruler death event
 		flavour_wild_hunt.21 #Wild Hunt Silence in the Steppes
+		insyaa_flavour.14 #Golodh, Immortal
 	}
 	if = {
 		limit = { has_government_attribute = no_stability_loss_on_monarch_death }
@@ -6622,8 +6629,9 @@ on_annexed = {
 		}
 		if = {
 			limit = { has_country_flag = federation_leader }
-			every_country = {
-				limit = { has_country_modifier = lake_federation_member }
+			clr_country_flag = federation_leader
+			random_country = {
+				limit = { has_country_modifier = lake_federation_member is_subject = no }
 				country_event = { id = lake.102 days = 1 }
 			}
 		}
@@ -11542,11 +11550,17 @@ on_four_year_pulse = {
 				random = 90
 			}
 		}
-    }
-
+	}
+	if = { #Lake Federation Elections
+		limit = {
+			owns = 5290
+		}
+		random_country = {
+			limit = { has_country_modifier = lake_federation_member is_subject = no }
+			country_event = { id = lake.102 }
+		}
+	}
 	events = {
-		lake.102 #Lake Federation Elections
-
 		#Breluslad revolts
 		flavour_brelar.61
 	}
@@ -13814,6 +13828,9 @@ on_five_year_pulse_3 = {
 		#Devouring Path
 		1000 = devouring_path.0
 		35 = devouring_path.1
+		
+		#Goblin Technocracies Easter Egg
+		15 = diggy.604
 	}
 
 	if = { #mechanim dormancy system
@@ -13822,6 +13839,11 @@ on_five_year_pulse_3 = {
 			owns = 6872
 		}
 		country_event = { id = mechanim_events.0 }
+	}
+
+	if = {
+		limit = { owns = 6877 } # only fire once per 5 year pulse instead of once per tag
+		golodh_wanders = yes
 	}
 
 	random_events = {
@@ -15881,6 +15903,14 @@ on_province_owner_change = {
 			has_province_modifier = gor_vazumbrog_dauvek_veker_secure_road
 		}
 		dauvek_veker_secure_road_colony_finished = yes
+	}
+
+
+	if = {
+		limit = { has_province_modifier = golodh_wandering }
+		# check here instead of in the event trigger because the other place this event is fired
+		# doesnt have the province modifier yet (and giving it at the same time doesn't seem to work)
+		province_event = { id = insyaa_flavour.11 } # Golodh, A Meeting
 	}
 	
 	###############################################################
@@ -23492,13 +23522,18 @@ on_pillaged_capital = {
 		add_adm_power = 50
 		add_mil_power = 50
 		add_dip_power = 50
+		add_treasury = 100
 		add_war_exhaustion = -5
-		add_stability = 1
+		if = {
+			limit = { NOT = { stability = -2 } }
+			add_stability = 1
+		}
 		add_country_modifier = {
 					name = orc_clans_contribution
 					duration = 3650
 		}
 		FROM = {
+			add_treasury = -100
 			remove_opinion = {
 				WHO = ROOT
 				modifier = B28_mockery
@@ -24434,39 +24469,6 @@ on_capital_moved = {
 			}
 			add_province_modifier = { name = magical_fortress_mod_1 duration = -1 }
 			add_province_modifier = { name = abjuration_1_ward_mod_1 duration = -1 }
-		}
-	}
-
-	#Great Storm 
-	owner = {
-		if = {
-			limit = {
-				is_or_was_tag = { tag = I80 }
-			}
-			if = {
-				limit = { has_country_flag = I80_capital_mage_tower }
-				ROOT = {
-					add_building_construction = {
-						building = mage_tower
-						speed = 1
-						cost = 0.2
-					}
-				}
-				if = {
-					limit = { ROOT = { has_manufactory_trigger = yes } }
-					add_treasury = -100
-				}
-				clr_country_flag = I80_capital_mage_tower
-			}
-			if = { 
-				limit = { has_country_flag = I80_mage_movement } 
-				increase_magic_experience = { unmodified_amount = 25 }
-			}
-			if = { 
-				limit = { has_country_flag = I80_tirughuun_capital ROOT = { province_id = 5138 } }
-				clr_country_flag = I80_tirughuun_capital
-				increase_magic_experience = { unmodified_amount = 50 }
-			}		
 		}
 	}
 }
@@ -26130,6 +26132,10 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 			}
 		}
 		FROM = { ROOT = { evocation_0_fireball_effect = yes } }
+	}
+	if = {
+		limit = { has_estate_privilege = artifice_invention_scream_beamers }
+		FROM = { change_siege = 2 }
 	}
 }
 
