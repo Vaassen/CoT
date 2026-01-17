@@ -295,6 +295,7 @@ generic_cast_spell = { #Duplicate relevant changes in 'magical_traditions_cast_s
 	[[war]
 		custom_tooltip = only_one_war_magic_tt
 		hidden_effect = { clear_active_war_magic = yes }
+		on_war_magic_cast = yes
 	]
 
 	hidden_effect = {
@@ -302,7 +303,7 @@ generic_cast_spell = { #Duplicate relevant changes in 'magical_traditions_cast_s
 	}
 	
 	on_$school$_spell_cast = yes
-	
+
 	$school$_$level$_$id$_effect = yes
 }
 
@@ -402,6 +403,7 @@ magical_traditions_cast_spell = { #Duplicate relevant changes in 'generic_cast_s
 	[[war]
 		custom_tooltip = only_one_war_magic_tt
 		hidden_effect = { clear_active_war_magic = yes }
+		on_war_magic_cast = yes
 	]
 
 	hidden_effect = {
@@ -1036,14 +1038,30 @@ divination_1_deposit_divination_effect = {  # Deposit Divination
 	}
 }
 divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
-	tooltip = { 4160 = { add_province_modifier = { name = divination_1_deposit_divination_local_mod duration = $days$ } } }
-	hidden_effect = {
-		every_owned_province = {
-			limit = { province_with_mineable_goods = yes }
-			add_province_modifier = { name = divination_1_deposit_divination_local_mod duration = $days$ }
+	if = {
+		limit = {
+			has_country_flag = S61_deposit_div_upgrade_flag
 		}
-		add_country_modifier = { name = divination_1_deposit_divination_cooldown_mod duration = $days$ hidden = yes }
+		tooltip = { 4160 = { add_province_modifier = { name = divination_1_deposit_divination_local_mod_S61_upgrade duration = $days$ } } }
+		hidden_effect = {
+			every_owned_province = {
+				limit = { OR = { province_with_mineable_goods = yes trade_goods = damestear } }
+				add_province_modifier = { name = divination_1_deposit_divination_local_mod_S61_upgrade duration = $days$ }
+			}
+			add_country_modifier = { name = divination_1_deposit_divination_cooldown_mod duration = $days$ hidden = yes }
+		}
 	}
+	else = {
+		tooltip = { 4160 = { add_province_modifier = { name = divination_1_deposit_divination_local_mod duration = $days$ } } }
+		hidden_effect = {
+			every_owned_province = {
+				limit = { OR = { province_with_mineable_goods = yes trade_goods = damestear } }
+				add_province_modifier = { name = divination_1_deposit_divination_local_mod duration = $days$ }
+			}
+			add_country_modifier = { name = divination_1_deposit_divination_cooldown_mod duration = $days$ hidden = yes }
+		}
+	}
+	
 }
 divination_2_scry_effect = {  # Scry #VERY FINICKY ABOUT ROOT SCOPE DUE TO FOW EFFECT
 	#Lets go with additive. Base duration = { days = 1825 months = 60 }
@@ -1144,6 +1162,14 @@ divination_2_scry_sub_effect = { #Scry sub-effect
 		capital_scope = { add_province_modifier = { name = divination_2_scry_local_mod duration = $days$ } }
 	}
 	else = { custom_tooltip = divination_2_scry_spell_effect_tt }
+	if = {
+		limit = {
+			has_country_flag = S61_scry_upgrade_flag
+		}
+		add_rebel_progress = {
+			value = -50
+		}
+	}
 }
 divination_2_manipulated_fortune_effect = {  # Manipulated Fortune
 	if = {
@@ -1156,7 +1182,6 @@ divination_2_manipulated_fortune_effect = {  # Manipulated Fortune
 		custom_tooltip = tughayasa_divination_booster_tt
 	}
 	else = { divination_2_manipulated_fortune_sub_effect = { days = 1825 } }
-
 	hidden_effect = {
 		if = {
 			limit = { has_country_modifier = orb_of_omniscience_div_tracker }
@@ -1501,6 +1526,10 @@ evocation_1_flaming_munitions_effect = { # Flaming Munitions
 		add_country_modifier = { name = evocation_1_flaming_munitions_mod duration = 1825 }
 		custom_tooltip = evocation_fireball_on_barrage_tt
 	}
+	if = { #Great Storm Shenanigans
+		limit = { has_country_flag = I80_fortrending_flag }
+		add_country_modifier = { name = I80_fort_rending duration = 1825 }
+	}
 }
 evocation_2_meteor_swarm_effect = { # Meteor Swarm
 	if = {
@@ -1636,6 +1665,10 @@ evocation_3_elemental_fury_effect = { # Elemental Fury
 	else = {
 		add_country_modifier = { name = evocation_3_elemental_fury_mod duration = 3650 }
 		custom_tooltip = evocation_fireball_on_barrage_tt
+	}
+	if = { #Great Storm Shenanigans
+		limit = { has_country_flag = I80_fortrending_flag }
+		add_country_modifier = { name = I80_fort_rending duration = 3650 }
 	}
 }
 
@@ -2285,7 +2318,23 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 	}
 }
 transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
-	tooltip = { 4160 = { add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ } } }
+	tooltip = { 
+		4160 = { 
+			add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ } 
+
+			if = {
+				limit = {
+					PREV = {
+						has_country_flag = S50_improved_plant_growth
+					}
+				}
+				add_prosperity = 10
+			}
+		} 
+	}
+
+
+
 	hidden_effect = {
 		if = {
 			limit = {
@@ -2310,6 +2359,16 @@ transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 			}
 		}
 		add_country_modifier = { name = transmutation_1_plant_growth_cooldown_mod duration = $days$ hidden = yes }
+
+		if = {
+			limit = {
+				has_country_flag = S50_improved_plant_growth
+			}
+			every_owned_province = {
+				limit = { province_with_arable_goods = yes }
+				add_prosperity = 10
+			}
+		}
 	}
 }
 transmutation_1_mass_enlarge_effect = { # Mass Enlarge
@@ -2339,6 +2398,13 @@ transmutation_2_reshape_terrain_effect = { # Reshape Terrain
 		else = { custom_tooltip = magic_booster_by_eilisin_tt }
 	}
 	else = { add_country_modifier = { name = transmutation_2_reshape_terrain_mod duration = 3650 } }
+
+	if = {
+		limit = {
+			has_country_flag = S50_upgraded_reshape_terrain
+		}
+		add_country_modifier = { name = S50_transmutation_2_reshape_terrain_buffed_mod duration = 3650 }
+	}
 }
 transmutation_3_rite_of_conception_effect = { # Rite of Conception
 	if = {
@@ -2533,6 +2599,9 @@ illusion_2_template_tag_specific_example_4_effect = { add_treasury = 10 }
 illusion_2_template_tag_specific_example_5_effect = { add_treasury = 11 }
 illusion_3_template_tag_specific_example_6_effect = { add_treasury = 12 }
 
+on_war_magic_cast = { #Effects that you want to happen whenever war magic is being cast
+	great_storm_war_magic_experience_effect = yes #Great Storm Thing
+}
 #Black Herd
 evocation_2_black_herd_default_5_effect = {
 	hidden_effect = {
