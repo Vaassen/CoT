@@ -5553,26 +5553,31 @@ apply_black_herd_capital_NZOC_effects = {
 				owner = {
 					OR = {
 						is_overall_advancing_magic = yes
-						is_advancing_project = yes
+						is_advancing_any_project = yes
 					}
 				}
 			}
+			set_variable = { tomb_chained_exp = 0 }
 			while = {
 				limit = { units_in_province = owner }
-				owner = { 
-					if = {
-						limit = {
-							OR = {
-								ruler_is_advancing_necromancy = yes
-								is_advancing_lichdom = yes
-								is_advancing_specific_magical_project = { project = black_herd_project_1 }
-							}
-						}
-						increase_magic_experience = { unmodified_amount = 2 }
-					}
-					else = { increase_magic_experience = { unmodified_amount = 0.5 } }
-				}
 				kill_units = { who = owner amount = 1 }
+				owner = { change_variable = { tomb_chained_exp = 0.5 } }
+			}
+			owner = {
+				if = {
+					limit = {
+						OR = {
+							ruler_is_advancing_necromancy = yes
+							is_advancing_lichdom = yes
+							is_advancing_specific_project = { project = black_herd_project_1 }
+						}
+					}
+					multiply_variable = {
+						which = tomb_chained_exp
+						value = 4
+					}
+				}
+				increase_magic_experience = { unmodified_var_amount = tomb_chained_exp }
 			}
 		}
 		if = {
@@ -5592,36 +5597,36 @@ apply_black_herd_capital_NZOC_effects = {
 		}
 		if = {
 			limit = { owner = { has_country_modifier = I55_vanishing_migration } }
-			change_culture = owner
-			change_religion = owner
-			add_province_modifier = {
-				name = I55_charnelshafts
-				duration = -1
+			if = {
+				limit = { NOT = { culture = owner } }
+				change_culture = owner
 			}
-			export_to_variable = {
-				which = bh_manpower_var
-				value = base_manpower
+			if = {
+				limit = { NOT = { religion = owner } }
+				change_religion = owner
 			}
-			divide_variable = {
-				which = bh_manpower_var
-				value = 2
-			}
-			round_variable = {
-				which = bh_manpower_var
-				value = 1
-			}
-			for_variable_amount = {
-				variable = bh_manpower_var
-				effect = "
-					add_base_manpower = -1
-					add_base_production = 1
-				"
-			}
-			every_owned_province = {
-				limit = { has_base_nomadic_zone_of_control_modifier = yes }
-				add_province_modifier = {
-					name = I55_charnelshafts
-					duration = -1
+			owner = {
+				export_to_variable = {
+					which = bh_manpower_var
+					value = base_manpower
+					who = PREV
+				}
+				divide_variable = {
+					which = bh_manpower_var
+					value = 2
+				}
+				round_variable = {
+					which = bh_manpower_var
+					value = 1
+				}
+				for_variable_amount = {
+					variable = bh_manpower_var
+					effect = "
+						PREV = {
+							add_base_manpower = -1
+							add_base_production = 1
+						}
+					"
 				}
 			}
 		}
@@ -5663,7 +5668,7 @@ add_noncentaur_nomadic_zone_of_control_modifier = {
 add_nomadic_capital_moved_modifier = {
 	if = {
 		limit = { #Black Herd
-			capital_scope = {
+			$scope$ = {
 				OR = {
 					has_province_modifier = I55_tomb_of_the_unchained
 					has_province_modifier = I55_home_of_the_greatbound
