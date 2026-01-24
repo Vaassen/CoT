@@ -3837,50 +3837,97 @@ triplets_add_development_effect = {
 	if = {
 		limit = {
 			has_building = temple
+			NOT = {
+				has_province_flag = triplet_gained_development_cathedral
+				has_province_flag = triplet_gained_development_temple
+			}
 		}
-		add_dev_from_upgrading_or_building = {
-			source = monument_triplet
-			building = temple
-			type = tax
-			value = 1
-		}
+		set_province_flag = triplet_gained_development_temple
+		add_base_tax = 1
 	}
 	else_if = {
 		limit = {
 			has_building = cathedral
+			NOT = { has_province_flag = triplet_gained_development_cathedral }
 		}
-		add_dev_from_upgrading_or_building = {
-			source = monument_triplet
-			building = cathedral
-			type = tax
-			value = 2
+		set_province_flag = triplet_gained_development_cathedral
+		if = {
+			limit = {
+				has_province_flag = triplet_gained_development_temple 			
+			}
+			add_base_tax = 1
+		}
+		else = {
+			add_base_tax = 2
 		}
 	}	
 }
-triplets_remove_development_effect = {
+apply_triplets_temple_bonus = {
 	if = {
 		limit = {
-			has_building = temple
+			has_estate_privilege = estate_church_development_of_temples
 		}
-		remove_dev_from_building_2 = {
-			source = monument_triplet
-			building = temple
-			type = tax
-			value = 1
+		if = {
+			limit = {
+				owner = { has_government_attribute = buff_development_of_temple }
+				has_building = cathedral
+			}
+			add_province_modifier = {
+				name = estate_church_development_of_temples_mod_buff
+				duration = -1
+			}
+		}
+		else = {
+			add_province_modifier = {
+				name = estate_church_development_of_temples_mod
+				duration = -1
+			}
 		}
 	}
-	else_if = {
-		limit = {
-			has_building = cathedral
+	else = {
+		if = {
+			limit = { owner = { mission_completed = R38_accommodate_new_students } }
+			add_province_modifier = {
+				name = bhuvauri_estate_lowercastes_development_of_temples_mod
+				duration = -1
+			}
 		}
-		remove_dev_from_building_2 = {
-			source = monument_triplet
-			building = cathedral
-			type = tax
-			value = 2
+		else = {
+			add_province_modifier = {
+				name = estate_lowercastes_development_of_temples_mod
+				duration = -1
+			}
 		}
 	}
 }
+
+clear_triplets_temple_bonus = {
+	if = {
+		limit = {
+			has_province_modifier = estate_church_development_of_temples_mod
+		}
+		remove_province_modifier = estate_church_development_of_temples_mod
+	}
+	else_if = {
+		limit = {
+			has_province_modifier = estate_church_development_of_temples_mod_buff
+		}
+		remove_province_modifier = estate_church_development_of_temples_mod_buff
+	}
+	else_if = {
+		limit = {
+			has_province_modifier = estate_lowercastes_development_of_temples_mod
+		}
+		remove_province_modifier = estate_lowercastes_development_of_temples_mod
+	}
+	else_if = {
+		limit = {
+			has_province_modifier = bhuvauri_estate_lowercastes_development_of_temples_mod
+		}
+		remove_province_modifier = bhuvauri_estate_lowercastes_development_of_temples_mod
+	}
+}
+
 triplets_check_extra_effects = {
 	#for tier-2 effect
 	if = {
@@ -3892,7 +3939,6 @@ triplets_check_extra_effects = {
 					tier = 2
 				}
 			}
-			
 		}
 		if = {
 			limit = {
@@ -3900,10 +3946,25 @@ triplets_check_extra_effects = {
 				can_use_holy_triplets_of_mewomender = yes
 			}
 			set_country_flag = triplets_temple_regardless_faith
-			every_owned_province = {
-				on_province_religion_converted_estate_privileges_effect = yes
+			if = {
+				limit = {
+					OR = {
+						has_estate_privilege = estate_church_development_of_temples
+						has_estate_privilege = estate_lowercastes_development_of_temples
+					}
+				}
+				every_owned_province = {
+					limit = {
+						has_tax_building_trigger = yes
+						NOT = {
+							has_owner_religion = yes
+							has_owner_harmonized_religion = yes
+							has_owner_secondary_religion = yes
+						}
+					}
+					apply_triplets_temple_bonus = yes
+				}
 			}
-
 		}
 		else_if = {
 			limit = {
@@ -3911,48 +3972,55 @@ triplets_check_extra_effects = {
 				NOT = { can_use_holy_triplets_of_mewomender = yes }
 			}
 			clr_country_flag = triplets_temple_regardless_faith
-			every_owned_province = {
-				on_province_religion_converted_estate_privileges_effect = yes		
+			if = {
+				limit = {
+					OR = {
+						has_estate_privilege = estate_church_development_of_temples
+						has_estate_privilege = estate_lowercastes_development_of_temples
+					}
+				}
+				every_owned_province = {
+					limit = {
+						has_tax_building_trigger = yes
+						NOT = {
+							has_owner_religion = yes
+							has_owner_harmonized_religion = yes
+							has_owner_secondary_religion = yes
+						}
+					}
+					clear_triplets_temple_bonus = yes
+				}
 			}
 			
 		}
-
-	}
-	#for tier-3 effect
-	if = {
-		limit = {
-			owns = 5593
-			5593 = {
-				has_great_project = {
-					type = holy_triplets_of_mewomender
-					tier = 3
-				}
-			}
-		}
+		#for tier-3 effect
 		if = {
 			limit = {
-				NOT = { has_country_flag = triplets_boost_tax_building }
-				can_use_holy_triplets_of_mewomender = yes
+				5593 = {
+					has_great_project = {
+						type = holy_triplets_of_mewomender
+						tier = 3
+					}
+				}
 			}
-			every_owned_province = {
-				triplets_add_development_effect = yes
-			}
-			set_country_flag = triplets_boost_tax_building
+			if = {
+				limit = {
+					NOT = { has_country_flag = triplets_boost_tax_building }
+					can_use_holy_triplets_of_mewomender = yes
+				}
+				set_country_flag = triplets_boost_tax_building
 
+			}
+			else_if = {
+				limit = {
+					has_country_flag = triplets_boost_tax_building
+					NOT = { can_use_holy_triplets_of_mewomender = yes }
+				}
+				clr_country_flag = triplets_boost_tax_building
+			}
 		}
-		else_if = {
-			limit = {
-				has_country_flag = triplets_boost_tax_building
-				NOT = { can_use_holy_triplets_of_mewomender = yes }
-			}
-			every_owned_province = {
-				triplets_remove_development_effect = yes
-			}
-			clr_country_flag = triplets_boost_tax_building
-
-		}
-
 	}
+
 	
 }
 
