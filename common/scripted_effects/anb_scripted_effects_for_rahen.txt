@@ -3022,7 +3022,9 @@ command_siege_won_effect = {
 	}
 	if = {
 		limit = { FROM = { owned_by = V98 province_group = temple_province_group } }
+		FROM = { save_event_target_as = temple_area_reconquest_shaman_revolt }
 		R62 = { country_event = { id = the_command.83 } }
+		
 	}
 }
 command_spawn_troops_for_shamans_effect = {
@@ -3309,7 +3311,7 @@ end_suhans_reformation = {
 		clr_global_flag = suhan_3
 		clr_global_flag = suhan_4
 		clr_global_flag = suhan_goes_sicko_mode
-		clr_global_flag = suhan_secondary_sicko_mode
+		#clr_global_flag = suhan_secondary_sicko_mode
 		clear_global_event_target = suhan_center
 		set_global_flag = suhan_reformation_over
 	}
@@ -3343,12 +3345,6 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		divide_variable = 		{ which = raj_var_cohesion_impact_prestige value = 10 }
 		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_prestige }
 		round_variable = 		{ which = raj_var_cohesion_impact_prestige value = 0 }
-
-		# Cohesion - War Exhaustion
-		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion who = PREV }
-		multiply_variable = 	{ which = raj_var_cohesion_impact_war_exhaustion value = 1.8 }
-		subtract_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_war_exhaustion }
-		round_variable = 		{ which = raj_var_cohesion_impact_war_exhaustion value = 0 }
 
 		# Cohesion - Stability
 		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
@@ -3716,8 +3712,10 @@ rahen_raj_variables_startup = {
 			set_variable = { which = vizier_scholars_invited value = 0 }
 		}
 	}
-	save_global_event_target_as = raj_raja_global_target
-	R52 = { save_global_event_target_as = raj_vizier_global_target }
+	# There was an issue with a top row mission trying to access the raj target before it was saved
+	# These have been moved to history/countries/R51 - Dhenijanraj.txt and history/countries/R52 - Rabhidaraj.txt
+	# save_global_event_target_as = raj_raja_global_target 
+	# R52 = { save_global_event_target_as = raj_vizier_global_target }
 	4411 = { set_variable = { which = raj_var_cohesion_impact_bonus value = 0 } }
 	rahen_raj_calc_cohesion = yes
 	check_if_at_senaptia_cap_pick_best_if_not = yes
@@ -3965,12 +3963,12 @@ check_if_at_senaptia_cap_pick_best_if_not = {
 				raj_below_allowed_senaptia = yes
 				owner = {
 					ai = yes
-					any_subject_country = { is_subject_of_type = daimyo_vassal }
+					any_subject_country = { is_subject_of_type = daimyo_vassal ai = yes }
 				}
 			}
 			owner = {
 				every_subject_country = {
-					limit = { is_subject_of_type = daimyo_vassal }
+					limit = { is_subject_of_type = daimyo_vassal ai = yes }
 					if = {
 						limit = {
 							OR = {
@@ -4076,7 +4074,13 @@ allowed_to_restore_raj = {
 
 raja_completed_ministries_agenda = {
 	if = {
-		limit = { has_government_attribute = is_raja }
+		limit = {
+			ai = no
+			OR = {
+				has_government_attribute = is_raja
+				is_subject_of_the_raja = yes
+			}
+		}
 		hidden_effect = { 
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion
@@ -4092,7 +4096,13 @@ raja_completed_ministries_agenda = {
 
 raja_failed_ministries_agenda = {
 	if = {
-		limit = { has_government_attribute = is_raja }
+		limit = {
+			ai = no
+			OR = {
+				has_government_attribute = is_raja
+				is_subject_of_the_raja = yes
+			}
+		}
 		hidden_effect = {
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion_bad
@@ -4130,7 +4140,15 @@ raj_dismantling_effect = {
 			}
 			#Grant freedom from old raja
 			[[releaseSubjects]
-				hidden_effect = { PREV = { create_subject = { subject_type = daimyo_vassal subject = PREV } }	} #prevent insta-annexation, pdx bug
+				hidden_effect = {
+					if = {
+						limit = { is_subject_of_type = great_daimyo_vassal }
+						PREV = { create_subject = { subject_type = great_daimyo_vassal subject = PREV } } #prevent insta-annexation, pdx bug
+					}
+					else = {
+						PREV = { create_subject = { subject_type = daimyo_vassal subject = PREV } } #prevent insta-annexation, pdx bug
+					}
+				}
 				grant_independence = yes
 				if = {
 					limit = { has_government_attribute = is_raja_subject }
