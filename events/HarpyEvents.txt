@@ -1,7 +1,81 @@
 
 namespace = harpy_events
 
-#Build Roost
+# Hidden event to make AI harpies upgrade their roosts, as well as harpy setup.
+country_event = {
+	id = harpy_events.0
+	title = harpy_events.0.t
+	desc = harpy_events.0.d
+	picture = HARPY_TOWN_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		culture_group = harpy
+	}
+	
+	immediate = {
+		harpy_roost_se_setup = yes
+
+		# AI building roosts.
+		if = { limit = { ai = yes }
+			export_to_variable = {
+				which = harpy_roost_own_and_subject_development
+				value = trigger_value:total_own_and_non_tributary_subject_development
+			}
+
+			# Check for eligible CoTs.
+			if = { limit = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } }
+				every_owned_province = {
+					limit = {
+						province_has_center_of_trade_of_level = 1
+						harpy_roost_st_terrain_is_valid = yes
+						harpy_roost_st_has_no_or_fledgling_roost = yes
+					}
+					if = { limit = { ROOT = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } } }
+						if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
+							harpy_roost_se_add_roost_tier_1 = yes
+						}
+						harpy_roost_se_add_roost_tier_2 = yes
+					}
+				}
+			}
+
+			# If more roosts can still be constructed, find the eligible province with the most development, then build a roost there.
+			if = { limit = { check_variable = { which = harpy_roost_own_and_subject_development which = harpy_roost_var_next_threshold } }
+				every_owned_province = {
+					limit = {
+						harpy_roost_st_terrain_is_valid = yes
+						harpy_roost_st_has_no_or_fledgling_roost = yes
+					}
+					if = { limit = { has_saved_event_target = harpy_roost_et_highest_development }
+						if = { limit = { higher_development_than = event_target:harpy_roost_et_highest_development }
+							save_event_target_as = harpy_roost_et_highest_development
+						}
+					}
+					else = {
+						save_event_target_as = harpy_roost_et_highest_development
+					}
+				}
+			}
+			if = { limit = { has_saved_event_target = harpy_roost_et_highest_development }
+				event_target:harpy_roost_et_highest_development = {
+					if = { limit = { NOT = { has_province_flag = harpy_roost_present } }
+						harpy_roost_se_add_roost_tier_1 = yes
+					}
+					harpy_roost_se_add_roost_tier_2 = yes
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = harpy_events.0.a
+	}
+}
+
+# Roost construction country-level manager, called on yearly pulse.
 country_event = {
 	id = harpy_events.1
 	title = harpy_events.1.t
@@ -9,414 +83,54 @@ country_event = {
 	picture = HARPY_TOWN_eventPicture
 	
 	is_triggered_only = yes
+	hidden = yes
+	
+	trigger = {
+		culture_group = harpy
+		has_country_flag = harpy_roost_country_flag_roost_construction_ongoing
+	}
 	
 	immediate = {
-		hidden_effect = {
-			set_country_flag = open_harpy_roost_menu
-			update_roost_count = yes
-			harpy_build_roost_region = yes
-		}
-	}
-	
-	after = {
-		hidden_effect = {
-			every_owned_province = { clr_province_flag = harpy_roost_region_@ROOT }
-		}
-	}
-	
-	option = { #build in capital
-		name = harpy_events.1.a
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			capital_scope = {
-				fort_level = 1
-				has_harpy_majority_trigger = yes
-				is_city = yes
-				OR = {
-					has_terrain = mountain
-					has_terrain = highlands
-					has_terrain = hills
+		every_owned_province = { 
+			limit = { 
+				has_province_modifier = harpy_roost_under_construction 
+				has_province_flag = had_harpy_event_3 
+				NOT = {
+					calc_true_if = {
+						has_province_flag = had_harpy_event_5
+						has_province_flag = had_harpy_event_8
+						has_province_flag = had_harpy_event_9
+						has_province_flag = had_harpy_event_10
+						amount = 2
+					}
 				}
-				NOT = { has_province_modifier = harpy_roost }
-				NOT = { has_province_modifier = harpy_roost_under_construction }
 			}
-		}
-		goto = capital_scope
-		
-		capital_scope = {
-			add_province_triggered_modifier = harpy_roost
-			add_province_modifier = { name = harpy_roost_under_construction duration = 365 }
-			#add_province_modifier = { name = same_roost_owner duration = -1 hidden = yes }
-		}
-		update_roost_count = yes
-		clr_country_flag = open_harpy_roost_menu
-	}
-	option = { #build in region 1
-		name = harpy_events.1.b
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region1
-		}
-		goto = harpy_roost_region1
-		
-		hidden_effect = {
-			event_target:harpy_roost_region1 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 2
-		name = harpy_events.1.c
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region2
-		}
-		goto = harpy_roost_region2
-		
-		hidden_effect = {
-			event_target:harpy_roost_region2 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 3
-		name = harpy_events.1.dd
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region3
-		}
-		goto = harpy_roost_region3
-		
-		hidden_effect = {
-			event_target:harpy_roost_region3 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 4
-		name = harpy_events.1.e
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region4
-		}
-		goto = harpy_roost_region4
-		
-		hidden_effect = {
-			event_target:harpy_roost_region4 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 5
-		name = harpy_events.1.f
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region5
-		}
-		goto = harpy_roost_region5
-		
-		hidden_effect = {
-			event_target:harpy_roost_region5 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 6
-		name = harpy_events.1.g
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region6
-		}
-		goto = harpy_roost_region6
-		
-		hidden_effect = {
-			event_target:harpy_roost_region6 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 7
-		name = harpy_events.1.h
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region7
-		}
-		goto = harpy_roost_region7
-		
-		hidden_effect = {
-			event_target:harpy_roost_region7 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 8
-		name = harpy_events.1.i
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region8
-		}
-		goto = harpy_roost_region8
-		
-		hidden_effect = {
-			event_target:harpy_roost_region8 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 9
-		name = harpy_events.1.j
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region9
-		}
-		goto = harpy_roost_region9
-		
-		hidden_effect = {
-			event_target:harpy_roost_region9 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #build in region 10
-		name = harpy_events.1.k
-        ai_chance = { factor = 1 }
-		trigger = {
-			can_build_roost = yes
-			has_saved_event_target = harpy_roost_region10
-		}
-		goto = harpy_roost_region10
-		
-		hidden_effect = {
-			event_target:harpy_roost_region10 = { province_event = { id = harpy_events.2 } }
-		}
-	}
-	option = { #nevermind
-		name = harpy_events.1.x
-        ai_chance = { factor = 1 }
-		add_adm_power = 50
-		clr_country_flag = open_harpy_roost_menu
-	}
-}
-
-province_event = {
-	id = harpy_events.2
-	title = harpy_events.2.t
-	desc = harpy_events.2.d
-	picture = CITY_DEVELOPMENT_eventPicture
-	
-	is_triggered_only = yes
-	
-	immediate = {
-		hidden_effect = {
-			harpy_build_roost_province = yes
-		}
-	}
-	
-	after = {
-		hidden_effect = {
-			owner = {
-				every_owned_province = { clr_province_flag = harpy_roost_@PREV }
+			random_list = {
+				1 = {
+					trigger = { 
+						NOT = { has_province_flag = had_harpy_event_5 } 
+						owner = { has_estate = estate_mages }
+					}
+					province_event = { id = harpy_events.5 days = 5 random = 180 }
+				}
+				1 = {
+					trigger = { NOT = { has_province_flag = had_harpy_event_8 } }
+					province_event = { id = harpy_events.8 days = 5 random = 180 }
+				}
+				1 = {
+					trigger = { NOT = { has_province_flag = had_harpy_event_9 } }
+					province_event = { id = harpy_events.9 days = 5 random = 180 }
+				}
+				1 = {
+					trigger = { NOT = { has_province_flag = had_harpy_event_10 } }
+					province_event = { id = harpy_events.10 days = 5 random = 180 }
+				}
 			}
 		}
 	}
 	
 	option = {
-		name = harpy_events.2.a
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost1
-			event_target:harpy_roost1 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost1
-		
-		event_target:harpy_roost1 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.b
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost2
-			event_target:harpy_roost2 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost2
-		
-		event_target:harpy_roost2 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.c
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost3
-			event_target:harpy_roost3 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost3
-		
-		event_target:harpy_roost3 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.dd
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost4
-			event_target:harpy_roost4 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost4
-		
-		event_target:harpy_roost4 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.e
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost5
-			event_target:harpy_roost5 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost5
-		
-		event_target:harpy_roost5 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.f
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost6
-			event_target:harpy_roost6 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost6
-		
-		event_target:harpy_roost6 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.g
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost7
-			event_target:harpy_roost7 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost7
-		
-		event_target:harpy_roost7 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = {
-		name = harpy_events.2.h
-        ai_chance = { factor = 1 }
-		trigger = {
-			has_saved_event_target = harpy_roost8
-			event_target:harpy_roost8 = { has_province_flag = harpy_roost_@PREV }
-		}
-		goto = harpy_roost8
-		
-		event_target:harpy_roost8 = {
-			add_province_modifier = { name = harpy_roost_under_construction duration = 1825 }
-			if = { limit = { culture_is_harpy = no }
-				add_harpy_minority_size_effect = yes
-				custom_tooltip = province_will_convert_to_harpy_tt
-			}
-			hidden_effect = {
-				province_event = { id = harpy_events.3 days = 365 random = 180 }
-				province_event = { id = harpy_events.4 days = 823 random = 180 }
-				province_event = { id = harpy_events.4 days = 1279 random = 180 }
-				province_event = { id = harpy_events.11 days = 1800 }
-			}
-		}
-		FROM = { update_roost_count = yes }
-		owner = { clr_country_flag = open_harpy_roost_menu }
-	}
-	option = { #Back
-		name = harpy_events.2.x
-        ai_chance = { factor = 1 }
-		
-		FROM = { country_event = { id = harpy_events.1 } }
+		name = harpy_events.1.a
 	}
 }
 
@@ -437,6 +151,8 @@ province_event = {
 	
 	immediate = {
 		hidden_effect = {
+			set_province_flag = had_harpy_event_3
+
 			owner = {
 				random_owned_province = { limit = { has_any_human_pop_trigger = yes } save_event_target_as = target_human }
 				random_owned_province = { limit = { has_any_elven_pop_trigger = yes } save_event_target_as = target_elven }
@@ -455,11 +171,14 @@ province_event = {
 		name = harpy_events.3.a	#always available
 		goto = target_human
 		ai_chance = { factor = 100 }
-		event_target:target_human = {
-			random_list = {
-				33 = { add_base_tax = -1 }
-				33 = { add_base_production = -1 }
-				33 = { add_base_manpower = -1 }
+		if = {
+			limit = { has_saved_event_target = target_human }
+			event_target:target_human = {
+				random_list = {
+					33 = { add_base_tax = -1 }
+					33 = { add_base_production = -1 }
+					33 = { add_base_manpower = -1 }
+				}
 			}
 		}
 		add_human_minority_size_effect = yes
@@ -625,44 +344,6 @@ province_event = {
 	}
 }
 
-#Roost contruction event manager
-province_event = {
-	id = harpy_events.4
-	title = harpy_events.4.t
-	desc = harpy_events.4.d
-	picture = HARPY_TOWN_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-	
-	trigger = {
-		has_province_modifier = harpy_roost_under_construction
-		owner = { culture_is_harpy = yes }
-	}
-	
-	option = {	#mage demolition
-		name = harpy_events.4.a
-		trigger = { owner = { has_estate = estate_mages } }
-		ai_chance = { factor = 100 }
-		province_event = { id = harpy_events.5 }
-	}
-	option = {	#shoddy construction
-		name = harpy_events.4.a
-		ai_chance = { factor = 100 }
-		province_event = { id = harpy_events.8 }
-	}
-	option = {	#water supply
-		name = harpy_events.4.a
-		ai_chance = { factor = 100 }
-		province_event = { id = harpy_events.9 }
-	}
-	option = {	#territorial clashes
-		name = harpy_events.4.a
-		ai_chance = { factor = 100 }
-		province_event = { id = harpy_events.10 }
-	}
-}
-
 #Mages offer demolition expertise
 province_event = {
 	id = harpy_events.5
@@ -676,6 +357,10 @@ province_event = {
 	trigger = {
 		has_province_modifier = harpy_roost_under_construction
 		owner = { has_estate = estate_mages }
+	}
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_5 }
 	}
 	
 	#accept
@@ -762,7 +447,15 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
-	
+
+	trigger = {
+		has_province_modifier = harpy_roost_under_construction
+	}
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_8 }
+	}
+
 	#unacceptable
 	option = {
 		name = harpy_events.8.a
@@ -785,6 +478,14 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
+
+	trigger = {
+		has_province_modifier = harpy_roost_under_construction
+	}
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_9 }
+	}
 	
 	#a fine boon
 	option = {
@@ -803,6 +504,14 @@ province_event = {
 	goto = ROOT
 	
 	is_triggered_only = yes
+
+	trigger = {
+		has_province_modifier = harpy_roost_under_construction
+	}
+
+	immediate = {
+		hidden_effect = { set_province_flag = had_harpy_event_10 }
+	}
 	
 	#Favor one side
 	option = {
@@ -832,6 +541,18 @@ province_event = {
 	
 	is_triggered_only = yes
 
+	immediate = {
+		hidden_effect = {
+			owner = { set_country_flag = harpy_roost_country_flag_finish_event_open }
+
+			harpy_roost_se_construction_cleanup = { country_target = owner }
+		}
+	}
+
+	after = { 
+		hidden_effect = { owner = { clr_country_flag = harpy_roost_country_flag_finish_event_open } } 
+	}
+
 	trigger = {
 		has_province_modifier = harpy_roost_under_construction
 		owner = { culture_is_harpy = yes }
@@ -839,17 +560,39 @@ province_event = {
 	
 	option = {
 		name = harpy_events.11.a
-		remove_province_modifier = harpy_roost_under_construction
-		add_province_triggered_modifier = harpy_roost
-		owner = { update_roost_count = yes }
-		if = {
-			limit = {
-				NOT = { culture_is_harpy = yes }
-			}
-			change_culture = owner
-		}
+		harpy_roost_se_add_roost_tier_2_complete = yes
+		tooltip = { remove_province_modifier = harpy_roost_under_construction }
 	}
 }
+
+ # Event to ensure that roosts completion is not prevented by other instances of itself.
+province_event = {
+	id = harpy_events.12
+	title = harpy_events.12.t
+	desc = harpy_events.12.d
+	picture = HARPY_TOWN_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		# If the country flag for having a finish event is NOT set, fire the roost complete event.
+		if = { limit = { owner = { NOT = { has_country_flag = harpy_roost_country_flag_finish_event_open } } }
+			province_event = { id = harpy_events.11 }
+		}
+		# Otherwise, fire this event again in 90 days, at which point the other roost(s) are hopefully done.
+		else = {
+			province_event = { id = harpy_events.12 days = 90 }
+		}
+	}
+
+	option = {
+		name = harpy_events.12.a
+	}
+}
+
+# Roost complete, but another instance of the roost complete event is open.
+
 
 #--------# Harem Events #---------#
 country_event = {
@@ -1679,13 +1422,17 @@ country_event = {
 	option = {
 		name = harpy_events.109.a
 		
-		if = { limit = { heir_mil = 6 } convert_heir_to_general = 70 }
-		else_if = { limit = { heir_mil = 5 } convert_heir_to_general = 50 }
-		else_if = { limit = { heir_mil = 4 } convert_heir_to_general = 40 }
-		else_if = { limit = { heir_mil = 3 } convert_heir_to_general = 30 }
-		else_if = { limit = { heir_mil = 2 } convert_heir_to_general = 20 }
-		else_if = { limit = { heir_mil = 1 } convert_heir_to_general = 10 }
-		else = { convert_heir_to_general = 0 }
+		if = {
+			limit = { heir_is_powerful_mage = yes }
+			define_heir_to_war_wizard = yes
+			if = { limit = { heir_mil = 6 } convert_heir_to_general = 70 }
+			else_if = { limit = { heir_mil = 5 } convert_heir_to_general = 50 }
+			else_if = { limit = { heir_mil = 4 } convert_heir_to_general = 40 }
+			else_if = { limit = { heir_mil = 3 } convert_heir_to_general = 30 }
+			else_if = { limit = { heir_mil = 2 } convert_heir_to_general = 20 }
+			else_if = { limit = { heir_mil = 1 } convert_heir_to_general = 10 }
+			else = { convert_heir_to_general = 0 }
+		}
 		
 		if = { limit = { NOT = { heir_claim = 100 } }
 			add_heir_claim = 5
@@ -2458,6 +2205,656 @@ country_event = {
 	}
 }
 
+# Generic Event - A Sanarenni Ascendant
+country_event = {
+	id = harpy_events.124
+	title = harpy_events.124.t
+	desc = harpy_events.124.d
+	picture = MAGE_MOON_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		OR = {
+			culture = firanyan_harpy
+			culture = siadunan_harpy
+			culture = naleni_harpy
+			culture = kiohan_harpy
+		}
+		has_estate = estate_mages
+	}
+
+	option = {
+		name = harpy_events.124.a
+
+		if = {
+			limit = { monthly_income = 83.333 } # Max of 250 rounded down
+			add_treasury = -250
+		}
+		else = {
+			add_years_of_income = -0.25
+		}
+
+		define_advisor = {
+			type = court_mage
+			skill = 2
+			cost_multiplier  = 0.5
+			female = yes
+			culture = ROOT
+		}
+
+		add_estate_influence_modifier = {
+			estate = estate_mages
+			desc = EST_VAL_INFLUENTIAL_SANARENNI
+			duration = 3650
+			influence = 10
+		}
+	}
+
+	option = {
+		name = harpy_events.124.b
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = martial_educator_personality
+				ruler_has_personality = tactical_genius_personality
+				at_least_magic_project_level = { project = battlemage_academy level = 1 }
+			}
+		}
+
+		add_mil_power = -50
+
+		add_country_modifier = {
+			name = harpy_sanarenni_battlemages
+			duration = 3650
+		}
+
+		add_estate_influence_modifier = {
+			estate = estate_mages
+			desc = EST_VAL_INFLUENTIAL_SANARENNI
+			duration = 3650
+			influence = 10
+		}
+	}
+
+	option = {
+		name = harpy_events.124.c
+
+		add_estate_loyalty_modifier = {
+			estate = estate_mages
+			desc = EST_VAL_INFLUENTIAL_SANARENNI_LOYALTY
+			duration = 3650
+			loyalty = 10
+		}
+
+		add_estate_influence_modifier = {
+			estate = estate_mages
+			desc = EST_VAL_INFLUENTIAL_SANARENNI
+			duration = 3650
+			influence = 10
+		}
+	}
+
+	option = {
+		name = harpy_events.124.e
+		highlight = yes
+		trigger = {
+			ruler_is_powerful_mage = yes
+		}
+
+		add_adm_power = -50
+
+		add_country_modifier = {
+			name = harpy_sanarenni_study_helpers
+			duration = 3650
+		}
+	}
+}
+
+# Generic Event - The Song of [Root.Monarch.GetName]
+country_event = {
+	id = harpy_events.125
+	title = harpy_events.125.t
+	desc = harpy_events.125.d
+	picture = wihgfx_FEMALE_RULER_eventPicture
+	
+	is_triggered_only = yes
+
+	trigger = {
+		religion = the_hunt
+		culture_group = harpy
+	}
+
+	option = {
+		name = harpy_events.125.a
+
+		add_church_power = -25
+		add_legitimacy_equivalent = { amount = 10 republican_tradition = 3 }
+		add_prestige = 10
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = -5
+		}
+	}
+
+	option = {
+		name = harpy_events.125.b
+		highlight = yes
+		trigger = {
+			custom_trigger_tooltip = {
+				tooltip = harpy_ruler_has_three_good_personalities
+				ruler_has_max_personalities = yes
+				NOT = { ruler_has_bad_personality = yes }
+			}
+
+		}
+
+		add_church_power = -50
+		add_legitimacy_equivalent = { amount = 20 republican_tradition = 6 }
+		add_prestige = 10
+		add_splendor = 50
+	}
+
+	option = {
+		name = harpy_events.125.c
+
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 10
+		}
+	}
+
+	option = {
+		name = harpy_events.125.e
+		highlight = yes
+		trigger = {
+			ruler_has_personality = patron_of_arts_personality
+		}
+
+		if = {
+			limit = { monthly_income = 83.333 } # Max of 250 rounded down
+			add_treasury = -250
+		}
+		else = {
+			add_years_of_income = -0.25
+		}
+
+		add_church_power = 100
+
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 10
+		}
+	}
+}
+
+# Travelers on the Winds
+country_event = {
+	id = harpy_events.126
+	title = harpy_events.126.t
+	desc = harpy_events.126.d
+	picture = HARPY_TOWN_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		culture_group = harpy
+		NOT = { has_country_modifier = harpy_events_prioritize_learning }
+		NOT = { has_country_modifier = harpy_events_prioritize_trade }
+		NOT = { has_country_modifier = harpy_events_focusing_exports }
+	}
+	
+	option = {
+		name = harpy_events.126.a
+		add_country_modifier = {
+			name = harpy_events_prioritize_learning
+			duration = 3650
+		}
+	}
+
+	option = {
+		name = harpy_events.126.b
+		add_country_modifier = {
+			name = harpy_events_prioritize_trade
+			duration = 3650
+		}
+		if = {
+			limit = { has_estate = estate_burghers }
+			add_estate_loyalty = {
+				estate = estate_burghers
+				loyalty = 10
+			}
+			add_estate_influence_modifier = {
+				estate = estate_burghers
+				desc = harpy_events_merchants_gaining_influence
+				duration = 3650
+				influence = 10
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.126.c
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = industrious_personality
+				adm = 5
+			}
+		}
+		add_country_modifier = {
+			name = harpy_events_focusing_exports
+			duration = 3650
+		}
+		every_owned_province = {
+			limit = { harpy_roost_st_has_active_flourishing_roost = yes }
+			add_base_production = 1
+		}
+	}
+}
+
+# Fury of the Nest-Robbed
+country_event = {
+	id = harpy_events.127
+	title = harpy_events.127.t
+	desc = harpy_events.127.d
+	picture = ANGRY_MOB_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		culture_group = harpy
+		NOT = { has_country_modifier = harpy_events_channeling_fury }
+		NOT = {
+			has_estate_influence_modifier = {
+				estate = estate_mages 
+				modifier = harpy_events_mages_scry_culprit
+			}
+		}
+	}
+	
+	option = {
+		name = harpy_events.127.a
+		add_prestige = -10
+		add_legitimacy = -10
+	}
+
+	option = {
+		name = harpy_events.127.b
+		add_yearly_manpower = -0.25
+	}
+
+	option = {
+		name = harpy_events.127.c
+		add_stability = -1
+		add_country_modifier = {
+			name = harpy_events_channeling_fury
+			duration = 3650
+		}
+	}
+
+	option = {
+		name = harpy_events.127.e
+		trigger = {
+			has_estate = estate_mages
+		}
+		add_years_of_income = -0.25
+		add_estate_influence_modifier = {
+			estate = estate_mages
+			desc = harpy_events_mages_scry_culprit
+			duration = 3650
+			influence = 20
+		}
+	}
+
+	option = {
+		name = harpy_events.127.f
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = just_personality
+				ruler_has_personality = lawgiver_personality
+				ruler_has_personality = silver_tongue_personality
+			}
+		}
+		add_legitimacy = -5
+	}
+}
+
+# Fashionable Feathers
+country_event = {
+	id = harpy_events.128
+	title = harpy_events.128.t
+	desc = harpy_events.128.d
+	picture = TRADEGOODS_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		culture_group = harpy
+		NOT = { has_country_modifier = harpy_events_promoting_dye_trade }
+		NOT = { has_country_modifier = harpy_events_dye_trade_taxes }
+		NOT = {
+			any_owned_province = {
+				has_province_modifier = harpy_event_dye_trade_province
+			}
+		}
+		NOT = {
+			has_estate_influence_modifier = {
+				estate = estate_burghers 
+				modifier = harpy_events_flourishing_dye_trade
+			}
+		}
+	}
+	
+	option = {
+		name = harpy_events.128.a
+		if = {
+			limit = { has_estate = estate_burghers }
+			add_estate_influence_modifier = {
+				estate = estate_burghers
+				desc = harpy_events_flourishing_dye_trade
+				duration = 3650
+				influence = 10
+			}
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+		else {
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.128.b
+
+		if = {
+			limit = { has_estate = estate_burghers }
+				add_estate_influence_modifier = {
+				estate = estate_burghers
+				desc = harpy_events_taxing_dye_trade
+				duration = 3650
+				influence = -10
+			}
+			add_estate_loyalty = {
+				estate = estate_burghers
+				loyalty = -10
+			}
+		}
+		add_country_modifier {
+			name = harpy_events_dye_trade_taxes
+			duration = 3650
+		}
+	}
+
+	option = {
+		name = harpy_events.128.c
+		add_years_of_income = -0.15
+		add_country_modifier = {
+			name = harpy_events_promoting_dye_trade
+			duration = 3650
+		}
+	}
+
+	option = {
+		name = harpy_events.128.e
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = greedy_personality
+				ruler_has_personality = embezzler_personality
+			}
+		}
+		add_years_of_income = 0.15
+		if = {
+			limit = { has_estate = estate_burghers }
+				add_estate_loyalty = {
+				estate = estate_burghers
+				loyalty = -10
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.128.f
+		highlight = yes
+		trigger = {
+			any_owned_province = {
+				trade_goods = dyes
+			}
+		}
+		every_owned_province = {
+			limit = {
+				trade_goods = dyes
+			}
+			add_province_modifier = {
+				name = harpy_event_dye_trade_province
+				duration = 3650 
+			}
+		}
+	}
+}
+
+# Blood_in_the_Sky
+country_event = {
+	id = harpy_events.129
+	title = harpy_events.129.t
+	desc = harpy_events.129.d
+	picture = VILLAGE_BURNING_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		culture_group = harpy
+		any_owned_province = {
+			harpy_roost_st_has_any_roost = yes
+		}
+		NOT = {
+			has_estate_influence_modifier = {
+				estate = estate_nobles 
+				modifier = harpy_events_matriarchs_unchecked
+			}
+		}
+		NOT = {
+			has_estate_influence_modifier = {
+				estate = estate_monstrous_tribes 
+				modifier = harpy_events_matriarchs_unchecked
+			}
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = {
+					any_owned_province = {
+						harpy_roost_st_has_any_roost = yes
+						NOT = { is_capital = yes }
+					}
+				}
+				random_owned_province = {
+					limit = {
+						harpy_roost_st_has_any_roost = yes
+						NOT = { is_capital = yes }
+					}
+					save_event_target_as = harpy_roost_chaos
+				}
+			}
+			else = {
+				random_owned_province = {
+					limit = {
+						harpy_roost_st_has_any_roost = yes
+					}
+					save_event_target_as = harpy_roost_chaos
+				}
+			}
+		}
+	}
+	
+	option = {
+		name = harpy_events.129.a
+		event_target:harpy_roost_chaos = {
+			add_local_autonomy = 25
+			add_unrest = 10
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_influence_modifier = {
+				estate = estate_monstrous_tribes
+				desc = harpy_events_matriarchs_unchecked
+				duration = 3650
+				influence = 10
+			}
+		}
+		else {
+			add_estate_influence_modifier = {
+				estate = estate_nobles
+				desc = harpy_events_matriarchs_unchecked
+				duration = 3650
+				influence = 10
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.129.b
+		event_target:harpy_roost_chaos = {
+			add_random_development = -1
+		}
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -10
+			}
+		}
+		else {
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -10
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.129.c
+		add_yearly_manpower = -0.25
+		event_target:harpy_roost_chaos = {
+			add_unrest = 5
+		}
+	}
+
+	option = {
+		name = harpy_events.129.e
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = cruel_personality
+				ruler_has_personality = strict_personality
+			}
+		}
+		add_mil_power = -25
+		add_stability = 1
+		if = {
+			limit = { has_estate = estate_monstrous_tribes }
+			add_estate_loyalty = {
+				estate = estate_monstrous_tribes
+				loyalty = -15
+			}
+		}
+		else {
+			add_estate_loyalty = {
+				estate = estate_nobles
+				loyalty = -15
+			}
+		}
+	}
+}
+
+# A Cliffside Spar
+country_event = {
+	id = harpy_events.130
+	title = harpy_events.130.t
+	desc = harpy_events.130.d
+	picture = HARPY_IMMORTAL_eventPicture
+	
+	is_triggered_only = yes
+	
+	trigger = {
+		culture_group = harpy
+		NOT = { has_country_modifier = harpy_events_officers_sparring }
+	}
+	
+	option = {
+		name = harpy_events.130.a
+		create_leader_scaling_with_tradition = {
+			leader = general
+			type = army
+		}
+	}
+
+	option = {
+		name = harpy_events.130.b
+		add_mil_power = 50
+		add_prestige = 5
+	}
+
+	option = {
+		name = harpy_events.130.c
+		highlight = yes
+		trigger = {
+			OR = {
+				ruler_has_personality = martial_educator_personality
+				ruler_has_personality = bold_fighter_personality
+			}
+		}
+		add_army_tradition = 10
+		add_country_modifier = {
+			name = harpy_events_officers_sparring
+			duration = 3650
+		}
+	}
+}
+
+# A Satyr Hatchling
+country_event = {
+	id = harpy_events.131
+	title = harpy_events.131.t
+	desc = harpy_events.131.d
+	picture = HARPY_TOWN_eventPicture
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		ai = no
+		culture_group = harpy
+		any_owned_province = {
+			fast_has_pop_of_race = { race = harpy }
+			OR = {
+				has_province_modifier = aw_satyrs_1
+				has_province_modifier = aw_satyrs_2
+				has_province_modifier = aw_satyrs_3
+			}
+		}
+	}
+
+	option = {
+		name = harpy_events.131.a
+		add_country_modifier = {
+			name = harpy_satyr_panic
+			duration = 3650
+		}
+	}
+}
 #Queendom Claim Mechanic Events
 
 country_event = {
@@ -2465,26 +2862,84 @@ country_event = {
 	title = harpy_events.200.t
 	desc = harpy_events.200.d
 	picture = ROYAL_COUPLE_FUTURE_eventPicture
-
 	hidden = yes
-
 	is_triggered_only = yes
-
 	trigger = {}
-
-	immediate = {
-		hidden_effect = {
-			harpy_name = { type = advisor }
-		}
-	}
 
 	option = {
 		name = harpy_events.200.a
-		generate_random_harpy_advisor_effect = yes
-	}
-	after = {
-		hidden_effect = {
-			clear_saved_name = harpy_advisor_name
+		if = {
+			limit = {
+				national_focus = ADM
+			}
+			every_subject_country = {
+				add_liberty_desire = -10
+			}
+			select_highest_dev_known_country_with_limit = {
+				index = 1
+				limit = "
+					is_subject_of = ROOT
+					NOT = {
+						has_country_modifier = HAR_honour_matriarch
+					}
+				"
+				effect = " 
+					add_country_modifier = {
+						name = HAR_honour_matriarch
+						duration = 9125
+					} 
+				"
+			}
+		}
+		else_if = {
+			limit = {
+				national_focus = DIP
+			}
+			every_known_country = {
+				add_aggressive_expansion = {
+					who = ROOT
+					value = -10
+					apply_calc = no
+				}	
+			}
+			select_highest_dev_known_country_with_limit = {
+				index = 1
+				limit = "
+					is_subject_of = ROOT
+					NOT = {
+						has_country_modifier = HAR_breathing_incense
+					}
+				"
+				effect = " 
+					add_country_modifier = {
+						name = HAR_breathing_incense
+						duration = 9125
+					} 
+				"
+			}
+		}
+		else_if = {
+			limit = {
+				national_focus = MIL
+			}
+			country_event = {
+				id = the_hunt_events.5
+			}
+			select_highest_dev_known_country_with_limit = {
+				index = 1
+				limit = "
+					is_subject_of = ROOT
+					NOT = {
+						has_country_modifier = HAR_inspire_war
+					}
+				"
+				effect = " 
+					add_country_modifier = {
+						name = HAR_inspire_war
+						duration = 9125
+					} 
+				"
+			}
 		}
 	}
 }
@@ -2503,41 +2958,84 @@ country_event = {
 
 	option = {
 		name = harpy_events.201.a
-		random_subject_country = {
-			limit = { is_march = no }
-			add_country_modifier = {
-				name = harpy_march_bonuses
-				duration = 3650
+		set_variable = {
+			which = HAR_dev_transfer
+			value = 0
+		}
+		for = {
+			amount = 40
+			effect = "
+			random_subject_country = {
+				random_owned_province = {
+					limit = {
+						base_tax = 2
+						base_production = 2
+						base_manpower = 2
+					}
+					add_random_development = -1
+					ROOT = {
+						change_variable = {
+							which = HAR_dev_transfer
+							value = 1
+						}
+					}
+				}
+			}
+			"
+		}
+		while = {
+			limit = {
+				check_variable = {
+					which = HAR_dev_transfer
+					value = 1
+				}
+			}
+			random_owned_province = {
+				add_random_development = 1
+			}
+			change_variable = {
+				which = HAR_dev_transfer
+				value = -1
 			}
 		}
 	}
 }
 
-country_event = {
+country_event = { #button three - get vassalisation
 	id = harpy_events.202
 	title = harpy_events.202.t
 	desc = harpy_events.202.d
 	picture = ROYAL_COUPLE_FUTURE_eventPicture
-
 	hidden = yes
-
 	is_triggered_only = yes
-
 	trigger = {}
-
-	immediate = {
-		hidden_effect = {
-			harpy_name = { type = general }
-		}
-	}
 
 	option = {
 		name = harpy_events.202.a
-		generate_random_harpy_general_effect = yes
-	}
-	after = {
-		hidden_effect = {
-			clear_saved_name = harpy_general_name
+		every_neighbor_country = {
+			export_to_variable = {
+				which = HARtotalDev
+				value = trigger_value:development
+			}
+			divide_variable = {
+				which = HARtotalDev
+				value = 50
+			}
+			if = {
+				limit = {
+					fast_owns_var_num_pops_of_race = {
+						race = harpy
+						variable_name = HARtotalDev
+					}
+				}
+				ROOT = {
+					add_casus_belli = {
+						type = cb_vassalize_mission
+						target = PREV
+						months = 120
+					}
+				}
+			}
 		}
 	}
 }
@@ -2588,4 +3086,5 @@ country_event = {
 		}
 	}
 }
+
 
