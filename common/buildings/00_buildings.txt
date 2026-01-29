@@ -257,8 +257,19 @@ temple = {
 			}
 			add_base_tax = 1
 		}
-
-
+		
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = {
+					has_province_flag = triplet_gained_development_temple
+					has_province_flag = triplet_gained_development_cathedral
+				}
+			}
+			add_base_tax = 1
+			set_province_flag = triplet_gained_development_temple
+		}
+	
 		gronstunad_building_authority_effect = { value = 1 }
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
@@ -398,6 +409,18 @@ temple = {
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+		hidden_effect = {
+			if = {
+				limit = {
+					owner_has_active_triplets_tier_3 = yes
+					has_province_flag = triplet_gained_development_temple
+				}
+				add_base_tax = -1
+				
+			}		
+		
+		}
+
 	}
 
 	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
@@ -1633,8 +1656,14 @@ cathedral = {
 			}
 			add_base_tax = 2
 		}
-		
-
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = { has_province_flag = triplet_gained_development_cathedral }
+			}
+			add_base_tax = 2
+			set_province_flag = triplet_gained_development_cathedral
+		}
 		gronstunad_building_authority_effect = { value = 3 }
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
@@ -4535,6 +4564,15 @@ mage_tower = {
 				province_event = { id = kheionai.3 }
 			}
 		}
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = -1
+				}
+			}
+		}
 		#Anbennar - Thangoya Tier 2 Reform Mechanic, Feel Free To Reuse
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
@@ -4703,6 +4741,40 @@ mage_tower = {
 				}
 			}
 		}
+
+		if = { #Black Herd - Refund 50% of the cost
+			limit = { FROM = { has_government_attribute = magocratic_caehnate_mage_towers } }
+			hidden_effect = {
+				FROM = {
+					export_to_variable = {
+						which = build_cost_var
+						value = modifier:build_cost
+					}
+					export_to_variable = {
+						which = local_build_cost_var
+						value = modifier:local_build_cost
+						who = PREV
+					}
+					change_variable = { build_cost_var = 1 }
+					change_variable = { local_build_cost_var = 1 }
+					if = {
+						limit = { NOT = { check_variable = { build_cost_var = 0 } } }
+						set_variable = { build_cost_var = 0 }
+					}
+					if = {
+						limit = { NOT = { check_variable = { local_build_cost_var = 0 } } }
+						set_variable = { local_build_cost_var = 0 }
+					}
+					multiply_variable = { which = build_cost_var which = 250 }
+					multiply_variable = { which = build_cost_var which = local_build_cost_var }
+					var_effect = { 
+						effect = add_treasury 
+						var = build_cost_var 
+						sign = + 
+					}
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		if = {
@@ -4722,6 +4794,15 @@ mage_tower = {
 			anb_manufactory_discount_remove = yes
 		}
 		anbennar_building_effect = yes
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = 1
+				}
+			}
+		}
 		#Anbennar - Irkorzik
 		if = {
 			limit = { 
