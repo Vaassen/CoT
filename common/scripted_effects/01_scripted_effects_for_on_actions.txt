@@ -1754,7 +1754,30 @@ on_new_monarch_effect = { #1.35
 	if = {
 		limit = { religion = fangaulan_pantheon }
 		fangaulan_pantheon_apply_holy_site_bonus = yes 
-	} 
+	}
+
+	#irrliam
+	if = {
+		limit = { has_ruler_flag = keladora_got }
+		create_subject = {
+			subject = F21
+			subject_type = personal_union
+		}
+		define_consort = {
+			name = "Keladora"
+			dynasty = "Birzartanzuir"
+			birth_date = 1391.7.3
+			adm = 3
+			dip = 4
+			mil = 3
+			female = yes
+			country_of_origin = F21
+		}
+	}
+	if = {
+		limit = { has_ruler_flag = irrliam_first_heir }
+		country_event = { id = irrliam.13 days = 10 }
+	}
 }
 
 anb_scripted_effects_for_ruler_death  = {
@@ -4617,6 +4640,11 @@ on_battle_won_country_effect = {
 			}
 		}
 	}
+
+	if = { #Black Herd
+		limit = { has_estate_privilege = estate_mages_black_herd_shockshroud_mages }
+		change_mana = { amount = 0.5 }
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -5302,22 +5330,45 @@ on_battle_lost_province_effect = {
 
 #1.35
 on_battle_ended_effect = {
-	ROOT = {
+	if = {
+		limit = { has_country_flag = count_total_land_units_killed_flag }
+		ROOT = {
+			change_variable = {
+				which = total_land_units_killed
+				which = land_units_killed
+			}
+			change_variable = {
+				which = total_land_units_lost
+				which = land_units_lost
+			}
+		}
+	}
+	if = {
+		limit = { has_country_flag = count_total_naval_units_killed_flag }
+		ROOT = {
+			change_variable = {
+				which = total_naval_units_killed
+				which = naval_units_killed
+			}
+			change_variable = {
+				which = total_naval_units_lost
+				which = naval_units_lost
+			}
+		}
+	}
+
+	if = { #Black Herd
+		limit = { at_least_magic_project_level = { project = black_herd_project_1 level = 1 } }
 		change_variable = {
-			which = total_land_units_killed
+			which = markhentakruan_land_units_killed
 			which = land_units_killed
 		}
-		change_variable = {
-			which = total_land_units_lost
-			which = land_units_lost
-		}
-		change_variable = {
-			which = total_naval_units_killed
-			which = naval_units_killed
-		}
-		change_variable = {
-			which = total_naval_units_lost
-			which = naval_units_lost
+		if = {
+			limit = { has_country_flag = I55_causalities_project_flag }
+			change_variable = { 
+				which = black_herd_causalities_var
+				which = land_units_killed
+			}
 		}
 	}
 }
@@ -5544,6 +5595,15 @@ on_religion_change_effect = {
 		limit = { religion = kalyin_worshippers }
 		kalyin_conversion = yes
 	}
+
+	# For countries that have ended up outside the proper range of isolationism values
+	if = {
+		limit = {
+			uses_isolationism = yes
+		}
+		check_isolation_level = yes
+	}
+	
 	if = {
 		limit = {
 			has_country_flag = kalyin_subject_flag
@@ -5712,6 +5772,13 @@ on_religion_change_effect = {
 
 	if = {
 		limit = { religion = suhans_praxis }
+		if = {
+			limit = { has_global_flag = suhan_is_triumphant }
+			add_country_modifier = {
+				name = suhan_dabbed_on_them
+				duration = -1
+			}
+		}
 		set_country_flag = was_suhans_praxis
 		every_owned_province = {
 			limit = { province_group = raheni_school_origin_provinces }
@@ -6915,6 +6982,11 @@ remove_all_age_of_discovery_modifiers = {
 		if = { #Great Storm
 			limit = { has_country_modifier = I80_supremacy_of_the_malukhuga }
 			remove_country_modifier = I80_supremacy_of_the_malukhuga
+		}
+		#Black Herd
+		if = {
+			limit = { has_country_modifier = I55_vanishing_migration }
+			remove_country_modifier = I55_vanishing_migration
 		}
 	}
 	if = {
@@ -10412,14 +10484,6 @@ startup_1444_effects = {
 		#ruler optimization
 
 		if = {
-			limit = { ai = no }
-			REB = {
-				random_variable = { randnum = 4092 }
-				round_variable = { which = randnum value = 0 }
-			}
-		}
-
-		if = {
 			limit = { is_playing_custom_nation = yes }
 			clear_fast_ruler_flags = yes
 			clear_fast_consort_flags = yes
@@ -11500,6 +11564,18 @@ startup_1444_effects = {
 			6877 = {
 				province_event = { id = insyaa_flavour.10 days = 1875 random = 90 } # year 1450
 			}
+		}
+		if = {
+			limit = { tag = F37 }
+			country_event = {
+				id = irrliam.2
+				days = 7100
+			}
+		}
+
+		if = {
+			limit = { capital_scope = { region = great_plateau_region } ai = no }
+			country_event = { id = utubodi_unification.0 }
 		}
 	}
 }
@@ -14675,6 +14751,10 @@ on_province_owner_change_effect = {
 		}
 		holohana_add_back_rumbling = yes
 	}
+	if = {
+		limit = { province_id = 3675 }
+		province_event = { id = utubodi_unification.1 }
+	}
 }
 
 on_primary_culture_changed_effect = {
@@ -15671,7 +15751,80 @@ on_province_owner_change_monuments = {
 			}
 		}
 	}
+	#Mewomender - Holy Triplets of Mewomender
+	if = {
+		limit = {
+			province_id = 5593
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_estate_privilege = estate_church_development_of_temples
+						has_estate_privilege = estate_lowercastes_development_of_temples
+					}					
+				}
+			}
+			FROM = {
+				every_owned_province = {
+					limit = {
+						has_tax_building_trigger = yes
+						NOT = {
+							has_owner_religion = yes
+							has_owner_harmonized_religion = yes
+							has_owner_secondary_religion = yes
+						}
+					}
+					clear_triplets_temple_bonus = yes
+				}
+			}
+		}
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_2 = yes
+			}
+			if = {
+				limit = {
+					owner = {
+						OR = {
+							has_estate_privilege = estate_church_development_of_temples
+							has_estate_privilege = estate_lowercastes_development_of_temples
+						}				
+					}
+				}
+				owner = {
+					every_owned_province = {
+						limit = {
+							has_tax_building_trigger = yes
+							NOT = {
+								has_owner_religion = yes
+								has_owner_harmonized_religion = yes
+								has_owner_secondary_religion = yes
+							}	
+						}
+						apply_triplets_temple_bonus = yes		
+					}			
+				}
+			}
+			if = {
+				limit = {
+					5593 = {
+						has_great_project = {
+							type = holy_triplets_of_mewomender
+							tier = 3
+						}
+					}
+				}
+				owner = {
+					every_owned_province = {
+						triplets_add_development_effect = yes	
+					}			
+				}
+			}
+			
+		}
 
+	}
 	##### When you have monument #####
 	if = { #Ascajar
 		limit = {
@@ -16040,6 +16193,13 @@ on_province_owner_change_monuments = {
 			name = izmeri_expand_the_buildings
 			duration = -1
 		}
+	}
+	#Mewomender - Holy Triplets of Mewomender
+	if = {
+		limit = {
+			owner_has_active_triplets_tier_3 = yes
+		}
+		triplets_add_development_effect = yes
 	}
 }
 
