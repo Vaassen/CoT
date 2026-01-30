@@ -102,7 +102,13 @@ rezankand_1_1_missions = {
 		required_missions = { rezankand_arrival_at_taychend } 
 		provinces_to_highlight = {
 			region = kalavend_region
-			NOT = { owned_by = ROOT } 
+			NOT = {
+				owned_by = ROOT
+				AND = {
+					owned_by = J79
+					J79 = { is_subject_of = ROOT }
+				}
+			}
 		}
 
 		trigger = {
@@ -114,9 +120,13 @@ rezankand_1_1_missions = {
 						value = 20
 					}
 				}
-				num_of_owned_provinces_with = {
+				num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
 					value = 15
 					region = kalavend_region
+					OR = {
+						owned_by = ROOT
+						owned_by = J79 #Katalperai
+					}
 				}
 			}
 		}
@@ -144,19 +154,19 @@ rezankand_1_1_missions = {
 		}
 
 		trigger = {
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = rezankand_first_clash_tooltip
-					check_variable = {
-						which = RezankandFirstClash
-						value = 5
+			if = {
+				limit = {
+					J99 = { #Validaunea
+						exists = yes
+						was_tag = G52 #Ameion
 					}
 				}
-				if = {
-					limit = {
-						J99 = { #Validaunea
-							exists = yes
-							was_tag = G52 #Ameion
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = rezankand_first_clash_tooltip
+						check_variable = {
+							which = RezankandFirstClash
+							value = 5
 						}
 					}
 					taychend_superregion = {
@@ -165,16 +175,25 @@ rezankand_1_1_missions = {
 							owned_by = J99 #Validaunea
 						} 
 					}
-					J99 = { exists = no } 
-				}
-				else = {
+					J99 = { exists = no }
+				} 
+			}
+			else = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = rezankand_first_clash_tooltip
+						check_variable = {
+							which = RezankandFirstClash
+							value = 5
+						}
+					}
 					taychend_superregion = {
 						type = all
 						NOT = { 
 							owned_by = G52 #Ameion
 						} 
 					}
-					G52 = { exists = no } 
+					G52 = { exists = no }
 				}
 			}
 		}
@@ -813,8 +832,8 @@ rezankand_5_1_missions = {
 				junglemouth_area = {
 					limit = {
 						NOT = { country_or_non_sovereign_subject_holds = ROOT }
-						add_permanent_claim = ROOT
 					}
+					add_permanent_claim = ROOT
 				}
 			}
 			create_general = {
@@ -966,7 +985,7 @@ rezankand_1_2_missions = {
 		position = 9
 		required_missions = { rezankand_choosing_sides } 
 		provinces_to_highlight = {  
-			province_id = 2467
+			province_id = 2487 #Urvand
 			NOT = { owned_by = ROOT }
 		} 
 
@@ -998,6 +1017,7 @@ rezankand_1_2_missions = {
 		provinces_to_highlight = {  
 			superregion = taychend_superregion
 			NOT = { owned_by = ROOT }
+			is_city = yes
 		} 
 
 		trigger = {  
@@ -1007,30 +1027,24 @@ rezankand_1_2_missions = {
 					is_city = no
 					owned_by = ROOT
 				}
+				if = {
+					limit = {
+						ROOT = { has_country_flag = rezankand_supported_on }
+					}
+					OR = {
+						religion = ROOT
+						religion = oren_nayiru
+					}
+				}
+				else = {
+					religion = ROOT
+				}
 			}
 			OR = {
 				kamryakvals_war_is_ended = yes
 				custom_trigger_tooltip = {
 					tooltip = rezankand_sided_with_on_tt
 					has_country_flag = rezankand_supported_on
-				}
-			}
-			if = {
-				limit = {
-					has_country_flag = rezankand_supported_on
-				}
-				taychend_superregion = {
-					type = all
-					OR = {
-						religion = ROOT
-						religion = oren_nayiru
-					}
-				}
-			}
-			else = {
-				taychend_superregion = {
-					type = all
-					religion = ROOT
 				}
 			}
 		} 
@@ -1047,6 +1061,9 @@ rezankand_1_2_missions = {
 					incident_variable_value = { incident = incident_one_sun value = 2 }
 				}
 				decrease_nsc_isolation_level = yes
+			}
+			else = {
+				custom_tooltip = nsc_isolationism_neutral_tt
 			}
 			end_incident = incident_one_sun
 			add_country_modifier = {
@@ -1560,18 +1577,7 @@ rezankand_2_4_missions = {
 		} 
 
 		effect = {  
-			custom_tooltip = supporting_artificers_tt
-			hidden_effect = {
-				if = {
-					limit = {
-						NOT = { has_country_flag = artificery_unlocked }
-					}
-					country_event = {
-						id = magic_artificery_setup.1
-						days = 1
-					}
-				}
-			}
+			unlock_artificery = yes
 			add_country_modifier = {
 				name = rezankand_architects_of_the_future_mod
 				duration = 7300 #20 years
@@ -1885,7 +1891,7 @@ rezankand_2_5_missions = {
 				estate = estate_artificers
 				loyalty = 60
 			}
-			is_not_researching_invention = yes
+			is_not_researching_or_blocked_from_researching_invention = yes
 			has_ruinborn_advisor_of_skill_category = { category = ADM skill = 3 }
 			has_ruinborn_advisor_of_skill_category = { category = DIP skill = 3 }
 			has_ruinborn_advisor_of_skill_category = { category = MIL skill = 3 }
@@ -1925,15 +1931,20 @@ rezankand_2_5_missions = {
 			}
 		} 
 
-		trigger = {  
-			effelai_ongoing_blooming = yes
-			custom_trigger_tooltip = {
-				tooltip = rezankand_hubs_burned_tt
-				check_variable = {
-					which = RezankandHubsBurned
-					value = 3
+		trigger = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = effelai_blooming_over }
 				}
-			}
+				effelai_ongoing_blooming = yes
+				custom_trigger_tooltip = {
+					tooltip = rezankand_hubs_burned_tt
+					check_variable = {
+						which = RezankandHubsBurned
+						value = 3
+					}
+				}
+			}  
 			army_size_percentage = 0.9
 			any_owned_province = {
 				is_effelai_network_hub = yes
@@ -2048,7 +2059,7 @@ rezankand_3_2_missions = {
 		position = 13
 		required_missions = { rezankand_the_tower } 
 		provinces_to_highlight = {  
-			superregion = amadia_region
+			region = amadia_region
 			OR = {
 				trade_goods = precursor_relics
 				trade_goods = damestear
@@ -2107,6 +2118,8 @@ rezankand_3_2_missions = {
 				NOT = { owned_by = ROOT }
 				NOT = { religion = ROOT }
 			}
+			NOT = { is_sea = yes }
+			NOT = { is_wasteland = yes }
 		} 
 
 		trigger = {
@@ -2227,6 +2240,8 @@ rezankand_3_3_missions = {
 				AND = {
 					continent = south_america
 					NOT = { owned_by = ROOT }
+					is_sea = no
+					is_wasteland = no
 				}
 			}
 		} 
@@ -2336,7 +2351,7 @@ rezankand_3_4_missions = {
 			OR = {
 				OR = {
 					court_mage = 3
-					ruler_has_mage_personality = yes
+					ruler_is_powerful_mage = yes
 				}
 				estate_loyalty = {
 					estate = estate_artificers
