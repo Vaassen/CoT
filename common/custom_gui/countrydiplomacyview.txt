@@ -966,6 +966,79 @@ custom_button = { # nsc_dagger_derumasil_action
 	}
 }
 
+#Rinta Seekers
+custom_window = {
+	name = custom_diplomacy_religion_rinta_seekers
+	potential = {
+		FROM = { is_variable_equal = { which = show_diplo_container value = 3020 } }
+	}
+}
+custom_button = { # nsc_dagger_derumasil_action
+	name = rs_steal_telescope_funds
+	tooltip = rs_steal_telescope_funds_tt
+	potential = { }
+	trigger = {
+		FROM = {
+			if = {
+				limit = { has_country_flag = stole_telescope_funds_flag }
+				had_country_flag = {
+					flag = stole_telescope_funds_flag
+					days = 365 #1 year
+				}
+			}
+		}
+		is_incident_active = incident_rinta_light_up_the_night_sky
+		if = {
+			limit = { has_global_flag = rinta_supercharge_stealing_funds_flag }
+			has_spy_network_from = {
+				who = FROM
+				value = 20
+			}
+		}
+		else = {
+			has_spy_network_from = {
+				who = FROM
+				value = 35
+			}
+		}
+	}
+	effect = {
+		FROM = {
+			if = {
+				limit = { has_global_flag = rinta_supercharge_stealing_funds_flag }
+				add_spy_network_in = {
+					who = ROOT
+					value = -20
+				}
+			}
+			else = {
+				add_spy_network_in = {
+					who = ROOT
+					value = -35
+				}
+			}
+			rinta_invest_in_telescope = { level = 0_5 }
+			set_country_flag = stole_telescope_funds_flag #Reset decision cooldown
+		}
+		tooltip = {
+			add_opinion = {
+				who = ROOT
+				modifier = rinta_stole_astronomy_funds
+			}
+			add_casus_belli = {
+				type = cb_spy_discovered
+				target = ROOT
+				months = 60 #5 years
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = rinta_seeker_events.520 #Astronomical Center Funds Stolen
+			}
+		}
+	}
+}
+
 #####
 #Estate Actions
 #####
@@ -1002,7 +1075,10 @@ custom_button = { #vampire_spread_action
 		ROOT = {
 			if = {
 				limit = { ai = yes }
-				culture_is_human = yes #Can only spread to humans as everyone else says no
+				OR = {
+					culture_is_human = yes #Can only spread to humans as everyone else says no
+					culture_is_half_elven = yes #Or half elves
+				}
 				NOT = { has_estate = estate_vampires }
 			}
 			else = {
@@ -1340,7 +1416,7 @@ custom_button = { # Y20_feiten_buy_skyport_rights_ai_accept
 	frame = {
 		number = 2
 		trigger = {
-			check_variable = { which = ai_accept_var_button_1 value = 1 }
+			FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
 		}
 	}
 	frame = {
@@ -2085,7 +2161,7 @@ custom_button = { #J33_invite_into_democratic_sphere
 			J33_invite_into_democratic_sphere_ai_acceptance_calc_effect = yes
 		}
 		if = {
-			limit = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
+			limit = { FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } } }
 			ROOT = {
 				if = {
 					limit = { NOT = { government = republic } }
@@ -2207,7 +2283,7 @@ custom_button = { #J33_invite_into_democratic_sphere_accept
 	frame = {
 		number = 2
 		trigger = {
-			check_variable = { which = ai_accept_var_button_1 value = 1 }
+			FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
 		}
 	}
 	frame = {
@@ -2364,7 +2440,7 @@ custom_button = { # Z97_spread_ravelian_faith
 			Z97_spread_ravelian_faith_ai_acceptance_calc_effect = yes
 		}
 		if = {
-			limit = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
+			limit = { FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } } }
 			FROM = { # Effects on the Ravelian State
 				add_adm_power = -100
 				add_dip_power = -100
@@ -2392,7 +2468,7 @@ custom_button = { # Z97_spread_ravelian_faith_ai_accept
 	frame = {
 		number = 2
 		trigger = {
-			check_variable = { which = ai_accept_var_button_1 value = 1 }
+			FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
 		}
 	}
 	frame = {
@@ -2425,18 +2501,27 @@ custom_button = { # Z97_spread_ravelian_estates
 		}
 	}
 	effect = {
-		ROOT = {
-			if = {
-				limit = { has_estate = estate_mages }
-				set_estate_privilege = estate_mages_organization_religious
+		hidden_effect = {
+			Z97_spread_ravelian_estates_ai_acceptance_calc_effect = yes
+		}
+		if = {
+			limit = { FROM = { check_variable = { which = ai_accept_var_button_2 value = 1 } } }
+			ROOT = {
+				if = {
+					limit = { has_estate = estate_mages }
+					set_estate_privilege = estate_mages_organization_religious
+				}
+				if = {
+					limit = { has_estate = estate_artificers }
+					set_estate_privilege = estate_artificers_organization_ravelian_control
+				}
+				hidden_effect = {
+					set_country_flag = estates_overseen_by_ravelians
+				}
 			}
-			if = {
-				limit = { has_estate = estate_artificers }
-				set_estate_privilege = estate_artificers_organization_ravelian_control
-			}
-			hidden_effect = {
-				set_country_flag = estates_overseen_by_ravelians
-			}
+		}
+		else = {
+			custom_tooltip = anb_custom_diplomacy_click_to_query
 		}
 	}
 }
@@ -2453,7 +2538,7 @@ custom_button = { # Z97_spread_ravelian_estates_ai_accept
 	frame = {
 		number = 2
 		trigger = {
-			check_variable = { which = ai_accept_var_button_1 value = 1 }
+			FROM = { check_variable = { which = ai_accept_var_button_2 value = 1 } }
 		}
 	}
 	frame = {
@@ -2676,7 +2761,7 @@ custom_button = { # Y25_zongji_fealty_action
 			Y25_fealty_ai_acceptance_calc_effect = yes
 		}
 		if = {
-			limit = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
+			limit = { FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } } }
 			FROM = {
 				add_dip_power = -60
 				create_subject = {
@@ -2703,7 +2788,7 @@ custom_button = { # Y25_zongji_fealty_action_ai_accept
 	frame = {
 		number = 2
 		trigger = {
-			check_variable = { which = ai_accept_var_button_1 value = 1 }
+			FROM = { check_variable = { which = ai_accept_var_button_1 value = 1 } }
 		}
 	}
 	frame = {
