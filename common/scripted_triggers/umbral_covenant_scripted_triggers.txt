@@ -1,0 +1,349 @@
+umbral_assimilation = {
+	custom_trigger_tooltip = {
+		tooltip = umbral_assimilation_$target_culture_group$_cttt
+		NOT = {
+			has_country_flag = S90_assimilated_$target_culture_group$
+		}
+		africa = {
+			type = all
+			OR = {
+				is_city = no
+				NOT = {
+					culture_group = $target_culture_group$
+				}
+				AND = {
+					owned_by = ROOT
+					religion = shadow_pact
+					OR = {
+						has_owner_accepted_culture = yes
+						has_owner_culture = yes
+					}
+				}
+				owned_by = S70 #yezel
+			}
+		}
+	}
+}
+
+umbral_expansion_mission_trigger = {
+	if = { 
+		limit = {
+			calc_true_if = {
+				$regionname$_region = {
+					type = all
+					NOT = { owned_by = S70 } #YM 
+				}
+				amount = 15
+			}
+		}
+		num_of_owned_provinces_with = { 
+			value = 15 
+			region = $regionname$_region
+		} 
+		any_owned_province = { 
+			region = $regionname$_region
+			has_building = mage_tower 
+			development = 25 
+			if = { 
+				limit = { 
+					has_dlc = "Leviathan" 
+				} 
+				num_of_times_expanded_infrastructure = 1 
+			} 
+		} 
+	} 
+	else = { 
+		custom_trigger_tooltip = { 
+			tooltip = S90_fail_region_tt 
+		} 
+	} 
+}
+
+
+
+
+
+
+# $type$ = [spirits,shadows,dusk,soul,abyss]
+uc_has_essence_for_type_ability = {
+	uc_has_essence_for_$type$_ability = yes
+}
+uc_has_essence_for_spirits_ability = {
+	uc_has_essence = { amount = 5 }
+}
+uc_has_essence_for_shadows_ability = {
+	uc_has_essence = { amount = 15 }
+}
+uc_has_essence_for_dusk_ability = {
+	uc_has_essence = { amount = 30 }
+}
+uc_has_essence_for_soul_ability = {
+	uc_has_essence = { amount = 45 }
+}
+uc_has_essence_for_abyss_ability = {
+	uc_has_essence = { amount = 45 }
+}
+uc_has_essence = {
+	# check_variable = { which = uc_shadow_essence_usage value = $amount$ }
+	#Remaining essence is calculated to avoid VAT
+	check_variable = { which = uc_free_shadow_essence value = $amount$ }
+}
+
+#Glowing UI scripted triggers (useful elsewhere too)
+# $type$ = [spirits,shadows,dusk,soul,abyss]
+UC_has_any_type_power_active = {
+	OR = {
+		has_country_flag = uc_$type$_power_1_active
+		has_country_flag = uc_$type$_power_2_active
+		has_country_flag = uc_$type$_power_3_active
+		has_country_flag = uc_$type$_power_4_active
+		#Ritual must automatically come off cd, uses mod instead
+		has_country_modifier = uc_$type$_power_5_cd
+	}
+}
+UC_has_two_of_type_power_active = {
+	calc_true_if = {
+		amount = 2
+		has_country_flag = uc_$type$_power_1_active
+		has_country_flag = uc_$type$_power_2_active
+		has_country_flag = uc_$type$_power_3_active
+		has_country_flag = uc_$type$_power_4_active
+		# has_country_flag = uc_$type$_power_5_active
+		#Ritual must automatically come off cd, uses mod instead
+		has_country_modifier = uc_$type$_power_5_cd
+	}
+}
+##UI only - not needed elsewhere
+UC_has_adjacent_two_of_type_power_active = {
+	UC_has_two_of_type_power_active = { type = $type1$ }
+	UC_has_two_of_type_power_active = { type = $type2$ }
+}
+
+can_click_uc_power_of_type_in_slot_trigger = {
+	if = {
+		limit = { uc_is_empowerment_active = { type = $type$ slot = $slot$ } }
+		uc_can_deactivate_trigger = { type = $type$ slot = $slot$ }
+	}
+	if = { #This is an 'if' instead of an 'else' so the triggers within don't break
+		limit = { NOT = { uc_is_empowerment_active = { type = $type$ slot = $slot$ } } }
+		can_activate_uc_power_of_type_in_slot_trigger = { type = $type$ slot = $slot$ }
+	}
+}
+can_click_uc_ritual_of_type = {
+	uc_$type$_power_$slot$_trigger = yes
+	uc_has_essence_for_type_ability = { type = $type$ }
+}
+# $type$ = [spirits,shadows,dusk,soul,abyss]
+# slot = 1-5
+can_activate_uc_power_of_type_in_slot_trigger = {
+	hidden_trigger = {
+		NOT = { has_country_flag = uc_$type$_power_$slot$_active } #hidden as its just intuitive, cant activate when activated
+	}
+	uc_$type$_power_$slot$_trigger = yes
+	uc_has_essence_for_type_ability = { type = $type$ }
+	OR = {
+		#Not unlocked 2, none active
+		custom_trigger_tooltip = {
+			tooltip = S90_no_active_power_of_type_active_tt
+			NOT = {
+				UC_has_any_type_power_active = { type = $type$ }
+			}
+		}
+		AND = { #Unlocked 2, less than 2 active
+			custom_trigger_tooltip = {
+				tooltip = S90_unlocked_two_powers_ability_tt
+				has_country_flag = S90_abyss_unlock
+			}
+			custom_trigger_tooltip = {
+				tooltip = S90_less_than_two_powers_of_type_active_tt
+				NOT = {
+					UC_has_two_of_type_power_active = { type = $type$ }
+				}
+			}
+		}
+	}
+	uc_five_year_ritual_$type$_block_trigger = yes
+}
+#These are necessary to exclude `abyss`
+uc_five_year_ritual_spirits_block_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = S90_ritual_cooldown_tt
+		NOT = { has_country_modifier = S90_ritual_spirits_blocker }
+	}
+}
+uc_five_year_ritual_shadows_block_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = S90_ritual_cooldown_tt
+		NOT = { has_country_modifier = S90_ritual_shadows_blocker }
+	}
+}
+uc_five_year_ritual_dusk_block_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = S90_ritual_cooldown_tt
+		NOT = { has_country_modifier = S90_ritual_dusk_blocker }
+	}
+}
+uc_five_year_ritual_soul_block_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = S90_ritual_cooldown_tt
+		NOT = { has_country_modifier = S90_ritual_soul_blocker }
+	}
+}
+uc_five_year_ritual_abyss_block_trigger = { }
+
+uc_is_empowerment_active = {
+	custom_trigger_tooltip = {
+		tooltip = S90_empowerment_off_cooldown_tt
+		OR = {
+			has_country_flag = uc_$type$_power_$slot$_active
+			has_country_modifier = uc_$type$_power_$slot$_cd #Catch ritual
+		}
+	}
+}
+uc_can_deactivate_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = S90_empowerment_off_cooldown_tt
+		has_country_flag = uc_$type$_power_$slot$_active
+		NOT = { has_country_modifier = uc_$type$_power_$slot$_cd }
+	}
+}
+
+has_unlocked_soul_powers = {
+	custom_trigger_tooltip = {
+		tooltip = S90_unlocked_soul_powers_tt
+		has_country_flag = S90_soul_empowerment_slot_unlock
+	}
+}
+has_unlocked_abyss_powers = {
+	custom_trigger_tooltip = {
+		tooltip = S90_unlocked_abyss_powers_tt
+		has_country_flag = S90_abyss_unlock
+	}
+}
+uc_spirits_power_1_trigger = { # spirits_incorporeal_accompaniment
+	
+}
+uc_spirits_power_2_trigger = { # spirits_communion
+	
+}
+uc_spirits_power_3_trigger = { # spirits_rise_from_shadow
+	
+}
+uc_spirits_power_4_trigger = { # spirits_always_watching
+	
+}
+uc_spirits_power_5_trigger = { # spirits_ritual
+	custom_trigger_tooltip = {
+		tooltip = spirits_ritual_cd_tt
+		NOT = { has_country_modifier = S90_ritual_cd_1 }
+	}
+}
+uc_shadows_power_1_trigger = { # shadows_extraction
+	
+}
+uc_shadows_power_2_trigger = { # shadows_dark_resuscitation
+	
+}
+uc_shadows_power_3_trigger = { # shadows_trick_of_the_light
+	# mission_completed = S90_trick_of_the_light
+	custom_trigger_tooltip = {
+		tooltip = has_trick_of_the_light_unlock_tt
+		has_country_flag = S90_trick_of_the_light_unlock
+	}
+}
+uc_shadows_power_4_trigger = { # shadows_immaterial_fabrication
+	# mission_completed = S90_plunder_the_earth
+	custom_trigger_tooltip = {
+		tooltip = has_immaterial_fabrication_unlock_tt
+		has_country_flag = S90_immaterial_fabrication_unlock
+	}
+}
+uc_shadows_power_5_trigger = { # shadows_ritual
+	custom_trigger_tooltip = {
+		tooltip = shadows_ritual_cd_tt
+		NOT = { has_country_modifier = S90_ritual_cd_2 }
+	}
+}
+uc_dusk_power_1_trigger = { # dusk_even_in_night
+	
+}
+uc_dusk_power_2_trigger = { # dusk_incensed_to_rage
+	
+}
+uc_dusk_power_3_trigger = { # dusk_even_souls_kneel
+	# mission_completed = S90_of_life
+	custom_trigger_tooltip = {
+		tooltip = has_even_souls_kneel_unlock_tt
+		has_country_flag = S90_even_souls_kneel_unlock
+	}
+}
+uc_dusk_power_4_trigger = { # dusk_what_lurks_in_the_dark
+	# mission_completed = S90_my_endless_legions
+	custom_trigger_tooltip = {
+		tooltip = has_what_lurks_in_the_dark_unlock_tt
+		has_country_flag = S90_what_lurks_in_the_dark_unlock
+	}
+}
+uc_dusk_power_5_trigger = { # dusk_ritual
+	custom_trigger_tooltip = {
+		tooltip = dusk_ritual_cd_tt
+		NOT = { has_country_modifier = S90_ritual_cd_3 }
+	}
+}
+uc_soul_power_1_trigger = { # soul_light
+	
+}
+uc_soul_power_2_trigger = { # soul_dark
+	
+}
+uc_soul_power_3_trigger = { # soul_font
+	
+}
+uc_soul_power_4_trigger = { # soul_harnessing_entropy
+	# mission_completed = S90_of_death
+	custom_trigger_tooltip = {
+		tooltip = has_harnessing_entropy_unlock_tt
+		has_country_flag = S90_harnessing_entropy_unlock
+	}
+}
+uc_soul_power_5_trigger = { # soul_ritual
+	custom_trigger_tooltip = {
+		tooltip = soul_ritual_cd_tt
+		NOT = { has_country_modifier = S90_ritual_cd_4 }
+	}
+}
+uc_abyss_power_1_trigger = { # abyss_tajan
+	# mission_completed = S90_relics_of_the_storm_queens
+	custom_trigger_tooltip = {
+		tooltip = has_tajan_unlock_tt
+		has_country_flag = S90_tajan_unlock
+	}
+}
+uc_abyss_power_2_trigger = { # abyss_viscus
+	# mission_completed = S90_the_realm_of_infernus
+	custom_trigger_tooltip = {
+		tooltip = has_viscus_of_the_desert_unlock_tt
+		has_country_flag = S90_viscus_of_the_desert_unlock
+	}
+}
+uc_abyss_power_3_trigger = { # abyss_serpent_king
+	# mission_completed = S90_straight_to_the_source
+	custom_trigger_tooltip = {
+		tooltip = has_writings_of_serpent_king_tt
+		has_country_flag = S90_writings_of_serpent_king
+	}
+}
+uc_abyss_power_4_trigger = { # abyss_fueled_by_suffering
+	# mission_completed = S90_not_just_the_past
+	custom_trigger_tooltip = {
+		tooltip = has_fueled_by_suffering_unlock_tt
+		has_country_flag = S90_fueled_by_suffering_unlock
+	}
+}
+uc_abyss_power_5_trigger = { # abyss_ritual
+	#Maybe custom_trigger_tooltip this
+	# NOT = { has_country_modifier = S90_ritual_cd_5 }
+	hidden_trigger = {
+		always = no
+	}
+}

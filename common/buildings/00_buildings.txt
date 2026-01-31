@@ -9,7 +9,8 @@
 # manufactory = { trade_good trade_good } # list of trade goods that get a production bonus
 # onmap = yes/no # show as a sprite on the map
 
-# FROM = owner
+# FROM = The nation building and paying for the building
+# owner = owner of the province
 # ROOT = province
 
 # Building AI is now mainly hard-coded. The AI will estimate how much it gains yearly from each building,
@@ -59,12 +60,19 @@ marketplace = {
 				duration = 7300
 			}
 		}
+		if = {
+			limit = { owner = { has_estate_privilege = estate_burghers_U10_construction_rights } }
+			area = {
+				limit = { owned_by = FROM }
+				add_province_modifier = {
+					name = U10_affluent_reclaimation
+					duration = -1
+				}
+			}
+		}
 
-		owner = { accretive_path_jiangszun_chi_stacking_effect = { amount = 20 } }
-		owner = { accretive_path_upper_raheni_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 1 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = trade }
 	}
 	on_destroyed = {
@@ -73,9 +81,25 @@ marketplace = {
 			type = production
 			value = 1
 		}
+		if = {
+			limit = {
+				NOT = {
+					area_for_scope_province = {
+						owned_by = FROM
+						has_trade_building_trigger = yes
+					}
+				}
+			}
+			area = {
+				limit = { owned_by = FROM }
+				remove_province_modifier = U10_affluent_reclaimation
+			}
+		}
 	}
 
-	on_construction_started = { } #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
 	on_construction_canceled = { } #Fires when you cancel the construction, ROOT - Province FROM - Country that canceled 1.25
 
 
@@ -122,8 +146,15 @@ workshop = {
 		}
 
 		gronstunad_building_authority_effect = { value = 1 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = prod }
+		if = {
+			limit = {
+				FROM = { tag = I14 }
+				province_id = 4217 #Gor Vazumbrog
+				has_province_modifier = gor_vazumbrog_dragons_wound
+			}
+			province_event = { id = flavour_gor_vazumbrog.207 }
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -134,6 +165,10 @@ workshop = {
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	allow_in_gold_provinces = no
@@ -222,12 +257,20 @@ temple = {
 			}
 			add_base_tax = 1
 		}
-
-		owner = { accretive_path_harimari_chi_stacking_effect = { amount = 20 } }
-		owner = { accretive_path_goldscale_kobold_chi_stacking_effect = { amount = 20 } }
-
+		
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = {
+					has_province_flag = triplet_gained_development_temple
+					has_province_flag = triplet_gained_development_cathedral
+				}
+			}
+			add_base_tax = 1
+			set_province_flag = triplet_gained_development_temple
+		}
+	
 		gronstunad_building_authority_effect = { value = 1 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
 		if = {
@@ -235,6 +278,73 @@ temple = {
 			infernal_deity_upgrade_effect = yes
 		}
 		spirit_fort_awakening_effect = yes
+
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = zokka_temple_upgrade_flag
+				}
+			}
+			add_province_modifier = {
+				name = zokka_tithe
+				duration = -1
+			}
+		}
+		if = { #Deranne
+			limit = {
+				region = lencenor_region
+				has_building = mage_tower
+				FROM = {
+					has_estate_privilege = estate_church_deranne_seaflower_skalds
+				}
+				NOT = {
+					area_for_scope_province = {
+						has_province_flag = deranne_skalds_province_flag
+					}	
+				}
+			}
+			add_base_tax = 1
+			add_base_production = 1
+			add_base_manpower = 1
+			set_province_flag = deranne_skalds_province_flag
+			FROM = {
+				add_estate_loyalty = {
+					estate = estate_church
+					loyalty = 5
+				}
+			}
+		}
+		if = { #Great Storm Effects
+			limit = { 
+				FROM = { is_or_was_tag = { tag = I80 } }
+			}
+			if = { #Great Storm Modifier, only for I80
+				limit = { owner = { has_country_modifier = I80_rukunai_style_monasteries } NOT = { has_province_flag = I80_monastery_built } } 
+				set_province_flag = I80_monastery_built
+				owner = {
+					add_treasury = 20
+				}
+			}
+			if = { #Great Storm Modifier, only for I80
+				limit = { owner = { has_country_modifier = I80_shaman_funded_temples } }
+				owner = { 
+					add_treasury = 10
+					increase_magic_experience = { unmodified_amount = 10 }
+				}
+			}
+			if = { #Modifier for Wild Hunt, effect applies when Great Storm does its thing and builds a temple there
+				limit = { owner = { has_country_modifier = I80_crisis_of_faith } }
+				spawn_rebels = {
+					size = 2
+					type = heretic_rebels
+				}
+				FROM = {
+					country_event = {
+						id = flavour_great_storm.16
+					}
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		on_province_tax_building_destroyed_estate_privileges_effect = yes
@@ -243,7 +353,7 @@ temple = {
 			type = tax
 			value = 1
 		}
-		if = {
+		if = { 
 			limit = {
 				FROM = { has_government_attribute = on_church_built_clergy_loyalty }
 			}
@@ -293,10 +403,30 @@ temple = {
 			add_base_tax = -1
 		}
 		remove_province_modifier = I98_IRS_activities
+		remove_province_modifier = zokka_tithe
+		remove_province_modifier = xiaken_temple_grounds_mod
+		remove_province_modifier = R36_countryside_schools_mod
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+		hidden_effect = {
+			if = {
+				limit = {
+					owner_has_active_triplets_tier_3 = yes
+					has_province_flag = triplet_gained_development_temple
+				}
+				add_base_tax = -1
+				
+			}		
+		
+		}
+
 	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	ai_will_do = {
 		factor = 1
 	}
@@ -316,9 +446,9 @@ barracks = {
 			value = 1
 		}
 
-		update_improved_military_buildings_modifier = { #1.35
-			building = barracks
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = barracks
+		#}
 
 		#Anbennar
 		anbennar_building_effect = yes
@@ -339,10 +469,17 @@ barracks = {
 			}
 		}
 
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 1 }
-	}
+		
+		if = { #Degakheion
+			limit = { FROM = { has_country_flag = degakheion_manpower_building_buff } }
+			add_province_modifier = {
+				name = G46_barracks_buff
+				duration = -1
+			}
+		}
+	} 
 	on_destroyed = {
 		# if = {
 			# limit = {
@@ -360,12 +497,25 @@ barracks = {
 			value = 1
 		}
 
-		update_improved_military_buildings_modifier = {
-			building = barracks #1.35
+		#update_improved_military_buildings_modifier = {
+		#	building = barracks #1.35
+		#}
+
+		if = { #Degakheion
+			limit = { FROM = { has_country_flag = degakheion_manpower_building_buff } }
+			remove_province_modifier = G46_barracks_buff
 		}
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+		if = { #Degakheion
+			limit = { FROM = { has_country_flag = degakheion_manpower_building_buff } }
+			remove_province_modifier = G46_barracks_buff
+		}
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -408,6 +558,10 @@ shipyard = {
 		gronstunad_building_authority_effect = { value = -1 }
 	}
 
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	ai_will_do = {
 		factor = 1
 		modifier = {
@@ -429,7 +583,6 @@ fort_15th = {
 	}
 
 	build_trigger = {
-		NOT = { has_terrain = fey_gladeway }
 	}
 
 	# THIS = Province, FROM = Builder(not nessecairly owner, can be overlord)
@@ -448,24 +601,24 @@ fort_15th = {
 						loyalty = 5
 					}
 				}
-				if = {
-					limit = {
-						has_estate = estate_maratha
-					}
-					add_estate_loyalty = {
-						estate = estate_maratha
-						loyalty = 5
-					}
-				}
-				if = {
-					limit = {
-						has_estate = estate_rajput
-					}
-					add_estate_loyalty = {
-						estate = estate_rajput
-						loyalty = 5
-					}
-				}
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_maratha
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_maratha
+				# 		loyalty = 5
+				# 	}
+				# }
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_rajput
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_rajput
+				# 		loyalty = 5
+				# 	}
+				# }
 				#Anbennar
 				if = {
 					limit = {
@@ -538,19 +691,98 @@ fort_15th = {
 			}
 		}
 
-		owner = { accretive_path_xiaken_chi_stacking_effect = { amount = 40 } }
 
 		#Anbennar
 		
 		#Anbennar
 		anbennar_building_effect = yes
-
+		owner = { accretive_path_gain_chi = { aspect = serenity_in_rock_and_stone category = mil amount = 20 } }
 		gronstunad_building_authority_effect = { value = 2 }
+
+		
+		#Anbennar - Brrtekuh
+		if = {
+			limit = {
+				has_building = mage_tower
+				owner = {
+					OR = {
+						has_estate_privilege = estate_church_U10_purification_posts_along_the_sorrow
+						has_country_modifier = U10_exorcist_combine
+					}
+				}
+			}
+			add_province_modifier = {
+				name = U10_containment_array
+				duration = -1
+			}
+		}
+		if = {
+			limit = { owner = { has_country_modifier = organized_aid } }
+			add_devastation = -5
+			every_neighbor_province = { 
+				limit = { owned_by = FROM }
+				add_devastation = -5
+			}	
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_government_attribute = expand_the_league_1_attribute
+						has_government_attribute = expand_the_league_2_attribute
+						has_government_attribute = expand_the_league_3_attribute
+					}
+					is_subject = no
+				}
+				owner = {
+					OR = {
+						tag = FROM
+						is_subject_of_type = vic_league_member
+					}
+				}
+			}
+			FROM = {
+				add_government_power = {
+					mechanic_type = vic_league_mechanic
+					power_type = vic_league_mil_power
+					value = 10
+				}
+			}
+		}
 		spirit_fort_awakening_effect = yes
+		update_magical_fortress = yes
+
+		if = { #No double forts for you
+			limit = {
+				OR = {
+					has_building = fort_16th
+					has_building = fort_17th
+					has_building = fort_18th
+				}
+			}
+			remove_building = fort_15th
+		}
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = volcanic_truth_persistence
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = 100
+				}
+			}
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
 	on_destroyed = {
+		if = {
+			limit = { has_province_modifier = U10_containment_array }
+			remove_province_modifier = U10_containment_array
+		}
 		#ANBENNAR - windward stuff
 		if = {
 			limit = {
@@ -572,11 +804,36 @@ fort_15th = {
 			province_event = { id = kobold_traps.8 }
 		}
 		remove_province_modifier = command_elephant_fort_buff
+		update_magical_fortress = yes
+
+		#Bibyobi
+		if = {
+			limit = { has_province_modifier = S98_jungle_fortress }
+			every_neighbor_province = {
+				limit = {
+					NOT = {
+						any_neighbor_province = {
+							owned_by = FROM
+							has_fort_building_trigger = yes
+						}
+					}
+				}
+				remove_province_modifier = S98_jungle_fortress
+			}
+		}
+		if = {
+			limit = { has_province_modifier = spiked_log_spiky_traps }
+			remove_province_modifier = spiked_log_spiky_traps
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -2 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	onmap = yes
@@ -615,6 +872,50 @@ coastal_defence = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 1 }
+		#karassk
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = L68_sailors_on_defense
+				}
+			}
+			add_province_modifier = {
+				name = L68_coastal_defense_sailors
+				duration = -1
+			}
+		}
+		#Izmeri the Black Stone City
+		if = {
+			limit = {
+				5631 = {
+					owned_by = FROM
+					has_great_project = {
+						type = izmeri_the_black_stone_city
+						tier = 2
+					}
+					owner = { can_use_izmeri_the_black_stone_city = yes }
+				}
+				NOT = { has_province_modifier = izmeri_expand_the_buildings }
+			}
+			add_province_modifier = {
+				name = izmeri_expand_the_buildings
+				duration = -1
+			}
+		}
+	}
+	on_destroyed = {
+		if = {
+			limit = { 
+				has_province_modifier = L68_coastal_defense_sailors
+			}
+			remove_province_modifier = L68_coastal_defense_sailors
+		}
+		if = {
+			limit = { 
+				has_province_modifier = izmeri_expand_the_buildings
+			}
+			remove_province_modifier = izmeri_expand_the_buildings
+		}
 	}
 	modifier = {
 		blockade_force_required = 0.5
@@ -624,6 +925,10 @@ coastal_defence = {
 
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -672,7 +977,6 @@ courthouse = {
 			}
 		}
 		
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 10 } }
 
 		gronstunad_building_authority_effect = { value = 1 }
 	}
@@ -685,6 +989,10 @@ courthouse = {
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -779,8 +1087,28 @@ dock = {
 				duration = 7300
 			}
 		}
-
 		gronstunad_building_authority_effect = { value = 1 }
+
+		if = {
+			limit = {
+				FROM = {
+					has_estate_privilege = estate_nobility_lizardfolk_imperial_fisheries
+				}
+				OR = {
+					province_id = 5896 
+					province_id = 5898
+					province_id = 5834
+					province_id = 3259
+					province_id = 3258
+				}
+			}
+			add_province_modifier = {
+				name = lizardfolk_imperial_fisheries
+				duration = -1
+			}
+		}
+
+		z22_white_harbour_build_check = yes
 	}
 
 	on_destroyed = {
@@ -789,9 +1117,17 @@ dock = {
 			type = production
 			value = 1
 		}
+		if = {
+			limit = { has_province_modifier = lizardfolk_imperial_fisheries }
+			remove_province_modifier = lizardfolk_imperial_fisheries
+		}
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -862,18 +1198,17 @@ regimental_camp = {
 			limit = { FROM = { has_estate_privilege = estate_boar_command_war_room_rights } }
 			FROM = { add_legitimacy = 0.5 }
 		}
-		update_improved_military_buildings_modifier = { #1.35
-			building = regimental_camp
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = regimental_camp
+		#}
 
 		gronstunad_building_authority_effect = { value = 2 }
 
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 20 } }
 	}
 	on_destroyed = {
-		update_improved_military_buildings_modifier = { #1.35
-			building = regimental_camp
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = regimental_camp
+		#}
 		remove_development_from_building = {
 			building = regimental_camp
 			type = manpower
@@ -882,6 +1217,10 @@ regimental_camp = {
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -2 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -906,7 +1245,6 @@ fort_16th = {
 	}
 
 	build_trigger = {
-		NOT = { has_terrain = fey_gladeway }
 	}
 
 	# THIS = Province, FROM = Builder(not nessecairly owner, can be overlord)
@@ -925,24 +1263,24 @@ fort_16th = {
 						loyalty = 5
 					}
 				}
-				if = {
-					limit = {
-						has_estate = estate_maratha
-					}
-					add_estate_loyalty = {
-						estate = estate_maratha
-						loyalty = 5
-					}
-				}
-				if = {
-					limit = {
-						has_estate = estate_rajput
-					}
-					add_estate_loyalty = {
-						estate = estate_rajput
-						loyalty = 5
-					}
-				}
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_maratha
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_maratha
+				# 		loyalty = 5
+				# 	}
+				# }
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_rajput
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_rajput
+				# 		loyalty = 5
+				# 	}
+				# }
 			}
 		}
 
@@ -991,16 +1329,94 @@ fort_16th = {
 		}
 		#Anbennar
 
-		owner = { accretive_path_xiaken_chi_stacking_effect = { amount = 40 } }
 
 		anbennar_building_effect = yes
-
+		owner = { accretive_path_gain_chi = { aspect = serenity_in_rock_and_stone category = mil amount = 20 } }
 		gronstunad_building_authority_effect = { value = 4 }
 		spirit_fort_awakening_effect = yes
+		#Anbennar - Brrtekuh
+		if = {
+			limit = {
+				has_building = mage_tower
+				owner = {
+					OR = {
+						has_estate_privilege = estate_church_U10_purification_posts_along_the_sorrow
+						has_country_modifier = U10_exorcist_combine
+					}
+				}
+			}
+			add_province_modifier = {
+				name = U10_containment_array
+				duration = -1
+			}
+		}
+		if = {
+			limit = { owner = { has_country_modifier = organized_aid } }
+			add_devastation = -5
+			every_neighbor_province = { 
+				limit = { owned_by = FROM }
+				add_devastation = -5
+			}	
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_government_attribute = expand_the_league_1_attribute
+						has_government_attribute = expand_the_league_2_attribute
+						has_government_attribute = expand_the_league_3_attribute
+					}
+					is_subject = no
+				}
+				owner = {
+					OR = {
+						tag = FROM
+						is_subject_of_type = vic_league_member
+					}
+				}
+			}
+			FROM = {
+				add_government_power = {
+					mechanic_type = vic_league_mechanic
+					power_type = vic_league_mil_power
+					value = 10
+				}
+			}
+		}
+
+		update_magical_fortress = yes
+
+		if = { #No double forts for you
+			limit = {
+				OR = {
+					has_building = fort_17th
+					has_building = fort_18th
+				}
+			}
+			remove_building = fort_16th
+			remove_building = fort_15th
+		}
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = volcanic_truth_persistence
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = 100
+				}
+			}
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
 	on_destroyed = {
+		if = {
+			limit = { has_province_modifier = U10_containment_array }
+			remove_province_modifier = U10_containment_array
+		}
 		#ANBENNAR - windward stuff
 		if = {
 			limit = {
@@ -1011,10 +1427,32 @@ fort_16th = {
 			}
 		}
 		remove_province_modifier = command_elephant_fort_buff
+
+		update_magical_fortress = yes
+
 		if = { # Anbennar Kobold Traps
 			limit = { has_province_flag = has_kobold_traps }
 			province_event = { id = kobold_traps.8 }
+		}
+		#Bibyobi
+		if = {
+			limit = { has_province_modifier = S98_jungle_fortress }
+			every_neighbor_province = {
+				limit = {
+					NOT = {
+						any_neighbor_province = {
+							owned_by = FROM
+							has_fort_building_trigger = yes
+						}
+					}
+				}
+				remove_province_modifier = S98_jungle_fortress
+			}
 		}			
+		if = {
+			limit = { has_province_modifier = spiked_log_spiky_traps }
+			remove_province_modifier = spiked_log_spiky_traps
+		}		
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
@@ -1027,6 +1465,10 @@ fort_16th = {
 		}
 
 		gronstunad_building_authority_effect = { value = -4 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	onmap = yes
@@ -1071,13 +1513,60 @@ naval_battery = {
 		}
 
 		gronstunad_building_authority_effect = { value = 2 }
+		#karassk
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = L68_sailors_on_defense
+				}
+			}
+			add_province_modifier = {
+				name = L68_coastal_defense_sailors
+				duration = -1
+			}
+		}
+		#Izmeri the Black Stone City
+		if = {
+			limit = {
+				5631 = {
+					owned_by = FROM
+					has_great_project = {
+						type = izmeri_the_black_stone_city
+						tier = 2
+					}
+					owner = { can_use_izmeri_the_black_stone_city = yes }
+				}
+				NOT = { has_province_modifier = izmeri_expand_the_buildings }
+			}
+			add_province_modifier = {
+				name = izmeri_expand_the_buildings
+				duration = -1
+			}
+		}
 	}
 	on_destroyed = {
 		if = {
 			limit = { province_id = 4551 }
 			remove_province_modifier = bhuvauri_gatehouse_of_rahen
 		}
+		if = {
+			limit = { 
+				has_province_modifier = L68_coastal_defense_sailors
+			}
+			remove_province_modifier = L68_coastal_defense_sailors
+		}
+		if = {
+			limit = { 
+				has_province_modifier = izmeri_expand_the_buildings
+			}
+			remove_province_modifier = izmeri_expand_the_buildings
+		}
 	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	modifier = {
 		blockade_force_required = 1.0
 		hostile_disembark_speed = 2.0
@@ -1167,20 +1656,34 @@ cathedral = {
 			}
 			add_base_tax = 2
 		}
-		
-		owner = { accretive_path_harimari_chi_stacking_effect = { amount = 20 } }
-		owner = { accretive_path_goldscale_kobold_chi_stacking_effect = { amount = 20 } }
-
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = { has_province_flag = triplet_gained_development_cathedral }
+			}
+			add_base_tax = 2
+			set_province_flag = triplet_gained_development_cathedral
+		}
 		gronstunad_building_authority_effect = { value = 3 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = zokka_temple_upgrade_flag
+				}
+			}
+			add_province_modifier = {
+				name = zokka_tithe_better
+				duration = -1
+			}
+			remove_province_modifier = zokka_tithe
+		}
 		if = {
 			limit = { province_group = infernal_court_temples }
 			infernal_deity_upgrade_effect = yes
 		}
 		spirit_fort_awakening_effect = yes
-
 	}
 	on_destroyed = {
 		on_province_tax_building_destroyed_estate_privileges_effect = yes
@@ -1217,8 +1720,15 @@ cathedral = {
 		}
 		remove_province_modifier = I98_IRS_activities
 		remove_province_modifier = commmand_tiger_temple_buff
+		remove_province_modifier = zokka_tithe_better
+		remove_province_modifier = xiaken_temple_grounds_mod
+		remove_province_modifier = R36_countryside_schools_mod
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -1247,7 +1757,6 @@ university = {
 			FROM = { add_legitimacy = 1 }
 		}
 		
-		owner = { accretive_path_harimari_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 3 }
 		
@@ -1268,6 +1777,24 @@ university = {
 				duration = -1
 			}
 		}
+		if = {
+			limit = {
+				owner = {
+					owns = 536
+				}
+				536 = {
+					has_great_project = {
+						type = eduz_ginakku
+						tier = 3
+					}
+				}
+			}
+			add_province_modifier = {
+				name = eduz_ginakku_university
+				duration = -1
+				hidden = yes
+			}
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -1275,10 +1802,14 @@ university = {
 			type = tax
 			value = 2
 		}
-		
+		remove_province_modifier = eduz_ginakku_university
 		dt_community_advancement_institution_spread_effect = yes 
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -1373,12 +1904,20 @@ trade_depot = {
 			FROM = { change_government_reform_progress = 4 }
 		}
 
-		owner = { accretive_path_jiangszun_chi_stacking_effect = { amount = 20 } }
-		owner = { accretive_path_upper_raheni_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 3 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = trade }
+
+		if = {
+			limit = { owner = { has_estate_privilege = estate_burghers_U10_construction_rights } }
+			area = {
+				limit = { owned_by = FROM }
+				add_province_modifier = {
+					name = U10_affluent_reclaimation
+					duration = -1
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -1386,9 +1925,27 @@ trade_depot = {
 			type = production
 			value = 2
 		}
+		if = {
+			limit = {
+				NOT = {
+					area_for_scope_province = {
+						owned_by = FROM
+						has_trade_building_trigger = yes
+					}
+				}
+			}
+			area = {
+				limit = { owned_by = FROM }
+				remove_province_modifier = U10_affluent_reclaimation
+			}
+		}
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -3 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -1448,6 +2005,10 @@ grand_shipyard = {
 	on_obsolete = {
 	}
 
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	ai_will_do = {
 		factor = 1
 		modifier = {
@@ -1491,9 +2052,9 @@ training_fields = {
 			upgrade_value = 1
 		}
 
-		update_improved_military_buildings_modifier = { #1.35
-			building = training_fields
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = training_fields
+		#}
 		#Anbennar
 		anbennar_building_effect = yes
 		if = {
@@ -1501,7 +2062,6 @@ training_fields = {
 			FROM = { add_legitimacy = 0.5 }
 		}
 
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 3 }
 		
@@ -1512,15 +2072,28 @@ training_fields = {
 				duration = -1
 			}
 		}
+
+		if = { #Degakheion
+			limit = { FROM = { has_country_flag = degakheion_manpower_building_buff } }
+			add_province_modifier = {
+				name = G46_training_fields_buff
+				duration = -1
+			}
+		}
 	}
 	on_destroyed = {
-		update_improved_military_buildings_modifier = { #1.35
-			building = training_fields
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = training_fields
+		#}
 		#Anbennar
 		if = { #Taychendi Empire
 			limit = { FROM =  { has_country_flag = J84_training_fields_flag } }
 			remove_province_modifier = J84_training_fields_buff
+		}
+
+		if = { #Degakheion
+			limit = { FROM = { has_country_flag = degakheion_manpower_building_buff } }
+			remove_province_modifier = G46_training_fields_buff
 		}
 		# if = {
 			# limit = {
@@ -1541,6 +2114,10 @@ training_fields = {
 		}
 	}
 
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	ai_will_do = {
 		factor = 1
 	}
@@ -1557,7 +2134,6 @@ fort_17th = {
 	}
 
 	build_trigger = {
-		NOT = { has_terrain = fey_gladeway }
 	}
 
 	# THIS = Province, FROM = Builder(not nessecairly owner, can be overlord)
@@ -1576,24 +2152,24 @@ fort_17th = {
 						loyalty = 5
 					}
 				}
-				if = {
-					limit = {
-						has_estate = estate_maratha
-					}
-					add_estate_loyalty = {
-						estate = estate_maratha
-						loyalty = 5
-					}
-				}
-				if = {
-					limit = {
-						has_estate = estate_rajput
-					}
-					add_estate_loyalty = {
-						estate = estate_rajput
-						loyalty = 5
-					}
-				}
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_maratha
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_maratha
+				# 		loyalty = 5
+				# 	}
+				# }
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_rajput
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_rajput
+				# 		loyalty = 5
+				# 	}
+				# }
 			}
 		}
 
@@ -1641,16 +2217,92 @@ fort_17th = {
 		}
 		#Anbennar
 
-		owner = { accretive_path_xiaken_chi_stacking_effect = { amount = 40 } }
 
 		anbennar_building_effect = yes
-
+		owner = { accretive_path_gain_chi = { aspect = serenity_in_rock_and_stone category = mil amount = 20 } }
 		gronstunad_building_authority_effect = { value = 6 }
 		spirit_fort_awakening_effect = yes
+		#Anbennar - Brrtekuh
+		if = {
+			limit = {
+				has_building = mage_tower
+				owner = {
+					OR = {
+						has_estate_privilege = estate_church_U10_purification_posts_along_the_sorrow
+						has_country_modifier = U10_exorcist_combine
+					}
+				}
+			}
+			add_province_modifier = {
+				name = U10_containment_array
+				duration = -1
+			}
+		}
+		if = {
+			limit = { owner = { has_country_modifier = organized_aid } }
+			add_devastation = -5
+			every_neighbor_province = { 
+				limit = { owned_by = FROM }
+				add_devastation = -5
+			}	
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_government_attribute = expand_the_league_1_attribute
+						has_government_attribute = expand_the_league_2_attribute
+						has_government_attribute = expand_the_league_3_attribute
+					}
+					is_subject = no
+				}
+				owner = {
+					OR = {
+						tag = FROM
+						is_subject_of_type = vic_league_member
+					}
+				}
+			}
+			FROM = {
+				add_government_power = {
+					mechanic_type = vic_league_mechanic
+					power_type = vic_league_mil_power
+					value = 10
+				}
+			}
+		}
+
+		update_magical_fortress = yes
+		
+		if = { #No double forts for you
+			limit = {
+				has_building = fort_18th
+			}
+			remove_building = fort_17th
+			remove_building = fort_16th
+			remove_building = fort_15th
+		}
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = volcanic_truth_persistence
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = 100
+				}
+			}
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
 	on_destroyed = {
+		if = {
+			limit = { has_province_modifier = U10_containment_array }
+			remove_province_modifier = U10_containment_array
+		}
 		#ANBENNAR - windward stuff
 		if = {
 			limit = {
@@ -1661,6 +2313,7 @@ fort_17th = {
 			}
 		}
 		remove_province_modifier = command_elephant_fort_buff
+		update_magical_fortress = yes
 
 		if = { #1.35
 			limit = {
@@ -1671,12 +2324,36 @@ fort_17th = {
 		if = { # Anbennar Kobold Traps
 			limit = { has_province_flag = has_kobold_traps }
 			province_event = { id = kobold_traps.8 }
-		}		
+		}
+
+		#Bibyobi
+		if = {
+			limit = { has_province_modifier = S98_jungle_fortress }
+			every_neighbor_province = {
+				limit = {
+					NOT = {
+						any_neighbor_province = {
+							owned_by = FROM
+							has_fort_building_trigger = yes
+						}
+					}
+				}
+				remove_province_modifier = S98_jungle_fortress
+			}
+		}
+		if = {
+			limit = { has_province_modifier = spiked_log_spiky_traps }
+			remove_province_modifier = spiked_log_spiky_traps
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -6 }
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	onmap = yes
@@ -1756,12 +2433,20 @@ stock_exchange = {
 			FROM = { change_government_reform_progress = 4 }
 		}
 
-		owner = { accretive_path_jiangszun_chi_stacking_effect = { amount = 20 } }
-		owner = { accretive_path_upper_raheni_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 4 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = trade }
+
+		if = {
+			limit = { owner = { has_estate_privilege = estate_burghers_U10_construction_rights } }
+			area = {
+				limit = { owned_by = FROM }
+				add_province_modifier = {
+					name = U10_affluent_reclaimation
+					duration = -1
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -1769,8 +2454,26 @@ stock_exchange = {
 			type = production
 			value = 3
 		}
+		if = {
+			limit = {
+				NOT = {
+					area_for_scope_province = {
+						owned_by = FROM
+						has_trade_building_trigger = yes
+					}
+				}
+			}
+			area = {
+				limit = { owned_by = FROM }
+				remove_province_modifier = U10_affluent_reclaimation
+			}
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -1804,7 +2507,6 @@ counting_house = {
 		}
 
 		gronstunad_building_authority_effect = { value = 4 }
-
 		sponsored_adventurers_building_reform_effect = { value = 5 type = prod }
 	}
 	on_destroyed = {
@@ -1815,6 +2517,10 @@ counting_house = {
 		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	allow_in_gold_provinces = no
@@ -1856,7 +2562,6 @@ town_hall = {
 			FROM = { change_government_reform_progress = 4 }
 		}
 		
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 10 } }
 
 		gronstunad_building_authority_effect = { value = 2 }
 	}
@@ -1868,6 +2573,10 @@ town_hall = {
 		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -1962,6 +2671,25 @@ drydock = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 3 }
+
+		if = {
+			limit = {
+				FROM = {
+					has_estate_privilege = estate_nobility_lizardfolk_imperial_fisheries
+				}
+				OR = {
+					province_id = 5896 
+					province_id = 5898
+					province_id = 5834
+					province_id = 3259
+					province_id = 3258
+				}
+			}
+			add_province_modifier = {
+				name = lizardfolk_imperial_fisheries
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
@@ -1970,8 +2698,16 @@ drydock = {
 			type = production
 			value = 2
 		}
+		if = {
+			limit = { has_province_modifier = lizardfolk_imperial_fisheries }
+			remove_province_modifier = lizardfolk_imperial_fisheries
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 
@@ -2001,9 +2737,9 @@ conscription_center = {
 			upgrade_value = 1
 		}
 
-		update_improved_military_buildings_modifier = { #1.35
-			building = conscription_center
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = conscription_center
+		#}
 
 		#Anbennar
 		anbennar_building_effect = yes
@@ -2012,7 +2748,6 @@ conscription_center = {
 			FROM = { add_legitimacy = 0.5 }
 		}
 
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 4 }
 	}
@@ -2023,11 +2758,15 @@ conscription_center = {
 			value = 2
 		}
 
-		update_improved_military_buildings_modifier = { #1.35
-			building = conscription_center
-		}
+		#update_improved_military_buildings_modifier = { #1.35
+		#	building = conscription_center
+		#}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2055,7 +2794,6 @@ fort_18th = {
 	}
 
 	build_trigger = {
-		NOT = { has_terrain = fey_gladeway }
 	}
 
 	# THIS = Province, FROM = Builder(not nessecairly owner, can be overlord)
@@ -2074,24 +2812,24 @@ fort_18th = {
 						loyalty = 5
 					}
 				}
-				if = {
-					limit = {
-						has_estate = estate_maratha
-					}
-					add_estate_loyalty = {
-						estate = estate_maratha
-						loyalty = 5
-					}
-				}
-				if = {
-					limit = {
-						has_estate = estate_rajput
-					}
-					add_estate_loyalty = {
-						estate = estate_rajput
-						loyalty = 5
-					}
-				}
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_maratha
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_maratha
+				# 		loyalty = 5
+				# 	}
+				# }
+				# if = {
+				# 	limit = {
+				# 		has_estate = estate_rajput
+				# 	}
+				# 	add_estate_loyalty = {
+				# 		estate = estate_rajput
+				# 		loyalty = 5
+				# 	}
+				# }
 			}
 		}
 
@@ -2139,16 +2877,81 @@ fort_18th = {
 		}
 		#Anbennar
 
-		owner = { accretive_path_xiaken_chi_stacking_effect = { amount = 40 } }
-
+		update_magical_fortress = yes
 		anbennar_building_effect = yes
-
+		owner = { accretive_path_gain_chi = { aspect = serenity_in_rock_and_stone category = mil amount = 20 } }
 		gronstunad_building_authority_effect = { value = 8 }
 		spirit_fort_awakening_effect = yes
+		#Anbennar - Brrtekuh
+		if = {
+			limit = {
+				has_building = mage_tower
+				owner = {
+					OR = {
+						has_estate_privilege = estate_church_U10_purification_posts_along_the_sorrow
+						has_country_modifier = U10_exorcist_combine
+					}
+				}
+			}
+			add_province_modifier = {
+				name = U10_containment_array
+				duration = -1
+			}
+		}
+		if = {
+			limit = { owner = { has_country_modifier = organized_aid } }
+			add_devastation = -5
+			every_neighbor_province = { 
+				limit = { owned_by = FROM }
+				add_devastation = -5
+			}	
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_government_attribute = expand_the_league_1_attribute
+						has_government_attribute = expand_the_league_2_attribute
+						has_government_attribute = expand_the_league_3_attribute
+					}
+					is_subject = no
+				}
+				owner = {
+					OR = {
+						tag = FROM
+						is_subject_of_type = vic_league_member
+					}
+				}
+			}
+			FROM = {
+				add_government_power = {
+					mechanic_type = vic_league_mechanic
+					power_type = vic_league_mil_power
+					value = 10
+				}
+			}
+		}
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = volcanic_truth_persistence
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = 100
+				}
+			}
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
 	on_destroyed = {
+		if = {
+			limit = { has_province_modifier = U10_containment_array }
+			remove_province_modifier = U10_containment_array
+		}
 		if = { #1.35
 			limit = {
 				has_province_modifier = estate_nobles_development_of_castles_mod
@@ -2169,10 +2972,35 @@ fort_18th = {
 			province_event = { id = kobold_traps.8 }
 		}		
 		remove_province_modifier = command_elephant_fort_buff
+		update_magical_fortress = yes
+
+		#Bibyobi
+		if = {
+			limit = { has_province_modifier = S98_jungle_fortress }
+			every_neighbor_province = {
+				limit = {
+					NOT = {
+						any_neighbor_province = {
+							owned_by = FROM
+							has_fort_building_trigger = yes
+						}
+					}
+				}
+				remove_province_modifier = S98_jungle_fortress
+			}
+		}
+		if = {
+			limit = { has_province_modifier = spiked_log_spiky_traps }
+			remove_province_modifier = spiked_log_spiky_traps
+		}
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	onmap = yes
@@ -2223,6 +3051,14 @@ wharf = {
 		#Anbennar - Exwes
 		on_province_wharf_manufactory_built_estate_privileges_effect = yes 
 
+		#Anbennar - Deranne
+		if = {
+			limit = {
+				FROM = { has_estate_privilege = estate_burghers_deranne_dalairey_lumber }
+			}
+			FROM = { deranne_add_lumber_buff_on_wharf_constructed_effect = yes }
+		}
+
 		# ANBENNAR
 		if = {
 			limit = {
@@ -2251,11 +3087,12 @@ wharf = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2274,8 +3111,19 @@ wharf = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
 		}
+		if = {
+			limit = {
+				FROM = { has_estate_privilege = estate_burghers_deranne_dalairey_lumber }
+				trade_goods = naval_supplies
+			}
+			FROM = { deranne_add_lumber_buff_on_wharf_constructed_effect = yes }
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2330,7 +3178,7 @@ weapons = {
 			value = 1 
 		}
 
-		# ANBENNAR
+		#Anbennar
 		if = {
 			limit = {
 				area = castonath_area
@@ -2349,6 +3197,7 @@ weapons = {
 			clr_province_flag = latest_manufactory_built_is_furnace
 			clr_province_flag = latest_manufactory_built_is_mage_tower
 		}
+		#Anbennar
 		if = {
 			limit = { FROM = { has_estate_privilege = estate_dragon_command_war_room_rights } }
 			FROM = { add_legitimacy = 1 }
@@ -2358,18 +3207,30 @@ weapons = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount = yes
 		}
-		#Anbennar
-
-		owner = { accretive_path_beikling_chi_stacking_effect = { amount = 100 } }
+		#Anbennar - The Red Citadel
+		if = {
+			limit = {
+				culture = beikling
+				4974 = {
+					owned_by = FROM
+					has_province_modifier = the_masterforge_upgrade
+				}
+			}
+			add_province_modifier = {
+				name = beikling_better_forging
+				duration = -1
+			}
+		}
 
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2385,8 +3246,16 @@ weapons = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
 		}
+		if = {
+			limit = { has_province_modifier = beikling_better_forging }
+			remove_province_modifier = beikling_better_forging
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2442,11 +3311,27 @@ textile = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = dyes
+			}
+			add_province_modifier = {
+				name = S50_nightblossom_cloak_weavers
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2461,8 +3346,17 @@ textile = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
 		}
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_nightblossom_cloak_weavers }
+			remove_province_modifier = S50_nightblossom_cloak_weavers
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2519,14 +3413,14 @@ plantations = {
 		#Anbennar
 		anbennar_building_effect = yes
 
-		owner = { accretive_path_naamjyut_chi_stacking_effect = { amount = 100 } }
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2543,6 +3437,10 @@ plantations = {
 		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2604,9 +3502,20 @@ tradecompany = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
 
+		if = {
+			limit = {
+				owner = { has_estate_privilege = estate_nobles_U10_torment_of_hellfire }
+				base_production = 10
+				trade_goods = slaves
+			}
+			add_province_modifier = {
+				name = U10_hellfire_factory
+				duration = -1
+			}
+		}
 		if = { #Taychendi Empire
 			limit = {
 				FROM = { has_country_flag = J84_trade_station_bonus_flag }
@@ -2620,10 +3529,15 @@ tradecompany = {
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
 			value = 2
+		}
+		if = {
+			limit = { has_province_modifier = U10_hellfire_factory }
+			remove_province_modifier = U10_hellfire_factory
 		}
 		remove_dev_from_building = { #1.35
 			building = manufactory 
@@ -2644,6 +3558,10 @@ tradecompany = {
 		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2705,10 +3623,9 @@ farm_estate = {
 			FROM = { add_legitimacy = 1 }
 		}
 
-		owner = { accretive_path_jiangyang_chi_stacking_effect = { amount = 20 } }
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
 
 		if = {
@@ -2751,9 +3668,24 @@ farm_estate = {
 				duration = -1
 			}
 		}
+		# Salla Myna
+		I27_se_apply_aviary_adjacency_mods = yes
+		#shelokmengi capstone S57
+		if = {
+			limit = {
+				owner = {
+					mission_completed = S57_my_empire_of_grain
+				}
+			}
+			add_province_modifier = {
+				name = S57_empire_of_grain 
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2803,8 +3735,17 @@ farm_estate = {
 			}
 			remove_province_modifier = Z35_noble_slaveowners_2
 		}
+		# Salla Myna
+		I27_se_remove_well_fed_hawks_mods = yes
+
+		#shelokmengi
+		remove_province_modifier = S57_empire_of_grain
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2862,10 +3803,26 @@ mills = {
 		anbennar_building_effect = yes
 
 		gronstunad_building_authority_effect = { value = 5 }
-
+		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = tropical_wood
+			}
+			add_province_modifier = {
+				name = S50_lotunga_pine_groves
+				duration = -1
+			}
+		}
 	}
 	on_destroyed = {
+		on_production_manufactory_destroyed_effect = yes
 		remove_development_from_building = {
 			building = manufactory
 			type = production
@@ -2880,8 +3837,18 @@ mills = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
 		}
+
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_lotunga_pine_groves }
+			remove_province_modifier = S50_lotunga_pine_groves
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -2954,6 +3921,10 @@ furnace = {
 		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -3042,6 +4013,10 @@ ramparts = {
 		}
 	}
 
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 
 	ai_will_do = {
 		factor = 1
@@ -3094,17 +4069,17 @@ soldier_households = {
 			type = manpower 
 			value = 1 
 		}
-		if = { #1.35
-			limit = {
-				FROM = {
-					has_government_attribute = improved_military_buildings
-				}
-			}
-			add_province_modifier = {
-				name = wei_suo_system_reform_soldier_households_modifier
-				duration = -1
-			}
-		}
+		#if = { #1.35
+		#	limit = {
+		#		FROM = {
+		#			has_government_attribute = improved_military_buildings
+		#		}
+		#	}
+		#	add_province_modifier = {
+		#		name = wei_suo_system_reform_soldier_households_modifier
+		#		duration = -1
+		#	}
+		#}
 		# ANBENNAR
 		if = {
 			limit = {
@@ -3160,6 +4135,21 @@ soldier_households = {
 				add_church_power = 10
 			}
 		}
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = fungi
+			}
+			add_province_modifier = {
+				name = S50_flourishing_moonrice_fields
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
@@ -3173,12 +4163,12 @@ soldier_households = {
 			type = manpower 
 			value = 1
 		}
-		if = { #1.35
-			limit = {
-				has_province_modifier = wei_suo_system_reform_soldier_households_modifier
-			}
-			remove_province_modifier = wei_suo_system_reform_soldier_households_modifier
-		}
+		#if = { #1.35
+		#	limit = {
+		#		has_province_modifier = wei_suo_system_reform_soldier_households_modifier
+		#	}
+		#	remove_province_modifier = wei_suo_system_reform_soldier_households_modifier
+		#}
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
@@ -3213,8 +4203,18 @@ soldier_households = {
 				add_church_power = -10
 			}
 		}
+
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_flourishing_moonrice_fields }
+			remove_province_modifier = S50_flourishing_moonrice_fields
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -3322,6 +4322,10 @@ impressment_offices = {
 	on_obsolete = {
 	}
 
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
+	}
+
 	ai_will_do = {
 		factor = 1
 	}
@@ -3419,6 +4423,19 @@ state_house = {
 		gronstunad_building_authority_effect = { value = 5 }
 
 		on_built_manufactory_effect = yes
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = speaking_memory_responsibility
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = 100
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -3430,8 +4447,25 @@ state_house = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
 		}
+		#Molten Eternity
+		FROM = {
+			if = {
+				limit = {
+					religion = molten_eternity
+					has_personal_deity = speaking_memory_responsibility
+				}
+				change_variable = {
+					which = moltenEternityObligationVar
+					value = -100
+				}
+			}
+		}
 	}
 	on_obsolete = {
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 
 	ai_will_do = {
@@ -3455,10 +4489,7 @@ mage_tower = {
 	}
 	build_trigger = {
 		OR = {
-			OR = {
-				FROM = { NOT = { has_country_flag = banned_magic } }
-				FROM = { is_subject_of = Y63 }
-			}
+			FROM = { has_not_banned_magic = yes }
 			FROM = { has_country_modifier = command_the_korashi_secret }
 		}
 	}
@@ -3488,6 +4519,15 @@ mage_tower = {
 	on_built = {
 		if = {
 			limit = {
+				NOT = {
+					FROM = { has_not_banned_magic = yes }
+					FROM = { has_country_modifier = command_the_korashi_secret }
+				}
+			}
+			remove_building = mage_tower
+		}
+		if = {
+			limit = {
 				area = castonath_area
 			}
 			set_province_flag = latest_manufactory_built_is_mage_tower
@@ -3512,6 +4552,15 @@ mage_tower = {
 				province_event = { id = kheionai.3 }
 			}
 		}
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = -1
+				}
+			}
+		}
 		#Anbennar - Thangoya Tier 2 Reform Mechanic, Feel Free To Reuse
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
@@ -3521,18 +4570,14 @@ mage_tower = {
 		#Anbennar - Irkorzik
 		if = {
 			limit = { 
-				AND = {
-					owner = { has_estate_privilege = estate_church_sandstorm_summoning }
-					owner = { has_country_flag = irkorzik_sandstorm_summoning_buff }
-				}
+				owner = { has_estate_privilege = estate_church_sandstorm_summoning }
+				owner = { has_country_flag = irkorzik_sandstorm_summoning_buff }
 			}
 			add_province_modifier = { name = irkorzik_sandstorm_summoning_buff duration = -1 }
 		}
 		else_if = {
 			limit = { 
-				AND = {
-					owner = { has_estate_privilege = estate_church_sandstorm_summoning }
-				}
+				owner = { has_estate_privilege = estate_church_sandstorm_summoning }
 			}
 			add_province_modifier = { name = irkorzik_sandstorm_summoning duration = -1 }
 		}
@@ -3542,6 +4587,23 @@ mage_tower = {
 		gronstunad_building_authority_effect = { value = 1 }
 
 		on_built_manufactory_effect = yes
+
+		#Anbennar - Brrtekuh
+		if = {
+			limit = {
+				has_fort_building_trigger = yes
+				owner = {
+					OR = {
+						has_estate_privilege = estate_church_U10_purification_posts_along_the_sorrow
+						has_country_modifier = U10_exorcist_combine
+					}
+				}
+			}
+			add_province_modifier = {
+				name = U10_containment_array
+				duration = -1
+			}
+		}
 
 		#Anbennar - Masked Butcher
 		if = {
@@ -3600,8 +4662,113 @@ mage_tower = {
 				duration =  -1
 			}
 		}
+		if = {
+			limit = { owner = { has_estate_privilege = estate_mages_development_of_mage_towers } }
+			add_province_modifier = { name = estate_mages_development_of_mage_towers_mod duration = -1 }
+		}
+		if = { #salla drennen veil stuff
+			limit = {
+				owner = {
+					has_country_flag = I28_project_unlock
+				}
+			}
+			if = {
+				limit = { owner = { at_least_magic_project_level = { project = drennen_project_1 level = 3 } } }
+				province_event = {
+					id = salla_drennen.23
+				}
+			}
+			else_if = {
+				limit = { owner = { at_least_magic_project_level = { project = drennen_project_1 level = 2 } } }
+				province_event = {
+					id = salla_drennen.22
+				}
+			}
+		}
+		if = { #Deranne
+			limit = {
+				region = lencenor_region
+				has_building = temple
+				FROM = {
+					has_estate_privilege = estate_church_deranne_seaflower_skalds
+				}
+				NOT = {
+					area_for_scope_province = {
+						has_province_flag = deranne_skalds_province_flag
+					}
+				}
+			}
+			add_base_tax = 1
+			add_base_production = 1
+			add_base_manpower = 1
+			set_province_flag = deranne_skalds_province_flag
+			FROM = {
+				add_estate_loyalty = {
+					estate = estate_church
+					loyalty = 5
+				}
+			}
+		}
+		umbral_fog_apply = yes #umbral covenant
+		if = { ##Great fun with Great Storm# #Either the player or its subject has a thing which has consequences# #
+			limit = { province_id = 5138 } #Tirughuun
+			if = {
+				limit = { FROM = { has_country_flag = I80_tirughuun_mage_tower } }
+				FROM = { 
+					clr_country_flag = I80_tirughuun_mage_tower
+					increase_magic_experience = { unmodified_amount = 150 }
+				}
+			}
+			if = {
+				limit = { FROM = { overlord = { has_country_flag = I80_tirughuun_mage_tower } } }
+				FROM = { 
+					overlord = { 
+						clr_country_flag = I80_tirughuun_mage_tower
+						increase_magic_experience = { unmodified_amount = 100 }
+					}
+				}
+			}
+		}
+
+		if = { #Black Herd - Refund 50% of the cost
+			limit = { FROM = { has_government_attribute = magocratic_caehnate_mage_towers } }
+			hidden_effect = {
+				FROM = {
+					export_to_variable = {
+						which = build_cost_var
+						value = modifier:build_cost
+					}
+					export_to_variable = {
+						which = local_build_cost_var
+						value = modifier:local_build_cost
+						who = PREV
+					}
+					change_variable = { build_cost_var = 1 }
+					change_variable = { local_build_cost_var = 1 }
+					if = {
+						limit = { NOT = { check_variable = { build_cost_var = 0 } } }
+						set_variable = { build_cost_var = 0 }
+					}
+					if = {
+						limit = { NOT = { check_variable = { local_build_cost_var = 0 } } }
+						set_variable = { local_build_cost_var = 0 }
+					}
+					multiply_variable = { which = build_cost_var which = 250 }
+					multiply_variable = { which = build_cost_var which = local_build_cost_var }
+					var_effect = { 
+						effect = add_treasury 
+						var = build_cost_var 
+						sign = + 
+					}
+				}
+			}
+		}
 	}
 	on_destroyed = {
+		if = {
+			limit = { has_province_modifier = U10_containment_array }
+			remove_province_modifier = U10_containment_array
+		}
 		if = {
 			limit = {
 				region = alecand_region
@@ -3615,23 +4782,28 @@ mage_tower = {
 			anb_manufactory_discount_remove = yes
 		}
 		anbennar_building_effect = yes
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = 1
+				}
+			}
+		}
 		#Anbennar - Irkorzik
 		if = {
 			limit = { 
-				AND = {
-					owner = { has_estate_privilege = estate_church_sandstorm_summoning } 
-					owner = { has_country_flag = irkorzik_upgraded_sandstorm_summoning }
-					has_province_modifier = irkorzik_sandstorm_summoning_buff
-				}
+				owner = { has_estate_privilege = estate_church_sandstorm_summoning } 
+				owner = { has_country_flag = irkorzik_upgraded_sandstorm_summoning }
+				has_province_modifier = irkorzik_sandstorm_summoning_buff
 			}
 			remove_province_modifier = irkorzik_sandstorm_summoning_buff
 		}
 		else_if = {
 			limit = { 
-				AND = {
-					owner = { has_estate_privilege = estate_church_sandstorm_summoning } 
-					has_province_modifier = irkorzik_sandstorm_summoning
-				}
+				owner = { has_estate_privilege = estate_church_sandstorm_summoning } 
+				has_province_modifier = irkorzik_sandstorm_summoning
 			}
 			remove_province_modifier = irkorzik_sandstorm_summoning
 		}
@@ -3675,10 +4847,10 @@ mage_tower = {
 			remove_province_modifier = rezankand_light_matrix_logistic_upgraded
 			every_neighbor_province = {
 				limit = {
-					owned_by = ROOT
+					owned_by = FROM
 					NOT = {
 						any_neighbor_province = {
-							owned_by = ROOT
+							owned_by = FROM
 							has_building = mage_tower
 						}
 					}
@@ -3696,6 +4868,14 @@ mage_tower = {
 			}
 			remove_province_modifier = toarnaire_toarnaire_mage_tower
 		}
+
+		umbral_fog_clear = yes #umbral covenant
+		#Mage Estate
+		remove_province_modifier = estate_mages_development_of_mage_towers_mod
+	}
+
+	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
+		anb_instantly_finish_next_construction = yes
 	}
 }
 
@@ -3875,50 +5055,6 @@ adenica_grand_tourney_grounds = {
 
 	ai_will_do = {
 		factor = 0
-	}
-}
-
-fort_magic = {
-	cost = 1500
-	time = 30
-
-	modifier = {
-		fort_level = 1
-		local_defensiveness = 1.5
-	}
-
-	on_built = {
-		#ANBENNAR - windward stuff
-		if = {
-			limit = {
-				region = alecand_region
-			}
-			hidden_effect = {
-				province_event = { id = kheionai.2 }
-			}
-		}
-	}
-
-	on_destroyed = {
-		#ANBENNAR - windward stuff
-		if = {
-			limit = {
-				region = alecand_region
-			}
-			hidden_effect = {
-				province_event = { id = kheionai.2 }
-			}
-		}
-	}
-
-	onmap = yes
-
-	influencing_fort = yes
-
-	#indestructible = yes
-
-	ai_will_do = {
-		factor = 0 #Lots of logic in code instead, that multiplies with this value
 	}
 }
 
@@ -4242,15 +5378,6 @@ railway_work = {
 						cost = 1
 					}
 				}
-				if = { 
-					limit = {
-						region = jade_mines_region
-						owner = { mission_completed = az_an_freeing_our_bretheren }
-					}
-					add_base_tax = 1
-					add_base_production = 1
-					add_base_manpower = 1
-				}
 			}
 			else_if = {
 				limit = { has_province_modifier = restored_rail }
@@ -4292,15 +5419,6 @@ railway_work = {
 						speed = 1.3
 						cost = 2
 					}
-				}
-				if = { 
-					limit = {
-						region = jade_mines_region
-						owner = { mission_completed = az_an_freeing_our_bretheren }
-					}
-					add_base_tax = 1
-					add_base_production = 1
-					add_base_manpower = 1
 				}
 			}
 			else_if = {
@@ -4344,6 +5462,15 @@ railway_work = {
 						cost = 2
 					}
 				}
+			}
+			if = { 
+				limit = {
+					region = jade_mines_region
+					owner = { mission_completed = az_an_freeing_our_bretheren }
+				}
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
 			}
 		}
     }
@@ -4825,40 +5952,3 @@ phoenix_empire_palace_build = {
 		factor = 0
 	}
 }
-
-#Mulen
-hanging_city_foundation = {
-	cost = 500
-	time = 24
-
-	indestructible = yes
-
-	build_trigger = {
-	}
-
-	modifier = {
-	}
-
-	on_built = {
-		hidden_effect = {
-			remove_building = hanging_city_foundation
-			add_permanent_province_modifier = {
-				name = mulen_hanging_city_foundation
-				duration = -1
-			}
-			owner = {
-				remove_country_modifier = mulen_building_foundation
-				if = {
-					limit = { is_subject = yes }
-					overlord = { remove_country_modifier = mulen_building_foundation }
-				}
-			}
-		}
-	}
-
-	ai_will_do = {
-		factor = 0
-	}
-}
-
-
