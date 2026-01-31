@@ -254,6 +254,7 @@ province_event = {
 				vt_set_incident_finished_flags = {
 					incident = mechanim_awakening
 				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
 			}
 		}
 		else_if = { # If option 2 receives the same or more votes as option 3
@@ -271,6 +272,7 @@ province_event = {
 			}
 			if = {
 				limit = { has_global_flag = vt_incident_organizational_crisis_active }
+				set_global_flag = vt_incident_organizational_crisis_lesser_sacred_sites
 				if = { # These are "triggered modifiers", but instead of using computationally expensive PTMs, there
 				# are two versions that get checked when the province owner, religion, or owner's religion changes
 					limit = {
@@ -409,6 +411,7 @@ province_event = {
 				vt_set_incident_finished_flags = {
 					incident = mechanim_awakening
 				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
 			}
 		}
 		else = { # If option 3 received the most votes
@@ -421,6 +424,7 @@ province_event = {
 			if = {
 				limit = { has_global_flag = vt_incident_organizational_crisis_active }
 				set_global_flag = vt_cuahu_teotlehu_reform_open
+				set_global_flag = vt_incident_organizational_crisis_greater_sacred_sites
 				if = { # These are "triggered modifiers", but instead of using computationally expensive PTMs, there
 				# are two versions that get checked when the province owner, religion, or owner's religion changes
 					limit = {
@@ -637,6 +641,7 @@ province_event = {
 				vt_set_incident_finished_flags = {
 					incident = mechanim_awakening
 				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
 			}
 		}
 	}
@@ -1071,6 +1076,11 @@ country_event = {
 
 	trigger = {
 		NOT = { has_reform = cuahu_teotlehu_reform }
+		OR = { # Make sure you still own at least 1 of them. They might get stolen in the 7 days since this event triggers
+		# If that happens, well, I won't cover every edge case. If you had both and lose both, this might fire for no-one
+			owns = 6181
+			owns = 6182
+		}
 	}
 
 	option = { 
@@ -1356,14 +1366,18 @@ country_event = {
 				}
 				save_event_target_as = vtTempPrimaryCulture2
 			}
-			random_owned_province = { #placeholder do I need to check if target2 was saved?
+			if = {
 				limit = {
-					has_owner_culture = yes
-					NOT = { province_id = event_target:vtTempPrimaryCulture1 }
 					has_saved_event_target = vtTempPrimaryCulture2
-					NOT = { province_id = event_target:vtTempPrimaryCulture2 }
 				}
-				save_event_target_as = vtTempPrimaryCulture3
+				random_owned_province = {
+					limit = {
+						has_owner_culture = yes
+						NOT = { province_id = event_target:vtTempPrimaryCulture1 }
+						NOT = { province_id = event_target:vtTempPrimaryCulture2 }
+					}
+					save_event_target_as = vtTempPrimaryCulture3
+				}
 			}
 		}
 	}
@@ -1434,13 +1448,18 @@ country_event = {
 				}
 				save_event_target_as = vtTempPrimaryReligion2
 			}
-			random_owned_province = { #placeholder do I need to check if target2 was saved?
+			if = {
 				limit = {
-					has_owner_religion = yes
-					NOT = { province_id = event_target:vtTempPrimaryReligion1 }
-					NOT = { province_id = event_target:vtTempPrimaryReligion2 }
+					has_saved_event_target = vtTempPrimaryReligion2
 				}
-				save_event_target_as = vtTempPrimaryReligion3
+				random_owned_province = {
+					limit = {
+						has_owner_religion = yes
+						NOT = { province_id = event_target:vtTempPrimaryReligion1 }
+						NOT = { province_id = event_target:vtTempPrimaryReligion2 }
+					}
+					save_event_target_as = vtTempPrimaryReligion3
+				}
 			}
 		}
 	}
@@ -1578,9 +1597,6 @@ country_event = {
 	}
 
 	after = {
-		set_variable = {
-			vt_twin_gods_vassals_checked = 1
-		}
 		if = { #If we have another vassal or march that hasn't been chosen, fire another event
 			limit = {
 				any_subject_country = {
@@ -1591,9 +1607,20 @@ country_event = {
 					NOT = { has_country_flag = vt_twin_gods_vassal_keep_or_not }
 				}
 			}
+			set_variable = {
+				vt_twin_gods_vassals_checked = 1
+			}
 			country_event = {
 				id = volcanic_truth.311 # Next vassal
 			}
+		}
+		else = {
+			every_subject_country = {
+				limit = {
+					has_country_flag = vt_twin_gods_vassal_keep_or_not
+				}
+				clr_country_flag = vt_twin_gods_vassal_keep_or_not
+			} 
 		}
 		
 		country_event = {
@@ -1743,6 +1770,9 @@ country_event = {
 
 	option = { #Release the vassal
 		name = volcanic_truth.311.a
+		ai_chance = {
+			factor = 1
+		}
 		
 		free_vassal = event_target:vt_twin_gods_vassal
 		event_target:vt_twin_gods_vassal = {
@@ -1752,6 +1782,9 @@ country_event = {
 
 	option = { #Keep them
 		name = volcanic_truth.311.b
+		ai_chance = {
+			factor = 2
+		}
 		
 		event_target:vt_twin_gods_vassal = {
 			add_liberty_desire = 50
