@@ -39,7 +39,6 @@ namespace = magic_project
 ### Remember to localise this variable!
 ### This variable is what ticks up whenever your project "finishes" (using the magic_project_level_up effect)
 ### It will be the best way for you to distinguish between the levels of your project
-### You can do something special: Lichdom is special, for example. But Lichdom was also a pain in the ass to code.
 ### (Offhand: remember that the variable is ticked up first, and then the finishing event is fired)
 
 # The event chain:
@@ -4821,7 +4820,7 @@ country_event = { #Theatre of Simulacra sub-menu bounceback
 }
 
 ###############
-### LICHDOM ###
+### LICHDOM ### (Special case, not a "real" project) 
 ###############
 #1 - Find tome how to do it
 #2 - Phylactery 1 - Constructing the Container
@@ -4837,83 +4836,6 @@ country_event = { #Theatre of Simulacra sub-menu bounceback
 
 namespace = magic_project_lichdom
 
-country_event = { #Lichdom event handler
-	id = magic_project_lichdom.0
-	title = magic_project_lichdom.0.t
-	desc = magic_project_lichdom.0.d
-	picture = END_OF_TIME_eventPicture
-
-	is_triggered_only = yes
-	hidden = yes
-
-	option = { #It has to be this complex on account of people stopping and starting research
-		name = magic_project_lichdom.0.a
-		ai_chance = { factor = 1 }
-
-
-		if = { limit = { has_ruler_modifier = lichdom_mod_2 }
-			if = {
-				limit = { at_least_magic_project_level = { project = lichdom level = 3 } }
-				country_event = { id = magic_project_lichdom.10 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 33 }
-					NOT = { has_ruler_modifier = studying_lichdom_prep has_ruler_modifier = studying_lichdom_circle }
-				}
-				country_event = { id = magic_project_lichdom.8 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 67 }
-					NOT = { has_ruler_modifier = studying_lichdom_cleansing has_ruler_modifier = studying_lichdom_cleansinger }
-				}
-				country_event = { id = magic_project_lichdom.9 }
-			}
-		}
-		else_if = { limit = { has_ruler_modifier = lichdom_mod_1 }
-			if = {
-				limit = { at_least_magic_project_level = { project = lichdom level = 2 } }
-				country_event = { id = magic_project_lichdom.7 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 33 }
-					NOT = { has_ruler_modifier = studying_lichdom_roots has_ruler_modifier = studying_lichdom_bowls has_ruler_modifier = studying_lichdom_blooms }
-				}
-				country_event = { id = magic_project_lichdom.5 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 67 }
-					NOT = { has_ruler_modifier = studying_lichdom_korashi has_ruler_modifier = studying_lichdom_venom has_ruler_modifier = studying_lichdom_wyvern }
-				}
-				country_event = { id = magic_project_lichdom.6 }
-			}
-		}
-		else = {
-			if = {
-				limit = { at_least_magic_project_level = { project = lichdom level = 1 } }
-				country_event = { id = magic_project_lichdom.4 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 33 }
-					NOT = { has_ruler_modifier = studying_lichdom_amulet has_ruler_modifier = studying_lichdom_box }
-				}
-				country_event = { id = magic_project_lichdom.2 }
-			}
-			else_if = {
-				limit = {
-					check_variable = { current_experience_percent = 67 }
-					NOT = { has_ruler_modifier = studying_lichdom_parchment has_ruler_modifier = studying_lichdom_runes has_ruler_modifier = studying_lichdom_blood }
-				}
-				country_event = { id = magic_project_lichdom.3 }
-			}
-		}
-	}
-}
-
 country_event = { #Lichdom 1 - Finding out how to do it
 	id = magic_project_lichdom.1
 	title = magic_project_lichdom.1.t
@@ -4921,8 +4843,6 @@ country_event = { #Lichdom 1 - Finding out how to do it
 	picture = muslimgfx_BIG_BOOK_eventPicture
 
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
 	
 	immediate = {
 		hidden_effect = {
@@ -4938,41 +4858,27 @@ country_event = { #Lichdom 1 - Finding out how to do it
 		}
 	}
 
-	option = { #Send Mages to find a lost tome
+	option = { #Start the project
 		name = magic_project_lichdom.1.a
 		ai_chance = { factor = 1 }
-		add_treasury = -100
-		increase_estate_witch_king_points = { size = small }
-		start_magic_project = { project = lichdom school = necromancy warning = yes }
+		custom_tooltip = lichdom_lookahead
+		show_magic_project_lichdom_warning = yes
+		if = {
+			limit = { #edge case where ruler dies while you have this event open
+				is_ruler_necromancy_level_3 = yes
+				months_of_ruling = 60
+			}
+			increase_ruler_witch_king_points = { size = small }
+			country_event = { id = magic_project_lichdom.2 days = 730 } #2 years
+		}
 	}
 
-	option = { #I'll find it myself!
-		name = magic_project_lichdom.1.b
-		ai_chance = { factor = 1 }
-		add_adm_power = -50
-		add_dip_power = -50
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 0 }
 
-		show_magic_project_lichdom_warning = yes
-		increase_ruler_witch_king_points = { size = small }
-		set_ruler_flag = magic_advancement
-		set_ruler_flag = necromancy_advancement
-		set_country_flag = magic_project
-		set_country_flag = lichdom_project
-		hidden_effect = { set_variable = { ruler_magic_experience = 0 } }
-
-		add_ruler_modifier = { name = ruler_studying_lichdom duration = -1 desc = until_advancement_concludes }
-		
-		hidden_effect = {
-			if = {
-				limit = { has_ruler_modifier = lichdom_mod_2 }
-				set_magic_experience_target = { type = ruler xptarget = 1000 }
-			}
-			else_if = {
-				limit = { has_ruler_modifier = lichdom_mod_1 }
-				set_magic_experience_target = { type = ruler xptarget = 700 }
-			}
-			else = { set_magic_experience_target = { type = ruler xptarget = 400 } }
-		}
+		remove_country_modifier = pursuing_lichdom
+		#As you get deeper in, it becomes harder to stop
 	}
 }
 country_event = { #Lichdom 2 - Phylactery 1 - Constructing the Container
@@ -4982,8 +4888,7 @@ country_event = { #Lichdom 2 - Phylactery 1 - Constructing the Container
 	picture = DEATH_OF_HEIR_eventPicture
 
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	immediate = {
 		hidden_effect = {
@@ -5005,7 +4910,7 @@ country_event = { #Lichdom 2 - Phylactery 1 - Constructing the Container
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -100
-		add_ruler_modifier = { name = studying_lichdom_amulet duration = -1 }
+		country_event = { id = magic_project_lichdom.3 days = 1095 } #3 years
 	}
 	
 	option = {	#An ornate, jewel-encrusted box
@@ -5013,7 +4918,18 @@ country_event = { #Lichdom 2 - Phylactery 1 - Constructing the Container
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -200
-		add_ruler_modifier = { name = studying_lichdom_box duration = -1 }
+		country_event = { id = magic_project_lichdom.3 days = 730 } #2 years
+	}
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_legitimacy_equivalent = { amount = -1 republican_tradition = -1 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
 	}
 }
 
@@ -5024,15 +4940,14 @@ country_event = { #Lichdom 3 - Phylactery 2 - Carving the Interiors Walls
 	picture = PAINTER_ARTIST_eventPicture
 	
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 
 	option = {	#Scribe dark spells on tiny magical parchments to put inside
 		name = magic_project_lichdom.3.a
 		ai_chance = { factor = 50 }
 		
 		add_adm_power = -100
-		add_ruler_modifier = { name = studying_lichdom_parchment duration = -1 }
+		country_event = { id = magic_project_lichdom.4 days = 1095 } #3 years
 	}
 	
 	option = {	#Carve unholy runes on the interior walls and fill them with liquified Damestear
@@ -5040,7 +4955,7 @@ country_event = { #Lichdom 3 - Phylactery 2 - Carving the Interiors Walls
 		ai_chance = { factor = 50 }
 		
 		add_dip_power = -100
-		add_ruler_modifier = { name = studying_lichdom_runes duration = -1 }
+		country_event = { id = magic_project_lichdom.4 days = 1095 } #3 years
 	}
 	
 	option = {	#Coat the insides with enchanted blood of a magical beast
@@ -5048,7 +4963,18 @@ country_event = { #Lichdom 3 - Phylactery 2 - Carving the Interiors Walls
 		ai_chance = { factor = 50 }
 		
 		add_mil_power = -100
-		add_ruler_modifier = { name = studying_lichdom_blood duration = -1 }
+		country_event = { id = magic_project_lichdom.4 days = 1095 } #3 years
+	}
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_legitimacy_equivalent = { amount = -5 republican_tradition = -5 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
 	}
 }
 
@@ -5059,6 +4985,7 @@ country_event = { #Lichdom 4 - Phylactery 3 - Enchanting the Phylactery
 	picture = MAGE_MOON_eventPicture
 	
 	is_triggered_only = yes
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	immediate = {
 		hidden_effect = {
@@ -5079,10 +5006,19 @@ country_event = { #Lichdom 4 - Phylactery 3 - Enchanting the Phylactery
 		ai_chance = { factor = 50 }
 		
 		add_adm_power = -100
-		increase_witch_king_points_large = { level = necromancy_level_1_minimum }
-		add_ruler_modifier = { name = lichdom_mod_1 duration = -1 }
+		increase_ruler_witch_king_points = { size = large }
+		country_event = { id = magic_project_lichdom.5 days = 1095 } #3 years
+	}
 
-		custom_tooltip = tooltip_magic_project_advance
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_legitimacy_equivalent = { amount = -10 republican_tradition = -10 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
 	}
 }
 
@@ -5093,15 +5029,14 @@ country_event = { #Lichdom 5 - Potion 1 - Collecting Reagents 1
 	picture = TRADE_GOODS_PLANTATION_GOODS_IN_WAREHOUSE_eventPicture
 	
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	option = {	#4 roots of Queen's Belladonna
 		name = magic_project_lichdom.5.a
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -100
-		add_ruler_modifier = { name = studying_lichdom_roots duration = -1 }
+		country_event = { id = magic_project_lichdom.6 days = 1095 } #3 years
 	}
 	
 	option = {	#2 bowls of grounded Halanna's Tears
@@ -5109,7 +5044,7 @@ country_event = { #Lichdom 5 - Potion 1 - Collecting Reagents 1
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -200
-		add_ruler_modifier = { name = studying_lichdom_bowls duration = -1 }
+		country_event = { id = magic_project_lichdom.6 days = 730 } #2 years
 	}
 	
 	option = {	#10 blooms of Fey-touched Hemlock
@@ -5117,7 +5052,18 @@ country_event = { #Lichdom 5 - Potion 1 - Collecting Reagents 1
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -300
-		add_ruler_modifier = { name = studying_lichdom_blooms duration = -1 }
+		country_event = { id = magic_project_lichdom.6 days = 365 } #1 year
+	}
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_legitimacy_equivalent = { amount = -20 republican_tradition = -20 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
 	}
 }
 
@@ -5128,15 +5074,14 @@ country_event = { #Lichdom 6 - Potion 2 - Collecting Reagents 2
 	picture = TRADEGOODS_eventPicture
 	
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	option = {	#3 grams of Black Damestear
 		name = magic_project_lichdom.6.a
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -100
-		add_ruler_modifier = { name = studying_lichdom_korashi duration = -1 }
+		country_event = { id = magic_project_lichdom.7 days = 1095 } #3 years
 	}
 	
 	option = {	#6 drops of Neratic Asp Venom
@@ -5144,7 +5089,7 @@ country_event = { #Lichdom 6 - Potion 2 - Collecting Reagents 2
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -200
-		add_ruler_modifier = { name = studying_lichdom_venom duration = -1 }
+		country_event = { id = magic_project_lichdom.7 days = 730 } #2 years
 	}
 	
 	option = {	#1 tincture of Wyvern Blood
@@ -5152,7 +5097,19 @@ country_event = { #Lichdom 6 - Potion 2 - Collecting Reagents 2
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -300
-		add_ruler_modifier = { name = studying_lichdom_wyvern duration = -1 }
+		country_event = { id = magic_project_lichdom.7 days = 365 } #1 year
+	}
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_prestige = -10
+			add_legitimacy_equivalent = { amount = -20 republican_tradition = -20 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
 	}
 }
 
@@ -5163,6 +5120,7 @@ country_event = { #Lichdom 7 - Potion 3 - Getting the vessel
 	picture = muslimgfx_NEW_HEIR_eventPicture
 	
 	is_triggered_only = yes
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 
 	immediate = {
 		hidden_effect = {
@@ -5183,10 +5141,8 @@ country_event = { #Lichdom 7 - Potion 3 - Getting the vessel
 		ai_chance = { factor = 50 }
 		
 		add_mil_power = -100
-		increase_witch_king_points_medium = { level = necromancy_level_2_minimum }
-		add_ruler_modifier = { name = lichdom_mod_2 duration = -1 }
-
-		custom_tooltip = tooltip_magic_project_advance
+		increase_ruler_witch_king_points = { size = medium }
+		country_event = { id = magic_project_lichdom.8 days = 1095 } #3 years
 	}
 	
 	option = {	#Find me a unicorn and bring me its horn!
@@ -5194,11 +5150,9 @@ country_event = { #Lichdom 7 - Potion 3 - Getting the vessel
 		ai_chance = { factor = 50 }
 		
 		add_treasury = -100
-		increase_witch_king_points_large = { level = necromancy_level_2_minimum }
-		add_ruler_modifier = { name = lichdom_mod_2 duration = -1 }
-
-		custom_tooltip = tooltip_magic_project_advance
-	}	
+		increase_ruler_witch_king_points = { size = medium }
+		country_event = { id = magic_project_lichdom.8 days = 1095 } #3 years
+	}
 	
 	option = {	#The first one but more so
 		name = magic_project_lichdom.7.c
@@ -5207,11 +5161,22 @@ country_event = { #Lichdom 7 - Potion 3 - Getting the vessel
 		highlight = yes
 		
 		kill_heir = { allow_new_heir = no }
-		increase_witch_king_points_large = { level = necromancy_level_2_minimum }
-		add_ruler_modifier = { name = lichdom_mod_2 duration = -1 }
+		increase_ruler_witch_king_points = { size = large }
+		country_event = { id = magic_project_lichdom.8 days = 730 } #2 years
+	}
 
-		custom_tooltip = tooltip_magic_project_advance
-	}	
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			reduce_stability_or_adm_power = yes
+			add_prestige = -10
+			add_legitimacy_equivalent = { amount = -20 republican_tradition = -20 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
+	}
 }
 
 country_event = { #Lichdom 8 - Dark Ritual 1 - Preparing the wards
@@ -5221,6 +5186,7 @@ country_event = { #Lichdom 8 - Dark Ritual 1 - Preparing the wards
 	picture = END_OF_TIME_eventPicture
 	
 	is_triggered_only = yes
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	immediate = {
 		hidden_effect = {
@@ -5246,7 +5212,7 @@ country_event = { #Lichdom 8 - Dark Ritual 1 - Preparing the wards
 		add_dip_power = -100
 		add_mil_power = -100
 		
-		add_ruler_modifier = { name = studying_lichdom_prep duration = -1 }
+		country_event = { id = magic_project_lichdom.9 days = 1095 } #3 years
 	}
 	
 	option = {	#Draw a Circle of Power to improve my chances
@@ -5257,13 +5223,26 @@ country_event = { #Lichdom 8 - Dark Ritual 1 - Preparing the wards
 		
 		add_adm_power = -100
 		
-		add_ruler_modifier = { name = studying_lichdom_circle duration = -1 }
+		country_event = { id = magic_project_lichdom.9 days = 730 } #2 years
 	}
 	
 	#Summon an outsider to give its dark blessing
 	
 	#Pray to my Dark Patron
-	
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			add_inflation = 2
+			reduce_stability_or_adm_power = yes
+			add_prestige = -10
+			add_legitimacy_equivalent = { amount = -20 republican_tradition = -20 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
+		}
+	}
 }
 
 country_event = { #Lichdom 9 - Dark Ritual 2 - Cleansing and putting yourself to near death
@@ -5273,17 +5252,14 @@ country_event = { #Lichdom 9 - Dark Ritual 2 - Cleansing and putting yourself to
 	picture = MIRACLE_MONK_eventPicture
 	
 	is_triggered_only = yes
-	immediate = { set_country_flag = in_magic_progress_event }
-	after = { clr_country_flag = in_magic_progress_event }
+	trigger = { has_ruler_modifier = pursuing_lichdom }
+	after = { hidden_effect = { country_event = { id = magic_project_lichdom.20 days = 365 } } } #last chance to stop
 	
 	option = {	#Begin the cleanse
 		name = magic_project_lichdom.9.a
 		ai_chance = { factor = 50 }
 		
-		add_ruler_modifier = {
-			name = studying_lichdom_cleansing
-			duration = -1
-		}
+		country_event = { id = magic_project_lichdom.10 days = 1095 } #3 years
 	}
 	
 	option = {	#Transmutation spells will help quicken the process
@@ -5292,9 +5268,21 @@ country_event = { #Lichdom 9 - Dark Ritual 2 - Cleansing and putting yourself to
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		
-		add_ruler_modifier = {
-			name = studying_lichdom_cleansinger
-			duration = -1
+		country_event = { id = magic_project_lichdom.10 days = 730 } #2 years
+	}
+
+	option = { #Back Out
+		name = magic_project_lichdom_stop
+		ai_chance = { factor = 1 }
+
+		if = { #edge case where ruler dies while you have this menu open
+			limit = { has_country_modifier = pursuing_lichdom }
+			set_bankruptcy = ROOT
+			add_inflation = 2
+			reduce_stability_or_adm_power = yes
+			add_prestige = -10
+			add_legitimacy_equivalent = { amount = -20 republican_tradition = -20 } #As you get deeper in, it becomes harder to stop
+			remove_country_modifier = pursuing_lichdom
 		}
 	}
 }
@@ -5306,29 +5294,13 @@ country_event = { #Lichdom 10 - Dark Ritual 3 - drinking it
 	picture = LOOMING_DEATH_eventPicture
 	
 	is_triggered_only = yes
+	trigger = { has_ruler_modifier = pursuing_lichdom }
 	
 	option = {	#Drink
 		name = magic_project_lichdom.10.a
 		ai_chance = { factor = 50 }
 		
-		remove_country_modifier = studying_lichdom_amulet
-		remove_country_modifier = studying_lichdom_box
-		remove_country_modifier = studying_lichdom_parchment
-		remove_country_modifier = studying_lichdom_runes
-		remove_country_modifier = studying_lichdom_blood
-		remove_country_modifier = lichdom_mod_1
-		remove_country_modifier = studying_lichdom_roots
-		remove_country_modifier = studying_lichdom_bowls
-		remove_country_modifier = studying_lichdom_blooms
-		remove_country_modifier = studying_lichdom_korashi
-		remove_country_modifier = studying_lichdom_venom
-		remove_country_modifier = studying_lichdom_wyvern
-		remove_country_modifier = lichdom_mod_2
-		remove_country_modifier = studying_lichdom_prep
-		remove_country_modifier = studying_lichdom_circle
-		remove_country_modifier = studying_lichdom_cleansing
-		remove_country_modifier = studying_lichdom_cleansinger
-		
+		remove_country_modifier = pursuing_lichdom
 		tooltip = {
 			kill_ruler = yes
 			random = {
@@ -5337,7 +5309,7 @@ country_event = { #Lichdom 10 - Dark Ritual 3 - drinking it
 			}
 		}
 		hidden_effect = {
-			play_sound = newmonarch
+			play_sound = newmonarch #trolls the player
 			country_event = { id = magic_project_lichdom.11 }
 		}
 	}
@@ -5348,14 +5320,14 @@ country_event = { #Lichdom 11 - Lichdom
 	title = magic_project_lichdom.11.t
 	desc = {
 		trigger = {
-			NOT = { TAG = H16 }
+			NOT = { #special lichdoms
+				TAG = H16
+			}
 		}
 	   desc = magic_project_lichdom.11.d
 	}
 	desc = {
-		trigger = {
-			TAG = H16
-		}
+		trigger = { TAG = H16 }
 		desc = magic_project_lichdom.11.db
 	}
 	picture = PRIEST_PHANTOM_eventPicture
@@ -5948,6 +5920,637 @@ country_event = { #Occupier destroys phylactery
 			name = lichdom_destroyed_phylactery
 			duration = 3650
 		}
+	}
+}
+
+country_event = { #Please Stop
+	id = magic_project_lichdom.20
+	title = magic_project_lichdom.20.t
+	desc = magic_project_lichdom.20.d
+	picture = PRESTOR_JOHN_eventPicture
+	
+	is_triggered_only = yes
+	trigger = { has_ruler_modifier = pursuing_lichdom }
+	
+	option = { #I will stop
+		name = magic_project_lichdom.20.a
+		ai_chance = { factor = 100 }
+		
+		if = {
+			limit = { has_ruler_modifier = pursuing_lichdom }
+			add_prestige = 20
+			add_stability_or_adm_power = yes
+			decrease_ruler_witch_king_points = { size = large }
+			remove_country_modifier = pursuing_lichdom
+		}
+	}
+
+	option = { #I will not
+		name = magic_project_lichdom.20.b
+		ai_chance = { factor = 0 }
+		highlight = yes
+		trigger = { has_ruler_modifier = pursuing_lichdom }
+		
+		if = {
+			limit = { has_ruler_modifier = pursuing_lichdom }
+			add_manpower = -0.001
+		}
+	}
+}
+
+
+########################
+### ARMY OF THE DEAD ###
+########################
+#1 - Night of Long Shovels
+#2 - Night of Long Shovels - Bounceback
+#3 - The Acquisition of Bodies (repeats)
+#4 - Bodies bounceback
+#5 - Army of the Dead
+#6 - Skeletons vs. Zombies vs. Ghouls vs. Revenants
+#7 - Army of the Dead II
+#8 - Fun with Recycling
+#9 - Recycling Bodies
+
+namespace = magic_project_army_of_the_dead
+
+country_event = { #Army of the Dead event handler
+	id = magic_project_army_of_the_dead.0
+	title = magic_project_army_of_the_dead.0.t
+	desc = magic_project_army_of_the_dead.0.d
+	picture = ANGRY_MOB_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = magic_project_army_of_the_dead.0.a
+		ai_chance = { factor = 1 }
+
+		if = {
+			limit = { has_country_flag = magic_project_completed_flag }
+			if = {
+				limit = { at_least_magic_project_level = { project = army_of_the_dead level = 3 } }
+				country_event = { id = magic_project_army_of_the_dead.10 }
+			}
+			else_if = {
+				limit = { at_least_magic_project_level = { project = army_of_the_dead level = 2 } }
+				country_event = { id = magic_project_army_of_the_dead.8 }
+			}
+			else = { country_event = { id = magic_project_army_of_the_dead.5 } }
+		}
+		else_if = {
+			limit = {
+				check_variable = { current_experience_percent = 50 }
+				NOT = { has_country_flag = magic_project_first_event_happened }
+			}
+			set_country_flag = magic_project_first_event_happened
+			set_country_flag = in_magic_progress_event
+			country_event = { id = magic_project_army_of_the_dead.3 }
+		}
+	}
+}
+country_event = { #Army of the Dead 1 - Night of Long Shovels
+	id = magic_project_army_of_the_dead.1
+	title = magic_project_army_of_the_dead.1.t
+	desc = {
+		desc = magic_project_army_of_the_dead_1_desc_first
+		trigger = {
+			NOT = {
+				has_country_flag = sacrificed_adm_advisor
+				has_country_flag = sacrificed_dip_advisor
+				has_country_flag = sacrificed_mil_advisor
+				has_country_flag = sacrificed_bystander
+			}
+		}
+	}
+	desc = {
+		desc = magic_project_army_of_the_dead_1_desc_second
+		trigger = {
+			OR = {
+				has_country_flag = sacrificed_adm_advisor
+				has_country_flag = sacrificed_dip_advisor
+				has_country_flag = sacrificed_mil_advisor
+				has_country_flag = sacrificed_bystander
+			}
+			NOT = {
+				AND = {
+					has_country_flag = sacrificed_adm_advisor
+					has_country_flag = sacrificed_dip_advisor
+					has_country_flag = sacrificed_mil_advisor
+					has_country_flag = sacrificed_bystander
+				}
+			}
+		}
+	}
+	desc = {
+		desc = magic_project_army_of_the_dead_1_desc_third
+		trigger = {
+			has_country_flag = sacrificed_adm_advisor
+			has_country_flag = sacrificed_dip_advisor
+			has_country_flag = sacrificed_mil_advisor
+			has_country_flag = sacrificed_bystander
+		}
+	}
+	picture = THREE_HEIRS_eventPicture
+
+	is_triggered_only = yes
+	immediate = { set_country_flag = in_magic_progress_event }
+	after = {
+		if = {
+			limit = { has_country_flag = in_magic_progress_event }
+			hidden_effect = { country_event = { id = magic_project_army_of_the_dead.2 } }
+		}
+	}
+
+	option = { #Sacrifice adm advisor
+		name = magic_project_army_of_the_dead.1.a
+		ai_chance = { factor = 1 }
+		trigger = {
+			employed_advisor = { category = ADM }
+			NOT = { has_country_flag = sacrificed_adm_advisor }
+		}
+
+		remove_advisor_by_category = ADM
+		aotd_increase_xp_mod_effect = yes
+		set_country_flag = sacrificed_adm_advisor
+	}
+
+	option = { #Sacrifice dip advisor
+		name = magic_project_army_of_the_dead.1.b
+		ai_chance = { factor = 1 }
+		trigger = {
+			employed_advisor = { category = DIP }
+			NOT = { has_country_flag = sacrificed_dip_advisor }
+		}
+
+		remove_advisor_by_category = DIP
+		aotd_increase_xp_mod_effect = yes
+		set_country_flag = sacrificed_dip_advisor
+	}
+
+	option = { #Sacrifice mil advisor
+		name = magic_project_army_of_the_dead.1.c
+		ai_chance = { factor = 1 }
+		trigger = {
+			employed_advisor = { category = MIL }
+			NOT = { has_country_flag = sacrificed_mil_advisor }
+		}
+
+		remove_advisor_by_category = MIL
+		aotd_increase_xp_mod_effect = yes
+		set_country_flag = sacrificed_mil_advisor
+	}
+
+	option = { #Sacrifice a random bystander
+		name = magic_project_army_of_the_dead.1.d
+		ai_chance = { factor = 1 }
+		trigger = {
+			NOT = {
+				employed_advisor = { category = ADM }
+				employed_advisor = { category = DIP }
+				employed_advisor = { category = MIL }
+				has_country_flag = sacrificed_bystander
+			}
+		}
+		add_prestige = -10
+		add_manpower = -0.001
+		aotd_increase_xp_mod_effect = yes
+		set_country_flag = sacrificed_bystander
+	}
+
+	option = { #That's enough
+		name = magic_project_army_of_the_dead.1.e
+		ai_chance = { factor = 1 }
+		trigger = {
+			OR = {
+				has_country_flag = sacrificed_adm_advisor
+				has_country_flag = sacrificed_dip_advisor
+				has_country_flag = sacrificed_mil_advisor
+				has_country_flag = sacrificed_bystander
+			}
+		}
+		if = { #you shouldn't literally sacrifice everyone
+			limit = {
+				has_country_flag = sacrificed_adm_advisor
+				has_country_flag = sacrificed_dip_advisor
+				has_country_flag = sacrificed_mil_advisor
+				has_country_flag = sacrificed_bystander
+			}
+			add_manpower = 0.001
+			remove_country_modifier = studying_aotd_mod_4
+			add_country_modifier = { name = studying_aotd_mod_3 duration = -1 desc = until_advancement_concludes }
+		}
+		clr_country_flag = sacrificed_adm_advisor
+		clr_country_flag = sacrificed_dip_advisor
+		clr_country_flag = sacrificed_mil_advisor
+		clr_country_flag = sacrificed_bystander
+		clr_country_flag = in_magic_progress_event
+	}
+}
+country_event = { #Night of Long Shovels bounceback
+	id = magic_project_army_of_the_dead.2
+	title = magic_project_army_of_the_dead.2.t
+	desc = magic_project_army_of_the_dead.2.desc
+	picture = THREE_HEIRS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = magic_project_army_of_the_dead.2.a
+		country_event = { id = magic_project_army_of_the_dead.1 }
+	}
+}
+
+country_event = { #Army of the Dead 2 - The Acquisition of Bodies
+	id = magic_project_army_of_the_dead.3
+	title = magic_project_army_of_the_dead.3.t
+	desc = magic_project_army_of_the_dead.3.d
+	picture = muslimgfx_PLAGUE_eventPicture
+
+	is_triggered_only = yes
+	after = {
+		if = {
+			limit = { has_country_flag = in_magic_progress_event }
+			hidden_effect = { country_event = { id = magic_project_army_of_the_dead.4 } }
+		}
+		else = {
+			clr_country_flag = aotd_1M
+			clr_country_flag = aotd_100k
+			clr_country_flag = aotd_10k
+			clr_country_flag = aotd_1k
+			clr_country_flag = aotd_100
+			clr_country_flag = aotd_10
+		}
+	}
+
+	option = { #More bodies!
+		name = magic_project_army_of_the_dead.3.a
+
+		if = {
+			limit = { has_country_flag = aotd_1M }
+			if = {
+				limit = { manpower = 1000 }
+				add_manpower = -1000
+				increase_magic_experience = { amount = 10 }
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = aotd_100k }
+			if = {
+				limit = { manpower = 100 }
+				add_manpower = -100
+				increase_magic_experience = { amount = 10 }
+				clr_country_flag = aotd_100k
+				set_country_flag = aotd_1M
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = aotd_10k }
+			if = {
+				limit = { manpower = 10 }
+				add_manpower = -10
+				increase_magic_experience = { amount = 10 }
+				clr_country_flag = aotd_10k
+				set_country_flag = aotd_100k
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = aotd_1k }
+			if = {
+				limit = { manpower = 1 }
+				add_manpower = -1
+				increase_magic_experience = { amount = 10 }
+				clr_country_flag = aotd_1k
+				set_country_flag = aotd_10k
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = aotd_100 }
+			if = {
+				limit = { manpower = 0.1 }
+				add_manpower = -0.1
+				increase_magic_experience = { amount = 10 }
+				clr_country_flag = aotd_100
+				set_country_flag = aotd_1k
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = aotd_10 }
+			if = {
+				limit = { manpower = 0.01 }
+				add_manpower = -0.01
+				increase_magic_experience = { amount = 10 }
+				clr_country_flag = aotd_10
+				set_country_flag = aotd_100
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+		else = {
+			if = {
+				limit = { manpower = 0.001 }
+				add_manpower = -0.001
+				increase_magic_experience = { amount = 10 }
+				set_country_flag = aotd_10
+			}
+			else = {
+				custom_tooltip = aotd_not_enough_manpower_tt
+				clr_country_flag = in_magic_progress_event
+			}
+		}
+	}
+
+	option = { #That's enough bodies
+		name = magic_project_army_of_the_dead.3.b
+		clr_country_flag = in_magic_progress_event
+	}
+}
+country_event = { #Acquisition of Bodies bounceback
+	id = magic_project_army_of_the_dead.4
+	title = magic_project_army_of_the_dead.4.t
+	desc = magic_project_army_of_the_dead.4.desc
+	picture = THREE_HEIRS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = magic_project_army_of_the_dead.4.a
+		country_event = { id = magic_project_army_of_the_dead.3 }
+	}
+}
+country_event = { #Army of the Dead 3 - Unlock Undead Mil
+	id = magic_project_army_of_the_dead.5
+	title = magic_project_army_of_the_dead.5.t
+	desc = magic_project_army_of_the_dead.5.d
+	picture = VASA_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = magic_project_army_of_the_dead.5.a
+
+		clear_racial_military = yes
+		change_unit_type = tech_undead
+		custom_tooltip = GetRacialMilUndead
+		add_country_modifier = { name = undead_military duration = -1 hidden = yes }
+		custom_tooltip = undead_military_hint
+
+		update_mana_regen_vars = yes
+
+		custom_tooltip = tooltip_magic_project_advance
+	}
+}
+country_event = { #Army of the Dead 4 - Choose between supporting different ideas
+	id = magic_project_army_of_the_dead.6
+	title = magic_project_army_of_the_dead.6.t
+	desc = magic_project_army_of_the_dead.6.desc
+	picture = PASHA_NEGOTIATION_eventPicture
+
+	is_triggered_only = yes
+	immediate = { set_country_flag = in_magic_progress_event }
+	after = {
+		if = {
+			limit = { has_country_flag = in_magic_progress_event }
+			hidden_effect = { country_event = { id = magic_project_army_of_the_dead.7 } }
+		}
+	}
+
+	option = { #Zombie guy should go test his theory
+		name = magic_project_army_of_the_dead.6.a
+		trigger = { NOT = { has_country_modifier = aotd_zombie_mod } }
+
+		kill_leader = { type = random }
+		add_country_modifier = { name = aotd_zombie_mod duration = -1 desc = until_advancement_concludes }
+		aotd_increase_xp_mod_effect = yes
+	}
+
+	option = { #Skeleton guy should go test his theory
+		name = magic_project_army_of_the_dead.6.b
+		trigger = { NOT = { has_country_modifier = aotd_skeleton_mod } }
+
+		kill_leader = { type = random }
+		add_country_modifier = { name = aotd_skeleton_mod duration = -1 desc = until_advancement_concludes }
+		aotd_increase_xp_mod_effect = yes
+	}
+
+	option = { #Revenant guy should go test his theory
+		name = magic_project_army_of_the_dead.6.c
+		trigger = { NOT = { has_country_modifier = aotd_revenant_mod } }
+
+		kill_leader = { type = random }
+		add_country_modifier = { name = aotd_revenant_mod duration = -1 desc = until_advancement_concludes }
+		aotd_increase_xp_mod_effect = yes
+	}
+
+	option = { #Ghoul guy should go test his theory
+		name = magic_project_army_of_the_dead.6.d
+		trigger = { NOT = { has_country_modifier = aotd_ghoul_mod } }
+
+		kill_leader = { type = random }
+		add_country_modifier = { name = aotd_ghoul_mod duration = -1 desc = until_advancement_concludes }
+		aotd_increase_xp_mod_effect = yes
+	}
+
+	option = { #No one should die for their beliefs except for the people who just did
+		name = magic_project_army_of_the_dead.6.e
+
+		clr_country_flag = in_magic_progress_event
+	}
+}
+country_event = { #4-Way VS bounceback
+	id = magic_project_army_of_the_dead.7
+	title = magic_project_army_of_the_dead.7.t
+	desc = magic_project_army_of_the_dead.7.desc
+	picture = THREE_HEIRS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = magic_project_army_of_the_dead.7.a
+		country_event = { id = magic_project_army_of_the_dead.6 }
+	}
+}
+country_event = { #Army of the Dead 5 - Unlock Zombies or Skeletons
+	id = magic_project_army_of_the_dead.8
+	title = magic_project_army_of_the_dead.8.t
+	desc = magic_project_army_of_the_dead.8.desc
+	picture = CROSSROAD_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Zombies
+		name = magic_project_army_of_the_dead.8.a
+
+		set_country_flag = aotd_zombie_army
+
+		custom_tooltip = aotd_undead_mil_gains_tt
+		custom_tooltip = aotd_zombies_pips_tt
+		custom_tooltip = tooltip_magic_project_advance
+	}
+
+	option = { #Skeletons
+		name = magic_project_army_of_the_dead.8.b
+
+		set_country_flag = aotd_skeleton_army
+
+		custom_tooltip = aotd_undead_mil_gains_tt
+		custom_tooltip = aotd_skeletons_pips_tt
+		custom_tooltip = tooltip_magic_project_advance
+	}
+}
+country_event = { #Army of the Dead 6 - Discover Corpse Recycling
+	id = magic_project_army_of_the_dead.9
+	title = magic_project_army_of_the_dead.9.t
+	desc = magic_project_army_of_the_dead.9.desc
+	picture = SCIENTISTS_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Sacrifice all your dudes
+		name = magic_project_army_of_the_dead.9.a
+
+		custom_tooltip = aotd_real_warning_tt
+		disband_all_regiments = yes
+		add_country_modifier = { name = studying_aotd_mod_4 duration = -1 desc = until_advancement_concludes }
+	}
+
+	option = { #Sacrifice your capital core
+		name = magic_project_army_of_the_dead.9.b
+
+		custom_tooltip = aotd_real_warning_tt
+		capital_scope = { remove_core = ROOT }
+		add_country_modifier = { name = studying_aotd_mod_3 duration = -1 desc = until_advancement_concludes }
+	}
+
+	option = { #Sacrifice your heir
+		name = magic_project_army_of_the_dead.9.c
+
+		custom_tooltip = aotd_real_warning_tt
+		if = {
+			limit = { has_heir = yes }
+			kill_heir = { allow_new_heir = no }
+		}
+		else = { add_prestige = -50 }
+		add_country_modifier = { name = studying_aotd_mod_2 duration = -1 desc = until_advancement_concludes }
+	}
+
+	option = { #Sacrifice a duck
+		name = magic_project_army_of_the_dead.9.d
+
+		custom_tooltip = aotd_real_warning_tt
+		add_manpower = -0.001
+		reduce_stability_or_adm_power = yes
+		add_country_modifier = { name = studying_aotd_mod_1 duration = -1 desc = until_advancement_concludes }
+	}
+
+	option = { #Sacrifice nothing
+		name = magic_project_army_of_the_dead.9.e
+
+		custom_tooltip = aotd_real_warning_tt
+		custom_tooltip = aotd_fake_warning_tt
+	}
+}
+country_event = { #Army of the Dead 7 - Enact Corpse Recycling
+	id = magic_project_army_of_the_dead.10
+	title = magic_project_army_of_the_dead.10.t
+	desc = magic_project_army_of_the_dead.10.d
+	picture = SCIENTISTS_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Sacrifice nothing
+		name = magic_project_army_of_the_dead.10.a
+
+		custom_tooltip = aotd_undead_mil_gains_tt
+		custom_tooltip = RacialMilUndeadExtra
+	}
+}
+
+
+country_event = { #Undead Army gains manpower on winning battles
+	id = magic_project_army_of_the_dead.20
+	title = magic_project_army_of_the_dead.20.t
+	desc = magic_project_army_of_the_dead.20.d
+	picture = UNDEAD_ARMY_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	trigger = { check_variable = { raise_undead = 3001 } } #Don't raise if it was a nothing battle
+	
+	option = {	#Rise!
+		name = magic_project_army_of_the_dead.20.a
+		ai_chance = { factor = 1 }
+
+		divide_variable = { raise_undead = 3 } #33% of the dead are raised
+		round_variable = { #truncate decimal portion
+			which = raise_undead
+			value = -1
+		}
+		
+		if = {
+			limit = { has_country_flag = hide_necromancy_on_battle }
+			divide_variable = { raise_undead = 1000 }
+			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
+		}
+		else = {
+			country_event = { id = magic_project_army_of_the_dead.21 }
+		}
+	}
+}
+
+country_event = { #Undead Army Manpower notif event
+	id = magic_project_army_of_the_dead.21
+	title = magic_project_army_of_the_dead.21.t
+	desc = magic_project_army_of_the_dead.21.d
+	picture = UNDEAD_ARMY_eventPicture
+	
+	is_triggered_only = yes
+
+	after = {
+		hidden_effect = {
+			divide_variable = { raise_undead = 1000 }
+			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
+		}
+	}
+
+	option = {	#Rise!
+		name = magic_project_army_of_the_dead.21.a
+		
+		custom_tooltip = magic_spell_raise_undead_tt
+	}
+	
+	option = {	#Rise! (But hide these pop-ups from now on)
+		name = magic_project_army_of_the_dead.21.b
+		
+		custom_tooltip = magic_spell_raise_undead_tt
+		hidden_effect = { set_country_flag = hide_necromancy_on_battle }
 	}
 }
 
