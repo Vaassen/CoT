@@ -371,8 +371,10 @@ country_event = { # Echo of Authority
             }
             
         }
-        clear_global_event_target = salt_and_silence_giant	
-        clear_global_event_target = salt_and_silence_emperor
+        hidden_effect = {
+            clear_global_event_target = salt_and_silence_giant	
+            clear_global_event_target = salt_and_silence_emperor
+        }
 	}
 }
 
@@ -389,6 +391,13 @@ country_event = { # Crown of Salt
     major_trigger = { 
         is_part_of_hre = yes
     }
+
+    after = {
+         hidden_effect = {
+            clear_global_event_target = salt_and_silence_giant 
+            clear_global_event_target = salt_and_silence_emperor
+        }
+    }
 	
 	option = {		
 		name = flavor_salt_silence_incident.5.a
@@ -403,8 +412,6 @@ country_event = { # Crown of Salt
                 duration = 14600
             }
         }
-        clear_global_event_target = salt_and_silence_giant 
-        clear_global_event_target = salt_and_silence_emperor
 	}
 
     option = {		
@@ -423,8 +430,6 @@ country_event = { # Crown of Salt
                 duration = 14600
             }
         }
-        clear_global_event_target = salt_and_silence_giant 
-        clear_global_event_target = salt_and_silence_emperor
 	}
 }
 
@@ -437,23 +442,32 @@ country_event = { # A Rising Overture
 	fire_only_once = yes
 	is_triggered_only = yes
     
-
-    immediate = {
-        hidden_effect = {
-             
-        }
-    }
 	
 	option = {	# Back Down
 		name = flavor_salt_silence_incident.6.a
         if = {
             limit = { is_part_of_hre = yes }
             every_owned_province = {
-                limit = { 
+                limit = {
                     is_part_of_hre = yes
-                    region = the_borders_region 
+                    region = the_borders_region  
                 }
-                release = PREV
+                random_core_country = {
+                    limit = { 
+                        is_part_of_hre = yes
+                        region = the_borders_region 
+                        exists = yes
+                    }
+                    PREV = { cede_province = PREV } 
+                }
+                random_core_country = {
+                    limit = { 
+                        is_part_of_hre = yes
+                        region = the_borders_region 
+                        exists = no
+                    }
+                    release = PREV
+                }
             }
         } 
         else = {
@@ -462,8 +476,12 @@ country_event = { # A Rising Overture
                     is_subject_of_type = personal_union 
                     is_part_of_hre = yes
                 }
-                PREV = { release = ROOT }
+                grant_independence = yes
             }
+        }
+        hidden_effect = {
+            clear_global_event_target = salt_and_silence_giant 
+            clear_global_event_target = salt_and_silence_emperor
         }
 	}
 
@@ -514,7 +532,6 @@ country_event = { # A Symphony of War
         every_known_country = {
             limit = { 
                 is_elector = yes
-                NOT = { capital_scope = { region = the_borders_region } }
                 NOT = { tag = event_target:salt_and_silence_giant }
             }
             join_all_offensive_wars_of = event_target:salt_and_silence_emperor
@@ -523,6 +540,17 @@ country_event = { # A Symphony of War
             limit = {
                 is_part_of_hre = yes
                 capital_scope = { region = the_borders_region }
+                is_elector = no
+                NOT = {
+                    OR = {
+                        is_in_war = {
+                            attackers = event_target:salt_and_silence_emperor
+                        }
+                        is_in_war = {
+                            defenders = event_target:salt_and_silence_emperor
+                        }
+                    }
+                }
                 NOT = { tag = event_target:salt_and_silence_emperor }
                 NOT = { tag = event_target:salt_and_silence_giant }
             }
@@ -579,7 +607,7 @@ country_event = {
 
     after = {
         hidden_effect = {
-            emperor = {
+            event_target:salt_and_silence_emperor = {
                 IF = {
                     limit = { NOT = { has_country_flag = salt_time_limit_set } }
                     country_event = { id = flavor_salt_silence_incident.10 days = 5475 }
