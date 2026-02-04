@@ -9,7 +9,8 @@
 # manufactory = { trade_good trade_good } # list of trade goods that get a production bonus
 # onmap = yes/no # show as a sprite on the map
 
-# FROM = owner
+# FROM = The nation building and paying for the building
+# owner = owner of the province
 # ROOT = province
 
 # Building AI is now mainly hard-coded. The AI will estimate how much it gains yearly from each building,
@@ -146,6 +147,14 @@ workshop = {
 
 		gronstunad_building_authority_effect = { value = 1 }
 		sponsored_adventurers_building_reform_effect = { value = 5 type = prod }
+		if = {
+			limit = {
+				FROM = { tag = I14 }
+				province_id = 4217 #Gor Vazumbrog
+				has_province_modifier = gor_vazumbrog_dragons_wound
+			}
+			province_event = { id = flavour_gor_vazumbrog.207 }
+		}
 	}
 	on_destroyed = {
 		remove_development_from_building = {
@@ -248,8 +257,19 @@ temple = {
 			}
 			add_base_tax = 1
 		}
-
-
+		
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = {
+					has_province_flag = triplet_gained_development_temple
+					has_province_flag = triplet_gained_development_cathedral
+				}
+			}
+			add_base_tax = 1
+			set_province_flag = triplet_gained_development_temple
+		}
+	
 		gronstunad_building_authority_effect = { value = 1 }
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
@@ -291,6 +311,37 @@ temple = {
 				add_estate_loyalty = {
 					estate = estate_church
 					loyalty = 5
+				}
+			}
+		}
+		if = { #Great Storm Effects
+			limit = { 
+				FROM = { is_or_was_tag = { tag = I80 } }
+			}
+			if = { #Great Storm Modifier, only for I80
+				limit = { owner = { has_country_modifier = I80_rukunai_style_monasteries } NOT = { has_province_flag = I80_monastery_built } } 
+				set_province_flag = I80_monastery_built
+				owner = {
+					add_treasury = 20
+				}
+			}
+			if = { #Great Storm Modifier, only for I80
+				limit = { owner = { has_country_modifier = I80_shaman_funded_temples } }
+				owner = { 
+					add_treasury = 10
+					increase_magic_experience = { unmodified_amount = 10 }
+				}
+			}
+			if = { #Modifier for Wild Hunt, effect applies when Great Storm does its thing and builds a temple there
+				limit = { owner = { has_country_modifier = I80_crisis_of_faith } }
+				spawn_rebels = {
+					size = 2
+					type = heretic_rebels
+				}
+				FROM = {
+					country_event = {
+						id = flavour_great_storm.16
+					}
 				}
 			}
 		}
@@ -358,6 +409,18 @@ temple = {
 	}
 	on_obsolete = {
 		gronstunad_building_authority_effect = { value = -1 }
+		hidden_effect = {
+			if = {
+				limit = {
+					owner_has_active_triplets_tier_3 = yes
+					has_province_flag = triplet_gained_development_temple
+				}
+				add_base_tax = -1
+				
+			}		
+		
+		}
+
 	}
 
 	on_construction_started = {  #Fires when you start the construction,  ROOT - Province FROM - Country that started 1.35
@@ -687,33 +750,8 @@ fort_15th = {
 			}
 		}
 		spirit_fort_awakening_effect = yes
-		if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 1 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_1
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 2 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_2
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 3 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_3
-				duration = -1
-			}
-		}
+		update_magical_fortress = yes
+
 		if = { #No double forts for you
 			limit = {
 				OR = {
@@ -737,7 +775,6 @@ fort_15th = {
 				}
 			}
 		}
-		umbral_fog_apply = yes #umbral covenant
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
@@ -767,9 +804,7 @@ fort_15th = {
 			province_event = { id = kobold_traps.8 }
 		}
 		remove_province_modifier = command_elephant_fort_buff
-		remove_province_modifier = magical_fortress_province_mod_1
-		remove_province_modifier = magical_fortress_province_mod_2
-		remove_province_modifier = magical_fortress_province_mod_3
+		update_magical_fortress = yes
 
 		#Bibyobi
 		if = {
@@ -790,7 +825,6 @@ fort_15th = {
 			limit = { has_province_modifier = spiked_log_spiky_traps }
 			remove_province_modifier = spiked_log_spiky_traps
 		}
-		umbral_fog_clear = yes
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
@@ -1349,33 +1383,9 @@ fort_16th = {
 				}
 			}
 		}
-		if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 1 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_1
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 2 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_2
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 3 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_3
-				duration = -1
-			}
-		}
+
+		update_magical_fortress = yes
+
 		if = { #No double forts for you
 			limit = {
 				OR = {
@@ -1399,7 +1409,6 @@ fort_16th = {
 				}
 			}
 		}
-		umbral_fog_apply = yes #umbral covenant
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
@@ -1418,9 +1427,9 @@ fort_16th = {
 			}
 		}
 		remove_province_modifier = command_elephant_fort_buff
-		remove_province_modifier = magical_fortress_province_mod_1
-		remove_province_modifier = magical_fortress_province_mod_2
-		remove_province_modifier = magical_fortress_province_mod_3
+
+		update_magical_fortress = yes
+
 		if = { # Anbennar Kobold Traps
 			limit = { has_province_flag = has_kobold_traps }
 			province_event = { id = kobold_traps.8 }
@@ -1443,8 +1452,7 @@ fort_16th = {
 		if = {
 			limit = { has_province_modifier = spiked_log_spiky_traps }
 			remove_province_modifier = spiked_log_spiky_traps
-		}
-		umbral_fog_clear = yes			
+		}		
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
@@ -1648,8 +1656,14 @@ cathedral = {
 			}
 			add_base_tax = 2
 		}
-		
-
+		if = {
+			limit = {
+				owner_has_active_triplets_tier_3 = yes
+				NOT = { has_province_flag = triplet_gained_development_cathedral }
+			}
+			add_base_tax = 2
+			set_province_flag = triplet_gained_development_cathedral
+		}
 		gronstunad_building_authority_effect = { value = 3 }
 		sponsored_adventurers_building_reform_effect = { value = 5 type = tax }
 		
@@ -2257,33 +2271,9 @@ fort_17th = {
 				}
 			}
 		}
-		if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 1 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_1
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 2 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_2
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 3 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_3
-				duration = -1
-			}
-		}
+
+		update_magical_fortress = yes
+		
 		if = { #No double forts for you
 			limit = {
 				has_building = fort_18th
@@ -2305,7 +2295,6 @@ fort_17th = {
 				}
 			}
 		}
-		umbral_fog_apply = yes #umbral covenant
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
@@ -2324,9 +2313,7 @@ fort_17th = {
 			}
 		}
 		remove_province_modifier = command_elephant_fort_buff
-		remove_province_modifier = magical_fortress_province_mod_1
-		remove_province_modifier = magical_fortress_province_mod_2
-		remove_province_modifier = magical_fortress_province_mod_3
+		update_magical_fortress = yes
 
 		if = { #1.35
 			limit = {
@@ -2358,7 +2345,6 @@ fort_17th = {
 			limit = { has_province_modifier = spiked_log_spiky_traps }
 			remove_province_modifier = spiked_log_spiky_traps
 		}
-		umbral_fog_clear = yes
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
@@ -2889,36 +2875,9 @@ fort_18th = {
 				duration = -1
 			}
 		}
-		if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 1 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_1
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 2 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_2
-				duration = -1
-			}
-		}
-		else_if = {
-			limit = {
-				owner = { exactly_magic_project_level = { project = magical_fortress level = 3 } }
-			}
-			add_province_modifier = {
-				name = magical_fortress_province_mod_3
-				duration = -1
-			}
-		}
 		#Anbennar
 
-
+		update_magical_fortress = yes
 		anbennar_building_effect = yes
 		owner = { accretive_path_gain_chi = { aspect = serenity_in_rock_and_stone category = mil amount = 20 } }
 		gronstunad_building_authority_effect = { value = 8 }
@@ -2985,7 +2944,6 @@ fort_18th = {
 				}
 			}
 		}
-		umbral_fog_apply = yes #umbral covenant
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings made obsolete!
@@ -3014,9 +2972,7 @@ fort_18th = {
 			province_event = { id = kobold_traps.8 }
 		}		
 		remove_province_modifier = command_elephant_fort_buff
-		remove_province_modifier = magical_fortress_province_mod_1
-		remove_province_modifier = magical_fortress_province_mod_2
-		remove_province_modifier = magical_fortress_province_mod_3
+		update_magical_fortress = yes
 
 		#Bibyobi
 		if = {
@@ -3037,7 +2993,6 @@ fort_18th = {
 			limit = { has_province_modifier = spiked_log_spiky_traps }
 			remove_province_modifier = spiked_log_spiky_traps
 		}
-		umbral_fog_clear = yes
 	}
 
 	# THIS = Province, FROM = Destroyer, Will not be called on buildings destroyed!
@@ -3358,6 +3313,21 @@ textile = {
 		gronstunad_building_authority_effect = { value = 5 }
 		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = dyes
+			}
+			add_province_modifier = {
+				name = S50_nightblossom_cloak_weavers
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
@@ -3375,6 +3345,11 @@ textile = {
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
+		}
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_nightblossom_cloak_weavers }
+			remove_province_modifier = S50_nightblossom_cloak_weavers
 		}
 	}
 	on_obsolete = {
@@ -3830,6 +3805,21 @@ mills = {
 		gronstunad_building_authority_effect = { value = 5 }
 		on_production_manufactory_built_effect = yes
 		on_built_manufactory_effect = yes
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = tropical_wood
+			}
+			add_province_modifier = {
+				name = S50_lotunga_pine_groves
+				duration = -1
+			}
+		}
 	}
 	on_destroyed = {
 		on_production_manufactory_destroyed_effect = yes
@@ -3846,6 +3836,12 @@ mills = {
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
 			anb_manufactory_discount_remove = yes
+		}
+
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_lotunga_pine_groves }
+			remove_province_modifier = S50_lotunga_pine_groves
 		}
 	}
 	on_obsolete = {
@@ -4139,6 +4135,21 @@ soldier_households = {
 				add_church_power = 10
 			}
 		}
+
+		# Yemotaferi MT
+		if = {
+			limit = {
+				owner = {
+					has_country_flag = S50_manufactory_modifiers
+				}
+				has_terrain = shadow_swamp_terrain
+				trade_goods = fungi
+			}
+			add_province_modifier = {
+				name = S50_flourishing_moonrice_fields
+				duration = -1
+			}
+		}
 	}
 
 	on_destroyed = {
@@ -4191,6 +4202,12 @@ soldier_households = {
 			FROM = {
 				add_church_power = -10
 			}
+		}
+
+		#Yemotaferi MT
+		if = {
+			limit = { has_province_modifier = S50_flourishing_moonrice_fields }
+			remove_province_modifier = S50_flourishing_moonrice_fields
 		}
 	}
 	on_obsolete = {
@@ -4535,6 +4552,15 @@ mage_tower = {
 				province_event = { id = kheionai.3 }
 			}
 		}
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = -1
+				}
+			}
+		}
 		#Anbennar - Thangoya Tier 2 Reform Mechanic, Feel Free To Reuse
 		if = {
 			limit = { FROM = { has_reform = kai_diligent_bureucracy } }
@@ -4683,6 +4709,60 @@ mage_tower = {
 				}
 			}
 		}
+		umbral_fog_apply = yes #umbral covenant
+		if = { ##Great fun with Great Storm# #Either the player or its subject has a thing which has consequences# #
+			limit = { province_id = 5138 } #Tirughuun
+			if = {
+				limit = { FROM = { has_country_flag = I80_tirughuun_mage_tower } }
+				FROM = { 
+					clr_country_flag = I80_tirughuun_mage_tower
+					increase_magic_experience = { unmodified_amount = 150 }
+				}
+			}
+			if = {
+				limit = { FROM = { overlord = { has_country_flag = I80_tirughuun_mage_tower } } }
+				FROM = { 
+					overlord = { 
+						clr_country_flag = I80_tirughuun_mage_tower
+						increase_magic_experience = { unmodified_amount = 100 }
+					}
+				}
+			}
+		}
+
+		if = { #Black Herd - Refund 50% of the cost
+			limit = { FROM = { has_government_attribute = magocratic_caehnate_mage_towers } }
+			hidden_effect = {
+				FROM = {
+					export_to_variable = {
+						which = build_cost_var
+						value = modifier:build_cost
+					}
+					export_to_variable = {
+						which = local_build_cost_var
+						value = modifier:local_build_cost
+						who = PREV
+					}
+					change_variable = { build_cost_var = 1 }
+					change_variable = { local_build_cost_var = 1 }
+					if = {
+						limit = { NOT = { check_variable = { build_cost_var = 0 } } }
+						set_variable = { build_cost_var = 0 }
+					}
+					if = {
+						limit = { NOT = { check_variable = { local_build_cost_var = 0 } } }
+						set_variable = { local_build_cost_var = 0 }
+					}
+					multiply_variable = { which = build_cost_var which = 250 }
+					multiply_variable = { which = build_cost_var which = local_build_cost_var }
+					var_effect = { 
+						effect = add_treasury 
+						var = build_cost_var 
+						sign = + 
+					}
+				}
+			}
+		}
 	}
 	on_destroyed = {
 		if = {
@@ -4702,6 +4782,15 @@ mage_tower = {
 			anb_manufactory_discount_remove = yes
 		}
 		anbennar_building_effect = yes
+		if = {
+			limit = { FROM = { has_government_attribute = crown_land_from_mage_towers } }
+			FROM = {
+				change_estate_land_share = {
+					estate = all
+					share = 1
+				}
+			}
+		}
 		#Anbennar - Irkorzik
 		if = {
 			limit = { 
@@ -4780,6 +4869,7 @@ mage_tower = {
 			remove_province_modifier = toarnaire_toarnaire_mage_tower
 		}
 
+		umbral_fog_clear = yes #umbral covenant
 		#Mage Estate
 		remove_province_modifier = estate_mages_development_of_mage_towers_mod
 	}
