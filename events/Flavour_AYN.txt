@@ -17,7 +17,7 @@ country_event = {  # Meeting of the Ardimyan Tribes
 		add_ruler_modifier = {
 			name = AYN_level_headed
 		}
-		every_country = {
+		every_known_country = {
 			limit = { culture = guryadagga }
 			add_opinion = {
 				who = ROOT
@@ -30,10 +30,10 @@ country_event = {  # Meeting of the Ardimyan Tribes
 		add_ruler_modifier = {
 			name = AYN_hot_headed
 		}
-		every_country = {
+		every_known_country = {
 			limit = { culture = guryadagga }
 			add_opinion = {
-				who = THIS
+				who = ROOT
 				modifier = AYN_meeting_hot_headed_wary
 			}
 		}
@@ -49,26 +49,14 @@ country_event = { #vassalise
 	is_triggered_only = yes
 
 	option = {
-		ai_chance = {
-			factor = 100
-		}
+		ai_chance = { factor = 100 }
 		name = flavour_AYN.102.a #yes
-		random_country = {
-			limit = { has_country_flag = AYN_vassaliser_flag }
-			vassalize = ROOT
-			clr_country_flag = AYN_vassaliser_flag
-		}
+		FROM = { vassalize = ROOT }
 	}
 
 	option = {
-		ai_chance = {
-			factor = 0
-		}
+		ai_chance = { factor = 0 }
 		name = flavour_AYN.102.a #no
-		random_country = {
-			limit = { has_country_flag = AYN_vassaliser_flag }
-			clr_country_flag = AYN_vassaliser_flag
-		}
 	}
 }
 
@@ -107,6 +95,14 @@ country_event = { #Owner of baashi badda fight raid or nah?
 
 	option = { # no fight
 		name = flavour_AYN.300.a
+		add_opinion = {
+			who = S86
+			modifier = S86_raided_territory_opinion_loser
+		}
+		add_casus_belli = {
+			type = cb_insult
+			target = S86
+		}
 		every_owned_province = {
 			limit = { area = baashi_badda_area }
 			add_devastation = 33
@@ -114,25 +110,15 @@ country_event = { #Owner of baashi badda fight raid or nah?
 				name = S86_raided_modifier
 				duration = 7300
 			}
-			owner = {
-				add_opinion = {
-					who = S86
-					modifier = S86_raided_territory_opinion_loser
-				}
-				add_casus_belli = {
-					type = cb_insult
-					target = S86
-				}
-			}
 			S86 = {
 				add_treasury = 50
 			}
-			every_country = {
-				limit = { culture = guryadagga }
-				add_opinion = {
-					who = S86
-					modifier = S86_raided_territory_opinion_gain_native
-				}
+		}
+		every_known_country = {
+			limit = { culture = guryadagga }
+			add_opinion = {
+				who = S86
+				modifier = S86_raided_territory_opinion_gain_native
 			}
 		}
 		S86 = {
@@ -149,7 +135,7 @@ country_event = { #Sea Migration (took me longer to make than the other 3 full s
 	desc = flavour_AYN.400.desc
 	is_triggered_only = yes
 	
-	immediate = { capital_scope = { save_event_target_as = S85_old_capital } }
+	immediate = { hidden_effect = { capital_scope = { save_event_target_as = S85_old_capital } } }
 	
 	option = { #Hwasadaa 6068
 		trigger = { NOT = { capital = 6068 } }
@@ -171,6 +157,10 @@ country_event = { #Sea Migration (took me longer to make than the other 3 full s
 				limit = { has_province_flag = S85_tribal_land_fl }
 				change_tribal_land = ROOT
 				clr_province_flag = S85_tribal_land_fl
+			}
+			change_variable = {
+				which = S88_track_sea_migration_count
+				value = 1
 			}
 		}
 		
@@ -319,7 +309,7 @@ country_event = { #Island Qeyikul Event
 	desc = flavour_AYN.401.desc
 	is_triggered_only = yes
 	
-	immediate = { capital_scope = { save_event_target_as = S85_old_capital } }
+	immediate = { hidden_effect = { capital_scope = { save_event_target_as = S85_old_capital } } }
 	
 	option = { #Hwasadaa 6068
 		trigger = { NOT = { capital = 6068 } }
@@ -395,10 +385,10 @@ country_event = { #Starting event
 	desc = flavour_AYN.500.desc
 
 	fire_only_once = yes
+	is_triggered_only = yes
 
 	trigger = {
 		tag = S87
-		always = yes
 	}
 
 	option = {
@@ -431,12 +421,18 @@ country_event = { # if you have more than one warband in your nation you can cho
 				save_event_target_as = fight_qeyikul_warband_target_1
 			}
 			random_owned_province = {
-				limit = { has_qeyikul_warband = yes }
+				limit = { has_qeyikul_warband = yes NOT = { province_id = event_target:fight_qeyikul_warband_target_1 } }
 				save_event_target_as = fight_qeyikul_warband_target_2
 			}
 			random_owned_province = {
-				limit = { has_qeyikul_warband = yes }
-				save_event_target_as = fight_qeyikul_warband_target_2
+				limit = {
+					has_qeyikul_warband = yes
+					NOT = {
+						province_id = event_target:fight_qeyikul_warband_target_1
+						province_id = event_target:fight_qeyikul_warband_target_2
+					}
+				}
+				save_event_target_as = fight_qeyikul_warband_target_3
 			}
 		}
 	}
@@ -453,11 +449,7 @@ country_event = { # if you have more than one warband in your nation you can cho
 		event_target:fight_qeyikul_warband_target_3 = { spawn_qeyikul_warband_rebels = yes }
 	}
 	option = {
-		name = flavour_AYN.1000.e #reset
-		country_event = { id = flavour_AYN.1000 }
-	}
-	option = {
-		name = flavour_AYN.1000.f #close
+		name = flavour_AYN.1000.d #close
 	}
 }
 
@@ -1193,10 +1185,17 @@ country_event = {
 
 	option = {
 		name = flavour_AYN.2000.a
+		custom_tooltip = AYN_qeyikul_warband_small_rewards_tt
 		change_variable = {
 			which = MerfolkLoweredPenatly
 			value = 1
 		}
+		custom_tooltip = AYN_qeyikul_warband_medium_rewards_tt
+		change_variable = {
+			which = MerfolkLoweredPenatly
+			value = 1
+		}
+		custom_tooltip = AYN_qeyikul_warband_large_rewards_tt
 	}
 }
 
