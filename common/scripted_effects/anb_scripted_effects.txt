@@ -9898,6 +9898,12 @@ dendugma_monastery_remove_modifier = {
 	remove_province_modifier = dendugma_monastery_ironwood_mod2
 }
 jadd_holy_order_reformed = {
+	export_to_variable = { which = holyOrderCost value = modifier:establish_order_cost who = ROOT }
+	multiply_variable = { which = holyOrderCost value = 50 }
+	change_variable = { which = holyOrderCost value = 50 }
+	set_variable = { which = adm_order_refund value = 0 }
+	set_variable = { which = dip_order_refund value = 0 }
+	set_variable = { which = mil_order_refund value = 0 }
 	every_owned_province = {
 		limit = {
 			holy_order = lightbringers_order
@@ -9925,6 +9931,7 @@ jadd_holy_order_reformed = {
 			clr_province_flag = lightbringers_order_was_here
 		}
 		holy_order = lightbringers_order_upgraded
+		owner = { change_variable = { which = adm_order_refund which = holyOrderCost } }
 	}
 	every_owned_province = {
 		limit = {
@@ -9934,15 +9941,31 @@ jadd_holy_order_reformed = {
 			clr_province_flag = jasienes_daughters_was_here
 		}
 		holy_order = jasienes_daughters_order_upgraded
+		owner = { change_variable = { which = dip_order_refund which = holyOrderCost } }
 	}
 	every_owned_province = {
 		limit = {
 			has_province_flag = militant_jadd_order_was_here
 		}
 		every_province_in_state = {
-			clr_province_flag = jasienes_daughters_was_here
+			clr_province_flag = militant_jadd_order_was_here
 		}
 		holy_order = militant_jadd_order_upgraded
+		owner = { change_variable = { which = mil_order_refund which = holyOrderCost } }
+	}
+	if = { #just in case establish_order_cost exceeds -100% which would start giving free power
+		limit = { NOT = { check_variable = { which = holyOrderCost value = 0 } } }
+		multiply_variable = { which = adm_order_refund value = -1 }
+		multiply_variable = { which = dip_order_refund value = -1 }
+		multiply_variable = { which = mil_order_refund value = -1 }
+		var_effect = { effect = add_adm_power var = adm_order_refund sign = - }
+		var_effect = { effect = add_dip_power var = dip_order_refund sign = - }
+		var_effect = { effect = add_mil_power var = mil_order_refund sign = - }
+	}
+	else = {
+		var_effect = { effect = add_adm_power var = adm_order_refund sign = + }
+		var_effect = { effect = add_dip_power var = dip_order_refund sign = + }
+		var_effect = { effect = add_mil_power var = mil_order_refund sign = + }
 	}
 }
 every_country_in_hre = {
@@ -10365,31 +10388,63 @@ define_consort_to_general = { #this is basically just for the magic rework
 	}
 	else = { clr_country_flag = has_consort_name }
 
-	
-	if = { #no using else-ifs in conjunction with defining traits
-		limit = { has_female_consort = yes }
-		define_general = {
-			shock = $shock$
-			fire = $fire$
-			manuever = $manuever$
-			siege = $siege$
-			name = consort_name
-			female = yes
-			[[trait]trait = $trait$]
-		}
-	}
-	if = {
-		limit = { has_female_consort = no }
-		define_general = {
-			shock = $shock$
-			fire = $fire$
-			manuever = $manuever$
-			siege = $siege$
-			name = consort_name
-			[[trait]trait = $trait$]
-		}
+	define_general = {
+		shock = $shock$
+		fire = $fire$
+		manuever = $manuever$
+		siege = $siege$
+		name = consort_name
+		[[female] female = $female$ ]
+		[[trait] trait = $trait$ ]
 	}
 	clear_saved_name = consort_name
+}
+
+convert_female_consort_to_general = {
+	if = {
+		limit = { has_female_consort = yes }
+
+		[[name]
+			set_saved_name = { key = consort_name type = simple name = "$consort_name$" }
+			set_country_flag = has_consort_name
+		]
+		if = {
+			limit = { NOT = { has_country_flag = has_consort_name } }
+			set_saved_name = { key = consort_name type = advisor female = yes scope = THIS }
+		}
+		else = { clr_country_flag = has_consort_name }
+
+		create_general = {
+			tradition = 0
+			name = consort_name
+			female = yes
+		}
+
+		clear_saved_name = consort_name
+	}
+}
+
+convert_consort_to_general = {
+	if = {
+		limit = { has_female_consort = no }
+
+		[[name]
+			set_saved_name = { key = consort_name type = simple name = "$consort_name$" }
+			set_country_flag = has_consort_name
+		]
+		if = {
+			limit = { NOT = { has_country_flag = has_consort_name } }
+			set_saved_name = { key = consort_name type = advisor scope = THIS }
+		}
+		else = { clr_country_flag = has_consort_name }
+
+		create_general = {
+			tradition = 0
+			name = consort_name
+		}
+		
+		clear_saved_name = consort_name
+	}
 }
 
 add_random_ruler_skill = {
@@ -11513,6 +11568,101 @@ ael_cannor_interactions_on_remove = {
 		}
 		H37 = {
 			remove_country_modifier = $modifier$
+		}
+	}
+}
+
+# binary tree (min:0 max:15)
+export_number_of_estate_privs_to_var = {
+	if = { # x >= 8
+		limit = { num_of_estate_privileges = { estate = $estate$ value = 8 } }
+		if = { # x >= 12
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 12 } }
+			if = { # x >= 14
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 14 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 15 } }
+					set_variable = { $var$ = 15 }
+				}
+				else = {
+					set_variable = { $var$ = 14 }
+				}
+			}
+			else = { # 12 <= x < 14
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 13 } }
+					set_variable = { $var$ = 13 }
+				}
+				else = {
+					set_variable = { $var$ = 12 }
+				}
+			}
+		}
+		else = { # 8 <= x < 12
+			if = { # 10 <= x < 12
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 10 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 11 } }
+					set_variable = { $var$ = 11 }
+				}
+				else = {
+					set_variable = { $var$ = 10 }
+				}
+			}
+			else = { # 8 <= x < 10
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 9 } }
+					set_variable = { $var$ = 9 }
+				}
+				else = {
+					set_variable = { $var$ = 8 }
+				}
+			}
+		}
+	}
+	else = { # x < 8
+		if = { # 4 <= x < 8
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 4 } }
+			if = { # 6 <= x < 8
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 6 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 7 } }
+					set_variable = { $var$ = 7 }
+				}
+				else = {
+					set_variable = { $var$ = 6 }
+				}
+			}
+			else = { # 4 <= x < 6
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 5 } }
+					set_variable = { $var$ = 5 }
+				}
+				else = {
+					set_variable = { $var$ = 4 }
+				}
+			}
+		}
+		else = { # x < 4
+			if = { # 2 <= x < 4
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 2 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 3 } }
+					set_variable = { $var$ = 3 }
+				}
+				else = {
+					set_variable = { $var$ = 2 }
+				}
+			}
+			else = { # x < 2
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 1 } }
+					set_variable = { $var$ = 1 }
+				}
+				else = {
+					set_variable = { $var$ = 0 }
+				}
+			}
 		}
 	}
 }
