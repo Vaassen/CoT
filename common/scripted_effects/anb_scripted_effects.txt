@@ -5125,6 +5125,8 @@ apply_owned_NZOC_country = {
 			}
 			apply_all_owned_NZOC_province = yes
 		}
+		
+		apply_black_herd_capital_NZOC_effects = yes #Black Herd
 	}
 
 	#Golden Tremor - Permanent NZoC Province
@@ -5249,6 +5251,13 @@ apply_all_owned_NZOC_province = {
 					value = 5
 				}
 			}
+		}
+	}
+	if = { #Black Herd
+		limit = { owner = { has_country_modifier = I55_vanishing_migration } }
+		add_province_modifier = {
+			name = I55_charnelshafts
+			duration = -1
 		}
 	}
 }
@@ -5534,6 +5543,96 @@ apply_reform_modifiers_NZOC_country = {
 	}
 }
 
+apply_black_herd_capital_NZOC_effects = {
+	if = {
+		limit = { owner = { is_or_was_tag = { tag = I55 } } } #Black Herd
+		if = {
+			limit = {
+				has_province_modifier = I55_tomb_of_the_unchained
+				units_in_province = owner
+				owner = {
+					OR = {
+						is_overall_advancing_magic = yes
+						is_advancing_any_project = yes
+					}
+				}
+			}
+			owner = { set_variable = { tomb_chained_exp = 0 } }
+			while = {
+				limit = { units_in_province = owner }
+				kill_units = { who = owner amount = 1 }
+				owner = { change_variable = { tomb_chained_exp = 0.5 } }
+			}
+			owner = {
+				if = {
+					limit = {
+						OR = {
+							ruler_is_advancing_necromancy = yes
+							is_advancing_lichdom = yes
+							is_advancing_specific_project = { project = black_herd_project_1 }
+						}
+					}
+					multiply_variable = {
+						which = tomb_chained_exp
+						value = 4
+					}
+				}
+				increase_magic_experience = { unmodified_var_amount = tomb_chained_exp }
+			}
+		}
+		if = {
+			limit = { has_province_modifier = I55_home_of_the_greatbound }
+			add_province_modifier = {
+				name = I55_home_of_the_greatbound_sub
+				duration = -1
+				hidden = yes
+			}
+		}
+		if = {
+			limit = { has_province_modifier = I55_land_of_the_frostclaimed }
+			add_province_modifier = {
+				name = I55_deposit_divination_half_mod
+				duration = 3650 #10 years
+			}
+		}
+		if = {
+			limit = { owner = { has_country_modifier = I55_vanishing_migration } }
+			if = {
+				limit = { NOT = { culture = owner } }
+				change_culture = owner
+			}
+			if = {
+				limit = { NOT = { religion = owner } }
+				change_religion = owner
+			}
+			owner = {
+				export_to_variable = {
+					which = bh_manpower_var
+					value = base_manpower
+					who = PREV
+				}
+				divide_variable = {
+					which = bh_manpower_var
+					value = 2
+				}
+				round_variable = {
+					which = bh_manpower_var
+					value = 1
+				}
+				for_variable_amount = {
+					variable = bh_manpower_var
+					effect = "
+						PREV = {
+							add_base_manpower = -1
+							add_base_production = 1
+						}
+					"
+				}
+			}
+		}
+	}
+}
+
 add_base_nomadic_zone_of_control_modifier = {
 	if = {
 		limit = { has_province_flag = cen_double_nzoc_effects_flag }
@@ -5562,6 +5661,30 @@ add_noncentaur_nomadic_zone_of_control_modifier = {
 		add_province_modifier = {
 			name = base_noncentaur_nomadic_zone_of_control_double
 			duration = -1
+		}
+	}
+}
+
+add_nomadic_capital_moved_modifier = {
+	if = {
+		limit = { #Black Herd
+			$scope$ = {
+				OR = {
+					has_province_modifier = I55_tomb_of_the_unchained
+					has_province_modifier = I55_home_of_the_greatbound
+					has_province_modifier = I55_land_of_the_frostclaimed
+				}
+			}
+		}
+		add_country_modifier = {
+			name = nomadic_capital_just_moved
+			duration = 365 #1 year
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = nomadic_capital_just_moved
+			duration = 1095 #3 years
 		}
 	}
 }
@@ -9775,6 +9898,12 @@ dendugma_monastery_remove_modifier = {
 	remove_province_modifier = dendugma_monastery_ironwood_mod2
 }
 jadd_holy_order_reformed = {
+	export_to_variable = { which = holyOrderCost value = modifier:establish_order_cost who = ROOT }
+	multiply_variable = { which = holyOrderCost value = 50 }
+	change_variable = { which = holyOrderCost value = 50 }
+	set_variable = { which = adm_order_refund value = 0 }
+	set_variable = { which = dip_order_refund value = 0 }
+	set_variable = { which = mil_order_refund value = 0 }
 	every_owned_province = {
 		limit = {
 			holy_order = lightbringers_order
@@ -9802,6 +9931,7 @@ jadd_holy_order_reformed = {
 			clr_province_flag = lightbringers_order_was_here
 		}
 		holy_order = lightbringers_order_upgraded
+		owner = { change_variable = { which = adm_order_refund which = holyOrderCost } }
 	}
 	every_owned_province = {
 		limit = {
@@ -9811,15 +9941,31 @@ jadd_holy_order_reformed = {
 			clr_province_flag = jasienes_daughters_was_here
 		}
 		holy_order = jasienes_daughters_order_upgraded
+		owner = { change_variable = { which = dip_order_refund which = holyOrderCost } }
 	}
 	every_owned_province = {
 		limit = {
 			has_province_flag = militant_jadd_order_was_here
 		}
 		every_province_in_state = {
-			clr_province_flag = jasienes_daughters_was_here
+			clr_province_flag = militant_jadd_order_was_here
 		}
 		holy_order = militant_jadd_order_upgraded
+		owner = { change_variable = { which = mil_order_refund which = holyOrderCost } }
+	}
+	if = { #just in case establish_order_cost exceeds -100% which would start giving free power
+		limit = { NOT = { check_variable = { which = holyOrderCost value = 0 } } }
+		multiply_variable = { which = adm_order_refund value = -1 }
+		multiply_variable = { which = dip_order_refund value = -1 }
+		multiply_variable = { which = mil_order_refund value = -1 }
+		var_effect = { effect = add_adm_power var = adm_order_refund sign = - }
+		var_effect = { effect = add_dip_power var = dip_order_refund sign = - }
+		var_effect = { effect = add_mil_power var = mil_order_refund sign = - }
+	}
+	else = {
+		var_effect = { effect = add_adm_power var = adm_order_refund sign = + }
+		var_effect = { effect = add_dip_power var = dip_order_refund sign = + }
+		var_effect = { effect = add_mil_power var = mil_order_refund sign = + }
 	}
 }
 every_country_in_hre = {
@@ -10242,31 +10388,63 @@ define_consort_to_general = { #this is basically just for the magic rework
 	}
 	else = { clr_country_flag = has_consort_name }
 
-	
-	if = { #no using else-ifs in conjunction with defining traits
-		limit = { has_female_consort = yes }
-		define_general = {
-			shock = $shock$
-			fire = $fire$
-			manuever = $manuever$
-			siege = $siege$
-			name = consort_name
-			female = yes
-			[[trait]trait = $trait$]
-		}
-	}
-	if = {
-		limit = { has_female_consort = no }
-		define_general = {
-			shock = $shock$
-			fire = $fire$
-			manuever = $manuever$
-			siege = $siege$
-			name = consort_name
-			[[trait]trait = $trait$]
-		}
+	define_general = {
+		shock = $shock$
+		fire = $fire$
+		manuever = $manuever$
+		siege = $siege$
+		name = consort_name
+		[[female] female = $female$ ]
+		[[trait] trait = $trait$ ]
 	}
 	clear_saved_name = consort_name
+}
+
+convert_female_consort_to_general = {
+	if = {
+		limit = { has_female_consort = yes }
+
+		[[name]
+			set_saved_name = { key = consort_name type = simple name = "$consort_name$" }
+			set_country_flag = has_consort_name
+		]
+		if = {
+			limit = { NOT = { has_country_flag = has_consort_name } }
+			set_saved_name = { key = consort_name type = advisor female = yes scope = THIS }
+		}
+		else = { clr_country_flag = has_consort_name }
+
+		create_general = {
+			tradition = 0
+			name = consort_name
+			female = yes
+		}
+
+		clear_saved_name = consort_name
+	}
+}
+
+convert_consort_to_general = {
+	if = {
+		limit = { has_female_consort = no }
+
+		[[name]
+			set_saved_name = { key = consort_name type = simple name = "$consort_name$" }
+			set_country_flag = has_consort_name
+		]
+		if = {
+			limit = { NOT = { has_country_flag = has_consort_name } }
+			set_saved_name = { key = consort_name type = advisor scope = THIS }
+		}
+		else = { clr_country_flag = has_consort_name }
+
+		create_general = {
+			tradition = 0
+			name = consort_name
+		}
+		
+		clear_saved_name = consort_name
+	}
 }
 
 add_random_ruler_skill = {
@@ -11390,6 +11568,101 @@ ael_cannor_interactions_on_remove = {
 		}
 		H37 = {
 			remove_country_modifier = $modifier$
+		}
+	}
+}
+
+# binary tree (min:0 max:15)
+export_number_of_estate_privs_to_var = {
+	if = { # x >= 8
+		limit = { num_of_estate_privileges = { estate = $estate$ value = 8 } }
+		if = { # x >= 12
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 12 } }
+			if = { # x >= 14
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 14 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 15 } }
+					set_variable = { $var$ = 15 }
+				}
+				else = {
+					set_variable = { $var$ = 14 }
+				}
+			}
+			else = { # 12 <= x < 14
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 13 } }
+					set_variable = { $var$ = 13 }
+				}
+				else = {
+					set_variable = { $var$ = 12 }
+				}
+			}
+		}
+		else = { # 8 <= x < 12
+			if = { # 10 <= x < 12
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 10 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 11 } }
+					set_variable = { $var$ = 11 }
+				}
+				else = {
+					set_variable = { $var$ = 10 }
+				}
+			}
+			else = { # 8 <= x < 10
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 9 } }
+					set_variable = { $var$ = 9 }
+				}
+				else = {
+					set_variable = { $var$ = 8 }
+				}
+			}
+		}
+	}
+	else = { # x < 8
+		if = { # 4 <= x < 8
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 4 } }
+			if = { # 6 <= x < 8
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 6 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 7 } }
+					set_variable = { $var$ = 7 }
+				}
+				else = {
+					set_variable = { $var$ = 6 }
+				}
+			}
+			else = { # 4 <= x < 6
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 5 } }
+					set_variable = { $var$ = 5 }
+				}
+				else = {
+					set_variable = { $var$ = 4 }
+				}
+			}
+		}
+		else = { # x < 4
+			if = { # 2 <= x < 4
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 2 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 3 } }
+					set_variable = { $var$ = 3 }
+				}
+				else = {
+					set_variable = { $var$ = 2 }
+				}
+			}
+			else = { # x < 2
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 1 } }
+					set_variable = { $var$ = 1 }
+				}
+				else = {
+					set_variable = { $var$ = 0 }
+				}
+			}
 		}
 	}
 }
