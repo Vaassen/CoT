@@ -1658,7 +1658,7 @@ clear_mages_organization_effect = {
 		remove_estate_privilege = estate_mages_organization_ice_smiths
 		remove_estate_privilege = estate_mages_organization_constabularies
 		remove_estate_privilege = estate_mages_organization_lihos_maidens
-		remove_estate_privilege = estate_mages_organization_jaherian_statute
+		remove_estate_privilege = estate_mages_organization_magi_clans
 		remove_estate_privilege = estate_mages_organization_onyxguard
 		remove_estate_privilege = estate_mages_organization_proffesional_mihipha
 		remove_estate_privilege = estate_mages_organization_orda_aldresia
@@ -5035,6 +5035,25 @@ anb_on_development_effect = {
 		random_list = {
 			1 = { add_base_$development$ = 1 }
 			2 = { }
+		}
+	}
+	#Tsukqiao
+	if = {
+		limit = {
+			owner = { 
+				check_variable = {
+					which = tsukqiao_free_dev
+					value = 1
+				}
+			}
+			culture = beikling
+		}
+		add_base_$development$ = 1
+		owner = {
+			subtract_variable  = {
+				which = tsukqiao_free_dev
+				value = 1
+			}
 		}
 	}
 }
@@ -9145,15 +9164,18 @@ zaradyrra_festivals_of_blood_effect = {
 					has_country_flag = ashhana_festivals_of_blood_effect_part_2
 				}
 			}
-			add_country_modifier = {
-				name = festivals_of_blood_army_size
-				duration = 3650
-			}
-			capital_scope = {
-				create_units_of_type_in_province = {
-					amount = 5
-					who = ROOT
-					unit_type = infantry
+			custom_tooltip = festivals_of_blood_festival_effect_tt
+			hidden_effect = {
+				add_country_modifier = {
+					name = festivals_of_blood_modifier
+					duration = 3650
+				}
+				capital_scope = {
+					create_units_of_type_in_province = {
+						amount = 5
+						who = ROOT
+						unit_type = infantry
+					}
 				}
 			}
 			if = {
@@ -10509,7 +10531,10 @@ beikling_update_better_forging_effect = { #The better forging modifier
 		limit = {
 			4974 = { has_province_modifier = the_masterforge_upgrade }
 			owner = { owns = 4974 }
-			culture = beikling
+			OR = {
+				culture = beikling
+				culture = nuraryi_harpy
+			}
 			has_building = weapons
 		}
 		add_province_modifier = {
@@ -11568,6 +11593,207 @@ ael_cannor_interactions_on_remove = {
 		}
 		H37 = {
 			remove_country_modifier = $modifier$
+		}
+	}
+}
+
+# binary tree (min:0 max:15)
+export_number_of_estate_privs_to_var = {
+	if = { # x >= 8
+		limit = { num_of_estate_privileges = { estate = $estate$ value = 8 } }
+		if = { # x >= 12
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 12 } }
+			if = { # x >= 14
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 14 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 15 } }
+					set_variable = { $var$ = 15 }
+				}
+				else = {
+					set_variable = { $var$ = 14 }
+				}
+			}
+			else = { # 12 <= x < 14
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 13 } }
+					set_variable = { $var$ = 13 }
+				}
+				else = {
+					set_variable = { $var$ = 12 }
+				}
+			}
+		}
+		else = { # 8 <= x < 12
+			if = { # 10 <= x < 12
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 10 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 11 } }
+					set_variable = { $var$ = 11 }
+				}
+				else = {
+					set_variable = { $var$ = 10 }
+				}
+			}
+			else = { # 8 <= x < 10
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 9 } }
+					set_variable = { $var$ = 9 }
+				}
+				else = {
+					set_variable = { $var$ = 8 }
+				}
+			}
+		}
+	}
+	else = { # x < 8
+		if = { # 4 <= x < 8
+			limit = { num_of_estate_privileges = { estate = $estate$ value = 4 } }
+			if = { # 6 <= x < 8
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 6 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 7 } }
+					set_variable = { $var$ = 7 }
+				}
+				else = {
+					set_variable = { $var$ = 6 }
+				}
+			}
+			else = { # 4 <= x < 6
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 5 } }
+					set_variable = { $var$ = 5 }
+				}
+				else = {
+					set_variable = { $var$ = 4 }
+				}
+			}
+		}
+		else = { # x < 4
+			if = { # 2 <= x < 4
+				limit = { num_of_estate_privileges = { estate = $estate$ value = 2 } }
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 3 } }
+					set_variable = { $var$ = 3 }
+				}
+				else = {
+					set_variable = { $var$ = 2 }
+				}
+			}
+			else = { # x < 2
+				if = {
+					limit = { num_of_estate_privileges = { estate = $estate$ value = 1 } }
+					set_variable = { $var$ = 1 }
+				}
+				else = {
+					set_variable = { $var$ = 0 }
+				}
+			}
+		}
+	}
+}
+
+
+tsukqiao_calc_might_and_right_effect = {
+	if = {
+		limit = { has_reform = tsukqiao_throne_of_lies_reform }
+		#The Good Modifiers 81-100 Legitimacy
+		remove_country_modifier = tsukqiao_might_and_right_good_1
+		remove_country_modifier = tsukqiao_might_and_right_good_2
+		remove_country_modifier = tsukqiao_might_and_right_good_3
+		#The Least Bad Modifiers 61-80 Legitimacy
+		remove_country_modifier = tsukqiao_might_and_right_least_bad_1
+		remove_country_modifier = tsukqiao_might_and_right_least_bad_2
+		remove_country_modifier = tsukqiao_might_and_right_least_bad_3
+		#The Quite Bad Modifiers 31-60 Legitimacy
+		remove_country_modifier = tsukqiao_might_and_right_quite_bad_1
+		remove_country_modifier = tsukqiao_might_and_right_quite_bad_2
+		remove_country_modifier = tsukqiao_might_and_right_quite_bad_3
+		#The Worst Modifiers 0-30 Legitimacy
+		remove_country_modifier = tsukqiao_might_and_right_worst_1
+		remove_country_modifier = tsukqiao_might_and_right_worst_2
+		remove_country_modifier = tsukqiao_might_and_right_worst_3
+		#Now calculate how much legitimacy do we have
+		if = { #The Worst Modifiers 0-30 Legitimacy
+			limit = { NOT = { legitimacy = 31 } }
+			if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_2 } #End by checking the level the system is at, starts at 1 and gets upgrade 2 times
+				add_country_modifier = { name = tsukqiao_might_and_right_worst_3 duration = -1 }
+			}
+			else_if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_1 }
+				add_country_modifier = { name = tsukqiao_might_and_right_worst_2 duration = -1 }
+			}
+			else = { add_country_modifier = { name = tsukqiao_might_and_right_worst_1 duration = -1 } }
+		}
+		else_if = { #The Quite Bad Modifiers 31-60 Legitimacy
+			limit = { NOT = { legitimacy = 61 } }
+			if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_2 }
+				add_country_modifier = { name = tsukqiao_might_and_right_quite_bad_3 duration = -1 }
+			}
+			else_if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_1 }
+				add_country_modifier = { name = tsukqiao_might_and_right_quite_bad_2 duration = -1 }
+			}
+			else = { add_country_modifier = { name = tsukqiao_might_and_right_quite_bad_1 duration = -1 } }
+		}
+		else_if = { #The Least Bad Modifiers 61-80 Legitimacy
+			limit = { NOT = { legitimacy = 81 } }
+			if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_2 }
+				add_country_modifier = { name = tsukqiao_might_and_right_least_bad_3 duration = -1 }
+			}
+			else_if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_1 }
+				add_country_modifier = { name = tsukqiao_might_and_right_least_bad_2 duration = -1 }
+			}
+			else = { add_country_modifier = { name = tsukqiao_might_and_right_least_bad_1 duration = -1 } }
+		}
+		else = { #The Good Modifiers 81-100 Legitimacy
+			if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_2 }
+				add_country_modifier = { name = tsukqiao_might_and_right_good_3 duration = -1 }
+			}
+			else_if = { 
+				limit = { has_country_flag = tsukqiao_might_and_right_upgrade_1 }
+				add_country_modifier = { name = tsukqiao_might_and_right_good_2 duration = -1 }
+			}
+			else = { add_country_modifier = { name = tsukqiao_might_and_right_good_1 duration = -1 } }
+		}
+	}
+}
+
+tsukqiao_remove_all_titles = {
+	remove_country_modifier = tsukqiao_terror_king_title
+	remove_country_modifier = tsukqiao_grand_marshal_title
+	remove_country_modifier = tsukqiao_sage_king_title
+	remove_country_modifier = tsukqiao_arena_king_title
+	remove_country_modifier = tsukqiao_halannraja_title
+	remove_country_modifier = tsukqiao_ruler_of_spirits_title
+	remove_country_modifier = tsukqiao_sri_baginda_title
+	clr_country_flag = no_more_comet_sighted_event
+	clr_country_flag = no_more_hunting_for_heir
+}
+
+tsukqiao_mask_of_might_effect_calc = {
+	if = {
+		limit = { has_country_flag = tsukqiao_upgrade_might_2 }
+		add_or_extend_ruler_modifier = {
+			name = tsukqiao_doctrine_of_might_3
+			duration = 7300
+		}
+	}
+	else_if = {
+		limit = { has_country_flag = tsukqiao_upgrade_might_1 }
+		add_or_extend_ruler_modifier = {
+			name = tsukqiao_doctrine_of_might_2
+			duration = 5475
+		}
+	}
+	else = {
+		add_or_extend_ruler_modifier = {
+			name = tsukqiao_doctrine_of_might_1
+			duration = 3650
 		}
 	}
 }
