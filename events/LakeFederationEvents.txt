@@ -3633,6 +3633,7 @@ country_event = { #Ask Beik to become vassal
 				add_casus_belli = {
 					type = cb_vassalize_mission
 					target = Y15
+					months = 240
 				}
 			}
 		}
@@ -3690,6 +3691,7 @@ country_event = { #Beik declines
 		add_casus_belli = {
 			type = cb_vassalize_mission
 			target = Y15
+			months = 240
 		}
 	}
 }
@@ -4298,38 +4300,54 @@ country_event = {
 	
 	trigger = {
 		has_country_modifier = lake_federation_member
+		is_subject = no
 	}
 	
 	immediate = {
-		if = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.105 days = 4 random = 10 }
-		}
+		save_event_target_as = new_federation_leader
 	}
 	
 	option = {
 		name = lake.102.a
 		ai_chance = { factor = 100 }
-		if = {
+		every_country = {
 			limit = {
-				NOT = {
-					calc_true_if = {
-						all_known_country = {
-							check_variable = {
-								which = FederationPoints
-								which = PREV
-							}
-							is_subject = no
-						}
-						amount = 1
-					}
+				has_country_modifier = lake_federation_member
+				check_variable = {
+					which = FederationPoints
+					which = event_target:new_federation_leader
 				}
 				is_subject = no
 			}
-			set_country_flag = federation_leader
+			save_event_target_as = new_federation_leader
 		}
-		else = {
-			clr_country_flag = federation_leader
+	}
+	
+	after = {
+		if = {
+			limit = { 
+				NOT = {
+					event_target:new_federation_leader = { # check for change
+						has_country_flag = federation_leader
+					}
+					any_country = {
+						has_country_flag = federation_leader
+						is_variable_equal = { # check for tie -> no change if tie, current wins
+							which = FederationPoints
+							which = event_target:new_federation_leader
+						}
+					}
+				}
+			}
+			every_country = {
+				clr_country_flag = federation_leader
+			}
+			event_target:new_federation_leader = {
+				set_country_flag = federation_leader
+				country_event = {
+					id = lake.40
+				}
+			}
 		}
 	}
 }
@@ -4545,34 +4563,6 @@ country_event = {
 #		}
 #	}
 #}
-
-#Federation President Election Tie-Breaker (Current Wins)
-country_event = {
-	id = lake.105
-	title = lake.105.t
-	desc = lake.105.d
-	picture = STREET_SPEECH_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-	
-	option = {
-		name = lake.105.a
-		ai_chance = { factor = 100 }
-		if = {
-			limit = { any_known_country = { has_country_flag = federation_leader } }
-			clr_country_flag = federation_leader
-		}
-		else_if = {
-			limit = { NOT = { has_country_flag = federation_leader } }
-			set_country_flag = federation_leader
-		}
-		every_country = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.40 }
-		}
-	}
-}
 
 #[Root] Triumps Over Centaurs
 country_event = {
@@ -6231,5 +6221,109 @@ country_event = {
 	option = {
 		name = lake.511.a
 		clr_global_flag = lake_mage_final_cd
+	}
+}
+
+#Zurka Qarshtuluu startup event
+country_event = {
+	id = lake.512
+	title = lake.512.t
+	desc = lake.512.d
+	picture = REVOLUTION_eventPicture
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		tag = J12
+	}
+
+	option = {
+		name = lake.512.a
+		5257 = {
+			add_province_modifier = {
+				name = J12_blockaded
+				duration = 36500
+			}
+		}
+	}
+}
+
+#Zurka Qarshtuluu bait successful
+country_event = {
+	id = lake.513
+	title = lake.513.t
+	desc = lake.513.d
+	picture = TREASURE_FLEET_SHIP_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.513.a
+		J10 = { #Vahjevgiiv
+			declare_war_with_cb = {
+				casus_belli = cb_vassalize_mission
+				who = J12
+			}
+		}
+	}
+}
+
+#Zurka Qarshtuluu city reunited
+country_event = {
+	id = lake.514
+	title = lake.514.t
+	desc = lake.514.d
+	picture = CITY_VIEW_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.514.a
+		change_tag = J34
+		hidden_effect = { restore_country_name = yes }
+		if = {
+			limit = { is_subject = no }
+			lake_federation_gain_5_points = yes
+		}
+		add_prestige = 25
+		hidden_effect = {
+			5256 = {
+				remove_core = J11
+				remove_core = J12
+			}
+			5257 = {
+				remove_core = J11
+				remove_core = J12
+			}
+		}
+	}
+}
+
+#Zurka Qarshtuluu jewel of the lakes
+country_event = {
+	id = lake.515
+	title = lake.515.t
+	desc = lake.515.d
+	picture = HIGH_TEMPLE_CITY_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.515.a
+		5256 = {
+			remove_province_modifier = J12_glassworks_freed
+			add_province_modifier = {
+				name = J12_western_jewel
+				duration = -1
+			}
+		}
+		5257 = {
+			remove_province_modifier = J12_barracks_restored
+			remove_province_modifier = J12_harbour_reclaimed
+			add_province_modifier = {
+				name = J12_eastern_jewel
+				duration = -1
+			}
+		}
+		5256 = {
+			add_great_project_tier = { type = grand_archives tier = 1 }
+		}
 	}
 }
