@@ -288,7 +288,7 @@ update_mana_regen_vars = { #use whenever you change the mana-per-month amount
 			}
 
 			if = { #believe it or not, we do in fact have to hardcode this...
-				limit = { is_subject = yes }
+				limit = { is_free_or_tributary_trigger = no }
 				divide_variable = { mages_mana_regen_val = 2 }
 			}
 
@@ -373,7 +373,7 @@ historical_magic_advancements = {
 	[[transmutation] set_country_flag = transmutation_$transmutation$]
 
 	[[infrastructure]
-		add_country_modifier = { name = magical_infrastructure_$infrastructure$ duration = -1 }
+		add_country_modifier = { name = magical_infrastructure_$infrastructure$ duration = -1 hidden = yes }
 		set_variable = { mana_regen_infra = 0.25 }
 		multiply_variable = { mana_regen_infra = $infrastructure$ }
 	]
@@ -463,9 +463,6 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 
 		### Study Flags only one type can get
 		clr_heir_flag = magic_study_help_from_tutor
-		
-		### rizvambrethar
-		rizvambrethar_remove_experience_boost = yes
 
 		### Salla Drennen
 		remove_country_modifier = I28_fey_futility
@@ -517,7 +514,16 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 			clr_country_flag = umbral_project_spire_project
 			clr_country_flag = umbral_project_loveme_project
 			clr_country_flag = umbral_project_ashen_project
+			clr_country_flag = UC_opta1
+			clr_country_flag = UC_optb1
+			clr_country_flag = UC_optc1
+			clr_country_flag = UC_opta2
+			clr_country_flag = UC_optb2
+			clr_country_flag = UC_optc2
 		}
+
+		#Black Herd
+		clr_country_flag = black_herd_project_1_project
 	}
 }
 magic_advancement_clr_type_flags = {
@@ -707,16 +713,16 @@ magic_project_level_up = { #Inefficient in order to accommodate independent usag
 }
 magical_infrastructure_level_up = {
 	if = { limit = { has_country_modifier = magical_infrastructure_3 }
-		remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 }
+		remove_country_modifier = magical_infrastructure_3 add_country_modifier = { name = magical_infrastructure_4 duration = -1 hidden = yes }
 	}
 	else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
-		remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 }
+		remove_country_modifier = magical_infrastructure_2 add_country_modifier = { name = magical_infrastructure_3 duration = -1 hidden = yes }
 	}
 	else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
-		remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 }
+		remove_country_modifier = magical_infrastructure_1 add_country_modifier = { name = magical_infrastructure_2 duration = -1 hidden = yes }
 	}
 	else = {
-		add_country_modifier = { name = magical_infrastructure_1 duration = -1 }
+		add_country_modifier = { name = magical_infrastructure_1 duration = -1 hidden = yes }
 	}
 	hidden_effect = {
 		change_variable = { mana_regen_infra = 0.25 }
@@ -766,8 +772,11 @@ calc_completed_magic_projects = { #Non-unique
 		change_variable = { magic_projects_completed = 1 }
 	}
 
-	#unique projects
-	if = { limit = { at_least_magic_project_level = { project = drennen_project_1 level = 3 } } #salla drennen
+	#Unique Projects
+	if = { limit = { at_least_magic_project_level = { project = drennen_project_1 level = 3 } } #Salla Drennen
+		change_variable = { magic_projects_completed = 1 }
+	}
+	if = { limit = { at_least_magic_project_level = { project = black_herd_project_1 level = 3 } } #Black Herd
 		change_variable = { magic_projects_completed = 1 }
 	}
 	if = { limit = { at_least_magic_project_level = { project = great_storm_project_1 level = 3 } } #Great Storm
@@ -900,6 +909,15 @@ show_magic_project_lichdom_warning = {
 		}
 		custom_tooltip = lichdom_mage_only_lock
 	}
+	if = {
+		limit = {
+			tag = I55 #Black Herd
+			NOT = { mission_completed = I55_2_4_enshroud }
+			has_ruler_modifier = lichdom_mod_1
+			NOT = { has_ruler_modifier = lichdom_mod_2 }
+		}
+		custom_tooltip = I55_lichdom_potion_insight_tt
+	}
 }
 
 ##################
@@ -913,8 +931,8 @@ set_magic_experience_target = {
 	if = {
 		limit = { NOT = { has_country_flag = xptarget_temp_flag } }
 
-		set_variable = { magic_experience_target = 100 } #Base experience
-		set_variable = { expFoo = 300 } 				#Increase per level
+		set_variable = { magic_experience_target = 100 } #BASE_MAGIC_XP_COST
+		set_variable = { expFoo = 300 } 				#MAGIC_XP_COST_INCREASE
 		## Maybe target level will be set elsewhere as a variable
 		#For now:
 		[[study]
@@ -1080,7 +1098,7 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
 				if = {
 					limit = { slow_study_ruler = yes }
-					multiply_variable = { last_months_xp_gain = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+					multiply_variable = { last_months_xp_gain = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 				}
 				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
@@ -1108,7 +1126,7 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 				multiply_variable = { which = last_months_xp_gain which = ruler_experience_modifier }
 				if = {
 					limit = { slow_study_heir = yes }
-					multiply_variable = { last_months_xp_gain = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+					multiply_variable = { last_months_xp_gain = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 				}
 				truncate_variable_3 = { which = last_months_xp_gain } #Tooltip bits for monthly xp estimate
 
@@ -1208,18 +1226,19 @@ ai_magic_xp_pulse = {
 	}
 }
 
+#BASE_MAGIC_XP_COST #MAGIC_XP_COST_INCREASE
 ai_pay_for_xp = { #AI advancements -- formatted to miminize size when compiled (expanded)
 	[[study]
 		if = { #we operate on ai_magic_value to calculate the xp cost for this advancement
 			limit = { has_$type$_flag = $study$_2 }
-			set_variable = { ai_magic_value = 850 } #level 2 to 3
+			set_variable = { ai_magic_value = 1000 } #level 2 to 3
 		}
 		else_if = {
 			limit = { has_$type$_flag = $study$_1 }
-			set_variable = { ai_magic_value = 600 } #level 1 to 2
+			set_variable = { ai_magic_value = 700 } #level 1 to 2
 		}
 		else = {
-			set_variable = { ai_magic_value = 350 } #level 0 to 1
+			set_variable = { ai_magic_value = 400 } #level 0 to 1
 		}
 		calc_ai_$type$_xp_modifier = yes
 		calc_ai_school_xp_modifier = { school = $study$ }
@@ -1227,30 +1246,30 @@ ai_pay_for_xp = { #AI advancements -- formatted to miminize size when compiled (
 	[[project]
 		if = {
 			limit = { exactly_magic_project_level = { project = $project$ level = 2 } }
-			set_variable = { ai_magic_value = 850 } #level 2 to 3
+			set_variable = { ai_magic_value = 1000 } #level 2 to 3
 		}
 		else_if = {
 			limit = { exactly_magic_project_level = { project = $project$ level = 1 } }
-			set_variable = { ai_magic_value = 600 } #level 1 to 2
+			set_variable = { ai_magic_value = 700 } #level 1 to 2
 		}
 		else = {
-			set_variable = { ai_magic_value = 350 } #level 0 to 1
+			set_variable = { ai_magic_value = 400 } #level 0 to 1
 		}
 		calc_ai_country_xp_modifier = yes
 	]
 	[[school] calc_ai_school_xp_modifier = { school = $school$ } ] #for project
 	[[infrastructure]
 		if = { limit = { has_country_modifier = magical_infrastructure_3 }
-			set_variable = { ai_magic_value = 1350 } # Lvl 3 to 4
+			set_variable = { ai_magic_value = 1600 } # Lvl 3 to 4
 		}
 		else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
-			set_variable = { ai_magic_value = 1100 } # Lvl 2 to 3
+			set_variable = { ai_magic_value = 1300 } # Lvl 2 to 3
 		}
 		else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
-			set_variable = { ai_magic_value = 850 } # Lvl 1 to 2
+			set_variable = { ai_magic_value = 1000 } # Lvl 1 to 2
 		}
 		else = {
-			set_variable = { ai_magic_value = 600 } # Lvl 0 to 1
+			set_variable = { ai_magic_value = 700 } # Lvl 0 to 1
 		}
 		calc_ai_country_xp_modifier = yes
 	]
@@ -1269,9 +1288,9 @@ calc_ai_ruler_xp_modifier = {
 		variable_name = ai_magic_modifier
 		value = modifier:mages_ruler_experience_mod
 	}
-	if = {
+	if = { #increase the amount they have to study
 		limit = { slow_study_ruler = yes }
-		divide_variable = { ai_magic_value = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+		divide_variable = { ai_magic_value = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 	}
 }
 calc_ai_heir_xp_modifier = {
@@ -1279,13 +1298,13 @@ calc_ai_heir_xp_modifier = {
 		variable_name = ai_magic_modifier
 		value = modifier:mages_ruler_experience_mod
 	}
-	if = {
+	if = { #increase the amount they have to study
 		limit = { slow_study_heir = yes }
-		divide_variable = { ai_magic_value = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+		divide_variable = { ai_magic_value = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 	}
 }
 calc_ai_country_xp_modifier = {
-	multiply_variable = { ai_magic_value = 3 } #MAGIC_RULER_SLOW_STUDY_RATIO
+	multiply_variable = { ai_magic_value = 3 } #MAGIC_ESTATE_SLOW_STUDY_RATIO
 	export_to_variable = {
 		variable_name = ai_magic_modifier
 		value = modifier:mages_estate_experience_mod
@@ -1316,12 +1335,12 @@ monthly_magic_upkeep_pulse = {
 
 		if = { limit = { has_ruler_flag = magic_advancement }
 			if = { limit = { slow_study_ruler = yes }
-				multiply_variable = { monthly_xp_tick = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+				multiply_variable = { monthly_xp_tick = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 			}
 		}
 		else_if = { limit = { has_heir_flag = magic_advancement }
 			if = { limit = { slow_study_heir = yes }
-				multiply_variable = { monthly_xp_tick = 0.75 } #MAGIC_RULER_SLOW_STUDY_RATIO
+				multiply_variable = { monthly_xp_tick = 0.67 } #MAGIC_RULER_SLOW_STUDY_RATIO
 			}
 		}
 		else_if = { limit = { has_country_flag = magic_advancement }
@@ -1834,7 +1853,8 @@ set_ruler_mage_effect = {
 	# war_wizard = yes makes the ruler or heir into a war wizard
 		# If you want to make the consort a war-wizard you can, but it won't work super right
 		# You can put in consort_name = xyz to give a set consort name
-	# witch_king = yes makes them a witch-king
+	# starting_infamy = XYZ starts them out with XYZ amount of infamy
+	# witch_king = yes makes your ruler a witch-king (the most common use of starting_infamy)
 	# lich = yes makes ruler a lich (liches are not automatically witch-kings)
 
 define_powerful_mage = { #types are ruler, heir, and consort
@@ -1885,6 +1905,8 @@ define_powerful_mage = { #types are ruler, heir, and consort
 
 		[[consort_name]		set_saved_name = { key = consort_name type = simple name = "$consort_name$" } set_country_flag = has_consort_name ]
 		[[war_wizard]		define_type_to_war_wizard_effect = { type = $type$ } ]
+		[[historic_war_wizard]	define_type_to_war_wizard_history_file = { type = $type$ } ] #Exclusively for history files
+		[[starting_infamy]	set_$type$_flag = is_infamous_$type$ set_variable = { $type$_witch_king_points = $starting_infamy$ } calculate_magical_infamy_modifier = yes ]
 		[[witch_king]		become_a_witch_king_effect = yes ]
 		[[lich]				become_a_lich_effect = yes ]
 
@@ -1898,17 +1920,106 @@ define_powerful_mage = { #types are ruler, heir, and consort
 define_type_to_war_wizard_effect = { #works on heir and ruler, else statements in scripted effects break general traits
 	if = {
 		limit = {
-			defining_war_wizard_$type$_is_female = yes
+			OR = {
+				$type$_has_stat = { mil = 6 }
+				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 5 } }
+			}
 		}
-		define_type_to_war_wizard_sub_effect = { type = $type$ female = yes }
+		add_country_modifier = { name = ruler_war_wizard_6_mod duration = 1 hidden = yes } #4/8/7/4
+		custom_tooltip = war_wizard_mil_6_base_stats_tt
 	}
-	else = { define_type_to_war_wizard_sub_effect = { type = $type$ } }
+	else_if = {
+		limit = {
+			OR = {
+				$type$_has_stat = { mil = 5 }
+				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 4 } }
+			}
+		}
+		add_country_modifier = { name = ruler_war_wizard_5_mod duration = 1 hidden = yes } #3/8/6/4
+		custom_tooltip = war_wizard_mil_5_base_stats_tt
+	}
+	else_if = {
+		limit = {
+			OR = {
+				$type$_has_stat = { mil = 4 }
+				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 3 } }
+			}
+		}
+		add_country_modifier = { name = ruler_war_wizard_4_mod duration = 1 hidden = yes } #3/8/5/3
+		custom_tooltip = war_wizard_mil_4_base_stats_tt
+	}
+	else_if = {
+		limit = {
+			OR = {
+				$type$_has_stat = { mil = 3 }
+				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 2 } }
+			}
+		}
+		add_country_modifier = { name = ruler_war_wizard_3_mod duration = 1 hidden = yes } #3/8/4/2
+		custom_tooltip = war_wizard_mil_3_base_stats_tt
+	}
+	else_if = {
+		limit = {
+			OR = {
+				$type$_has_stat = { mil = 2 }
+				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 1 } }
+			}
+		}
+		add_country_modifier = { name = ruler_war_wizard_2_mod duration = 1 hidden = yes } #2/7/3/2
+		custom_tooltip = war_wizard_mil_2_base_stats_tt
+	}
+	else_if = {
+		limit = {
+			OR = {
+				$type$_has_stat = { mil = 1 }
+				has_country_flag = wyvernheart_bioimproved_mages_results
+			}
+		}
+		add_country_modifier = { name = ruler_war_wizard_1_mod duration = 1 hidden = yes } #1/7/3/1
+		custom_tooltip = war_wizard_mil_1_base_stats_tt
+	}
+	else = {
+		add_country_modifier = { name = ruler_war_wizard_0_mod duration = 1 hidden = yes } #0/7/2/0
+		custom_tooltip = war_wizard_mil_0_base_stats_tt
+	}
+
+	if = { #Wyvernheart
+		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
+		add_country_modifier = { name = wyvernheart_war_wizard_mod duration = 1 hidden = yes } #+1 maneuver
+		custom_tooltip = wyvernheart_war_wizard_tt
+	}
+
+	if = {
+		limit = { has_female_$type$ = yes }
+		convert_female_$type$_to_general = yes
+	}
+	else = { convert_$type$_to_general = yes }
+
+	#clear modifiers
+	remove_country_modifier = ruler_war_wizard_6_mod
+	remove_country_modifier = ruler_war_wizard_5_mod
+	remove_country_modifier = ruler_war_wizard_4_mod
+	remove_country_modifier = ruler_war_wizard_3_mod
+	remove_country_modifier = ruler_war_wizard_2_mod
+	remove_country_modifier = ruler_war_wizard_1_mod
+	remove_country_modifier = ruler_war_wizard_0_mod
+
+	remove_country_modifier = wyvernheart_war_wizard_mod
 }
-define_type_to_war_wizard_sub_effect = {
-	if = { limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
-		define_type_to_war_wizard_wyvernheart_effect = { type = $type$ [[female] female = $female$ ] }
+
+define_ruler_to_war_wizard = { define_type_to_war_wizard_effect = { type = ruler } }
+define_heir_to_war_wizard = { define_type_to_war_wizard_effect = { type = heir } }
+
+# In due time, all historic war wizards should get their own defined pips and this effect should be removed
+define_type_to_war_wizard_history_file = { #War wizards don't work in history files b/c they try to add and remove modifiers.
+	if = {
+		limit = { has_female_$type$ = yes }
+		define_type_to_historic_war_wizard_sub_effect = { type = $type$ female = yes }
 	}
-	else_if = { limit = { $type$_has_stat = { mil = 6 } }
+	else = { define_type_to_historic_war_wizard_sub_effect = { type = $type$ } }
+}
+define_type_to_historic_war_wizard_sub_effect = { #since this is in the history file, special cases like wyvernheart don't apply
+	if = { limit = { $type$_has_stat = { mil = 6 } }
 		define_$type$_to_general = { fire = 4 shock = 8 manuever = 7 siege = 4 [[female] female = $female$ ] }
 	}
 	else_if = { limit = { $type$_has_stat = { mil = 5 } }
@@ -1928,67 +2039,6 @@ define_type_to_war_wizard_sub_effect = {
 	}
 	else = { define_$type$_to_general = { fire = 0 shock = 7 manuever = 2 siege = 0 [[female] female = $female$ ] } }
 }
-
-define_type_to_war_wizard_wyvernheart_effect = {
-	if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 6 }
-				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 5 } }
-			}
-		}
-		define_$type$_to_general = { fire = 4 shock = 8 manuever = 8 siege = 4 [[female] female = $female$ ] }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 5 }
-				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 4 } }
-			}
-		}
-		define_$type$_to_general = { fire = 3 shock = 8 manuever = 7 siege = 4 [[female] female = $female$ ] }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 4 }
-				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 3 } }
-			}
-		}
-		define_$type$_to_general = { fire = 3 shock = 8 manuever = 6 siege = 3 [[female] female = $female$ ] }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 3 }
-				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 2 } }
-			}
-		}
-		define_$type$_to_general = { fire = 3 shock = 8 manuever = 5 siege = 2 [[female] female = $female$ ] }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 2 }
-				AND = { has_country_flag = wyvernheart_bioimproved_mages_results $type$_has_stat = { mil = 1 } }
-			}
-		}
-		define_$type$_to_general = { fire = 2 shock = 7 manuever = 4 siege = 2 [[female] female = $female$ ] }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				$type$_has_stat = { mil = 1 }
-				has_country_flag = wyvernheart_bioimproved_mages_results
-			}
-		}
-		define_$type$_to_general = { fire = 1 shock = 7 manuever = 4 siege = 1 [[female] female = $female$ ] }
-	}
-	else = { define_$type$_to_general = { fire = 0 shock = 7 manuever = 3 siege = 0 [[female] female = $female$ ] } }
-}
-
-define_ruler_to_war_wizard = { define_type_to_war_wizard_effect = { type = ruler } }
-define_heir_to_war_wizard = { define_type_to_war_wizard_effect = { type = heir } }
 
 magic_level_up_all_ruler_schools = {
 	custom_tooltip = magic_level_up_all_ruler_schools_tt
@@ -2050,7 +2100,7 @@ estate_action_RECRUIT_COURT_MAGE = {
 	decrease_estate_witch_king_points = { size = medium }
 }
 
-define_war_wizard = {
+define_war_wizard = { #Allows access to a few pre-defined war wizards.
 	define_war_wizard_sub_effect = {
 		[[name] name = "$name$" ]
 		$level$ = yes
@@ -2058,7 +2108,7 @@ define_war_wizard = {
 	}
 }
 
-define_war_wizard_sub_effect = {
+define_war_wizard_sub_effect = { #the levels here correspond with the war wizard project
 	define_general = {
 		[[name] name = "$name$" ]
 		[[3] fire = 3 shock = 8 manuever = 7 siege = 4 ]
@@ -2075,129 +2125,62 @@ define_war_wizard_sub_effect = {
 # (it breaks inside else statements in scripted effects )
 # Also, RNG for names is broken unless we set saved name
 
-create_war_wizard = {
+create_war_wizard = { #the more general war-wizard function
+	custom_tooltip = create_war_wizard_tt
 	hidden_effect = {
 		set_saved_name = { key = male_name type = leader }
 		set_saved_name = { key = female_name type = leader female = yes }
 	}
-	if = {
-		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
-		create_war_wizard_wyvernheart_effect = yes
-	}
-	else = {
-		if = {
-			limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
-			tooltip = { define_war_wizard = { level = 3 } }
-			hidden_effect = { #We need the PRNG for situations like the evocation project
-				if = {
-					limit = { culture_is_harpy = yes }
-					define_war_wizard = { name = female_name level = 3 female = yes }
-				}
-				else = {
-					randnum_effect = {
-						max = 2
-						case1 = "define_war_wizard = { name = male_name level = 3 }"
-						case2 = "define_war_wizard = { name = female_name level = 3 female = yes }"
-					}
-				}
-			}
-		}
-		else_if = {
-			limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
-			tooltip = { define_war_wizard = { level = 2 } }
-			hidden_effect = {
-				if = {
-					limit = { culture_is_harpy = yes }
-					define_war_wizard = { name = female_name level = 2 female = yes }
-				}
-				else = {
-					randnum_effect = {
-						max = 2
-						case1 = "define_war_wizard = { name = male_name level = 2 }"
-						case2 = "define_war_wizard = { name = female_name level = 2 female = yes }"
-					}
-				}
-			}
-		}
-		else_if = {
-			limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
-			tooltip = { define_war_wizard = { level = 1 } }
-			hidden_effect = {
-				if = {
-					limit = { culture_is_harpy = yes }
-					define_war_wizard = { name = female_name level = 1 female = yes }
-				}
-				else = {
-					randnum_effect = {
-						max = 2
-						case1 = "define_war_wizard = { name = male_name level = 1 }"
-						case2 = "define_war_wizard = { name = female_name level = 1 female = yes }"
-					}
-				}
-			}
-		}
-		else = {
-			tooltip = { define_war_wizard = { level = 0 } }
-			hidden_effect = {
-				if = {
-					limit = { culture_is_harpy = yes }
-					define_war_wizard = { name = female_name level = 0 female = yes }
-				}
-				else = {
-					randnum_effect = {
-						max = 2
-						case1 = "define_war_wizard = { name = male_name level = 0 }"
-						case2 = "define_war_wizard = { name = female_name level = 0 female = yes }"
-					}
-				}
-			}
-		}
-	}
-	hidden_effect = {
-		clear_saved_name = male_name
-		clear_saved_name = female_name
-	}
-}
 
-create_war_wizard_wyvernheart_effect = { #Wyvernheart almost never needs PRNG
-	if = {
+	if = { #all the tooltips go after this block!
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
-		tooltip = { define_general = { fire = 3 shock = 8 manuever = 8 siege = 4 } }
-		hidden_effect = {
-			random_list = {
-				50 = { define_general = { name = male_name fire = 3 shock = 8 manuever = 8 siege = 4 } }
-				50 = { define_general = { name = female_name fire = 3 shock = 8 manuever = 8 siege = 4 female = yes } }
-			}
-		}
+		add_country_modifier = { name = war_wizard_3_mod duration = 1 hidden = yes } #3/8/7/4
+		custom_tooltip = war_wizard_level_3_base_stats_tt
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
-		tooltip = { define_general = { fire = 2 shock = 8 manuever = 6 siege = 3 } }
-		hidden_effect = {
-			random_list = {
-				50 = { define_general = { name = male_name fire = 2 shock = 8 manuever = 6 siege = 3 } }
-				50 = { define_general = { name = female_name fire = 2 shock = 8 manuever = 6 siege = 3 female = yes } }
-			}
-		}
+		add_country_modifier = { name = war_wizard_2_mod duration = 1 hidden = yes } #2/8/5/3
+		custom_tooltip = war_wizard_level_2_base_stats_tt
 	}
 	else_if = {
 		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
-		tooltip = { define_general = { fire = 1 shock = 7 manuever = 5 siege = 2 } }
-		hidden_effect = {
-			random_list = {
-				50 = { define_general = { name = male_name fire = 1 shock = 7 manuever = 5 siege = 2 } }
-				50 = { define_general = { name = female_name fire = 1 shock = 7 manuever = 5 siege = 2 female = yes } }
-			}
-		}
+		add_country_modifier = { name = war_wizard_1_mod duration = 1 hidden = yes } #1/7/4/2
+		custom_tooltip = war_wizard_level_1_base_stats_tt
 	}
 	else = {
-		tooltip = { define_general = { fire = 0 shock = 7 manuever = 3 siege = 1 } }
-		hidden_effect = {
-			random_list = {
-				50 = { define_general = { name = male_name fire = 0 shock = 7 manuever = 3 siege = 1 } }
-				50 = { define_general = { name = female_name fire = 0 shock = 7 manuever = 3 siege = 1 female = yes } }
+		add_country_modifier = { name = war_wizard_0_mod duration = 1 hidden = yes } #0/7/2/1
+		custom_tooltip = war_wizard_level_0_base_stats_tt
+	}
+
+	if = { #Wyvernheart
+		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
+		add_country_modifier = { name = wyvernheart_war_wizard_mod duration = 1 hidden = yes } #+1 maneuver
+		custom_tooltip = wyvernheart_war_wizard_tt
+	}
+
+	hidden_effect = { #We need the PRNG for situations like the evocation project
+		if = {
+			limit = { culture_is_harpy = yes }
+			create_general = { name = female_name female = yes }
+		}
+		else = {
+			randnum_effect = {
+				max = 2
+				case1 = "create_general = { name = male_name }"
+				case2 = "create_general = { name = female_name female = yes }"
 			}
 		}
+
+		#Clear names
+		clear_saved_name = male_name
+		clear_saved_name = female_name
+
+		#Clear war wizard modifiers
+		remove_country_modifier = war_wizard_3_mod
+		remove_country_modifier = war_wizard_2_mod
+		remove_country_modifier = war_wizard_1_mod
+
+		remove_country_modifier = wyvernheart_war_wizard_mod
 	}
 }
 
@@ -2290,7 +2273,7 @@ become_a_witch_king_effect = {
 	else_if = {
 		limit = { has_country_flag = witch_king_thorns }
 		add_ruler_modifier = { name = witch_king_thorns_modifier duration = -1 }
-		make_spell_half_off = { school = enchantment level = 2 id = enchanting_embassy_2 ruler = yes }
+		make_spell_half_off = { school = enchantment level = 2 id = enchanting_embassy ruler = yes }
 	}
 	else_if = {
 		limit = { has_country_flag = witch_king_armies }
@@ -2383,6 +2366,22 @@ calculate_magical_infamy_modifier = {
 
 increase_type_witch_king_points_small = { #1 point
 	custom_tooltip = increase_$type$_witch_king_points_small
+	if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 15 } }
+		custom_tooltip = $type$_infamy_will_be_witch_king_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 11 } }
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 7 } }
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 3 } }
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		change_variable = { $type$_witch_king_points = 1 }
@@ -2390,6 +2389,34 @@ increase_type_witch_king_points_small = { #1 point
 }
 increase_type_witch_king_points_medium = { #2 points
 	custom_tooltip = increase_$type$_witch_king_points_medium
+	if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 14 }
+			NOT = { check_variable = { $type$_witch_king_points = 16 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_witch_king_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 10 }
+			NOT = { check_variable = { $type$_witch_king_points = 12 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 6 }
+			NOT = { check_variable = { $type$_witch_king_points = 8 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 2 }
+			NOT = { check_variable = { $type$_witch_king_points = 4 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		change_variable = { $type$_witch_king_points = 2 }
@@ -2397,6 +2424,22 @@ increase_type_witch_king_points_medium = { #2 points
 }
 increase_type_witch_king_points_large = { #4 points
 	custom_tooltip = increase_$type$_witch_king_points_large
+	if = {
+		limit = { type_has_infamy_denounced = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_witch_king_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_suspicious = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_respected = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_paragon = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		change_variable = { $type$_witch_king_points = 4 }
@@ -2404,6 +2447,22 @@ increase_type_witch_king_points_large = { #4 points
 }
 decrease_type_witch_king_points_small = { #1 point
 	custom_tooltip = decrease_$type$_witch_king_points_small
+	if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 16 } }
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 12 } }
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 8 } }
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
+	else_if = {
+		limit = { is_variable_equal = { which = $type$_witch_king_points value = 4 } }
+		custom_tooltip = $type$_infamy_will_be_paragon_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		subtract_variable = { $type$_witch_king_points = 1 }
@@ -2411,6 +2470,34 @@ decrease_type_witch_king_points_small = { #1 point
 }
 decrease_type_witch_king_points_medium = { #2 points
 	custom_tooltip = decrease_$type$_witch_king_points_medium
+	if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 16 }
+			NOT = { check_variable = { $type$_witch_king_points = 18 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 12 }
+			NOT = { check_variable = { $type$_witch_king_points = 14 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 8 }
+			NOT = { check_variable = { $type$_witch_king_points = 10 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 4 }
+			NOT = { check_variable = { $type$_witch_king_points = 6 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_paragon_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		subtract_variable = { $type$_witch_king_points = 2 }
@@ -2418,6 +2505,25 @@ decrease_type_witch_king_points_medium = { #2 points
 }
 decrease_type_witch_king_points_large = { #4 points
 	custom_tooltip = decrease_$type$_witch_king_points_large
+	if = {
+		limit = {
+			check_variable = { $type$_witch_king_points = 16 }
+			NOT = { check_variable = { $type$_witch_king_points = 20 } }
+		}
+		custom_tooltip = $type$_infamy_will_be_denounced_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_denounced = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_suspicious_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_suspicious = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_respected_tt
+	}
+	else_if = {
+		limit = { type_has_infamy_respected = { type = $type$ } }
+		custom_tooltip = $type$_infamy_will_be_paragon_tt
+	}
 	hidden_effect = {
 		set_$type$_flag = is_infamous_$type$ #We check for this when transferring points
 		subtract_variable = { $type$_witch_king_points = 4 }
