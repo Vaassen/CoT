@@ -579,3 +579,130 @@ volcanic_truth_kiamoa_entrance_modifier_checks = {
 		# correct to leave the situation as is
 	}
 }
+#Pachpalka scripted effects
+pachpalka_pick_country = {
+	set_global_flag = pachpalka_is_in_$region$
+	
+	if = { #if any country has its capital inside the region, target one capital. Else, nothing happens
+		limit = {
+			$region$_region = { 
+				is_capital = yes
+			}
+		}
+		$region$_region = {
+			type = random
+			amount = 1
+			limit = { is_capital = yes }
+			owner = { save_event_target_as = pachpalka_country_target }
+		}
+	}
+}
+
+pachpalka_pick_destination = {
+	random_list = { #Pachpalka won't move back to the region he came from.
+		1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_1$ } } pachpalka_pick_country = { region = $destination_1$ } }
+		1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_2$ } } pachpalka_pick_country = { region = $destination_2$ } }
+		[[destination_3] 1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_3$ } } pachpalka_pick_country = { region = $destination_3$ } } ]
+		[[destination_4] 1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_4$ } } pachpalka_pick_country = { region = $destination_4$ } } ]
+		[[destination_5] 1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_5$ } } pachpalka_pick_country = { region = $destination_5$ } } ]
+		[[destination_6] 1 = { trigger = { NOT = { has_global_flag = pachpalka_was_in_$destination_6$ } } pachpalka_pick_country = { region = $destination_6$ } } ]
+	}
+	clr_global_flag = pachpalka_was_in_great_plateau
+	clr_global_flag = pachpalka_was_in_cotlkae
+	clr_global_flag = pachpalka_was_in_anakae
+	clr_global_flag = pachpalka_was_in_anakuele
+	clr_global_flag = pachpalka_was_in_yanacotlele
+	clr_global_flag = pachpalka_was_in_horn_of_insyaa
+	clr_global_flag = pachpalka_was_in_tagaala_mangroves
+	clr_global_flag = pachpalka_was_in_west_insyaan_lowlands
+	clr_global_flag = pachpalka_was_in_malogadin_coast
+	clr_global_flag = pachpalka_was_in_west_charkuchar
+	clr_global_flag = pachpalka_was_in_central_charkuchar
+	clr_global_flag = pachpalka_was_in_east_charkuchar
+	clr_global_flag = pachpalka_was_in_south_charkuchar
+	
+	clr_global_flag = pachpalka_is_in_$origin$
+	set_global_flag = pachpalka_was_in_$origin$
+}
+
+move_pachpalka_effect = {
+	trigger_switch = { #Select a new region, mostly based on adjacency. The selection script also picks a capital province in that region if there's one.
+		on_trigger = has_global_flag
+		pachpalka_is_in_great_plateau = { pachpalka_pick_destination = { origin = great_plateau destination_1 = cotlkae destination_2 = west_charkuchar } }
+		pachpalka_is_in_cotlkae = { pachpalka_pick_destination = { origin = cotlkae destination_1 = great_plateau destination_2 = anakae destination_3 = anakuele destination_4 = yanacotlele destination_5 = horn_of_insyaa } }
+		pachpalka_is_in_anakae = { pachpalka_pick_destination = { origin = anakae destination_1 = cotlkae destination_2 = anakuele destination_3 = yanacotlele } }
+		pachpalka_is_in_anakuele = { pachpalka_pick_destination = { origin = anakuele destination_1 = cotlkae destination_2 = anakae destination_3 = yanacotlele } }
+		pachpalka_is_in_yanacotlele = { pachpalka_pick_destination = { origin = yanacotlele destination_1 = cotlkae destination_2 = anakae destination_3 = anakuele destination_4 = horn_of_insyaa } }
+		pachpalka_is_in_horn_of_insyaa = { pachpalka_pick_destination = { origin = horn_of_insyaa destination_1 = cotlkae destination_2 = yanacotlele destination_3 = tagaala_mangroves destination_4 = west_insyaan_lowlands destination_5 = west_charkuchar } }
+		pachpalka_is_in_tagaala_mangroves = { pachpalka_pick_destination = { origin = tagaala_mangroves destination_1 = horn_of_insyaa destination_2 = west_insyaan_lowlands } }
+		pachpalka_is_in_west_insyaan_lowlands = { pachpalka_pick_destination = { origin = west_insyaan_lowlands destination_1 = horn_of_insyaa destination_2 = tagaala_mangroves destination_3 = malogadin_coast destination_4 = west_charkuchar destination_5 = central_charkuchar destination_6 = south_charkuchar } }
+		pachpalka_is_in_malogadin_coast = { pachpalka_pick_destination = { origin = malogadin_coast destination_1 = west_insyaan_lowlands destination_2 = south_charkuchar } }
+		pachpalka_is_in_west_charkuchar = { pachpalka_pick_destination = { origin = west_charkuchar destination_1 = great_plateau destination_2 = horn_of_insyaa destination_3 = west_insyaan_lowlands destination_4 = central_charkuchar  } }
+		pachpalka_is_in_central_charkuchar = { pachpalka_pick_destination = { origin = central_charkuchar destination_1 = west_insyaan_lowlands destination_2 = west_charkuchar destination_3 = east_charkuchar destination_4 = south_charkuchar } }
+		pachpalka_is_in_east_charkuchar = { pachpalka_pick_destination = { origin = east_charkuchar destination_1 = central_charkuchar destination_2 = south_charkuchar } }
+		pachpalka_is_in_south_charkuchar = { pachpalka_pick_destination = { origin = south_charkuchar destination_1 = west_insyaan_lowlands destination_2 = malogadin_coast destination_3 = central_charkuchar destination_4 = east_charkuchar } }
+	}
+	
+	if = {
+		limit = { has_saved_event_target = pachpalka_country_target }
+		event_target:pachpalka_country_target = {
+			random_list = {
+				1 = { country_event = { id = insyaa_flavour.20 } } #Strange Kobold Theologian event
+				1 = { country_event = { id = insyaa_flavour.22 } } #Strange Kobold Merchant event
+				1 = { country_event = { id = insyaa_flavour.24 } } #Strange Kobold Artist event
+				1 = { country_event = { id = insyaa_flavour.26 } } #Strange Kobold Philosopher event
+			}
+		}
+	}
+	else = { #Pachpalka will move next pulse
+		set_global_flag = pachpalka_on_the_move
+	}
+}
+
+hire_pachpalka_effect = {
+	if = {
+		limit = {
+			monthly_income = 33
+		}
+		add_treasury = -100
+	}
+	else = {
+		add_years_of_income = -0.25
+	}
+	hire_advisor = {
+		type = $type$
+		name = pachpalka_pseudonym
+		skill = 1
+		religion = infinite_self
+		culture = yawasichya_kobold
+		cost_multiplier = 0.5
+	}
+	add_country_modifier = { name = pachpalka_$type$_school duration = -1 desc = pachpalka_modifier_duration_tt }
+	set_global_flag = pachpalka_tracker@ROOT
+	set_country_flag = pachpalka_hired
+	set_country_flag = pachpalka_$type$_hired
+}
+
+pachpalka_leaves_effect = {
+	custom_tooltip = pachpalka_$type$_leaves_tt
+	$effect$
+	remove_country_modifier = pachpalka_$type$_school
+	hidden_effect = {
+		clr_global_flag = pachpalka_tracker@ROOT
+		clr_country_flag = pachpalka_hired
+		clr_country_flag = pachpalka_$type$_hired
+		kill_advisor = $type$
+		move_pachpalka_effect = yes
+	}
+}
+
+pachpalka_fired_from_court_effect = {
+	if = {
+		limit = { has_country_flag = pachpalka_$type$_hired }
+		remove_country_modifier = pachpalka_$type$_school
+		clr_global_flag = pachpalka_tracker@ROOT
+		clr_country_flag = pachpalka_hired
+		clr_country_flag = pachpalka_$type$_hired
+		set_global_flag = pachpalka_on_the_move #Pachpalka will move on next pulse
+	}
+}
