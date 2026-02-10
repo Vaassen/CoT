@@ -199,7 +199,7 @@ end_all_nsc_incidents = {
 	end_incident = incident_silent_as_the_grave
 	end_incident = incident_rise_of_artificery
 	end_incident = incident_spread_of_ravelianism
-	end_incident = incident_teachings_szal_fazil
+	end_incident = incident_rebirth_magic
 	end_incident = incident_thirteenth_night
 	end_incident = incident_whisper_shadows
 	end_incident = incident_trapped_in_shadows
@@ -253,10 +253,7 @@ end_all_nsc_incidents = {
 	clr_country_flag = nsc_lucian_carter_in_our_lands
 	clr_country_flag = nsc_lucian_carter_happened
 	every_owned_province = { clr_province_flag = denied_ravelian_society }
-	
-	#szal-fazil
-	clr_country_flag = nsc_human_country_magic_prohibition
-	
+		
 	#Silent as the grave
 	clr_country_flag = nsc_first_calamity
 	clr_country_flag = nsc_second_calamity
@@ -1625,6 +1622,217 @@ decrease_rinta_seekers_isolation_level = {
 		}
 		else = {
 			custom_tooltip = decrease_rinta_seekers_isolation_level_min_tooltip			#Already at min
+		}
+	}
+}
+
+# Generic script to set isolation level if you convert and are outside the range
+check_isolation_level = {
+	if = {
+		limit = {
+			religion = bulwari_sun_cult
+		}
+		check_isolation_level_set_middle = {
+			lower = 0
+			middle = 2
+			middle_plus = 3
+			upper_plus = 5
+		}
+	}
+	else_if = {
+		limit = {
+			religion = rinta_seekers
+		}
+		check_isolation_level_set_middle = {
+			lower = 10
+			middle = 12
+			middle_plus = 13
+			upper_plus = 15
+		}
+	}
+	else_if = {
+		limit = {
+			religion = volcanic_truth
+		}
+		check_isolation_level_set_middle = {
+			lower = 15
+			middle = 17
+			middle_plus = 18
+			upper_plus = 20
+		}
+	}
+}
+
+check_isolation_level_set_middle = {
+	# lower is the actual lowest valid value for isolationism for the religion
+	# middle is the value in the middle that we want to get to
+	# middle_plus is 1 higher which we use when going down to middle
+	# upper_plus is 1 higher than the highest valid value for isolationism for the religion
+	
+	if = { # If you are above the highest valid value, decrement until you get to middle
+		limit = {
+			isolationism = $upper_plus$
+		}
+		while = {
+			limit = {
+				isolationism = $middle_plus$
+			}
+			add_isolationism = -1
+		}
+	}
+	else_if = { # If you are below the lowest valid value, increment until you get to middle
+		limit = {
+			NOT = { isolationism = $lower$ }
+		}
+		while = {
+			limit = {
+				NOT = { isolationism  = $middle$ }
+			}
+			add_isolationism = 1
+		}
+	}
+}
+
+#-----------# Volcanic Truth #-----------#
+
+
+increase_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = {
+				isolationism = 19
+			}
+			custom_tooltip = increase_volcanic_truth_isolation_level_max_tooltip 			#already at max
+		}
+		else = {
+			custom_tooltip = increase_volcanic_truth_isolation_level_tooltip 				#Tooltip for specific localization for each religion
+			hidden_effect = { add_isolationism = 1 }
+		}
+	}
+}
+
+decrease_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = { isolationism = 15 }
+			custom_tooltip = decrease_volcanic_truth_isolation_level_tooltip				#Tooltip for specific localization for each religion
+			hidden_effect = { add_isolationism = -1 }
+		}
+		else = {
+			custom_tooltip = decrease_volcanic_truth_isolation_level_min_tooltip			#Already at min
+		}
+	}
+}
+
+move_to_center_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = { NOT = { isolationism = 17 } }
+			custom_tooltip = move_to_center_volcanic_truth_isolation_level_tooltip
+			hidden_effect = { add_isolationism = 1 }
+		}
+		if = {
+			limit = { isolationism = 18 }
+			custom_tooltip = move_to_center_volcanic_truth_isolation_level_tooltip
+			hidden_effect = { add_isolationism = -1 }
+		}
+	}
+}
+
+end_all_volcanic_truth_incidents = {
+	end_incident = incident_volcanic_organizational_crisis
+	end_incident = incident_volcanic_taga_ala_influence
+	end_incident = incident_volcanic_mass_eruption_of_the_twin_gods
+	end_incident = incident_volcanic_weakening_of_the_kiamoa
+	end_incident = incident_volcanic_the_molten_eternity
+	end_incident = incident_volcanic_a_dragon_turtles_place
+	end_incident = incident_volcanic_mechanim_awakening
+}
+
+vt_set_incident_finished_flags = {
+	set_global_flag = vt_incident_$incident$_finished
+	clr_global_flag = vt_incident_$incident$_active
+}
+				
+
+vt_random_eruption_effect = {
+	random_list = {
+		15 = {
+			trigger = { government = monarchy }
+			modifier = {
+				factor = 4
+				tag = N00
+			}
+			country_event = {
+				id = volcanic_truth.301
+			}
+		}
+		15 = {
+			trigger = { NOT = { has_reform = cuahu_teotlehu_reform } }
+			country_event = {
+				id = volcanic_truth.302
+			}
+		}
+		15 = {
+			trigger = {
+				any_owned_province = {
+					has_owner_culture = no
+				}
+				any_owned_province = {
+					has_owner_culture = yes
+				}
+			}
+			country_event = {
+				id = volcanic_truth.303
+			}
+		}
+		15 = {
+			trigger = {
+				is_religion_enabled = molten_eternity
+			}
+			country_event = {
+				id = volcanic_truth.304
+			}
+		}
+		15 = {
+			trigger = {
+				OR = {
+					num_of_generals = 2
+					num_of_admirals = 2
+				}
+			}
+			country_event = {
+				id = volcanic_truth.305
+			}
+		}
+		15 = {
+			trigger = {
+				OR = {
+					vassal = 1
+					march = 1
+				}
+			}
+			country_event = {
+				id = volcanic_truth.306
+			}
+		}
+		1 = {
+			#General Unrest Rare
+			country_event = {
+				id = volcanic_truth.307
+			}
 		}
 	}
 }
