@@ -512,10 +512,12 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
 	else_if = {
 		limit = { # Colonies are cheaper and tracked separately
 			OR = { # I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false, but has_construction = colonist is true
-				is_colony = yes
-				has_construction = colonist
-				has_province_modifier = supplies_colony
+			# you start is_colony = yes is still false
+				AND = { # This will be when a colony changes hands
+					owner = { exists = yes }
+					is_city = no
+				}
+				has_province_modifier = supplies_colony # This will be when it is decolonised
 			}
 		}
 		remove_province_modifier = supplies_colony # Remove it in case the conquerer doensn't use supplies. If they do, it will be added back immediately
@@ -576,8 +578,8 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
 		}
 		FROM = {
 			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_gain
-				value = -10
+				which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+				value = -1
 			}
 			change_variable = {
 				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
@@ -585,18 +587,9 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
 			}
 		}
 	}
-	# The script for adding uses slightly different logic and an "if" not "else_if" since you might conquer a SF but have it deleted
+	# The script for adding uses slightly different logic and an "if" not "else" since you might conquer a SF but have it deleted
 	# That is not a concern when you lose a province
-	else_if = { # Otherwise, it's a province we need to spend monthly supplies on
-		limit = {
-			NOT = {
-				# I need this because when on_province_owner_change triggers on a new colony
-				# you start is_colony = yes is still false, but has_construction = colonist is true
-				is_colony = yes
-				has_construction = colonist
-				has_province_modifier = supplies_colony
-			}
-		}
+	else = { # Otherwise, it's a province we need to spend monthly supplies on
 		if = { # Different regions have different costs so we track them differently
 			limit = {
 				OR = {
@@ -673,13 +666,14 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
 	}
 	else_if = {
 		limit = { # Colonies are cheaper and tracked separately
-			OR = { # I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false, but has_construction = colonist is true
-				is_colony = yes
-				has_construction = colonist
-				has_province_modifier = supplies_colony
-			}
+			# I use this because when on_province_owner_change triggers on a new colony
+			# you start is_colony = yes is still false
+			# This will be when a colony changes hands. Since this is for the adding, I don't
+			# need to worry about the new owner being empty (from decolonisation)
+			owner = { exists = yes }
+			is_city = no
 		}
+
 		# First, set a mod so when the province is decolonised we know what it was before
 		# Can't use a province flag since those are cleared on decolonisation
 		add_permanent_province_modifier = {
@@ -745,8 +739,8 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
 			limit = {
 				OR = {
 					owner = { #You can only have 10
-						num_of_owned_provinces_with = {
-							has_province_modifier = charkuchin_kobold_supply_facility
+						check_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
 							value = 11
 						}
 					}
@@ -766,8 +760,8 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
 		else = { # else increase SF count by 1
 			owner = {
 				change_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_gain
-					value = 10
+					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+					value = 1
 				}
 				change_variable = {
 					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
@@ -993,8 +987,8 @@ insyaa_charkuchin_kobold_citadel_supplies_monthly_loss = {
 insyaa_charkuchin_kobolds_ai_supply_centre = {
 	add_treasury = -50
 	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_gain
-		value = 10
+		which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+		value = 1
 	}	
 	change_variable = {
 		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
@@ -1019,15 +1013,36 @@ insyaa_charkuchin_kobolds_ai_supply_centre = {
 
 insyaa_charkuchin_kobolds_released_setup = {
 	clr_country_flag = charkuchin_kobold_start #I'm pretty sure flags stick around if you are annexed then released
+
+	# Since your government type depends on the type of the country that released you as a vassal or forced you to be
+	# released via peace, and we ony have 7 starting Insyaa kobold tags, I'll hardcode their starting gov types
+	# If you're not in that list (maybe more kobolds in the future) you get a monarchy if you were native
+	# or tribal
+	trigger_switch = {
+		on_trigger = tag
+		P30 = { change_government = monarchy }
+		P31 = { change_government = theocracy }
+		P32 = { change_government = monarchy }
+		P33 = { change_government = monarchy }
+		P34 = { change_government = monarchy }
+		P35 = { change_government = republic }
+		P36 = { change_government = republic }
+	}
 	trigger_switch = {
 		on_trigger = government
 		monarchy = { add_government_reform = charkuchin_kobold_feudalism_reform }
 		republic = { add_government_reform = charkuchin_kobold_oligarchy_reform }
 		theocracy = { add_government_reform = charkuchin_kobold_monastic_order_reform }
-		tribal = { add_government_reform = charkuchin_kobold_tribal_kingdom }
-		native = { add_government_reform = charkuchin_kobold_native_chiefdom_reform }
+		tribal = {
+			change_government = monarchy
+			add_government_reform = charkuchin_kobold_feudalism_reform
+		}
+		native = {
+			change_government = monarchy
+			add_government_reform = charkuchin_kobold_feudalism_reform
+		}
 	}
-	country_event = { #Initial variable setup and some modifiers. Maybe check if the mechanic is still necessary?
+	country_event = { #Initial variable setup and some modifiers
 		id = charkuchin_kobold.0
 	}
 	#Update the supplies counters for your provinces, since the starting event assumes

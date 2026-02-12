@@ -43,7 +43,7 @@ country_event = {
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_total_cost = 0 }
 
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_citadel_gain = 5 } #from a citadel level 1
-			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_supply_facility_gain = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count = 0 }
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain = 5 } #from admin tech 2
 
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_total_gain = 10 }
@@ -166,13 +166,6 @@ country_event = {
 
 	is_triggered_only = yes
 
-	trigger = {
-		any_owned_province = {
-			NOT = { has_charkuchin_kobold_citadel = yes }
-		}
-		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
-	}
-
 	immediate = {
 		hidden_effect = {
 			random_owned_province = {
@@ -194,22 +187,19 @@ country_event = {
 		ai_chance = { factor = 1 }
 		custom_tooltip = charkuchin_kobold.3.a.tt
 
-		hidden_effect = {
-			event_target:hinuibird_predation = {
-				add_province_triggered_modifier = charkuchin_kobold_hinuibird_predation
-				# Failure event after 2 months
-				province_event = {
-					id = charkuchin_kobold.13
-					days = 61
-				}
-				if = { # AI can't really aim for a PTM, so just let them auto-complete
-					limit = {
-						owner = {
-							ai = yes
-						}
-					}
+		# Succeeding in this event just prevents a loss, and the AI will auto-complete
+		# since they can't aim for a PTM, so just skip it for the AI
+		if = {
+			limit = {
+				ai = no
+			}
+			hidden_effect = {
+				event_target:hinuibird_predation = {
+					add_province_triggered_modifier = charkuchin_kobold_hinuibird_predation
+					# Failure event after 2 months
 					province_event = {
-						id = charkuchin_kobold.15
+						id = charkuchin_kobold.13
+						days = 61
 					}
 				}
 			}
@@ -226,13 +216,6 @@ country_event = {
 	goto = hinuibird_carcass
 
 	is_triggered_only = yes
-
-	trigger = {
-		any_owned_province = {
-			NOT = { has_charkuchin_kobold_citadel = yes }
-		}
-		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
-	}
 
 	immediate = {
 		hidden_effect = {
@@ -255,24 +238,27 @@ country_event = {
 		ai_chance = { factor = 1 }
 		custom_tooltip = charkuchin_kobold.4.a.tt
 
-		hidden_effect = {
-			event_target:hinuibird_carcass = {
-				add_province_triggered_modifier = charkuchin_kobold_hinuibird_carcass
-				# Failure event after 4 months
-				province_event = {
-					id = charkuchin_kobold.14
-					days = 122
-				}
-				if = { # AI can't really aim for a PTM, so just let them auto-complete
-					limit = {
-						owner = {
-							ai = yes
-						}
-					}
+		# The AI will auto-complete since they can't aim for a PTM, so just skip it for the AI
+		if = {
+			limit = {
+				ai = no
+			}
+			hidden_effect = {
+				event_target:hinuibird_carcass = {
+					add_province_triggered_modifier = charkuchin_kobold_hinuibird_carcass
+					# Failure event after 4 months
 					province_event = {
-						id = charkuchin_kobold.16
+						id = charkuchin_kobold.14
+						days = 122
 					}
 				}
+			}
+		}
+		else = { # Just give the AI the free supplies from the reward
+			add_government_power = {
+				mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+				power_type = citadel_supplies
+				value = 15
 			}
 		}
 	}
@@ -287,13 +273,6 @@ country_event = {
 	goto = hinuibird_landslide
 
 	is_triggered_only = yes
-
-	trigger = {
-		any_owned_province = {
-			NOT = { has_charkuchin_kobold_citadel = yes }
-		}
-		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
-	}
 
 	immediate = {
 		hidden_effect = {
@@ -404,14 +383,17 @@ country_event = {
 			NOT = { has_charkuchin_kobold_citadel = yes }
 			NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
 		}
+		NOT = { # This keeps it to every 4 months
+			has_country_modifier = charkuchin_kobold_decolonisation_cooldown
+		}
 	}
 
-	# Keep triggering itself every 4 months until you go above 0.1 supplies or have no eligible provinces
 	immediate = {
 		hidden_effect = {
-			country_event = {
-				id = charkuchin_kobold.7
-				days = 122 # 4 months
+			add_country_modifier = {
+				name = charkuchin_kobold_decolonisation_cooldown
+				duration = 122
+				# hidden = yes
 			}
 		}
 	}
@@ -426,6 +408,9 @@ country_event = {
 			if = {
 				limit = {
 					any_owned_province = {
+						is_city = yes
+						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
 						OR = {
 							region = west_insyaan_lowlands_region
 							region = titanoflora_valley_region
@@ -691,6 +676,34 @@ province_event = {
 				power_type = citadel_supplies
 				value = 15
 			}
+		}
+	}
+}
+
+# Hinuibird Migration disaster event handler (to save some trigger checks)
+country_event = {
+	id = charkuchin_kobold.17
+	title = charkuchin_kobold.17.title
+	desc = charkuchin_kobold.17.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		any_owned_province = {
+			NOT = { has_charkuchin_kobold_citadel = yes }
+		}
+		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
+	}
+
+	option = {
+		name = charkuchin_kobold.17.a
+
+		random_list = {
+			1 = { country_event = { id = charkuchin_kobold.3 } }
+			1 = { country_event = { id = charkuchin_kobold.4 } }
+			1 = { country_event = { id = charkuchin_kobold.5 } }
 		}
 	}
 }
