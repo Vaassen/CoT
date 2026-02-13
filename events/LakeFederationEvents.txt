@@ -4300,38 +4300,54 @@ country_event = {
 	
 	trigger = {
 		has_country_modifier = lake_federation_member
+		is_subject = no
 	}
 	
 	immediate = {
-		if = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.105 days = 4 random = 10 }
-		}
+		save_event_target_as = new_federation_leader
 	}
 	
 	option = {
 		name = lake.102.a
 		ai_chance = { factor = 100 }
-		if = {
+		every_country = {
 			limit = {
-				NOT = {
-					calc_true_if = {
-						all_known_country = {
-							check_variable = {
-								which = FederationPoints
-								which = PREV
-							}
-							is_subject = no
-						}
-						amount = 1
-					}
+				has_country_modifier = lake_federation_member
+				check_variable = {
+					which = FederationPoints
+					which = event_target:new_federation_leader
 				}
 				is_subject = no
 			}
-			set_country_flag = federation_leader
+			save_event_target_as = new_federation_leader
 		}
-		else = {
-			clr_country_flag = federation_leader
+	}
+	
+	after = {
+		if = {
+			limit = { 
+				NOT = {
+					event_target:new_federation_leader = { # check for change
+						has_country_flag = federation_leader
+					}
+					any_country = {
+						has_country_flag = federation_leader
+						is_variable_equal = { # check for tie -> no change if tie, current wins
+							which = FederationPoints
+							which = event_target:new_federation_leader
+						}
+					}
+				}
+			}
+			every_country = {
+				clr_country_flag = federation_leader
+			}
+			event_target:new_federation_leader = {
+				set_country_flag = federation_leader
+				country_event = {
+					id = lake.40
+				}
+			}
 		}
 	}
 }
@@ -4547,34 +4563,6 @@ country_event = {
 #		}
 #	}
 #}
-
-#Federation President Election Tie-Breaker (Current Wins)
-country_event = {
-	id = lake.105
-	title = lake.105.t
-	desc = lake.105.d
-	picture = STREET_SPEECH_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-	
-	option = {
-		name = lake.105.a
-		ai_chance = { factor = 100 }
-		if = {
-			limit = { any_known_country = { has_country_flag = federation_leader } }
-			clr_country_flag = federation_leader
-		}
-		else_if = {
-			limit = { NOT = { has_country_flag = federation_leader } }
-			set_country_flag = federation_leader
-		}
-		every_country = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.40 }
-		}
-	}
-}
 
 #[Root] Triumps Over Centaurs
 country_event = {
@@ -6289,23 +6277,8 @@ country_event = {
 		
 	option = {
 		name = lake.514.a
-		change_tag = J34
-		hidden_effect = { restore_country_name = yes }
-		if = {
-			limit = { is_subject = no }
-			lake_federation_gain_5_points = yes
-		}
-		add_prestige = 25
-		hidden_effect = {
-			5256 = {
-				remove_core = J11
-				remove_core = J12
-			}
-			5257 = {
-				remove_core = J11
-				remove_core = J12
-			}
-		}
+		
+		qarshtuluu_form_nation_effect = yes
 	}
 }
 
