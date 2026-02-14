@@ -1199,67 +1199,56 @@ L80_fealty_ai_acceptance_calc_effect = {
 			set_variable = { which = ai_accept_var_button_1 value = 0 }
 			set_variable = { which = ai_accept_var_button_1_pos value = 0 }
 			set_variable = { which = ai_accept_var_button_1_neg value = 0 }
-			set_variable = { which = zongjiPrestigious value = 0 }
-			set_variable = { which = custdip_ruler_dip value = 0 }
-			set_variable = { which = custdip_ruler_mil value = 0 }
 
 			##Positive
-			#Y25OurSize
+
+			change_variable = { which = ai_accept_var_button_1_neg value = -90 }
+
 			export_to_variable = {
 				which = custdip_our_development
 				value = total_development
 			}
-			change_variable = { which = ai_accept_var_button_1_pos which = custdip_our_development }
-			#Y25Prestigious
-			if = {
-				limit = { prestige = 50 }
-				export_to_variable = {
-					which = zongjiPrestigious
-					value = prestige
-				}
-				divide_variable = { which = zongjiPrestigious value = 4 }
-				change_variable = { which = ai_accept_var_button_1_pos which = zongjiPrestigious }
-			}
-			#Y25Assertive
-			if = {
-				limit = {
-					power_projection = 50
-				}
-				change_variable = { which = ai_accept_var_button_1_pos value = 15 }
-			}
-			#Y25Powerful
-			if = {
-				limit = {
-					army_strength = {
-						who = ROOT
-						value = 1.5
-					}
-				}
-				change_variable = { which = ai_accept_var_button_1_pos value = 15 }
-			}
-	
-			#Y25ImperialClaims
-			if = {
-				limit = {
-					government_rank = 3
-				}
-				change_variable = { which = ai_accept_var_button_1_pos value = 20 }
-			}
-	
-			#Ambiguous
-			#Y25DipRep
 			export_to_variable = {
-				which = custdip_diplo_rep
-				value = modifier:diplomatic_reputation
+				which = custdip_their_development
+				value = total_development
+				who = ROOT
 			}
-			multiply_variable = { which = custdip_diplo_rep value = 3 }
-			if = {
-				limit = { diplomatic_reputation = 0 }
-				change_variable = { which = ai_accept_var_button_1_pos which = custdip_diplo_rep }
-			}
-			else = {
-				change_variable = { which = ai_accept_var_button_1_neg which = custdip_diplo_rep }
-			}
+
+			# Temps for eco base math
+			set_variable = { which = custdip_rdev value = 0 }
+			set_variable = { which = custdip_tdev value = 0 }
+			set_variable = { which = custdip_num value = 0 }
+			set_variable = { which = custdip_den value = 0 }
+			set_variable = { which = custdip_size_score value = 0 }
+
+			# rDev = (10 + our_dev)/2
+			change_variable = { which = custdip_rdev which = custdip_our_development }
+			add_to_variable  = { which = custdip_rdev value = 10 }
+			divide_variable  = { which = custdip_rdev value = 2 }
+
+			# tDev = (10 + their_dev)/2
+			change_variable = { which = custdip_tdev which = custdip_their_development }
+			add_to_variable  = { which = custdip_tdev value = 10 }
+			divide_variable  = { which = custdip_tdev value = 2 }
+
+			# numerator = rDev + 1
+			change_variable = { which = custdip_num which = custdip_rdev }
+			add_to_variable  = { which = custdip_num value = 1 }
+
+			# denominator = (tDev^2)/2 + 1
+			change_variable = { which = custdip_den which = custdip_tdev }
+			multiply_variable = { which = custdip_den which = custdip_tdev } # square
+			divide_variable   = { which = custdip_den value = 2 }
+			add_to_variable   = { which = custdip_den value = 1 }
+
+			# size_score = 30 * numerator / denominator
+			change_variable = { which = custdip_size_score which = custdip_num }
+			divide_variable = { which = custdip_size_score which = custdip_den }
+			multiply_variable = { which = custdip_size_score value = 30 }
+
+			# This term is always positive, so put it in the positive bucket
+			change_variable = { which = ai_accept_var_button_1_pos which = custdip_size_score }
+
 			#Y25vassalizationReasons
 			export_to_variable = {
 				which = custdip_vassalization_reasons
@@ -1273,37 +1262,64 @@ L80_fealty_ai_acceptance_calc_effect = {
 			else = {
 				change_variable = { which = ai_accept_var_button_1_neg which = custdip_vassalization_reasons }
 			}
-	
-			#Negative
-			#Base acceptance
-			change_variable = { ai_accept_var_button_1_neg = -45 }
-			#Y25TheirSize
-			export_to_variable = {
-				which = custdip_their_development
-				value = total_development
-				who = ROOT
+
+			export_to_variable = { which = custdip_our_army_strength   value = army_strength }
+			export_to_variable = { which = custdip_their_army_strength value = army_strength who = ROOT }
+
+			set_variable = { which = custdip_mil_diff value = 0 }
+			set_variable = { which = custdip_mil_mod  value = 0 }
+
+			# diff = our - their
+			change_variable   = { which = custdip_mil_diff which = custdip_our_army_strength }
+			subtract_variable = { which = custdip_mil_diff which = custdip_their_army_strength }
+
+			if = {
+				limit = { check_variable = { which = custdip_mil_diff value = 0.5 } }
+				change_variable = { which = custdip_mil_mod value = 20 }
 			}
+			else = {
+				if = {
+					limit = { check_variable = { which = custdip_mil_diff value = -0.5 } }
+					change_variable = { which = custdip_mil_mod value = -40 }
+				}
+				else = {
+					# mil_mod = -10 + diff*60
+					change_variable   = { which = custdip_mil_mod which = custdip_mil_diff }
+					multiply_variable = { which = custdip_mil_mod value = 60 }
+					add_to_variable   = { which = custdip_mil_mod value = -10 }
+				}
+			}
+
+			# bucket into pos/neg
+			if = {
+				limit = { check_variable = { which = custdip_mil_mod value = 0.0001 } }
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_mil_mod }
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_mil_mod }
+			}
+
+			#Base acceptance
+			change_variable = { ai_accept_var_button_1_pos = 25 }
+
+			#Y25DipRep
+			export_to_variable = {
+				which = custdip_diplo_rep
+				value = modifier:diplomatic_reputation
+			}
+			multiply_variable = { which = custdip_diplo_rep value = 3 }
+			if = {
+				limit = { diplomatic_reputation = 0 }
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_diplo_rep }
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_diplo_rep }
+			}
+			
+			#Negative
+			
 			multiply_variable = { which = custdip_their_development value = -1 }
 			change_variable = { which = ai_accept_var_button_1_neg which = custdip_their_development }
-			#Y25TooBig
-			if = {
-				limit = {
-					ROOT = { total_development = 150 }
-				}
-				change_variable = { ai_accept_var_button_1_neg = -150 }
-			}
-			#Y25Weak
-			if = {
-				limit = {
-					NOT = {
-						army_strength = {
-							who = ROOT
-							value = 0.6
-						}
-					}
-				}
-				change_variable = { which = ai_accept_var_button_1_neg value = -45 }
-			}
 			change_variable = { which = ai_accept_var_button_1 which = ai_accept_var_button_1_pos }
 			change_variable = { which = ai_accept_var_button_1 which = ai_accept_var_button_1_neg }
 		}
