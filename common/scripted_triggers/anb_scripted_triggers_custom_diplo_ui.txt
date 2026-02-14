@@ -95,6 +95,7 @@ custdip_unique_button_trigger = {
 			custdip_unique_H85_trigger = yes
 			custdip_unique_B37_trigger = yes
 			custdip_unique_Y25_trigger = yes
+			custdip_unique_L80_trigger = yes
 			# has_global_flag = custdip_debug
 		}
 	}
@@ -180,6 +181,10 @@ custdip_unique_B37_trigger = {
 custdip_unique_Y25_trigger = {
 	tag = Y25
 	has_country_flag = request_fealty_activated
+}
+custdip_unique_L80_trigger = {
+	tag = L80
+	has_country_flag = L80_relorks_plea_flag
 }
 
 
@@ -1029,6 +1034,88 @@ Z97_spread_ravelian_estates_ai_acceptance_trigger = {
 			}
 		}
 
+		#Final check - passed as a string
+		$custom_trigger$
+	}
+}
+
+
+L80_fealty_ai_acceptance_trigger = {
+	variable_arithmetic_trigger = {
+		custom_tooltip = trigger_ai_accept_string
+		#Export all variables first - they're temporary, it's ok, and necessary
+		export_to_variable = { which = ai_accept_var value = trigger_value:always } #=0
+		export_to_variable = { which = temp_vassalisation_reasons value = modifier:accept_vassalization_reasons who = FROM with = THIS }
+		export_to_variable = { which = temp_diplomatic_reputation value = modifier:diplomatic_reputation who = FROM }
+		export_to_variable = { which = temp_dip value = DIP who = FROM }
+		export_to_variable = { which = temp_mil value = MIL who = FROM }
+		export_to_variable = { which = temp_our_dev value = total_development who = FROM }
+		export_to_variable = { which = temp_their_dev value = total_development who = ROOT }
+		export_to_variable = { which = temp_prestige value = prestige who = FROM }
+
+		#Y25Base
+		change_variable = { which = ai_accept_var value = -45 }
+		#Y25OurSize
+		change_variable = { which = ai_accept_var which = temp_our_dev }
+		#Y25TheirSize
+		subtract_variable = { which = ai_accept_var which = temp_their_dev }
+		#Y25vassalizationreasons
+		change_variable = { which = ai_accept_var which = temp_vassalisation_reasons }
+		#Y25dipRep
+		multiply_variable = { which = temp_diplomatic_reputation value = 2 }
+		change_variable = { which = ai_accept_var which = temp_diplomatic_reputation }
+		#Y25TooBig
+		if = {
+			limit = { ROOT = { total_development = 150 } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -150 }
+			}
+		}
+		#Y25Prestigious
+		if = {
+			limit = { FROM = { prestige = 50 } }
+			variable_arithmetic_trigger = {
+				multiply_variable = { which = temp_prestige value = 0.25 }
+				change_variable = { which = ai_accept_var which = temp_prestige }
+			}
+		}
+		#Y25Assertive
+		if = {
+			limit = { FROM = { power_projection = 50 } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 15 }
+			}
+		}
+		#Y25Powerful
+		if = {
+			limit = {
+				FROM = {
+					army_strength = {
+						who = ROOT
+						value = 1.5
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 15 }
+			}
+		}
+		#Y25Weak
+		if = {
+			limit = {
+				FROM = {
+					NOT = {
+						army_strength = {
+							who = ROOT
+							value = 0.6
+						}
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -45 }
+			}
+		}
 		#Final check - passed as a string
 		$custom_trigger$
 	}
