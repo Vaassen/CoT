@@ -5902,6 +5902,15 @@ on_heir_death = {
 			id = flavour_badakhan.200
 		}
 	}
+	if = {
+		limit = { has_country_flag = keladora_got }
+		add_casus_belli = {
+			target = F21
+			type = cb_restore_personal_union
+			months = 120
+		}
+		clr_country_flag = keladora_got
+	}
 
 
 	#Orenvalyam
@@ -13244,6 +13253,8 @@ on_five_year_pulse = {
 		flavor_umbral_covenant.204 #flavour events
 		aelantir_cannor_interaction.500	#Aelantir-Cannor Interactions - Overseas Shipments
 		shadow_pact.20 #Palace of the Sealed Tree Replastering
+		aakhetist.100 # aakhet_host failsafe
+		hyti.20 #hytiranyalen handler
 	}
 	ai_magic_xp_pulse = yes
 
@@ -14295,6 +14306,32 @@ on_five_year_pulse_3 = {
 				which = infernal_toll_timer value = 0
 			}
 			country_event = { id = infernal_events.200 }
+		}
+	}
+	
+	#Pachpalka
+	if = {
+		limit = { had_global_flag = { flag = pachpalka_on_the_move days = 1825 } } #Pachpalka moves 5 years after failing to be hired or being fired
+		clr_global_flag = pachpalka_on_the_move
+		move_pachpalka_effect = yes
+	}
+	if = {
+		limit = { had_country_flag = { flag = pachpalka_hired days = 7000 } } #a bit less than 20 years to make sure the events fire at max 20 years
+		if = {
+			limit = { has_country_flag = pachpalka_theologian_hired }
+			country_event = { id = insyaa_flavour.31 }
+		}
+		else_if = {
+			limit = { has_country_flag = pachpalka_trader_hired }
+			country_event = { id = insyaa_flavour.33 }
+		}
+		else_if = {
+			limit = { has_country_flag = pachpalka_artist_hired }
+			country_event = { id = insyaa_flavour.35 }
+		}
+		else_if = {
+			limit = { has_country_flag = pachpalka_philosopher_hired }
+			country_event = { id = insyaa_flavour.37 }
 		}
 	}
 }
@@ -21730,6 +21767,65 @@ on_raid_coast = {
 			}
 		}
 	}
+	if = {
+		limit = {
+			1081 = { owned_by = ROOT }
+		}
+		FROM = {
+			every_neighbor_province = {
+				limit = { has_province_modifier = slaves_raided }
+				ROOT = {
+					change_variable = {
+						which = theDriftcourtTriggerVariable
+						value = 1
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				1081 = { the_driftcourt_usage_trigger = yes }
+			}
+			if = {
+				limit = {
+					1081 = {
+						has_great_project = {
+							type = the_driftcourt
+							tier = 3
+						}
+					}
+				}
+				FROM = {
+					every_neighbor_province = {
+						limit = { has_province_modifier = slaves_raided }
+						add_claim = ROOT
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					1081 = {
+						has_great_project = {
+							type = the_driftcourt
+							tier = 1
+						}
+					}
+				}
+				FROM = {
+					every_neighbor_province = {
+						limit = { 
+							has_province_modifier = slaves_raided 
+							OR = {
+								continent = north_america
+								continent = south_america
+							}
+						}
+						add_claim = ROOT
+					}
+				}
+			}
+		}
+	}
 }
 
 # ROOT = Tag that captured the flagship, FROM = Tag that lost the flagship
@@ -23229,6 +23325,14 @@ on_pre_adm_advisor_fired = {
 	}
 	clr_country_flag = adm_advisor_recently_hired
 	clr_country_flag = I55_adm_advisor_project_flag
+	
+	#Pachpalka
+	if = {
+		limit = { has_country_flag = pachpalka_hired }
+		pachpalka_fired_from_court_effect = { type = theologian }
+		pachpalka_fired_from_court_effect = { type = artist }
+		pachpalka_fired_from_court_effect = { type = philosopher }
+	}
 }
 
 # this = country
@@ -23247,6 +23351,9 @@ on_pre_dip_advisor_fired = {
 	}
 	clr_country_flag = dip_advisor_recently_hired
 	clr_country_flag = I55_dip_advisor_project_flag
+	
+	#Pachpalka
+	pachpalka_fired_from_court_effect = { type = trader }
 }
 
 # this = country
@@ -23290,6 +23397,10 @@ on_post_adm_advisor_fired = {
 			has_government_mechanic = ashhana_blood_curse_mechanic
 		}
 		remove_country_modifier = ashhana_control_adm_advisor
+	}
+	if = {
+		limit = { has_country_flag = hyti_dreamer_employed } 
+		country_event = { id = hyti.2 }
 	}
 }
 
