@@ -1,0 +1,1793 @@
+namespace = volcanic_truth
+
+#VT Incident Handler Start
+province_event = {
+	id = volcanic_truth.1
+	title = volcanic_truth.1.title
+	desc = volcanic_truth.1.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		set_variable = {
+			which = vt_vote_option_1
+			value = 0
+		}
+		set_variable = {
+			which = vt_vote_option_2
+			value = 0
+		}
+		set_variable = {
+			which = vt_vote_option_3
+			value = 0
+		}
+
+		# This event will give every human player a chance to vote
+		# This way, even if someone converts to VT after the incident started, they can vote at the same time
+		province_event = {
+			id = volcanic_truth.2
+			days = 2738 # 7 years 183 days
+		}
+		# This event will give every AI player a chance to vote
+		# This way, even if someone converts to VT after the incident started, they can vote at the same time
+		province_event = {
+			id = volcanic_truth.3
+			days = 3138 # 8 years 218 days
+		}
+		# This event determines what actually happens, based on the current incident and the votes
+		# This way, even if someone converts to VT after the incident started, they see the result at the same time
+		province_event = {
+			id = volcanic_truth.4
+			days = 3650 # 10 years
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.1.a
+	}
+}
+
+# Give every human the chance to vote. 
+province_event = {
+	id = volcanic_truth.2
+	title = volcanic_truth.2.title
+	desc = volcanic_truth.2.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		every_country = {
+			limit = {
+				religion = volcanic_truth
+				ai = no
+			}
+			country_event = {
+				id = volcanic_truth.10 #Vote for 1, 2, or 3
+			}
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.2.a
+	}
+}
+
+# Give every AI the chance to vote
+province_event = {
+	id = volcanic_truth.3
+	title = volcanic_truth.3.title
+	desc = volcanic_truth.3.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		every_country = {
+			limit = {
+				religion = volcanic_truth
+				ai = yes
+			}
+			country_event = {
+				id = volcanic_truth.10 #Vote for 1, 2, or 3
+			}
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.3.a
+	}
+}
+
+# VT Incident Handler Start. Set the flags and such based on which incident and which option had the most votes, then
+# trigger an event for each VT country telling them what's happened
+province_event = {
+	id = volcanic_truth.4
+	title = volcanic_truth.4.title
+	desc = volcanic_truth.4.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		# Taga'ala Influence: No matter which option wins, vision is gained on all Coastal provinces and all provinces bordering
+		# a Coastal province in a few regions
+		if = {
+			limit = { has_global_flag = vt_incident_taga_ala_influence_active }
+			every_country = {
+				limit = { religion = volcanic_truth }
+				tagaala_mangroves_region = {
+					limit = { 
+						OR = {
+							has_port = yes
+							any_neighbor_province = {
+								has_port = yes
+							}
+						}
+					}
+					discover_country = PREV
+				}
+				horn_of_insyaa_region = {
+					limit = { 
+						OR = {
+							has_port = yes
+							any_neighbor_province = {
+								has_port = yes
+							}
+						}
+					}
+					discover_country = PREV
+				}
+				malogadin_coast_region = {
+					limit = { 
+						OR = {
+							has_port = yes
+							any_neighbor_province = {
+								has_port = yes
+							}
+						}
+					}
+					discover_country = PREV
+				}
+				west_insyaan_lowlands_region = {
+					limit = { 
+						OR = {
+							has_port = yes
+							any_neighbor_province = {
+								has_port = yes
+							}
+						}
+					}
+					discover_country = PREV
+				}				 
+			}
+		}
+
+		if = { # If option 1 received the same or more votes as options 2 and 3
+			limit = {
+				check_variable = {
+					which = vt_vote_option_1
+					which = vt_vote_option_2
+				}
+				check_variable = {
+					which = vt_vote_option_1
+					which = vt_vote_option_3
+				}
+			}
+			every_country = {
+				limit = { religion = volcanic_truth }
+				country_event = {
+					id = volcanic_truth.21
+				}
+			}
+			if = {
+				limit = { has_global_flag = vt_incident_organizational_crisis_active }
+				set_global_flag = vt_gold_from_admin_order
+				vt_set_incident_finished_flags = {
+					incident = organizational_crisis
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_taga_ala_influence_active }
+				set_global_flag = vt_taga_ala_trade_dip_order
+				vt_set_incident_finished_flags = {
+					incident = taga_ala_influence
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				insyaa_kiamoa_opening_provinces = {
+					remove_province_modifier = volcanic_truth_kiamoa_entrance_guard_marker #This is the one that just gives trade power to show on the map beforehand
+					if = {
+						limit = {
+							religion = volcanic_truth
+							owner = { religion = volcanic_truth }
+						}
+						add_permanent_province_modifier = {
+							name = volcanic_truth_kiamoa_entrance_guard
+							duration = -1
+						}
+					}
+					else = {
+						add_permanent_province_modifier = {
+							name = volcanic_truth_kiamoa_entrance_guard_inactive
+							duration = -1
+						}
+					}
+				}
+				every_country = {
+					limit = { religion = volcanic_truth }
+					add_stability = 1
+					add_country_modifier = {
+						name = vt_innward_focus
+						duration = 3650 # 10 years
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = weakening_of_the_kiamoa
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_the_molten_eternity_active }
+				set_global_flag = vt_molten_eternity_tolerance_estate_privilege_flag
+				vt_set_incident_finished_flags = {
+					incident = the_molten_eternity
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_mechanim_awakening_active }
+				set_global_flag = vt_mechanim_religious_diplomat_estate_privilege
+				every_country = {
+					limit = { religion = volcanic_truth }
+					medium_increase_of_mechanim_tolerance_effect = yes
+					add_country_modifier = {
+						name = vt_mechanim_cultural_impact
+						duration = -1
+					}
+					mechanim_accept_regional_culture_effect = yes
+				}
+				vt_set_incident_finished_flags = {
+					incident = mechanim_awakening
+				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
+			}
+		}
+		else_if = { # If option 2 receives the same or more votes as option 3
+			limit = {
+				check_variable = {
+					which = vt_vote_option_2
+					which = vt_vote_option_3
+				}
+			}
+			every_country = {
+				limit = { religion = volcanic_truth }
+				country_event = {
+					id = volcanic_truth.22
+				}
+			}
+			if = {
+				limit = { has_global_flag = vt_incident_organizational_crisis_active }
+				set_global_flag = vt_incident_organizational_crisis_lesser_sacred_sites
+				if = { # These are "triggered modifiers", but instead of using computationally expensive PTMs, there
+				# are two versions that get checked when the province owner, religion, or owner's religion changes
+					limit = {
+						6181 = { #Muatlaqua
+							owner = { religion = volcanic_truth }
+							religion = volcanic_truth
+						}
+					}
+					6181 = {
+						add_permanent_province_modifier = {
+							name = muatlaqua_sacred_site_lesser
+							duration = -1
+						}
+					}
+				}
+				else = {
+					6181 = {
+						add_permanent_province_modifier = {
+							name = muatlaqua_sacred_site_lesser_inactive
+							duration = -1
+						}
+					}
+				}
+				if = {
+					limit = {
+						6182 = { #Quahopilo
+							owner = { religion = volcanic_truth }
+							religion = volcanic_truth
+						}
+					}
+					6182 = {
+						add_permanent_province_modifier = {
+							name = quahopilo_sacred_site_lesser
+							duration = -1
+						}
+					}
+				}
+				else = {
+					6182 = {
+						add_permanent_province_modifier = {
+							name = quahopilo_sacred_site_lesser_inactive
+							duration = -1
+						}
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = organizational_crisis
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_taga_ala_influence_active }
+				set_global_flag = vt_taga_ala_convert_dip_order
+				vt_set_incident_finished_flags = {
+					incident = taga_ala_influence
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				insyaa_kiamoa_opening_provinces = {
+					remove_province_modifier = volcanic_truth_kiamoa_entrance_guard_marker #This is the one that just gives trade power to show on the map beforehand
+					if = {
+						limit = {
+							religion = volcanic_truth
+							owner = { religion = volcanic_truth }
+						}
+						add_permanent_province_modifier = {
+							name = volcanic_truth_kiamoa_entrance_guard
+							duration = -1
+						}
+					}
+					else = {
+						add_permanent_province_modifier = {
+							name = volcanic_truth_kiamoa_entrance_guard_inactive
+							duration = -1
+						}
+					}
+				}
+				if = {
+					limit = {
+						insyaa_kiamoa_opening_provinces = {
+							owner = {
+								religion = volcanic_truth
+							}
+						}
+					}
+					every_country = {
+						limit = { religion = volcanic_truth }
+						add_country_modifier = {
+							name = vt_may_recruit_explorers_and_conquistadors
+							duration = 9125 # 25 years
+						}
+						ringlet_sea_region = { 
+							discover_country = PREV
+						}
+						lower_yanshen_region = {
+							discover_country = PREV
+						}
+						north_yanshen_region = {
+							discover_country = PREV
+						}
+						sarmadfar_region = {
+							discover_country = PREV
+						}
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = weakening_of_the_kiamoa
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_the_molten_eternity_active }
+				every_country = {
+					limit = { religion = volcanic_truth }
+					add_country_modifier = {
+						name = vt_the_effort_of_the_orders
+						duration = -1
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = the_molten_eternity
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_mechanim_awakening_active }
+				set_global_flag = vt_mechanim_religious_merchant_estate_privilege
+				every_country = {
+					limit = { religion = volcanic_truth }
+					large_increase_of_mechanim_tolerance_effect = yes
+				}
+				for = {
+					amount = 12
+					effect = "
+						random_add_dormant_mechanim_kanolowele_effect = yes
+					"
+				}
+				vt_set_incident_finished_flags = {
+					incident = mechanim_awakening
+				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
+			}
+		}
+		else = { # If option 3 received the most votes
+			every_country = { # Tell every VT country that option 3 won
+				limit = { religion = volcanic_truth }
+				country_event = {
+					id = volcanic_truth.23
+				}
+			}
+			if = {
+				limit = { has_global_flag = vt_incident_organizational_crisis_active }
+				set_global_flag = vt_cuahu_teotlehu_reform_open
+				set_global_flag = vt_incident_organizational_crisis_greater_sacred_sites
+				if = { # These are "triggered modifiers", but instead of using computationally expensive PTMs, there
+				# are two versions that get checked when the province owner, religion, or owner's religion changes
+					limit = {
+						6181 = { #Muatlaqua
+							owner = {
+								religion = volcanic_truth
+								has_reform = cuahu_teotlehu_reform
+							}
+							religion = volcanic_truth
+						}
+					}
+					6181 = {
+						add_permanent_province_modifier = {
+							name = muatlaqua_sacred_site_greater
+							duration = -1
+						}
+					}
+				}
+				else = {
+					6181 = {
+						add_permanent_province_modifier = {
+							name = muatlaqua_sacred_site_greater_inactive
+							duration = -1
+						}
+					}
+				}
+				if = {
+					limit = {
+						6182 = { #Quahopilo
+							owner = {
+								religion = volcanic_truth
+								has_reform = cuahu_teotlehu_reform
+							}
+							religion = volcanic_truth
+						}
+					}
+					6182 = {
+						add_permanent_province_modifier = {
+							name = quahopilo_sacred_site_greater
+							duration = -1
+						}
+					}
+				}
+				else = {
+					6182 = {
+						add_permanent_province_modifier = {
+							name = quahopilo_sacred_site_greater_inactive
+							duration = -1
+						}
+					}
+				}
+				# The owner(s) of these provinces gets some choices if the owner doesn't have the
+				# Cuahu Teotlehu gov reform
+				# Note that if the same country owns both provinces, the event will try to fire twice
+				# on the same day but you cannot have the same event on the same day so only 1 will trigger
+				6181 = { #Muatlaqua
+					owner = {
+						country_event = {
+							id = volcanic_truth.101
+							days = 7
+						}
+					}
+				}
+				6182 = { #Quahopilo
+					owner = {
+						country_event = {
+							id = volcanic_truth.101
+							days = 7
+						}
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = organizational_crisis
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_taga_ala_influence_active }
+				set_global_flag = vt_taga_ala_war_dip_order
+				if = {
+					limit = { 6182 = { owner = { religion = volcanic_truth } } }
+					6182 = { # Quhopilo
+						owner = {
+							# gain cb_crusade against all taga’ala tags (base on culture group)
+							# These Holy War CBs like cb_crusade have a lot of prerequisites. I don't think it works if they are only heretics, for one
+							# Too finnicky, so just use claims
+							tagaala_mangroves_region = {
+								add_permanent_claim = PREV
+							}
+						}
+					}
+				}
+				# Gain some negative trade power in some nodes in these regions if you already have at least 5% trade share
+				every_country = {
+					limit = {
+						religion = volcanic_truth
+					}
+					if = {
+						limit = {
+							3572 = { # Fave Tasaai trade node
+								trade_share = {
+									country = PREV
+									share = 5
+								}
+							}
+						}
+						3572 = {
+							add_trade_modifier = {
+								who = PREV
+								duration = 3650 # 10 years
+								power = -15
+								key = SHUNNED_BY_TAGAALA
+							}
+						}
+					}
+					if = {
+						limit = {
+							6950 = { # Dunhiyulil trade node
+								trade_share = {
+									country = PREV
+									share = 5
+								}
+							}
+						}
+						6950 = {
+							add_trade_modifier = {
+								who = PREV
+								duration = 3650 # 10 years
+								power = -15
+								key = SHUNNED_BY_TAGAALA
+							}
+						}
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = taga_ala_influence
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				if = {
+					limit = {
+						insyaa_kiamoa_opening_provinces = {
+							owner = {
+								religion = volcanic_truth
+							}
+						}
+					}
+					every_country = {
+						limit = { religion = volcanic_truth }
+						add_country_modifier = {
+							name = vt_may_recruit_explorers_and_conquistadors
+							duration = 9125 # 25 years
+						}
+						ringlet_sea_region = { 
+							discover_country = PREV
+						}
+						lower_yanshen_region = {
+							discover_country = PREV
+						}
+						north_yanshen_region = {
+							discover_country = PREV
+						}
+						sarmadfar_region = {
+							discover_country = PREV
+						}
+						if = {
+							limit = {
+								insyaa_kiamoa_opening_provinces = {
+									owned_by = PREV
+								}
+							}
+							ringlet_sea_region = { 
+								add_claim = PREV
+							}
+							lower_yanshen_region = {
+								add_claim = PREV
+							}
+							north_yanshen_region = {
+								add_claim = PREV
+							}
+							sarmadfar_region = {
+								add_claim = PREV
+							}
+						}
+					}
+					vt_set_incident_finished_flags = {
+						incident = weakening_of_the_kiamoa
+					}
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_the_molten_eternity_active }
+				6919 = {
+					if = {
+						limit = { religion = volcanic_truth }
+						add_reform_center = volcanic_truth
+					}
+					else = {
+						set_global_flag = vt_convert_yahou_lapahtol_reward
+					}
+				}
+				vt_set_incident_finished_flags = {
+					incident = the_molten_eternity
+				}
+			}
+			else_if = {
+				limit = { has_global_flag = vt_incident_mechanim_awakening_active }
+				set_global_flag = vt_mechanim_religious_missionary_estate_privilege
+				set_global_flag = vt_mechanim_awakening_change_religion
+				every_country = {
+					limit = { religion = volcanic_truth }
+					small_decrease_of_mechanim_tolerance_effect = yes
+				}
+				vt_set_incident_finished_flags = {
+					incident = mechanim_awakening
+				}
+				clr_global_flag = vt_arrival_of_the_mechanim_flag
+			}
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.4.a
+	}
+}
+
+#Start Incident Show Player
+country_event = {
+	id = volcanic_truth.5
+	title = volcanic_truth.5.title
+	desc = {
+		trigger = { has_global_flag = vt_incident_organizational_crisis_active }
+		desc = volcanic_truth.5.desc.1
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_taga_ala_influence_active }
+		desc = volcanic_truth.5.desc.2
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_mass_eruption_active }
+		desc = volcanic_truth.5.desc.3
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+		desc = volcanic_truth.5.desc.4
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_the_molten_eternity_active }
+		desc = volcanic_truth.5.desc.5
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+		desc = volcanic_truth.5.desc.6
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_mechanim_awakening_active }
+		desc = volcanic_truth.5.desc.7
+	}
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.5.a
+		add_stability = -1
+	}
+}
+
+# VT Incident Voting Event
+# Every VT country gets this - humans first, then AI a while later
+country_event = {
+	id = volcanic_truth.10
+	title = volcanic_truth.10.title
+	desc = {
+		trigger = { has_global_flag = vt_incident_organizational_crisis_active }
+		desc = volcanic_truth.10.desc.1
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_taga_ala_influence_active }
+		desc = volcanic_truth.10.desc.2
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_mass_eruption_active }
+		desc = volcanic_truth.10.desc.3
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+		desc = volcanic_truth.10.desc.4
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_the_molten_eternity_active }
+		desc = volcanic_truth.10.desc.5
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+		desc = volcanic_truth.10.desc.6
+	}
+	desc = {
+		trigger = { has_global_flag = vt_incident_mechanim_awakening_active }
+		desc = volcanic_truth.10.desc.7
+	}
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.10.a
+		custom_tooltip = vt_101a_tt
+		custom_tooltip = vt_incident_results_tt_a
+		hidden_effect = {
+			set_country_flag = vt_country_voted_option_1
+			6162 = {
+				change_variable = {
+					which = vt_vote_option_1
+					value = 1
+				}
+			}
+
+			if = {
+				limit = {
+					ai = no
+					diplomatic_reputation = 1 # We don't want negative dip rep reducing your vote
+				}
+				volcanic_truth_player_diplomatic_voting = { vote = 1 }
+			}
+
+			if = {
+				limit = { vt_is_adm_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = adm_order
+					order_num = 1
+				}
+			}
+			else_if = {
+				limit = { vt_is_dip_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = dip_order
+					order_num = 1
+				}
+			}
+			else_if = {
+				limit = { vt_is_mil_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = mil_order
+					order_num = 1
+				}
+			}
+		}
+		decrease_volcanic_truth_isolation_level = yes
+
+		# The AI is more likely to vote for the option that their human friend has voted for
+		ai_chance = {
+			factor = 33
+			modifier = {
+				factor = 1.5
+				government = republic
+			}
+			modifier = {
+				factor = 1.5
+				any_ally = {
+					ai = no
+					religion = volcanic_truth
+					has_country_flag = vt_country_voted_option_1
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 100
+					}
+					has_country_flag = vt_country_voted_option_1
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 150
+					}
+					has_country_flag = vt_country_voted_option_1
+				}
+			}
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.10.b
+		custom_tooltip = vt_101b_tt
+		custom_tooltip = vt_incident_results_tt_b
+		hidden_effect = {
+			set_country_flag = vt_country_voted_option_2
+			6162 = {
+				change_variable = {
+					which = vt_vote_option_2
+					value = 1
+				}
+			}
+
+			if = {
+				limit = {
+					ai = no
+					diplomatic_reputation = 1 # We don't want negative dip rep reducing your vote
+				}
+				volcanic_truth_player_diplomatic_voting = { vote = 2 }
+			}
+
+			if = {
+				limit = { vt_is_adm_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = adm_order
+					order_num = 2
+				}
+			}
+			else_if = {
+				limit = { vt_is_dip_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = dip_order
+					order_num = 2
+				}
+			}
+			else_if = {
+				limit = { vt_is_mil_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = mil_order
+					order_num = 2
+				}
+			}
+		}
+		move_to_center_volcanic_truth_isolation_level = yes
+
+		# The AI is more likely to vote for the option that their human friend has voted for
+		ai_chance = {
+			factor = 33
+			modifier = {
+				factor = 1.5
+				government = monarchy
+			}
+			modifier = {
+				factor = 1.5
+				any_ally = {
+					ai = no
+					religion = volcanic_truth
+					has_country_flag = vt_country_voted_option_2
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 100
+					}
+					has_country_flag = vt_country_voted_option_2
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 150
+					}
+					has_country_flag = vt_country_voted_option_2
+				}
+			}
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.10.c
+		custom_tooltip = vt_101c_tt
+		custom_tooltip = vt_incident_results_tt_c
+		hidden_effect = {
+			set_country_flag = vt_country_voted_option_3
+			6162 = {
+				change_variable = {
+					which = vt_vote_option_3
+					value = 1
+				}
+			}
+
+			if = {
+				limit = {
+					ai = no
+					diplomatic_reputation = 1 # We don't want negative dip rep reducing your vote
+				}
+				volcanic_truth_player_diplomatic_voting = { vote = 3 }
+			}
+
+			if = {
+				limit = { vt_is_adm_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = adm_order
+					order_num = 3
+				}
+			}
+			else_if = {
+				limit = { vt_is_dip_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = dip_order
+					order_num = 3
+				}
+			}
+			else_if = {
+				limit = { vt_is_mil_incident = yes }
+				volcanic_truth_set_order = {
+					order_type = mil_order
+					order_num = 3
+				}
+			}
+		}
+		increase_volcanic_truth_isolation_level = yes
+
+		# The AI is more likely to vote for the option that their human friend has voted for
+		ai_chance = {
+			factor = 33
+			modifier = {
+				factor = 3
+				government = theocracy
+			}
+			modifier = {
+				factor = 1.5
+				any_ally = {
+					ai = no
+					religion = volcanic_truth
+					has_country_flag = vt_country_voted_option_3
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 100
+					}
+					has_country_flag = vt_country_voted_option_3
+				}
+			}
+			modifier = {
+				factor = 1.5
+				any_known_country = {
+					ai = no
+					religion = volcanic_truth
+					has_opinion = {
+						who = ROOT
+						value = 150
+					}
+					has_country_flag = vt_country_voted_option_3
+				}
+			}
+		}
+	}
+}
+
+#VT Option 1
+country_event = {
+	id = volcanic_truth.21
+	title = volcanic_truth.21.title
+	desc = volcanic_truth.21.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.21.a
+		add_adm_power = 50
+		custom_tooltip = vt_incident_results_tt_a
+		custom_tooltip = vt_end_all_active_incidents_tt
+		hidden_effect = {
+			volcanic_truth_clear_vote_flags = yes
+			end_all_volcanic_truth_incidents = yes
+		}
+	}
+}
+
+#VT Option 2
+country_event = {
+	id = volcanic_truth.22
+	title = volcanic_truth.22.title
+	desc = volcanic_truth.22.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.22.a
+		add_dip_power = 50
+		custom_tooltip = vt_incident_results_tt_b
+		custom_tooltip = vt_end_all_active_incidents_tt
+		hidden_effect = {
+			volcanic_truth_clear_vote_flags = yes
+			end_all_volcanic_truth_incidents = yes
+		}
+	}
+}
+
+#VT Option 3
+country_event = {
+	id = volcanic_truth.23
+	title = volcanic_truth.23.title
+	desc = volcanic_truth.23.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.23.a
+		add_mil_power = 50
+		custom_tooltip = vt_incident_results_tt_c
+		custom_tooltip = vt_end_all_active_incidents_tt
+		hidden_effect = {
+			volcanic_truth_clear_vote_flags = yes
+			end_all_volcanic_truth_incidents = yes
+		}
+	}
+}
+
+# Ultimatum after Organisational Crisis incident
+country_event = {
+	id = volcanic_truth.101
+	title = volcanic_truth.101.title
+	desc = volcanic_truth.101.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_reform = cuahu_teotlehu_reform }
+		OR = { # Make sure you still own at least 1 of them. They might get stolen in the 7 days since this event triggers
+		# If that happens, well, I won't cover every edge case. If you had both and lose both, this might fire for no-one
+			owns = 6181
+			owns = 6182
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.101.a
+		ai_chance = {
+			factor = 1
+		}
+		if = {
+			limit = {
+				owns = 6181 #Muatlaqua
+			}
+			6181 = { cede_province = N22 } #Xihatlele
+		}
+		if = {
+			limit = {
+				owns = 6182
+			}
+			6182 = { cede_province = N01 } #Maulu
+		}
+	}
+
+	option = { 
+		name = volcanic_truth.101.b
+		ai_chance = {
+			factor = 1
+		}
+		change_government = theocracy
+		if = {
+			limit = { NOT = { religion = volcanic_truth } }
+			change_religion = volcanic_truth
+			volcanic_truth_set_order = {
+				order_type = adm
+				order_num = 3
+			}
+		}
+		add_government_reform = cuahu_teotlehu_reform
+		add_stability = -6
+	}
+
+	option = { 
+		name = volcanic_truth.101.c
+		ai_chance = {
+			factor = 3 # Make the AI favour keeping the provinces and its government form
+		}
+		custom_tooltip = volcanic_truth.101.c.tt
+		hidden_effect = {
+			every_known_country = {
+				limit = { religion = volcanic_truth }
+				add_aggressive_expansion = {
+					who = ROOT
+					value = 50
+					apply_calc = no
+				}
+			}
+		}
+	}
+}
+
+# On Organisational Crisis incident start, a non-Volcanic Truth country is informed about these provinces
+country_event = {
+	id = volcanic_truth.102
+	title = volcanic_truth.102.title
+	desc = volcanic_truth.102.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { has_reform = cuahu_teotlehu_reform }
+		#This is to make sure if one country has both provinces they only get this event once
+		NOT = { has_country_flag = volcanic_truth_102_once_flag }
+		NOT = { religion = volcanic_truth }
+		ai = no
+	}
+
+	# Since these events trigger on the same day, I think using the immediate and after like
+	# this with the flags will work
+	immediate = {
+		set_country_flag = volcanic_truth_102_once_flag
+	}
+
+	after = {
+		clr_country_flag = volcanic_truth_102_once_flag
+	}
+
+	# Just a warning to the player
+	option = { 
+		name = volcanic_truth.102.a
+	}
+}
+
+# Explaining you need to conquer all taga'ala provinces for a reward
+country_event = {
+	id = volcanic_truth.200
+	title = volcanic_truth.200.title
+	desc = volcanic_truth.200.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.200.a
+		custom_tooltip = volcanic_truth.200.a.tt
+		add_prestige = 10
+	}
+}
+
+# Reward for conquering all taga'ala provinces
+country_event = {
+	id = volcanic_truth.201
+	title = volcanic_truth.201.title
+	desc = volcanic_truth.201.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.201.a
+		add_stability = 2
+		add_adm_power = 200
+		add_dip_power = 200
+		add_mil_power = 200
+	}
+}
+
+# Choose a random bad effect for the volcano erupting
+country_event = {
+	id = volcanic_truth.300
+	title = volcanic_truth.300.title
+	desc = volcanic_truth.300.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = {
+		name = volcanic_truth.300.a
+
+		vt_random_eruption_effect = yes
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 1
+country_event = {
+	id = volcanic_truth.301
+	title = volcanic_truth.301.title
+	desc = volcanic_truth.301.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = {
+		name = volcanic_truth.301.a
+		ai_chance = {
+			factor = 1
+		}
+
+		kill_heir = {}
+		remove_consort = yes
+		kill_ruler = yes
+		define_ruler = {
+			claim = 95
+			min_age = 18
+			max_age = 30
+		}
+	}
+
+	option = {
+		name = volcanic_truth.301.b
+		ai_chance = {
+			factor = 3
+		}
+		random_list = {
+			33 = {
+				change_adm = -1
+			}
+			33 = {
+				change_dip = -1
+			}
+			33 = {
+				change_mil = -1
+			}
+		}
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 2
+country_event = {
+	id = volcanic_truth.302
+	title = volcanic_truth.302.title
+	desc = volcanic_truth.302.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = {
+		name = volcanic_truth.302.a
+		ai_chance = {
+			factor = 1
+		}
+
+		add_stability = -2
+		random_list = {
+			50 = {
+				trigger = {	NOT = { government = monarchy } }
+				change_government = monarchy
+			}
+			50 = {
+				trigger = {	NOT = { government = republic } }
+				change_government = republic
+			}
+			50 = {
+				trigger = {	NOT = { government = theocracy } }
+				change_government = theocracy
+			}
+		}
+	}
+
+	option = {
+		name = volcanic_truth.302.b
+		ai_chance = {
+			factor = 3
+		}
+		
+		add_legitimacy_equivalent = { amount = -60 republican_tradition = -30 }
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 3
+country_event = {
+	id = volcanic_truth.303
+	title = volcanic_truth.303.title
+	desc = volcanic_truth.303.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					has_owner_culture = no
+				}
+				save_event_target_as = vtTempNonPrimaryCulture
+			}
+			random_owned_province = {
+				limit = {
+					has_owner_culture = yes
+				}
+				save_event_target_as = vtTempPrimaryCulture1
+			}
+			random_owned_province = {
+				limit = {
+					has_owner_culture = yes
+					NOT = { province_id = event_target:vtTempPrimaryCulture1 }
+				}
+				save_event_target_as = vtTempPrimaryCulture2
+			}
+			if = {
+				limit = {
+					has_saved_event_target = vtTempPrimaryCulture2
+				}
+				random_owned_province = {
+					limit = {
+						has_owner_culture = yes
+						NOT = { province_id = event_target:vtTempPrimaryCulture1 }
+						NOT = { province_id = event_target:vtTempPrimaryCulture2 }
+					}
+					save_event_target_as = vtTempPrimaryCulture3
+				}
+			}
+		}
+	}
+
+	option = {
+		name = volcanic_truth.303.a
+		ai_chance = {
+			factor = 1
+		}
+
+		change_primary_culture = event_target:vtTempNonPrimaryCulture
+	}
+
+	option = {
+		name = volcanic_truth.303.b
+		ai_chance = {
+			factor = 3
+		}
+
+		event_target:vtTempPrimaryCulture1 = {
+			change_culture = event_target:vtTempNonPrimaryCulture
+		}
+		if = {
+			limit = { has_saved_event_target = vtTempPrimaryCulture2 }
+			event_target:vtTempPrimaryCulture2 = {
+				change_culture = event_target:vtTempNonPrimaryCulture
+			}
+		}
+		if = {
+			limit = { has_saved_event_target = vtTempPrimaryCulture3 }
+			event_target:vtTempPrimaryCulture3 = {
+				change_culture = event_target:vtTempNonPrimaryCulture
+			}
+		}
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 4
+country_event = {
+	id = volcanic_truth.304
+	title = volcanic_truth.304.title
+	desc = volcanic_truth.304.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					has_owner_religion = yes
+				}
+				save_event_target_as = vtTempPrimaryReligion1
+			}
+			random_owned_province = {
+				limit = {
+					has_owner_religion = yes
+					NOT = { province_id = event_target:vtTempPrimaryReligion1 }
+				}
+				save_event_target_as = vtTempPrimaryReligion2
+			}
+			if = {
+				limit = {
+					has_saved_event_target = vtTempPrimaryReligion2
+				}
+				random_owned_province = {
+					limit = {
+						has_owner_religion = yes
+						NOT = { province_id = event_target:vtTempPrimaryReligion1 }
+						NOT = { province_id = event_target:vtTempPrimaryReligion2 }
+					}
+					save_event_target_as = vtTempPrimaryReligion3
+				}
+			}
+		}
+	}
+
+	option = {
+		name = volcanic_truth.304.a
+		ai_chance = {
+			factor = 1
+		}
+
+		change_religion = molten_eternity
+		add_stability = -1
+	}
+
+	option = {
+		name = volcanic_truth.304.b
+		ai_chance = {
+			factor = 3
+		}
+
+		event_target:vtTempPrimaryReligion1 = {
+			change_religion = molten_eternity
+		}
+		if = {
+			limit = { has_saved_event_target = vtTempPrimaryReligion2 }
+			event_target:vtTempPrimaryReligion2 = {
+				change_religion = molten_eternity
+			}
+		}
+		if = {
+			limit = { has_saved_event_target = vtTempPrimaryReligion3 }
+			event_target:vtTempPrimaryReligion3 = {
+				change_religion = molten_eternity
+			}
+		}
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 5
+country_event = {
+	id = volcanic_truth.305
+	title = volcanic_truth.305.title
+	desc = volcanic_truth.305.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = {
+		name = volcanic_truth.305.a
+		ai_chance = {
+			factor = 1
+		}
+
+		kill_leader = { type = admiral }
+		kill_leader = { type = admiral }
+		kill_leader = { type = admiral }
+		kill_leader = { type = general }
+		kill_leader = { type = general }
+		kill_leader = { type = general }
+	}
+
+	option = {
+		name = volcanic_truth.305.b
+		ai_chance = {
+			factor = 3
+		}
+
+		add_army_tradition = -50
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 6
+country_event = {
+	id = volcanic_truth.306
+	title = volcanic_truth.306.title
+	desc = volcanic_truth.306.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	immediate = { # We need to check each vassal for flag 6 - do one here, then keep triggering events
+		hidden_effect = {
+			random_subject_country = {
+				limit = {
+					OR = {
+						is_subject_of_type = march
+						is_subject_of_type = vassal
+					}
+				}
+				save_event_target_as = vt_twin_gods_vassal
+				set_country_flag = vt_twin_gods_vassal_keep_or_not
+			}
+		}
+	}
+
+	option = {
+		name = volcanic_truth.306.a
+		ai_chance = {
+			factor = 1
+		}
+
+		free_vassal = event_target:vt_twin_gods_vassal
+		event_target:vt_twin_gods_vassal = {
+			clr_country_flag = vt_twin_gods_vassal_keep_or_not
+		}
+	}
+
+	option = {
+		name = volcanic_truth.306.b
+		ai_chance = {
+			factor = 2
+		}
+
+		event_target:vt_twin_gods_vassal = {
+			add_liberty_desire = 50
+		}
+	}
+
+	after = {
+		if = { #If we have another vassal or march that hasn't been chosen, fire another event
+			limit = {
+				any_subject_country = {
+					OR = {
+						is_subject_of_type = march
+						is_subject_of_type = vassal
+					}
+					NOT = { has_country_flag = vt_twin_gods_vassal_keep_or_not }
+				}
+			}
+			set_variable = {
+				vt_twin_gods_vassals_checked = 1
+			}
+			country_event = {
+				id = volcanic_truth.311 # Next vassal
+			}
+		}
+		else = {
+			every_subject_country = {
+				limit = {
+					has_country_flag = vt_twin_gods_vassal_keep_or_not
+				}
+				clr_country_flag = vt_twin_gods_vassal_keep_or_not
+			} 
+		}
+		
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+# The effects from the random effect from the Twin Gods' eruption - 7
+country_event = {
+	id = volcanic_truth.307
+	title = volcanic_truth.307.title
+	desc = volcanic_truth.307.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = {
+		name = volcanic_truth.307.a
+		
+		add_stability = -1
+		custom_tooltip = volcanic_truth.307.a.tt
+		tooltip = { add_unrest = 5 }
+
+		hidden_effect = {
+			every_owned_province = {
+				add_unrest = 5
+			}
+		}
+	}
+	
+	after = {
+		country_event = {
+			id = volcanic_truth.308
+			days = 365
+		}
+	}
+}
+
+#VT Incident Handler End Twin Gods
+country_event = {
+	id = volcanic_truth.308
+	title = volcanic_truth.308.title
+	desc = volcanic_truth.308.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = { religion = volcanic_truth }
+
+	option = { 
+		name = volcanic_truth.308.a
+
+		add_stability = 1
+		custom_tooltip = vt_end_incident_volcanic_mass_eruption_tt
+		hidden_effect = {
+			end_incident = incident_volcanic_mass_eruption_of_the_twin_gods
+			vt_set_incident_finished_flags = {
+				incident = mass_eruption
+			}
+			every_subject_country = {
+				clr_country_flag = vt_twin_gods_vassal_keep_or_not
+			}
+		}
+	}
+}
+
+# Actual eruption that allows the incident to start
+province_event = {
+	id = volcanic_truth.310
+	title = volcanic_truth.310.title
+	desc = volcanic_truth.310.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	fire_only_once = yes
+	hidden = yes
+
+	immediate = {
+		set_global_flag = vt_twin_god_eruption_flag
+	}
+
+	option = { 
+		name = volcanic_truth.310.a
+	}
+}
+
+# Keep checking vassals to see if you release them or increase LD
+country_event = {
+	id = volcanic_truth.311
+	title = volcanic_truth.311.title
+	desc = volcanic_truth.311.desc
+	picture = BAD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = { # We need to check each vassal for flag 6 - do one here, then keep triggering events
+		hidden_effect = {
+			random_subject_country = {
+				limit = {
+					OR = {
+						is_subject_of_type = march
+						is_subject_of_type = vassal
+					}
+					NOT = { has_country_flag = vt_twin_gods_vassal_keep_or_not }
+				}
+				save_event_target_as = vt_twin_gods_vassal
+				set_country_flag = vt_twin_gods_vassal_keep_or_not
+			}
+		}
+	}
+
+	after = {
+		change_variable = {
+			vt_twin_gods_vassals_checked = 1
+		}
+		if = { #If we have another vassal or march that hasn't been chosen, fire another event
+			limit = {
+				any_subject_country = {
+					OR = {
+						is_subject_of_type = march
+						is_subject_of_type = vassal
+					}
+					NOT = { has_country_flag = vt_twin_gods_vassal_keep_or_not }
+				}
+				# Only do this for 3 vassals
+				NOT = {
+					check_variable = {
+						vt_twin_gods_vassals_checked = 3
+					}
+				}
+			}
+			country_event = {
+				id = volcanic_truth.311 # Next vassal
+				days = 1
+			}
+		}
+		else = {
+			every_subject_country = {
+				clr_country_flag = vt_twin_gods_vassal_keep_or_not
+			}
+		}
+	}
+
+	option = { #Release the vassal
+		name = volcanic_truth.311.a
+		ai_chance = {
+			factor = 1
+		}
+		
+		free_vassal = event_target:vt_twin_gods_vassal
+		event_target:vt_twin_gods_vassal = {
+			clr_country_flag = vt_twin_gods_vassal_keep_or_not
+		}
+	}
+
+	option = { #Keep them
+		name = volcanic_truth.311.b
+		ai_chance = {
+			factor = 2
+		}
+		
+		event_target:vt_twin_gods_vassal = {
+			add_liberty_desire = 50
+		}
+	}
+}
