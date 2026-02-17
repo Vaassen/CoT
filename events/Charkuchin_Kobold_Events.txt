@@ -23,7 +23,7 @@ country_event = {
 				}
 			}
 			set_country_flag = charkuchin_kobold_start
-			set_country_flag = hinuibird_migration_end_flag # Used to trigger the disaster after 12 years
+			REB = { set_country_flag = hinuibird_migration_end_flag } # Used to trigger the disaster after 12 years and keep it in sync among all Insyaan kobolds
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_charkuchar_range_colony_count = 0 }
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_lowlands_colony_count = 0 }
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_titanoflora_colony_count = 0 }
@@ -139,13 +139,33 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			clr_country_flag = hinuibird_migration_start_flag
+			# These variables will be used in the disaster tooltip to show when it will end
+			REB = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = hinuibird_migration_start_flag }
+					}
+					export_to_variable = {
+						which = hinuibird_disaster_year_end
+						value = trigger_value:is_year
+					}
+					change_variable = {
+						which = hinuibird_disaster_year_end
+						value = 4
+					}
+					export_to_variable = {
+						which = hinuibird_disaster_month
+						value = trigger_value:is_month
+					}
+					set_country_flag = hinuibird_migration_start_flag
+					clr_country_flag = hinuibird_migration_end_flag
+				}
+			}
 			# Supply costs are tripled
 			multiply_variable = {
 				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
 				value = 3
 			}
-			set_country_flag = hinuibird_migration_start_flag
 		}
 	}
 
@@ -343,13 +363,24 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			clr_country_flag = hinuibird_migration_end_flag
+			REB = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = hinuibird_migration_end_flag }
+					}
+					set_country_flag = hinuibird_migration_end_flag
+					country_event = { # This delay in clearing the hinuibird_migration_start_flag is so every country gets the chance to end the disaster
+					# If it's cleared immediately, my testing shows only the first country that checks their disaster will actually end it
+						id = charkuchin_kobold.18
+						days = 2
+					}
+				}
+			}
 			# Supply costs go back to normal
 			divide_variable = {
 				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
 				value = 3
 			}
-			set_country_flag = hinuibird_migration_end_flag
 		}
 	}
 
@@ -378,13 +409,13 @@ country_event = {
 				value = 0.1
 			}
 		}
+		NOT = { # This keeps it to every 4 months
+			has_country_modifier = charkuchin_kobold_decolonisation_cooldown
+		}
 		any_owned_province = {
 			is_city = yes
 			NOT = { has_charkuchin_kobold_citadel = yes }
 			NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
-		}
-		NOT = { # This keeps it to every 4 months
-			has_country_modifier = charkuchin_kobold_decolonisation_cooldown
 		}
 	}
 
@@ -392,8 +423,8 @@ country_event = {
 		hidden_effect = {
 			add_country_modifier = {
 				name = charkuchin_kobold_decolonisation_cooldown
-				duration = 122
-				# hidden = yes
+				duration = 122 # 4 months
+				hidden = yes
 			}
 		}
 	}
@@ -415,9 +446,7 @@ country_event = {
 							region = west_insyaan_lowlands_region
 							region = titanoflora_valley_region
 							region = titanoflora_savanna_region
-							region = titanoflora_riverlands_region
-							region = titanoflora_lakelands_region
-							region = titanoflora_forests_region
+							superregion = hinuilands_superregion
 						}
 					}
 				}
@@ -430,9 +459,7 @@ country_event = {
 							region = west_insyaan_lowlands_region
 							region = titanoflora_valley_region
 							region = titanoflora_savanna_region
-							region = titanoflora_riverlands_region
-							region = titanoflora_lakelands_region
-							region = titanoflora_forests_region
+							superregion = hinuilands_superregion
 						}
 					}
 					if = {
@@ -513,13 +540,13 @@ country_event = {
 			monarchy = { add_government_reform = feudalism_reform }
 			republic = { add_government_reform = oligarchy_reform }
 			theocracy = { add_government_reform = monastic_order_reform }
-			tribal = { add_government_reform = tribal_kingdom }
-			native = { add_government_reform = native_chiefdom_reform }
 		}
 
 		hidden_effect = {
-			clr_country_flag = hinuibird_migration_end_flag
-			clr_country_flag = hinuibird_migration_start_flag
+			REB = {
+				clr_country_flag = hinuibird_migration_end_flag
+				clr_country_flag = hinuibird_migration_start_flag
+			}
 			regenerate_government_mechanics = yes
 			end_disaster = hinuibird_migration_disaster
 		}
@@ -691,10 +718,10 @@ country_event = {
 	hidden = yes
 
 	trigger = {
+		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
 		any_owned_province = {
 			NOT = { has_charkuchin_kobold_citadel = yes }
 		}
-		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
 	}
 
 	option = {
@@ -704,6 +731,25 @@ country_event = {
 			1 = { country_event = { id = charkuchin_kobold.3 } }
 			1 = { country_event = { id = charkuchin_kobold.4 } }
 			1 = { country_event = { id = charkuchin_kobold.5 } }
+		}
+	}
+}
+
+# A delayed clearing of the flag so every country has the time to end the disaster
+country_event = {
+	id = charkuchin_kobold.18
+	title = charkuchin_kobold.18.title
+	desc = charkuchin_kobold.18.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = charkuchin_kobold.18.a
+
+		REB = {
+			clr_country_flag = hinuibird_migration_start_flag
 		}
 	}
 }
