@@ -1,4 +1,4 @@
-name="Anbennar-PublicFork"
+name="Anbennar-LocalMod"
 tags={
 	"Alternative History"
 	"Total Conversion"
@@ -29,4 +29,4 @@ replace_path="gfx/loadingscreens"
 replace_path="tutorial"
 picture="anbennar.jpg"
 supported_version="v1.37.5.0"
-path="mod/Anbennar-PublicFork"
+path="mod/AnbennarLocalMod"
