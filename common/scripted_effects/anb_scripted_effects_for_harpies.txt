@@ -90,6 +90,7 @@ harpy_roost_se_add_free_flourishing_roost_to_province = {
 		add_permanent_province_modifier = { name = harpy_roost_mod_roost_flourishing_active duration = -1 }
 		harpy_roost_se_roost_terrain_offset_add = yes
 		hidden_effect = { set_province_flag = harpy_roost_present }
+		harpy_roost_add_lvl2_bonus_mods = yes
 	}
 }
 
@@ -207,7 +208,7 @@ harpy_roost_se_add_roost_tier_3 = {
 ### Backend stuff, you probably do not need to look at anything below this line, but feel free to do so if you're curious.
 # Country scope
 harpy_roost_se_recalculate = {
-	custom_tooltip = harpy_roost_se_recalculate_tt
+	#custom_tooltip = harpy_roost_se_recalculate_tt		I think player shouldn't see this at all
 	hidden_effect = {
 		set_variable = { which = harpy_roost_var_next_threshold value = 0 }
 		subtract_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required }
@@ -309,6 +310,34 @@ harpy_roost_se_add_roost_tier_2_free = {
 	}
 }
 
+harpy_roost_build_tier_2_free_nocap = {	#since this is for missions and stuff, gets a compact tooltip
+	hidden_effect = { owner = { change_variable = { which = harpy_roost_var_free_roosts value = 1 } } }
+	custom_tooltip = harpy_roost_se_build_free_flourishing_roost_to_province_tt
+	hidden_effect = {
+		if = {
+			limit = { NOT = { has_province_flag = harpy_roost_present } }
+			add_province_modifier = { name = harpy_roost_mod_roost_fledgling duration = -1 }
+			set_province_flag = harpy_roost_present
+		}
+	}
+	if = { limit = { harpy_roost_st_has_non_fledgling_roost = yes }
+		hidden_effect = { owner = { subtract_variable = { which = harpy_roost_var_next_threshold which = harpy_roost_var_dev_required } } }
+		custom_tooltip = harpy_roost_se_add_free_flourishing_roost_to_province_tt_already_has_roost
+	}
+	hidden_effect = {
+		if = {
+			limit = { harpy_roost_st_has_non_fledgling_roost = no }
+			add_permanent_province_modifier = { name = harpy_roost_under_construction duration = -1 }
+			set_province_flag = harpy_roost_province_flag_under_construction
+			if = { limit = { NOT = { culture_group = harpy } }
+				add_harpy_minority_size_effect = yes
+			}
+			FROM = { set_country_flag = harpy_roost_country_flag_roost_construction_ongoing }
+			add_province_triggered_modifier = harpy_roost_ptm_mod_initial_setup_randomizer
+		}
+	}
+}
+
 # Called in harpy_events.11.
 harpy_roost_se_add_roost_tier_2_complete = {
 	add_permanent_province_modifier = { name = harpy_roost_mod_roost_flourishing_active duration = -1 }
@@ -318,25 +347,7 @@ harpy_roost_se_add_roost_tier_2_complete = {
 	if = { limit = { NOT = { culture_group = harpy } }
 		change_culture = owner
 	}
-	if = { #for bonus roost effects
-		limit = {
-			owner = {
-				has_country_flag = harpy_roost_upgrade #set this to minimise unnecessary checks
-			}
-		}
-		if = {
-			limit = {
-				owner = {
-					has_country_flag = F27_roost_upgrade
-				}
-			}
-			remove_province_modifier = F27_roost_upgrade_one
-			add_permanent_province_modifier = {
-				name = F27_roost_upgrade_two
-				duration = -1
-			}
-		}
-	}
+	harpy_roost_add_lvl2_bonus_mods = yes	
 }
 
 # Province scope.
@@ -353,25 +364,7 @@ harpy_roost_se_add_roost_tier_2_immediately = {
 		if = { limit = { NOT = { culture_group = harpy } }
 			change_culture = owner
 		}
-		if = { #for bonus roost effects
-			limit = {
-				owner = {
-					has_country_flag = harpy_roost_upgrade #set this to minimise unnecessary checks
-				}
-			}
-			if = {
-				limit = {
-					owner = {
-						has_country_flag = F27_roost_upgrade
-					}
-				}
-				remove_province_modifier = F27_roost_upgrade_one
-				add_permanent_province_modifier = {
-					name = F27_roost_upgrade_two
-					duration = -1
-				}
-			}
-		}
+		harpy_roost_add_lvl2_bonus_mods = yes
 	}
 	else = {
 		owner = { add_adm_power = 50 }
@@ -384,6 +377,7 @@ harpy_roost_se_set_flourishing_roost_active = {
 		remove_province_modifier = harpy_roost_mod_roost_flourishing_inactive
 		add_permanent_province_modifier = { name = harpy_roost_mod_roost_flourishing_active duration = -1 }
 		harpy_roost_se_roost_terrain_offset_add = yes
+		harpy_roost_add_lvl2_bonus_mods = yes
 	}
 }
 
@@ -392,6 +386,7 @@ harpy_roost_se_set_flourishing_roost_inactive = {
 	remove_province_modifier = harpy_roost_mod_roost_flourishing_active 
 	add_permanent_province_modifier = { name = harpy_roost_mod_roost_flourishing_inactive duration = -1 }
 	harpy_roost_se_roost_terrain_offset_clear = yes
+	harpy_roost_remove_lvl2_bonus_mods = yes
 }
 
 # Root = province, FROM = previous owner
@@ -434,6 +429,23 @@ harpy_roost_se_destroy_roost = {
 		remove_province_modifier = harpy_roost_mod_roost_flourishing_active 
 		remove_province_modifier = harpy_roost_mod_roost_flourishing_inactive 
 		clr_province_flag = harpy_roost_present
+		harpy_roost_se_roost_terrain_offset_clear = yes
+		harpy_roost_remove_lvl2_bonus_mods = yes
+	}
+}
+
+harpy_roost_reduce_roost_lvl = {
+	if = {
+		limit = { has_province_modifier = harpy_roost_mod_roost_fledgling }
+		remove_province_modifier = harpy_roost_mod_roost_fledgling
+		clr_province_flag = harpy_roost_present
+	}
+	if = { limit = { has_province_modifier = harpy_roost_mod_roost_flourishing_active }
+		remove_province_modifier = harpy_roost_mod_roost_flourishing_active
+		harpy_roost_se_roost_terrain_offset_clear = yes
+		add_province_modifier = { name = harpy_roost_mod_roost_fledgling duration = -1 }
+		hidden_effect = { owner = { harpy_roost_se_recalculate = yes } }
+		harpy_roost_remove_lvl2_bonus_mods = yes
 	}
 }
 
@@ -523,4 +535,44 @@ harpy_roost_se_construction_cleanup = {
 			}
 		}
 	]
+}
+
+harpy_roost_se_add_roost_tier_2_inactive_immediately = {
+	add_permanent_province_modifier = { name = harpy_roost_mod_roost_flourishing_inactive duration = -1 }
+	set_province_flag = harpy_roost_present
+}
+
+harpy_roost_add_lvl2_bonus_mods = {
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = harpy_roost_upgrade #set this to minimise unnecessary checks
+			}
+		}
+		if = {
+			limit = {
+				owner = { has_country_flag = F27_roost_upgrade }
+			}
+			remove_province_modifier = F27_roost_upgrade_one
+			add_province_modifier = {
+				name = F27_roost_upgrade_two
+				duration = -1
+			}
+		}
+		if = {
+			limit = {
+				owner = { has_country_flag = hyti_surf_hold }
+				has_terrain = dwarven_hold_surface
+			}
+			add_province_modifier = {
+				name = hyti_nonsub_offset_mod
+				duration = -1
+			}
+		}
+	}
+}
+
+harpy_roost_remove_lvl2_bonus_mods = {
+	remove_province_modifier = F27_roost_upgrade_two
+	remove_province_modifier = hyti_nonsub_offset_mod
 }
