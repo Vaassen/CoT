@@ -2613,22 +2613,109 @@ on_war_won = {
 		}
 	}
 
-	#Artificery
-	update_artifice_points = yes #needs to be last
-
-	# Huugeta Humiliation Counter
+	# Huugeta Mercenary Enterprise
 	if = {
 		limit = {
-			tag = S45
-			FROM = { 
-				humiliated_by = ROOT
+			any_known_country = {
+				has_country_flag =  S45_mercenary_enterprise
 			}
 		}
-		change_variable = {
-			which = humiliationCounter
-			value = 1
+
+		if = {
+			limit = {
+				any_known_country = {
+					has_country_flag =  S45_mercenary_enterprise
+					is_renting_condottieri_to = ROOT
+				}
+			}
+
+			# Can't scope to Huugeta directly as they may form Melakmengi
+			random_known_country = {
+				limit = {
+					has_country_flag =  S45_mercenary_enterprise
+					is_renting_condottieri_to = ROOT
+				}
+				S45_change_momentum = { value = 10 action = condottieri }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						ROOT = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+						FROM = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+					}
+				}
+
+				random_known_country = {
+					limit = {
+						has_country_flag =  S45_mercenary_enterprise
+						is_renting_condottieri_to = ROOT
+					}
+					change_variable = {
+						which = telekenidWars
+						value = 1
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				any_hired_mercenary_company = {
+					home_province = {
+						owner = {
+							has_country_flag =  S45_mercenary_enterprise
+						}
+					}
+				}
+			}
+			random_known_country = {
+				limit = {
+					has_country_flag =  S45_mercenary_enterprise
+					is_renting_condottieri_to = ROOT
+				}
+				S45_change_momentum = { value = 10 action = mercenaries }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						ROOT = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+						FROM = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+					}
+				}
+				random_known_country = {
+					limit = {
+						has_country_flag =  S45_mercenary_enterprise
+						is_renting_condottieri_to = ROOT
+					}
+					change_variable = {
+						which = telekenidWars
+						value = 1
+					}
+				}
+			}
 		}
 	}
+
+	#Artificery
+	update_artifice_points = yes #needs to be last
 }
 
 # country
@@ -2654,84 +2741,6 @@ on_main_war_won = {
 		clr_country_flag = S50_final_hag_war
 		country_event = {
 			id = yemotaferi.6
-		}
-	}
-
-	# Huugeta Mercenary Enterprise
-	if = {
-		limit = {
-			any_known_country = {
-				has_country_flag =  S45_mercenary_enterprise
-			}
-		}
-
-		if = {
-			limit = {
-				any_known_country = {
-					has_country_flag =  S45_mercenary_enterprise
-					is_renting_condottieri_to = ROOT
-				}
-			}
-			S45 = { S45_change_momentum = { value = 10 action = condottieri } }
-
-			if = {
-				limit = {
-					OR = {
-						ROOT = {
-							any_owned_province = {
-								region = telekenid_region
-							}
-						}
-						FROM = {
-							any_owned_province = {
-								region = telekenid_region
-							}
-						}
-					}
-				}
-				S45 = {
-					change_variable = {
-						which = telekenidWars
-						value = 1
-					}
-				}
-			}
-		}
-
-		if = {
-			limit = {
-				any_hired_mercenary_company = {
-					home_province = {
-						owner = {
-							has_country_flag =  S45_mercenary_enterprise
-						}
-					}
-				}
-			}
-			S45 = { S45_change_momentum = { value = 10 action = mercenaries } }
-
-			if = {
-				limit = {
-					OR = {
-						ROOT = {
-							any_owned_province = {
-								region = telekenid_region
-							}
-						}
-						FROM = {
-							any_owned_province = {
-								region = telekenid_region
-							}
-						}
-					}
-				}
-				S45 = {
-					change_variable = {
-						which = telekenidWars
-						value = 1
-					}
-				}
-			}
 		}
 	}
 
@@ -3091,7 +3100,6 @@ on_battle_lost_country = {
 			which = land_units_lost
 		}
 	}
-	
 }
 
 # province
@@ -3135,6 +3143,51 @@ on_battle_won_province = {
 					factor = 0.94 # Make it 15% chance for more demonic schools
 
 					owner = { is_demonic_school = yes }
+				}
+			}
+		}
+	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			FROM = {
+				any_war_enemy_country = {
+					OR = {
+						any_known_country = {
+							# Check if any enemy is renting condottieri from Huugeta
+							has_country_flag = S45_mercenary_enterprise
+							is_renting_condottieri_to = PREV
+
+							ROOT = {
+								# Check if Huugeta's condottieri are in the battle province.
+								num_of_units_in_province = {
+									who = PREV
+									amount = 1
+								}
+							}
+						}
+						any_hired_mercenary_company = {
+							home_province = {
+								owner = { has_country_flag = S45_mercenary_enterprise }
+							}
+							location = { province_id = ROOT }
+						}
+					}
+				}
+			}
+		}
+		FROM = {
+			random_war_enemy_country = {
+				limit = {
+					any_known_country = {
+						# Flag suffices to identify Huugeta
+						has_country_flag = S45_mercenary_enterprise
+					}
+				}
+				random_known_country = {
+					limit = { has_country_flag = S45_mercenary_enterprise }
+					S45_change_momentum = { value = 1 action = battle }
 				}
 			}
 		}
@@ -3668,6 +3721,8 @@ on_battle_lost_province = {
 			}
 		}
 	}	
+
+
 }
 
 # country
@@ -4485,6 +4540,51 @@ on_siege_won_province = {
 		controller = {
 			clr_country_flag = irriliam_bonk_elizna
 			country_event = { id = irrliam.14 }
+		}
+	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			FROM = {
+				any_war_enemy_country = {
+					OR = {
+						any_known_country = {
+							# Check if any enemy is renting condottieri from Huugeta
+							has_country_flag = S45_mercenary_enterprise
+							is_renting_condottieri_to = PREV
+
+							ROOT = {
+								# Check if Huugeta's condottieri are in the battle province.
+								num_of_units_in_province = {
+									who = PREV
+									amount = 1
+								}
+							}
+						}
+						any_hired_mercenary_company = {
+							home_province = {
+								owner = { has_country_flag = S45_mercenary_enterprise }
+							}
+							location = { province_id = ROOT }
+						}
+					}
+				}
+			}
+		}
+		FROM = {
+			random_war_enemy_country = {
+				limit = {
+					any_known_country = {
+						# Flag suffices to identify Huugeta
+						has_country_flag = S45_mercenary_enterprise
+					}
+				}
+				random_known_country = {
+					limit = { has_country_flag = S45_mercenary_enterprise }
+					S45_change_momentum = { value = 1 action = siege }
+				}
+			}
 		}
 	}
 }
@@ -7302,7 +7402,16 @@ on_mil_development = {
 	}
 
 	# Huugeta Mercenary Chapter
-	S45_add_mercenary_chapter_to_province = yes
+	if = {
+        limit = {
+			owner = { has_country_flag = S45_mercenary_chapters }
+            S45_mercenary_chapter_requirements = yes
+        }
+        add_province_modifier = {
+            name = S45_mercenary_chapter
+            duration = -1
+        }
+    }
 }
 
 on_overextension_pulse = {
@@ -16364,7 +16473,16 @@ on_province_owner_change = {
 	umbral_fog_update = yes
 	
 	# Huugeta Mercenary Chapter
-	S45_add_mercenary_chapter_to_province = yes
+	if = {
+        limit = {
+			owner = { has_country_flag = S45_mercenary_chapters }
+            S45_mercenary_chapter_requirements = yes
+        }
+        add_province_modifier = {
+            name = S45_mercenary_chapter
+            duration = -1
+        }
+    }
 	
 	###############################################################
 	# EFFECTS BELOW HERE DO NOT WORK PROPERLY IN SCRIPTED EFFECTS #
@@ -26983,6 +27101,16 @@ on_mil_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 			mil_tech = 6 
 		}
 		remove_country_modifier = shifter_make_state_button_work_without_cav
+	}
+	
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			has_country_flag = S45_mercenary_enterprise
+			is_ahead_of_time_in_technology = { tech = mil }
+		}
+
+		S45_change_momentum = { value = 10 action = tech }
 	}
 }
 
