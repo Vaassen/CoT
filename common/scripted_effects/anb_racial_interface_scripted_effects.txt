@@ -1181,8 +1181,11 @@ racial_mil_effect_selector_dlc = {
 				$effect$ = { RACE = elven NO_DLC_ELVEN = yes }
 			}
 		}
-		racial_mil_has_spirit_menu_open = { custom_tooltip = racil_mil_cannot_switch_special_military_tt }
-		racial_mil_has_undead_menu_open = { custom_tooltip = racil_mil_cannot_switch_special_military_tt }
+		racial_mil_has_spirit_menu_open = { custom_tooltip = racil_mil_cannot_switch_spirit_military_tt }
+		racial_mil_has_undead_menu_open = {
+			$effect$ = { RACE = undead UNDEAD_SPECIALIZATION = yes }
+			update_mana_regen_vars = yes
+		}
 	}
 }
 
@@ -1224,24 +1227,31 @@ racial_mil_cannot_change_to_selected_race_military = {
 	if = { limit = { NOT = { mil_power = 200 } }
 		custom_tooltip = pop_military_not_enough_milpower_tt
 	}
-	if = { limit = { NOT = { rp_high_tolerance_generic_race_trigger = yes } }
-		custom_tooltip = pop_military_tolerance_too_low_tt
+	if = { limit = { has_country_flag = racial_mil_has_undead_menu_open }
+		if = { limit = { NOT = { at_least_magic_project_level = { project = army_of_the_dead level = 1 } } }
+			custom_tooltip = army_of_the_dead_too_low_tt
+		}
 	}
+	else = {
+		if = { limit = { NOT = { rp_high_tolerance_generic_race_trigger = yes } }
+			custom_tooltip = pop_military_tolerance_too_low_tt
+		}
 
-	if = {
-		limit = {
-			NOT = {
-				check_variable = { which = nb$RACE$CoredDev value = 30 }
-				AND = {
-					has_country_modifier = $RACE$_administration
-					NOT = { has_country_flag = cannot_change_to_$RACE$_military_unless_enough_dev }
+		if = {
+			limit = {
+				NOT = {
+					check_variable = { which = nb$RACE$CoredDev value = 30 }
+					AND = {
+						has_country_modifier = $RACE$_administration
+						NOT = { has_country_flag = cannot_change_to_$RACE$_military_unless_enough_dev }
+					}
 				}
 			}
-		}
-		custom_tooltip = pop_military_dev_too_low_tt
-		if = {
-			limit = { has_country_modifier = $RACE$_administration }
-			custom_tooltip = cannot_change_to_racial_military_unless_enough_dev
+			custom_tooltip = pop_military_dev_too_low_tt
+			if = {
+				limit = { has_country_modifier = $RACE$_administration }
+				custom_tooltip = cannot_change_to_racial_military_unless_enough_dev
+			}
 		}
 	}
 
@@ -1256,6 +1266,22 @@ racial_mil_cannot_change_to_selected_race_military = {
 	]
 	[[GNOMISH_ARTIFICERS]
 		tooltip = { add_country_modifier = { name = gnomish_military_artificer_buff duration = -1 } }
+	]
+	[[UNDEAD_SPECIALIZATION]
+		tooltip = {
+			if = {
+				limit = { has_country_flag = aotd_skeleton_army }
+				add_country_modifier = { name = aotd_skeleton_mod duration = -1 }
+			}
+			if = {
+				limit = { has_country_flag = aotd_zombie_army }
+				add_country_modifier = { name = aotd_zombie_mod duration = -1 }
+			}
+			if = {
+				limit = { has_country_flag = aotd_centaur_army }
+				add_country_modifier = { name = aotd_centaur_mod duration = -1 }
+			}
+		}
 	]
 }
 
@@ -1282,6 +1308,20 @@ racial_mil_change_military_effect = {
 	[[GNOMISH_ARTIFICERS]
 		tooltip = { add_country_modifier = { name = gnomish_military_artificer_buff duration = -1 } }
 		add_country_modifier = { name = gnomish_military_artificer_buff duration = -1 hidden = yes }
+	]
+	[[UNDEAD_SPECIALIZATION]
+		if = {
+			limit = { has_country_flag = aotd_skeleton_army }
+			add_country_modifier = { name = aotd_skeleton_mod duration = -1 }
+		}
+		if = {
+			limit = { has_country_flag = aotd_zombie_army }
+			add_country_modifier = { name = aotd_zombie_mod duration = -1 }
+		}
+		if = {
+			limit = { has_country_flag = aotd_centaur_army }
+			add_country_modifier = { name = aotd_centaur_mod duration = -1 }
+		}
 	]
 }
 
@@ -1330,8 +1370,24 @@ racial_mil_niche_effects = {
 		}
 		remove_country_modifier = beggaston_ruinborn_aux
 	}
-
+	else_if = { #Reveria No Gnome Admin
+		limit = {
+			has_country_modifier = reveria_gnomish_cannons
+			NOT = { has_country_modifier = human_military }
+		}
+		remove_country_modifier = reveria_gnomish_cannons
+	}
 	z22_niche_mil_effects_check = yes
+	if = {
+		limit = {
+			has_country_flag = hyti_free_mil_swap
+			OR = {
+				has_country_modifier = harpy_military
+				has_country_modifier = goblin_military
+			}
+		}
+		remove_country_modifier = restructuring_military
+	}
 }
 
 update_unit_sprites_for_racial_mil = {
@@ -1417,7 +1473,37 @@ update_unit_sprites_for_racial_mil = {
 			custom_tooltip = swap_to_human_aelantir_sprites_tooltip
 			hidden_effect = { apply_sprite_pack = divenhalgfx_sprite_pack }
 		}
-		
+
+		else_if = {
+			limit = {
+				capital_scope = {
+					OR = {
+						region = great_plateau_region
+						superregion = hinuilands_superregion
+					}
+					NOT = { region = titanoflora_forests_region }
+				}
+			}
+			custom_tooltip = swap_to_human_utubodi_sprites_tooltip
+			hidden_effect = { apply_sprite_pack = utubodi_units_pack }
+		}
+		else_if = {
+			limit = {
+				capital_scope = {
+					OR = {
+						superregion = kanolowele_superregion
+						region = titanoflora_forests_region
+					}
+				}
+			}
+			custom_tooltip = swap_to_human_kanolowele_sprites_tooltip
+			hidden_effect = { apply_sprite_pack = kanolowele_units_pack }
+		}
+		else_if = { limit = { capital_scope = { superregion = south_insyaa_superregion } }
+			custom_tooltip = swap_to_human_yenbenmirra_sprites_tooltip
+			hidden_effect = { apply_sprite_pack = yenbenmirra_units_pack }
+		}
+
 		# cannor and gerudia (default fallback)
 		else = {
 			custom_tooltip = swap_to_human_cannorian_sprites_tooltip
@@ -1591,7 +1677,7 @@ update_unit_sprites_for_racial_mil = {
 		if = {
 			limit = { capital_scope = { superregion = kheionai_superregion } }
 			custom_tooltip = swap_to_kheionai_ruinborn_sprites_tooltip
-			hidden_effect = { apply_sprite_pack = kheionai_cool_units_sprite_pack }
+			hidden_effect = { apply_sprite_pack = kheionai_sprite_pack }
 		}
 		
 		# eordand and taychend
@@ -1896,12 +1982,17 @@ racial_mil_military_change_tech = {
 					capital_scope = { superregion = gozengun_superregion }
 					primary_culture = pezarangi_harpy
 					primary_culture = reishao_harpy
+					primary_culture = semifire_harpy
 					AND = {
 						accepted_culture = pezarangi_harpy
 						NOT = { culture_group = harpy }
 					}
 					AND = {
 						accepted_culture = reishao_harpy
+						NOT = { culture_group = harpy }
+					}
+					AND = {
+						accepted_culture = semifire_harpy
 						NOT = { culture_group = harpy }
 					}
 				}
@@ -2058,6 +2149,32 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_ynnsmen
 		}
+		else_if = {
+			limit = {
+				capital_scope = {
+					OR = {
+						region = great_plateau_region
+						superregion = hinuilands_superregion
+					}
+					NOT = { region = titanoflora_forests_region }
+				}
+			}
+			change_unit_type = tech_utubodi
+		}
+		else_if = {
+			limit = {
+				capital_scope = {
+					OR = {
+						superregion = kanolowele_superregion
+						region = titanoflora_forests_region
+					}
+				}
+			}
+			change_unit_type = tech_kanolowele
+		}
+		else_if = { limit = { capital_scope = { superregion = south_insyaa_superregion } }
+			change_unit_type = tech_insyaa_lowlands
+		}
 		else = {
 			change_unit_type = tech_cannorian
 		}
@@ -2091,6 +2208,9 @@ racial_mil_military_change_tech = {
 			}
 			change_unit_type = tech_darkscale_kobold
 		}
+		else_if = { limit = { capital_scope = { continent = oceania } }
+			change_unit_type = tech_insyaa_kobolds
+		}
 		else = {
 			change_unit_type = tech_kobold
 		}
@@ -2121,6 +2241,9 @@ racial_mil_military_change_tech = {
 		else_if = {
 			limit = { capital_scope = { superregion = fangaula_superregion } }
 			change_unit_type = tech_dunesole_ogre
+		}
+		else_if = { limit = { capital_scope = { continent = oceania } }
+			change_unit_type = tech_insyaa_ogres
 		}
 		else = {
 			change_unit_type = tech_ogre	#may need custom one
@@ -2536,5 +2659,13 @@ racial_mil_military_change_tech = {
 		else = {
 			change_unit_type = tech_cannorian
 		}
+	}
+	else_if = { #Effects for undead
+		limit = { has_country_flag = racial_mil_has_undead_menu_open }
+		if = {
+			limit = { has_country_flag = aotd_centaur_army }
+			change_unit_type = tech_centaur
+		}
+		else = { change_unit_type = tech_undead }
 	}
 }
