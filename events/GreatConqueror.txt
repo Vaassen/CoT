@@ -20,6 +20,7 @@ country_event = {
 			NOT = { current_age = age_of_discovery }
 		}
 		ai = yes
+		NOT = { has_country_flag = vile_one_vc }
 	}
 	
 	hidden = yes
@@ -43,6 +44,9 @@ country_event = {
 			add_ruler_modifier = {
 				name = legacy_of_great_conqueror
 				duration = -1
+			}
+			every_owned_province = {
+				remove_province_modifier = seat_of_centaur_gc
 			}
 			log = "GREAT CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| stop being a Great Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
 		}
@@ -120,7 +124,10 @@ country_event = {
 					}
 					coalition_target = ROOT															#Must not be the coalition target
 					NOT = { num_of_cities = 2 }														#Must have more than one province
-					government = tribal
+					if = {
+						limit = { government = tribal }
+						tribal_elligible_for_gc = no
+					}
 				}
 			}
 			
@@ -264,6 +271,11 @@ country_event = {
 				has_global_flag = mythical_conqueror
 				is_great_power = yes
 			}
+
+			modifier = {
+				factor = 3
+				centaur_can_become_vc = yes															#More common if chance to become Khüraen Caehn
+			}
 		}
 		
 		if = {
@@ -274,54 +286,10 @@ country_event = {
 					total_development = 1000
 				}
 			}
-			force_add_ruler_personality = { personality = mythical_conqueror_personality }
-			add_ruler_modifier = {
-				name = mythical_conqueror_modifier
-				duration = -1
-			}
-			set_ai_personality = {
-				personality = ai_militarist
-				locked = yes
-			}
-			add_stability = 3
-			change_dip = 3
-			change_adm = 3
-			change_mil = 3
-			
-			# Back-end
-			set_country_flag = great_conqueror_flag
-			REB = { change_variable = { nbGC = 1 } }
-			export_to_variable = {
-				which = ownDev
-				value = total_development
-				who = ROOT
-			}
-			log = "MYTHICAL CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| became a Mythical Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+			create_mythical_conqueror = yes
 		}
 		else = {
-			force_add_ruler_personality = { personality = great_conqueror_personality }
-			add_ruler_modifier = {
-				name = great_conqueror_modifier
-				duration = -1
-			}
-			set_ai_personality = {
-				personality = ai_militarist
-				locked = yes
-			}
-			add_stability = 1
-			change_dip = 1
-			change_adm = 1
-			change_mil = 1
-			
-			# Back-end
-			set_country_flag = great_conqueror_flag
-			REB = { change_variable = { nbGC = 1 } }
-			export_to_variable = {
-				which = ownDev
-				value = development
-				who = ROOT
-			}
-			log = "GREAT CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| became a Great Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+			create_great_conqueror = yes
 		}
 
 		#Randomly spawns a variant conqueror
@@ -333,17 +301,21 @@ country_event = {
 					ruler_has_personality_or_ancestor = { personality = mythical_conqueror_personality }
 				}
 				modifier = {
+					# No variant conquerors without turning them on in settings
 					factor = 0
 					NOT = { has_global_flag = variant_conqueror }
 				}
 				modifier = {
+					# Requires that a player can see the tag
 					factor = 0
 					NOT = {
-						any_known_country = {
+						any_country = {
 							ai = no
+							knows_country = ROOT
 						}
 					}
 				}
+
 				#Vampire Conqueror
 				if = {
 					limit = {
@@ -351,11 +323,19 @@ country_event = {
 					}
 					country_event = { id = great_conqueror.3 }
 				}
+				#Umbral Covenant
+				else_if = {
+					limit = {
+						sarhali_can_become_vc = yes
+					}
+					set_country_flag = vile_one_vc
+					set_global_flag = umbral_covenant_formed
+					country_event = { id = great_conqueror.7 }
+				}
 				#Lich Conqueror
 				else = {
 					country_event = { id = great_conqueror.1 }
 				}
-				# TODO - ADD MORE VARIANTS
 			}
 			#No Variant Conqueror
 			30 = {
@@ -393,7 +373,10 @@ country_event = {
 			save_event_target_as = capital_province
 		}
 		every_country = {
-			limit = { ai = no }
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
 			country_event = { id = great_conqueror.2 }
 		}
 	}
@@ -434,5 +417,304 @@ country_event = {
 		#	limit = { ai = no }
 		#	country_event = { id = great_conqueror.4 }
 		#}
+	}
+}
+
+#Caehn (AI)
+country_event = {
+	id = great_conqueror.5
+	title = great_conqueror.5.t
+	desc = great_conqueror.5.d
+	picture = CENTAUR_CAMPFIRE_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		ai = yes
+		centaur_can_become_vc = yes
+		has_country_flag = great_conqueror_flag
+		total_development = 50
+		army_size = 10
+		if = {
+			limit = { is_at_war = yes }
+			war_score = -10									# isn't in the process of getting stomped
+			all_war_enemy_countries = { ai = yes }			# isn't fighting a player
+		}
+	}
+
+	option = {
+		name = great_conqueror.5.a
+		capital_scope = {
+			save_event_target_as = capital_province
+		}
+
+		#Upgrade from Great Conqueror to Mythical Conqueror
+		create_mythical_conqueror = yes
+		
+		export_to_variable = {
+			which = ownDev
+			value = total_development
+			who = ROOT
+		}
+		log = "MYTHICAL CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| became a Variant Mythical Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+
+		change_tag = I89
+		custom_tooltip = centaur_unlock_cb_tooltip
+		hidden_effect = { set_country_flag = centaur_special_cb }
+		hidden_effect = { restore_country_name = yes }
+		swap_non_generic_missions = yes
+		remove_non_electors_emperors_from_empire_effect = yes
+		change_government = tribal
+		if = {
+			limit = { NOT = { has_reform = I55_magocratic_caehnate } }
+			custom_tooltip = great_centaur_horde_tt
+			hidden_effect = { add_government_reform = great_centaur_horde }
+		}
+		grant_unlimited_state_action = { action = genocide }
+		hidden_effect = {
+			forbidden_lands_superregion = {
+				limit = {
+					OR = {
+						region = west_forbidden_plains_region
+						region = east_forbidden_plains_region
+						region = ogre_valley_region
+						region = yyl_moista_region
+						region = serpent_gift_region
+						region = nuzurbokh_region
+					}
+					NOT = { is_core = ROOT }
+				}
+				add_permanent_claim = ROOT
+			}
+		}
+		increase_government_rank_scripted_effect = { rank = 3 }
+		add_country_modifier = {
+			name = centaur_unification_zeal
+			duration = -1
+			desc = centaur_unification_zeal_tooltip
+		}
+		add_prestige = 25
+		add_country_modifier = {
+			name = "centralization_modifier"
+			duration = 7300
+		}
+		if = {
+			limit = { ai = yes }
+			add_country_modifier = {
+				name = centaur_the_red_storm_ai_luck
+				duration = 36500
+			}
+			if = { #If the Centaurs are struggling, stop spiraling
+				limit = { inflation = 5 }
+				add_inflation = -10
+				add_treasury = 1000
+			}
+		}
+		if = { limit = { has_country_modifier = centaur_horde_1 } remove_country_modifier = centaur_horde_1 }
+		else_if = { limit = { has_country_modifier = centaur_horde_2 } remove_country_modifier = centaur_horde_2 }
+		else_if = { limit = { has_country_modifier = centaur_horde_3 } remove_country_modifier = centaur_horde_3 }
+		else_if = { limit = { has_country_modifier = centaur_horde_4 } remove_country_modifier = centaur_horde_4 }
+		else_if = { limit = { has_country_modifier = centaur_horde_5 } remove_country_modifier = centaur_horde_5 }
+		else_if = { limit = { has_country_modifier = centaur_horde_6 } remove_country_modifier = centaur_horde_6 }
+		if = {
+			limit = { has_country_modifier = subjugated_horde }
+			remove_country_modifier = subjugated_horde
+		}
+		if = {
+			limit = { has_country_modifier = settled_horde }
+			remove_country_modifier = settled_horde
+		}
+		add_country_modifier = {
+			name = centaur_zeal_timer
+			duration = 365
+			hidden = yes
+		}
+		if = {
+			limit = { tag = I78 }
+			set_variable = { centaur_zeal = 30 }
+		}
+		else = {
+			set_variable = { centaur_zeal = 10 }
+		}
+		set_global_flag = crimson_caehn_formed
+
+		country_event = { id = ideagroups.1 } #Swap Ideas
+
+		every_country = {
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
+			country_event = { id = great_conqueror.6 }
+		}
+	}
+}
+
+#Caehn (player)
+country_event = {
+	id = great_conqueror.6
+	title = great_conqueror.6.t
+	desc = great_conqueror.6.d
+	picture = END_OF_TIME_eventPicture
+	goto = capital_province
+
+	is_triggered_only = yes
+
+	option = {
+		name = great_conqueror.6.a
+		custom_tooltip = caehn_vc_tt
+	}
+}
+
+#Vile One (AI)
+country_event = {
+	id = great_conqueror.7
+	title = great_conqueror.7.t
+	desc = great_conqueror.7.d
+	picture = LOOMING_DEATH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = great_conqueror.7.a
+		capital_scope = {
+			save_event_target_as = capital_province
+		}
+
+		# Can't call the normal events because we need to handle the ruler change logic here.
+
+		change_tag = S90
+		restore_country_name = yes
+		increase_government_rank_scripted_effect = { rank = 3 }
+		swap_non_generic_missions = yes
+		if = {
+			limit = { has_custom_ideas = no }
+			country_event = { id = ideagroups.1 } #Swap Ideas
+		}
+		add_country_modifier = {
+			name = "centralization_modifier"
+			duration = 7300
+		}
+		change_government = theocracy
+		set_country_flag = umbral_covenant_formed
+		add_government_reform = the_vile_one_reform_initial
+		define_ruler = {
+            name = "The Vile One"
+            dynasty = " "
+            age = 99
+            adm = 6
+            dip = 1
+            mil = 6
+            female = yes
+        }
+        if = {
+            limit = {
+                NOT = {
+                    was_tag = S30
+                }
+            }
+            set_variable = {
+                which = S90_concentrate
+                value = 0
+            }
+            set_variable = {
+                which = S90_exploit_count
+                value = 0
+            }
+        }
+        set_variable = {
+            which = S90_festivals
+            value = 0
+        }
+        set_variable = {
+            which = S90_scorch_count
+            value = 0
+        }
+        set_variable = {
+            which = S90_vileone_battles
+            value = 0
+        }
+        set_variable = {
+            which = S90_major_rift_count
+            value = 0
+        }
+        set_country_flag = count_battles_won
+        set_country_flag = count_wars_won
+        create_mythical_conqueror = yes
+        add_ruler_personality = conqueror_personality
+        add_ruler_personality = shadow_planetouched_personality
+		define_powerful_mage = {
+			type = ruler
+			enchantment = 3
+			evocation = 2
+			illusion = 2
+			necromancy = 1
+		}
+        make_ruler_immortal = yes
+        add_ruler_modifier = {
+        	name = umbral_covenant_gc
+        	duration = 9125
+        }
+        every_owned_province = {
+            limit = {
+                region = shadow_swamp_region
+            }
+            cede_province = S70
+        }
+        every_ally = {
+        	limit = {
+        		NOT = { religion = shadow_pact }
+        		NOT = { religion = night_coven }
+        	}
+        	break_alliance = ROOT
+        	break_marriave = ROOT
+        }
+        S70 = {
+            country_event = {
+                id = flavor_umbral_covenant.2
+            }
+        }
+        country_event = {
+            id = flavor_umbral_covenant.999
+        }
+
+        change_religion = shadow_pact
+        every_owned_province = {
+        	change_religion = shadow_pact
+        }
+
+        create_unit_forcelimit_percentage = {
+        	type = infantry
+        	special_unit_category = mamluks
+        	force_limit_percentage = 0.6
+        }
+
+        custom_tooltip = umbral_alliance_tt
+
+		every_country = {
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
+			country_event = { id = great_conqueror.8 }
+		}
+	}
+}
+
+#Vile One (player)
+country_event = {
+	id = great_conqueror.8
+	title = great_conqueror.8.t
+	desc = great_conqueror.8.d
+	picture = COMBINED_HAGS_eventPicture
+	goto = capital_province
+
+	is_triggered_only = yes
+
+	option = {
+		name = great_conqueror.8.a
+		custom_tooltip = vile_one_vc_tt
 	}
 }
