@@ -2514,6 +2514,36 @@ on_war_won = {
 			}
 		}
 	}
+
+	# Kimanis Wine Cult removal
+	if = {
+		limit = {
+			FROM = { tag = G61 has_country_flag = G61_cooperation_with_winecults }
+		}
+		add_country_modifier = { name = G61_wine_cult_cooldown_country duration = 5475 hidden = yes } # 15y
+		every_owned_or_non_tributary_subject_province = {
+			remove_province_modifier = G61_wine_cult
+		}
+	}
+	#Kimanis Independence War
+	if = {
+		limit = {
+			tag = G61
+			if = {
+				limit = {
+					has_saved_global_event_target = oppressor_kimanis
+				}
+				FROM = { tag = event_target:oppressor_kimanis }
+			}
+			OR = {
+				has_country_flag = G61_highest_indep_rewards
+				has_country_flag = G61_higher_indep_rewards
+				has_country_flag = G61_normal_indep_rewards
+			}
+		}
+		country_event = { id = flavour_kimanis.3 }
+	}
+
 	#####
 	# Bibyobi Khetist war check
 	if = {
@@ -4134,11 +4164,13 @@ on_siege_won_country = {
 				has_country_flag = tsukqiao_jinqiu_war_flag 
 				has_country_flag = tsukqioa_brothers_in_xiongxiap_flag
 			}
-			OR = {
-				tag = Z60
-				is_in_war = {
-					attacker_leader = Z60
-					defender_leader = Y02
+			ROOT = {
+				OR = {
+					tag = Z60
+					is_in_war = {
+						attacker_leader = Z60
+						defender_leader = Y02
+					}
 				}
 			}
 		}
@@ -4751,6 +4783,8 @@ on_new_monarch = {
 		
 		danggun.1 #Neokttareum tests your ruler
 		guwaamud.100 # Ruler Ascension needs a consort
+
+		tsukqiao.42 #Yak Command Dead Event
 	}
 
 	random_events = {
@@ -9946,6 +9980,16 @@ on_bi_yearly_pulse_2 = {
 		2500 = 0
 	}
 
+	# Kimanis Winecult
+	if = {
+		limit = {
+			has_country_flag = G61_cooperation_with_winecults
+		}
+		country_event = {
+			id = flavour_kimanis.18
+		}
+	}
+
 	#Long-lived Pulse
 	random_events = {
 		50 = anb_ruler.5
@@ -11569,6 +11613,7 @@ on_thri_yearly_pulse_4 = {
 		10 = rahenraj.2121
 		10 = rahenraj.2123
 		2 = rahenraj.1200
+		1 = rahenraj.1203
 		10 = the_command.15
 
 		20 = 0
@@ -12785,6 +12830,10 @@ on_four_year_pulse_4 = {
 		100 = insyaa_flavour.19
 		100 = insyaa_flavour.20
 		100 = insyaa_flavour.21
+		100 = insyaa_flavour.22
+		125 = insyaa_flavour.23
+		50 = insyaa_flavour.24
+		100 = insyaa_flavour.25
 
 		#Mechanim
 		30 = insyaa_flavour.40
@@ -14492,6 +14541,43 @@ on_five_year_pulse_4 = {
            ROOT = { set_capital = PREV }
         }
 	}
+	if = {
+		limit = {
+			is_the_raja = yes
+			ai = yes
+		}
+		random_list = {
+			2 = {
+				trigger = {
+					NOT = { has_country_modifier = rahen_raj_mandate_raja_4_raja_cd_mod }
+					is_at_war = no
+					calc_true_if = {
+						all_subject_country = { is_in_war = { casus_belli = cb_raj_wars } }
+						amount = 8
+					}
+				}
+				rahen_raj_mandate_raja_introspection = yes
+				add_mil_power = -50
+			}
+			2 = {
+				trigger = { NOT = { has_country_modifier = rahen_raj_mandate_raja_3_raja_mod } }
+				rahen_raj_mandate_raja_declaration_of_harmony = yes
+				add_dip_power = -50
+			}
+			2 = {
+				trigger = {
+					has_saved_global_event_target = raj_vizier_global_target
+					event_target:raj_vizier_global_target = { ai = yes }
+					NOT = { has_country_modifier = rahen_raj_mandate_vizier_2_raja_mod }
+				}
+				event_target:raj_vizier_global_target = {
+					rahen_raj_mandate_vizier_imperial_drills = yes
+					add_mil_power = -50
+				}
+			}
+			13 = {}
+		}
+	}
 }
 
 # El Dorado
@@ -16170,14 +16256,6 @@ on_province_owner_change = {
 		}
 	}
 
-	if = { #Tsukqiao
-		limit = { 
-			owner = { has_reform = tsukqiao_throne_of_lies_reform } 
-		}
-		add_legitimacy = 1 
-	}
-				
-
 	if = { #Ashhana Blood Curse rampage. FROM is old owner, ROOT is the province
 	# The first time an Ashhana Lizardfolk province is conquered by a non-Ashhana Lizardfolk realm in Age of Monsters,
 	# gain 'Rampaging Ashhana Hordes' province modifier for 30 years.
@@ -17680,6 +17758,24 @@ on_province_owner_change = {
 			country_event = { id = flavour_nispac.5 }
 		}
 	}
+
+	#Kimanis Wine Cults
+	if = {
+		limit = {
+			owner = { has_country_flag = G61_wine_cult_conquest_bonus }
+			has_province_modifier = G61_wine_cult
+		}
+		owner = {
+			add_adm_power = 25
+		}
+		add_nationalism = -20
+		remove_province_modifier = G61_wine_cult
+		add_province_modifier = {
+			name = G61_wine_cult_coring
+			duration = -1
+		}
+	}
+	
 }
 
 # country 1.35
@@ -20939,6 +21035,15 @@ on_dependency_gained = {
 			}
 		}
 	}
+	if = { # Kimanis
+		limit = {
+			FROM = { tag = G61 }
+		}
+		ROOT = {
+			save_global_event_target_as = oppressor_kimanis
+		}
+	}
+	
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -20961,6 +21066,9 @@ on_dependency_lost = {
 			if = { limit = { is_subject_of_type = great_daimyo_vassal }
 				clr_country_flag = senapti_flag
 				4411 = { change_variable = { rajNbSenapti = -1 } }
+			}
+			if = { limit = { tag = R53 }
+				remove_core = 4411
 			}
 		}
 
@@ -21392,6 +21500,15 @@ on_dependency_lost = {
 		}
 		remove_country_modifier = N79_will_of_the_people_buff
 		FROM = { remove_country_modifier = N89_consent_of_the_people_buff }
+	}
+
+	if = { # kimanis
+		limit = {
+			FROM = { tag = G61 NOT = { is_subject = yes } }
+		}
+		ROOT = {
+			clear_global_event_target = oppressor_kimanis
+		}
 	}
 }
 
@@ -23947,6 +24064,12 @@ on_conquest = {
 		owner = { add_treasury = 5 }
 	}
 
+	if = { #Tsukqiao
+		limit = { 
+			owner = { has_reform = tsukqiao_throne_of_lies_reform } 
+		}
+		owner = { add_legitimacy = 1 }
+	}
 }
 
 on_country_creation = {
@@ -25847,6 +25970,10 @@ on_new_age = {
 		clr_country_flag = I78_livestock_upgrade
 		every_owned_province = { remove_province_modifier = I78_livestock_production }
 	}
+	if = { # Kimanis
+		limit = { has_country_flag = G61_glorious_battle_buff_event_flag }
+		clr_country_flag = G61_glorious_battle_buff_event_flag
+	}
 }
 
 #ROOT = province
@@ -26686,6 +26813,7 @@ on_core = { #ROOT - Province, #FROM - Country that gets the core
 		}
 	}
 	FROM = { accretive_path_gain_chi = { aspect = remembrance_festivals category = adm amount = 10 } }
+	ROOT = { remove_province_modifier = G61_wine_cult_coring } # kimanis
 
 	FROM = { #Magic Rework
 		if = {
