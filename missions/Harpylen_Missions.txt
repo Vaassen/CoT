@@ -31,10 +31,10 @@ F98_col_1 = {
 			# Future heirs are better. See on_new_heir in on_actions
 			custom_tooltip = heirs_powerful_mage_chance_extra_stats_tt
 			custom_tooltip = subjugation_cb_kheterata_region_tt
-			hidden_effect = {
-				kheterata_region = {
+			hidden_effect = { # What's the fastest way to find all countries with a capital in Khetarata...?
+				every_capital_province = {
 					limit = {
-						is_capital = yes
+						region = kheterata_region
 					}
 					owner = {
 						reverse_add_casus_belli = {
@@ -44,6 +44,30 @@ F98_col_1 = {
 						}
 					}
 				}
+				# every_known_country = {
+				# 	limit = {
+				# 		capital_scope = {
+				# 			region = kheterata_region
+				# 		}
+				# 	}
+				# 	reverse_add_casus_belli = {
+				# 		target = ROOT
+				# 		type = cb_vassalize_mission
+				# 		months = 240 # placeholder how long for?
+				# 	}
+				# }
+				# kheterata_region = {
+				# 	limit = {
+				# 		is_capital = yes
+				# 	}
+				# 	owner = {
+				# 		reverse_add_casus_belli = {
+				# 			target = ROOT
+				# 			type = cb_vassalize_mission
+				# 			months = 240 # placeholder how long for?
+				# 		}
+				# 	}
+				# }
 			}
 		}
 	}
@@ -55,22 +79,119 @@ F98_col_1 = {
 			F98_pride_of_dynasty
 			F98_doctrinal_debate
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					region = kheterata_region
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					province_id = 463
+					NOT = {
+						has_great_project = {
+							type = koroshesh_library
+							tier = 2
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			kheterata_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			capital_scope = {
+				higher_development_than = 475 # Kheterat
+			}
+			development_in_provinces = {
+				value = 400
+				region = harpy_hills_region
+			}
+			has_country_modifier = enchantment_3_harpy_mod # Song of Hassi's Queendom spell. Custom tooltip?
+			463 = {
+				has_great_project = {
+					type = koroshesh_library
+					tier = 2
+				}
+			}
+		}
 
-		effect = {  } 
+		effect = {
+			custom_tooltip = cheaper_flourishing_roots_retroactive_tt
+			# Apply this discount retroactively
+			every_owned_province = {
+				limit = {
+					OR = {
+						has_province_modifier = harpy_roost_under_construction
+						has_province_modifier = harpy_roost_mod_roost_flourishing_active
+					}
+				}
+				add_adm_power = 15
+			}
+		} 
 	}
 
 	F98_wings_of_stone = {
 		icon = per_build_the_fire_temples
 		position = 6
 		required_missions = { F98_eclipse_elikhet } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = { # It's in Akasik and either you don't own it, or it's valid for a roost and doesn't have one
+					region = akasik_region
+					OR = {
+						NOT = { country_or_non_sovereign_subject_holds = ROOT }
+						AND = {
+							harpy_roost_st_terrain_is_valid = yes
+							harpy_roost_st_has_any_roost = no
+						}
+					}
+				}
+				AND = { # It's Seascourge gnoll and it's not exploited with 1 infantry
+					culture = seascourge_gnoll
+					NOT = {
+						AND = {
+							has_province_flag = anb_has_been_exploited_flag
+							num_of_units_in_province = {
+								amount = 1
+								type = infantry
+								who = ROOT
+							}
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			akasik_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+				OR = { # placeholder Custom trigger tooltip, probably
+					harpy_roost_st_terrain_is_valid = no
+					harpy_roost_st_has_any_roost = yes
+				}
+			}
+			all_owned_province = {
+				OR = { # placeholder custom tooltip. Set anb_on_action_tracking_exploit_dev_flag country flag somewhere
+					NOT = { culture = seascourge_gnoll }
+					AND = {
+						has_province_flag = anb_has_been_exploited_flag
+						num_of_units_in_province = {
+							amount = 1
+							type = infantry
+							who = ROOT
+						}
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			# Stonewing homecoming event
+		} 
 	}
 
 	F98_to_sleep_to_dream = {
@@ -94,11 +215,35 @@ F98_col_2 = {
 	F98_len = {
 		icon = mission_new_dawn
 		position = 1
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			# This one might be clearer if I highlight the ones already done
+			culture_group = harpy
+			harpy_roost_st_has_any_roost = yes
+			num_of_times_improved_by_owner = 1
+		} 
 
-		trigger = {  } 
+		trigger = {
+			num_of_owned_provinces_with = {
+				value = 15
+				culture_group = harpy
+				harpy_roost_st_has_any_roost = yes
+				num_of_times_improved_by_owner = 1
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			every_owned_province = {
+				limit = {
+					harpy_roost_st_has_any_roost = yes
+				}
+				add_province_modifier = {
+					name = F98_province_len
+					duration = 3650 # 10 years
+				}
+			}
+			# Developing provinces with roosts give a new modifier. See on_development_effect
+			custom_tooltip = F98_develop_roost_bonus_tt
+		} 
 	}
 
 	F98_throne_queen = {
@@ -108,11 +253,35 @@ F98_col_2 = {
 			F98_len
 			F98_spreading_wings
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			province_id = 660
+			NOT = {
+				AND = {
+					has_great_project = {
+						type = queens_throne
+						tier = 2
+					}
+					development = 35
+					num_of_buildings_in_province = 5
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			660 = { # Heunthume
+				has_great_project = {
+					type = queens_throne
+					tier = 2
+				}
+				development = 35
+				num_of_buildings_in_province = 5
+			}
+			crown_land_share = 30
+		} 
 
-		effect = {  } 
+		effect = {
+			# With Gilded Feather event
+		} 
 	}
 
 	F98_cultivate_sanarenni = {
@@ -214,22 +383,113 @@ F98_col_3 = {
 	F98_spreading_wings = {
 		icon = mission_arise_ashes
 		position = 1
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				region = harpy_hills_region
+				region = bulwar_proper_region
+			}
+			OR = {
+				NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				unrest = 0.1
+				devastation = 0.1
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			harpy_hills_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+				NOT = {
+					unrest = 0.1
+					devastation = 0.1
+				}
+			}
+			bulwar_proper_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+				NOT = {
+					unrest = 0.1
+					devastation = 0.1
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			# provinces with harpy pops cost -20% warscore. Hmm. Province modifiers when I declare war maybe?
+			bulwar_superregion = {
+				limit = { # placeholder should you get a claim on your subjects' provs?
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				add_permanent_claim = ROOT
+			}
+		} 
 	}
 
 	F98_extended_dominion = {
 		icon = mission_desert_city
 		position = 2
 		required_missions = { F98_spreading_wings } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					region = far_bulwar_region
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					OR = {
+						province_group = golden_highway_far_bulwar
+						province_group = golden_highway_bulwar_proper
+					}
+					NOT = {
+						AND = {
+							has_province_modifier = golden_highway
+							num_of_times_improved = 1
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			far_bulwar_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			# placeholder custom tooltips?
+			golden_highway_far_bulwar = {
+				type = all
+				has_province_modifier = golden_highway
+				num_of_times_improved = 1
+			}
+			golden_highway_bulwar_proper = {
+				type = all
+				has_province_modifier = golden_highway
+				num_of_times_improved = 1
+			}
+			
+		} 
 
-		effect = {  } 
+		effect = {
+			every_owned_province = {
+				limit = {
+					OR = {
+						province_group = golden_highway_bulwar_proper
+						province_group = golden_highway_far_bulwar
+						province_group = golden_highway_far_salahad
+						province_group = golden_highway_rahen_coast
+						province_group = golden_highway_dhujat
+						province_group = golden_highway_xianjie
+						province_group = golden_highway_upper_yanshen
+						province_group = golden_highway_yanshen_coast
+						province_group = golden_highway_south_salahad
+					}
+				}
+				add_province_modifier = {
+					name = F98_harpyway
+					duration = -1
+				}
+			}
+		} 
 	}
 
 	F98_once_flew = {
