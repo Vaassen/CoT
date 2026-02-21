@@ -1,6 +1,26 @@
 
 namespace = centaur_nomad
 
+country_event = { #Refresh capital move cost when cooldown ends
+	id = centaur_nomad.1
+	title = none
+	desc = none
+	picture = none
+
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		ai = no
+		has_government_attribute = centaur_nomadism_attribute
+	}
+
+	option = {
+		name = none
+		update_nomadism_capital_move_cost = yes
+	}
+}
+
 #give stuff to new capital provinces
 country_event = {
 	id = centaur_nomad.100
@@ -40,13 +60,15 @@ country_event = {
 
 	option = {
 		hidden_effect = {
-			add_country_modifier = {
-				name = nomadic_capital_just_moved
-				duration = 1825
-			}
+			add_nomadic_capital_moved_modifier = { scope = capital_scope }
 			set_country_flag = nomad_setup
 			set_country_flag = has_centaur_nomadism_attribute
 			apply_owned_NZOC_country = yes
+			if = {
+				limit = { ai = no }
+				country_event = { id = centaur_nomad.1 days = 1096 } #3 years
+				update_nomadism_capital_move_cost = yes
+			}
 		}
 	}
 }
@@ -222,10 +244,6 @@ country_event = {
 	option = {
 		capital_scope = { add_local_autonomy = 10 }
 		set_capital = event_target:cent_new_capital
-		add_country_modifier = {
-			name = nomadic_capital_just_moved
-			duration = 1825
-		}
 		ai_chance = {
 			factor = 1
 		}
@@ -253,6 +271,34 @@ country_event = {
 		}
 		custom_tooltip = NZOC_positive_province_count_tt
 		custom_tooltip = NZOC_negative_province_count_tt
+		
+		if = { #Great Storm Things
+			limit = { is_or_was_tag = { tag = I80 } }
+			if = {
+				limit = { has_country_flag = I80_capital_mage_tower }
+				capital_scope = {
+					add_building_construction = {
+						building = mage_tower
+						speed = 1
+						cost = 0.2
+					}
+				}
+				if = {
+					limit = { capital_scope = { has_manufactory_trigger = yes } }
+					add_treasury = -100
+				}
+				clr_country_flag = I80_capital_mage_tower
+			}
+			if = {
+				limit = { has_country_flag = I80_mage_movement } 
+				increase_magic_experience = { unmodified_amount = 25 }
+			}
+			if = {
+				limit = { has_country_flag = I80_tirughuun_capital capital = 5138 }
+				clr_country_flag = I80_tirughuun_capital
+				increase_magic_experience = { unmodified_amount = 50 }
+			}
+		}
 	}
 
 	after = {
