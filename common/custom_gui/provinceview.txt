@@ -162,13 +162,13 @@ custom_button = {
 					limit = { is_capital = yes }
 					setup_digging_deeper_capital = yes
 					start_digging_deeper = yes
+					owner = { set_country_flag = is_digging }
 				}
 				else = {
 					setup_digging_deeper_non_capital = yes
 					start_digging_deeper_non_capital = yes
 				}
 			}
-			set_country_flag = is_digging
 			play_sound = diggy_diggy_pickaxe_sfx
 		}
 	}
@@ -1931,6 +1931,7 @@ custom_button = { #Endhuvi Traveling Society Button
 		is_part_of_kharunyana_river = yes
 		NOT = { region = nomsyulhan_region }
 		owned_by = FROM	
+		NOT = { has_province_modifier = R36_cinnabar_lotus_society_barge_3 }
 	}
 	trigger = {
 		event_target:endhuvi_cinnabar_lotus_province = { owned_by = FROM }
@@ -2014,10 +2015,13 @@ custom_button = { #Centaur Nomadism Move Capital Button
 				}
 			}
 		}
+		if = { #Black Herd
+			limit = { has_province_modifier = I55_home_to_none_but_stone }
+			NOT = { has_province_modifier = I55_home_to_none_but_stone }
+		}
 	}
 	effect = {
 		FROM = { 
-			custom_tooltip = IW_adm_power_effect_tt
 			hidden_effect = {
 				var_effect = {
 					var = nzoc_cost
@@ -2026,15 +2030,53 @@ custom_button = { #Centaur Nomadism Move Capital Button
 				}
 			}
 			set_capital = ROOT
-			add_country_modifier = {
-				name = nomadic_capital_just_moved
-				duration = 1095 #3 years
-			}
+			custom_tooltip = IW_adm_power_effect_tt
+			add_nomadic_capital_moved_modifier = { scope = ROOT }
 		}
 		custom_tooltip = IW_move_capital_button_tt
 	}
 }
 
+custom_button = {
+	name = IW_move_capital_blocker
+	potential = {
+		owned_by = FROM
+		FROM = { has_government_attribute = centaur_nomadism_attribute }
+	}
+}
+
+# Mechanim Ward Conduit
+custom_button = {
+	name = mechanim_ward_conduit_button
+	tooltip = mechanim_ward_conduit_button_tt
+	potential = {
+		owner = {
+			has_country_modifier = mechanim_administration
+			tag_can_use_mechanim_ward_conduit = yes
+		}
+		continent = oceania
+	}
+	trigger = {
+		NOT = { has_province_modifier = mechanim_ward_conduit }
+		province_can_get_mechanim_ward_conduit = yes
+		NOT = { province_group = gene_pillars }
+		owner = {
+			treasury = 100
+			adm_power = 50
+			dip_power = 50
+			mil_power = 50
+		}
+	}
+	effect = {
+		owner = {
+			add_treasury = -100
+			add_adm_power = -50
+			add_dip_power = -50
+			add_mil_power = -50
+		}
+		add_province_modifier = { name = mechanim_ward_conduit duration = -1 }
+	}
+}
 
 # Gor Vazumbrog province actions
 custom_button = {
@@ -2161,6 +2203,65 @@ custom_button = {
 	}
 }
 
+custom_button = {
+	name = utubodi_unification_own_button
+	potential = {
+		owner = {
+			tag = FROM
+			has_utubodi_unification_mechanic = yes
+		}
+		utubodi_unification_has_collectable_resource = yes
+	}
+	trigger = {
+		owner = {
+			owns = 3675
+			NOT = { is_at_war = yes }
+			has_utubodi_unification_mechanic = yes
+			NOT = { num_of_rebel_armies = 1 }
+		}
+		utubodi_unification_can_collect_resource = yes
+	}
+	effect = {
+		utubodi_unification_add_resource = yes
+		utubodi_unification_spawn_rebels_particularist = yes
+		add_devastation = 100
+		owner = { change_utubodi_unification_leaning = { value = 20 } }
+	}
+	tooltip = utubodi_unification_explanation_tooltip
+}
+
+custom_button = {
+	name = utubodi_unification_vassal_button
+	potential = {
+		owner = {
+			is_subject_of = FROM
+			has_utubodi_unification_mechanic = yes
+			overlord = { has_utubodi_unification_mechanic = yes }
+		}
+		utubodi_unification_has_collectable_resource = yes
+	}
+	trigger = {
+		owner = {
+			overlord = {
+				owns = 3675
+			}
+			NOT = { is_at_war = yes }
+			has_utubodi_unification_mechanic = yes
+			NOT = { num_of_rebel_armies = 1 }
+		}
+		utubodi_unification_can_collect_resource = yes
+	}
+	effect = {
+		utubodi_unification_add_resource = yes
+		utubodi_unification_spawn_rebels_independence = yes
+		owner = {
+			add_liberty_desire = 20
+			overlord = { change_utubodi_unification_leaning = { value = -20 } }
+		}
+	}
+	tooltip = utubodi_unification_explanation_tooltip
+}
+
 #################################
 # Anbennar Province UI Expanded #
 #################################
@@ -2190,44 +2291,20 @@ custom_button = {
 # }
 
 #Debug button for testing
-custom_button = { #template button to open it, all must set 'aPUI_parent_container_flag'
+custom_button = { #template button to open it, change 'template' to the name of the APUI
 	name = aPUI_debug_button
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_debug_flag
-		}
+		has_eligible_aPUI_template_in_province = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				NOT = {
-					has_province_flag = aPUI_template_flag
-				}
-			}
-			clear_all_aPUI_flags = yes
-			set_province_flag = aPUI_parent_container_flag
-			set_province_flag = aPUI_template_flag
-		}
-		else = {
-			clear_all_aPUI_flags = yes
-		}
+		open_aPUI_in_province = { name = template }
 	}
 	tooltip = "aPUI Debug Button"
 }
-#Baseline UI elements
-custom_window = {
-	name = aPUI_parent_container
-	potential = {
-		has_province_flag = aPUI_parent_container_flag
-		# FROM = {
-		# 	# tag = Z99
-		# }
-	}
-}
+#Baseline UI Element
 custom_button = { #Close button
 	name = aPUI_close_button
 	effect = {
-		#clr_province_flag = aPUI_parent_container_flag
 		clear_all_aPUI_flags = yes
 	}
 }
@@ -2235,8 +2312,7 @@ custom_button = { #Close button
 custom_window = {
 	name = aPUI_template_window
 	potential = {
-		#Must match the format 'aPUI_$name$_flag'
-		has_province_flag = aPUI_template_flag
+		has_open_aPUI_in_province = { name = template }
 	}
 }
 custom_text_box = {
@@ -2299,41 +2375,21 @@ custom_text_box = {
 }
 
 # Gor Vazumbrog aPUI
-custom_button = { #gor_vazumbrog_vault button to open it, all must set 'aPUI_parent_container_flag'
+custom_button = {
 	name = aPUI_gor_vazumbrog_vault_button
 	tooltip = "Enter the Vault"
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_gor_vazumbrog_vault_enabled_flag
-		}
-		province_id = 4217
-		is_capital = yes
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				NOT = {
-					has_province_flag = aPUI_gor_vazumbrog_vault_flag
-				}
-			}
-			clear_all_aPUI_flags = yes
-			set_province_flag = aPUI_parent_container_flag
-			set_province_flag = aPUI_gor_vazumbrog_vault_flag
-		}
-		else = {
-			clear_all_aPUI_flags = yes
-		}
+		open_aPUI_in_province = { name = gor_vazumbrog_vault }
 	}
 }
 custom_button = { # dummy copy for the "buildings tab closed" button, which cant open the buildings tab
 	name = aPUI_gor_vazumbrog_vault_button_dummy
 	tooltip = "Access the Vault by opening the Buildings tab"
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_gor_vazumbrog_vault_enabled_flag
-		}
-		province_id = 4217
-		is_capital = yes
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
 	}
 	effect = {
 	}
@@ -2344,8 +2400,7 @@ custom_button = { # dummy copy for the "buildings tab closed" button, which cant
 custom_window = {
 	name = aPUI_gor_vazumbrog_vault_window
 	potential = {
-		#Must match the format 'aPUI_$name$_flag'
-		has_province_flag = aPUI_gor_vazumbrog_vault_flag
+		has_open_aPUI_in_province = { name = gor_vazumbrog_vault }
 	}
 }
 custom_text_box = {
