@@ -1053,85 +1053,88 @@ L80_fealty_ai_acceptance_trigger = {
 		export_to_variable = { which = temp_their_dev value = total_development who = ROOT }
 		export_to_variable = { which = temp_prestige value = prestige who = FROM }
 
-		# Temps for the math
-		export_to_variable = { which = temp_rdev value = trigger_value:always }      # 0
-		export_to_variable = { which = temp_tdev value = trigger_value:always }      # 0
-		export_to_variable = { which = temp_num value = trigger_value:always }       # 0
-		export_to_variable = { which = temp_den value = trigger_value:always }       # 0
-		export_to_variable = { which = temp_score value = trigger_value:always }     # 0
-
-		# Econ base math:
-		# score = 30 * (rDev + 1) / ( (tDev^2)/2 + 1 ) - 90
-		# rDev = (10 + our_dev)/2
-		# tDev = (10 + their_dev)/2
-
-		# Start at -90
-		change_variable = { which = ai_accept_var value = -90 }
-
-		# rDev = (10 + our_dev)/2
-		change_variable = { which = temp_rdev which = temp_our_dev }
-		add_to_variable  = { which = temp_rdev value = 10 }
-		divide_variable  = { which = temp_rdev value = 2 }
-
-		# tDev = (10 + their_dev)/2
-		change_variable = { which = temp_tdev which = temp_their_dev }
-		add_to_variable  = { which = temp_tdev value = 10 }
-		divide_variable  = { which = temp_tdev value = 2 }
-
-		# numerator = rDev + 1
-		change_variable = { which = temp_num which = temp_rdev }
-		add_to_variable  = { which = temp_num value = 1 }
-
-		# denominator = (tDev^2)/2 + 1
-		change_variable = { which = temp_den which = temp_tdev }
-		multiply_variable = { which = temp_den which = temp_tdev }   # temp_den = tDev * tDev
-		divide_variable   = { which = temp_den value = 2 }           # /2
-		add_to_variable   = { which = temp_den value = 1 }           # +1
-
-		# score = 30 * numerator / denominator
-		change_variable = { which = temp_score which = temp_num }
-		divide_variable = { which = temp_score which = temp_den }
-		multiply_variable = { which = temp_score value = 30 }
-
-		change_variable = { which = ai_accept_var which = temp_score }
-
-		export_to_variable = { which = temp_our_army_strength   value = army_strength who = FROM }
-		export_to_variable = { which = temp_their_army_strength value = army_strength who = ROOT }
-
-		export_to_variable = { which = temp_mil_diff value = trigger_value:always } # 0
-		export_to_variable = { which = temp_mil_mod  value = trigger_value:always } # 0
-
-		change_variable   = { which = temp_mil_diff which = temp_our_army_strength }
-		subtract_variable = { which = temp_mil_diff which = temp_their_army_strength }
-
-		if = {
-			limit = { check_variable = { which = temp_mil_diff value = 0.5 } }
-			change_variable = { which = temp_mil_mod value = 20 }
-		}
-		else = {
-			if = {
-				limit = { check_variable = { which = temp_mil_diff value = -0.5 } }
-				change_variable = { which = temp_mil_mod value = -40 }
-			}
-			else = {
-				# mil_mod = -10 + diff*60
-				change_variable   = { which = temp_mil_mod which = temp_mil_diff }
-				multiply_variable = { which = temp_mil_mod value = 60 }
-				add_to_variable   = { which = temp_mil_mod value = -10 }
-			}
-		}
-
-		# Apply
-		change_variable = { which = ai_accept_var which = temp_mil_mod }
-
 		#Y25Base
-		change_variable = { which = ai_accept_var value = 25 }
+		change_variable = { which = ai_accept_var value = -45 }
+		#Y25OurSize
+		change_variable = { which = ai_accept_var which = temp_our_dev }
+		#Y25TheirSize
+		multiply_variable = { which = temp_their_dev value = 5 }
+		subtract_variable = { which = ai_accept_var which = temp_their_dev }
 		#Y25vassalizationreasons
 		change_variable = { which = ai_accept_var which = temp_vassalisation_reasons }
 		#Y25dipRep
-		multiply_variable = { which = temp_diplomatic_reputation value = 3 }
+		multiply_variable = { which = temp_diplomatic_reputation value = 2 }
 		change_variable = { which = ai_accept_var which = temp_diplomatic_reputation }
-		
+		#Y25TooBig
+		if = {
+			limit = { ROOT = { total_development = 100 } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -1000 }
+			}
+		}
+		#Y25Powerful
+		if = {
+			limit = {
+				FROM = {
+					army_strength = {
+						who = ROOT
+						value = 1.5
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 15 }
+			}
+		}
+		#Y25Weak
+		if = {
+			limit = {
+				FROM = {
+					NOT = {
+						army_strength = {
+							who = ROOT
+							value = 0.6
+						}
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -45 }
+			}
+		}
+
+		if = {
+			limit = {
+				OR = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_rivalry } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_hostile } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_outraged } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_domineering } }
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -1000 }
+			}
+		}
+		if = {
+			limit = { ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -20 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_friendly } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_threatened } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_allied } }
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 10 }
+			}
+		}
+
 		#Final check - passed as a string
 		$custom_trigger$
 	}
