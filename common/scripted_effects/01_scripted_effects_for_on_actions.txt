@@ -1755,7 +1755,6 @@ on_new_monarch_effect = { #1.35
 		limit = { religion = fangaulan_pantheon }
 		fangaulan_pantheon_apply_holy_site_bonus = yes 
 	}
-
 	#irrliam
 	if = {
 		limit = { has_ruler_flag = keladora_got }
@@ -1773,10 +1772,37 @@ on_new_monarch_effect = { #1.35
 			female = yes
 			country_of_origin = F21
 		}
+		clr_country_flag = keladora_got
 	}
 	if = {
 		limit = { has_ruler_flag = irrliam_first_heir }
 		country_event = { id = irrliam.13 days = 10 }
+	}
+	if = {
+		limit = {
+			has_reform = hyti_technoharem
+		}
+		if = {
+			limit = { has_ruler_flag = hyti_brillite_heir }
+			add_ruler_modifier = {
+				name = hyti_brillite
+				duration = -1
+			}
+		}
+		if = {
+			limit = { has_ruler_flag = hyti_mechanist_heir }
+			add_ruler_modifier = {
+				name = hyti_mechanist
+				duration = -1
+			}
+		}
+		if = {
+			limit = { has_ruler_flag = hyti_technomancer_heir }
+			add_ruler_modifier = {
+				name = hyti_technomancer
+				duration = -1
+			}
+		}
 	}
 }
 
@@ -2520,6 +2546,27 @@ on_province_religion_changed_effect = {
 	on_province_religion_converted_estate_privileges_effect = yes
 
 	mother_akasik_mountain_control_check = yes
+
+	# Volcanic Truth religious site "triggered" modifiers. Helps with performance, since Province Triggered
+	# Modifiers check their conditions every single day
+	if = {
+		limit = {
+			province_id = 6181 # Muatlaqua
+		}
+		volcanic_truth_sacred_site_modifier_checks = { site_name = muatlaqua }
+	}
+	else_if = {
+		limit = {
+			province_id = 6182 # Quahopilo
+		}
+		volcanic_truth_sacred_site_modifier_checks = { site_name = quahopilo }
+	}
+	else_if = {
+		limit = {
+			province_group = insyaa_kiamoa_opening_provinces
+		}
+		volcanic_truth_kiamoa_entrance_modifier_checks = yes
+	}
 	
 	if = {
 		limit = {
@@ -4079,7 +4126,10 @@ on_battle_won_country_effect = {
 		vf_battle_count_win = yes
 
 		if = {
-			limit = { has_cast_undead_army = yes }
+			limit = {
+				has_country_modifier = undead_military
+				exactly_magic_project_level = { project = army_of_the_dead level = 3 }
+			}
 			set_variable = {
 				which = raise_undead
 				which = land_units_killed
@@ -4088,7 +4138,7 @@ on_battle_won_country_effect = {
 				which = raise_undead
 				which = land_units_lost
 			}
-			country_event = { id = magic_spell.700 } # Undead manpower gain
+			country_event = { id = magic_project_army_of_the_dead.20 } # Undead manpower gain
 		}
 
 		#Anbennar
@@ -4644,6 +4694,63 @@ on_battle_won_country_effect = {
 	if = { #Black Herd
 		limit = { has_estate_privilege = estate_mages_black_herd_shockshroud_mages }
 		change_mana = { amount = 0.5 }
+	}
+
+	if = { #kimanis glorious battle counter
+		limit = {
+			tag = G61
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						current_age = age_of_revolutions
+						check_variable = {
+							which = land_units_killed
+							value = 30000
+						}
+					}
+					AND = {
+						current_age = age_of_absolutism
+						check_variable = {
+							which = land_units_killed
+							value = 22500
+						}
+					}
+					AND = {
+						current_age = age_of_reformation
+						check_variable = {
+							which = land_units_killed
+							value = 15000
+						}
+					}
+					AND = {
+						current_age = age_of_discovery
+						check_variable = {
+							which = land_units_killed
+							value = 7500
+						}
+					}
+				}
+			}
+			if = {
+				limit = { has_country_flag = G61_glorious_battle_buff_flag }
+				country_event = {
+					id = flavour_kimanis.17
+				}
+				add_country_modifier = {
+					name = G61_glorious_battle_buff
+					duration = 365
+				}
+				
+			}
+			else = {
+				change_variable = {
+					which = glorious_battle_count_G61
+					value = 1
+				}
+			}
+		}
 	}
 }
 
@@ -5816,6 +5923,39 @@ on_religion_change_effect = {
 		remove_country_modifier = ai_church_power_bypass
 	}
 
+	# Volcanic Truth religious site "triggered" modifiers. Helps with performance, since Province Triggered
+	# Modifiers check their conditions every single day
+	if = {
+		limit = {
+			owns = 6181 # Muatlaqua
+		}
+		#Scope to the province we care about to re-use the same code as the province religion change
+		6181 = {
+			volcanic_truth_sacred_site_modifier_checks = { site_name = muatlaqua }
+		}
+	}
+	if = {
+		limit = {
+			owns = 6182 # Quahopilo
+		}
+		6182 = {
+			volcanic_truth_sacred_site_modifier_checks = { site_name = quahopilo }
+		}
+	}
+	if = {
+		limit = {
+			insyaa_kiamoa_opening_provinces = {
+				owned_by = ROOT
+			}
+		}
+		insyaa_kiamoa_opening_provinces = {
+			limit = {
+				owned_by = ROOT
+			}
+			volcanic_truth_kiamoa_entrance_modifier_checks = yes
+		}
+	}
+
 	if = {
 		limit = {
 			has_global_flag = rending_active
@@ -6866,7 +7006,7 @@ on_war_declaration_effect = {
 
 	if = {
 		limit = {
-			has_reform = rally_to_the_roar #ashhana lizardfolk reform
+			has_government_attribute = rally_to_the_roar_ability #Ashhana 'Rally to the Roar' reform
 		}
 		add_manpower = 5
 	}
@@ -6927,7 +7067,6 @@ on_war_declaration_effect = {
 		FROM = { save_event_target_as = event_country }
 		I78 = { country_event = { id = flavour_wild_hunt.22 } }
 	}
-
 	#Great Storm starting Ruler liking Humans
 	if = {
 		limit = { 
@@ -6937,6 +7076,42 @@ on_war_declaration_effect = {
 			}
 		}
 		add_stability = -2
+	}
+	if = {
+		limit = { has_country_modifier = hyti_harpy_harmy FROM = { capital_scope = { continent = serpentspine } } }
+		remove_country_modifier = hyti_harpy_harmy
+		add_country_modifier = {
+			name = hyti_gobbo_army
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { FROM = { has_country_modifier = hyti_harpy_harmy } capital_scope = { continent = serpentspine } }
+		FROM = { 
+			remove_country_modifier = hyti_harpy_harmy
+			add_country_modifier = {
+				name = hyti_gobbo_army
+				duration = -1
+			}
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = hyti_gobbo_army FROM = { capital_scope = { NOT = { continent = serpentspine } } } }
+		remove_country_modifier = hyti_gobbo_army
+		add_country_modifier = {
+			name = hyti_harpy_harmy
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { FROM = { has_country_modifier = hyti_gobbo_army } capital_scope = { NOT = { continent = serpentspine } } }
+		FROM = {
+			remove_country_modifier = hyti_gobbo_army
+			add_country_modifier = {
+				name = hyti_harpy_harmy
+				duration = -1
+			}
+		}
 	}
 }
 
@@ -7608,7 +7783,7 @@ on_province_culture_change_effect = {
 	if = {
 		limit = {
 			owner = {
-				has_reform = crocadilian_unity
+				has_government_attribute = crocodilian_unity_ability
 			}
 			culture = ashhana_lizardfolk
 		}
@@ -8006,6 +8181,22 @@ on_colony_finished_effect = {
 		add_halfling_minority_size_effect = yes
 	}
 	
+	if = {	#hytiranyalen
+		limit = {	
+			owner = { is_or_was_tag = { tag = F81 } }
+			continent = serpentspine
+		}
+		if = {
+			limit = { NOT = { has_terrain = dwarven_hold_surface } }
+			change_culture = exodus_goblin
+			change_religion = goblinic_shamanism
+			add_province_modifier = {
+				name = hyti_cave_mod6
+				duration = -1
+			}
+		}
+		remove_province_modifier = hyti_fast_hold
+	}
 }
 
 on_colonist_boosting_colony_effect = {
@@ -8893,7 +9084,7 @@ on_development_effect = {
 			#from developing provinces
 			if = {
 				limit = {
-					has_reform = paintbrushes_for_everyone
+					has_government_attribute = paintbrushes_for_everyone_ability
 				}
 				ashhana_blood_curse_add_control_by_source = {
 					canvas_strength = 0.75
@@ -10182,7 +10373,12 @@ on_built_manufactory_effect = {
 			19 = { }
 		}
 	}
-
+	if = { #Tsukqiao
+		limit = { 
+			owner = { has_reform = tsukqiao_throne_of_lies_reform } 
+		}
+		owner = { add_legitimacy = 5 }
+	}
 }
 
 on_capital_moved_effect = {
@@ -11581,6 +11777,44 @@ startup_1444_effects = {
 		if = {
 			limit = { capital_scope = { region = great_plateau_region } ai = no }
 			country_event = { id = utubodi_unification.0 }
+		}
+		if = {
+			limit = { tag = N12 }
+			#Set up the Volcanic Truth twin gods' randomised eruption
+			6162 = {
+				province_event = {
+					id = volcanic_truth.310
+					days = 24090 # 66-86 years
+					random = 7300
+				}
+			}
+		}
+
+		#Tsukqiao
+		if = {
+			limit = { tag = Z60 }
+			country_event = { id = tsukqiao.1 days = 7 } #Save primary culture
+		}
+		
+		#Pachpalka initialization
+		if = {
+			limit = {
+				tag = N91 #random Great Plateau tag
+			}
+			random_known_country = {
+				limit = {
+					capital_scope = {
+						region = great_plateau_region
+					}
+				}
+				capital_scope = { save_global_event_target_as = pachpalka_location }
+				random_list = {
+					1 = { country_event = { id = insyaa_flavour.30 days = 30 } } #Strange Kobold Theologian event
+					1 = { country_event = { id = insyaa_flavour.32 days = 30 } } #Strange Kobold Merchant event
+					1 = { country_event = { id = insyaa_flavour.34 days = 30 } } #Strange Kobold Artist event
+					1 = { country_event = { id = insyaa_flavour.36 days = 30 } } #Strange Kobold Philosopher event
+				}
+			}
 		}
 	}
 }
@@ -14747,6 +14981,13 @@ on_province_owner_change_effect = {
 			event_target:endhuvi_cinnabar_lotus_province = { owner = { country_event = { id = flavour_endhuvi.102 } } }
 		}
 	}
+	if = { #Magical Fortress
+		limit = {
+			has_building = mage_tower
+			owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
+		}
+		add_province_modifier = { name = magical_fortress_province_mod duration = -1 }
+	}
 	if = { #Holohana - flag gets automatically removed when province is decolonized this readds it
 		limit = {
 			has_province_modifier = holohana_rumbling
@@ -14759,6 +15000,84 @@ on_province_owner_change_effect = {
 	if = {
 		limit = { province_id = 3675 }
 		province_event = { id = utubodi_unification.1 }
+	}
+	if = {
+		limit = { owner = { is_or_was_tag = { tag = F81 } } }
+		if = {
+			limit = { province_id = 619 }
+			province_event = { id = hyti.17 }
+		}
+		if = {
+			limit = { province_id = 676 }
+			province_event = { id = hyti.18 }
+		}
+		if = {
+			limit = { province_id = 673 }
+			province_event = { id = hyti.19 }
+		}
+		if = {
+			limit = {
+				has_province_modifier = great_bulwari_watercourse
+				owner = { has_country_flag = hyti_bulwar_water }
+			}
+			owner = { set_country_flag = allow_jorkad_dam_building }
+		}
+		if = {
+			limit = { continent = serpentspine }
+			if = {
+				limit = {
+					OR = { province_id = 2931 province_id = 4236 }
+					owner = { has_country_flag = hyti_station }
+				}
+				owner = { country_event = { id = hyti.14 } }
+			}
+			add_goblin_minority_size_effect = yes
+			if = {
+				limit = { has_terrain = dwarven_hold }
+				owner = {
+					trigger_switch = {
+						on_trigger = has_country_flag
+						hyti_cave_mod4 = { PREV = { add_province_modifier = { name = hyti_cave_mod4 duration = -1 } } }
+						hyti_cave_mod5 = { PREV = { add_province_modifier = { name = hyti_cave_mod5 duration = -1 } } }
+						hyti_cave_mod6 = { PREV = { add_province_modifier = { name = hyti_cave_mod6 duration = -1 } } }
+					}
+				}
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_terrain = dwarven_road
+							OR = {
+								has_province_modifier = dwarovar_rail
+								owner = { NOT = { has_country_flag = hyti_base_trains } }
+							}
+						}
+						has_terrain = cavern
+					}
+				}
+				add_province_modifier = { name = hyti_cave_mod6 duration = -1 }
+			}
+			if = {
+				limit = {
+					has_province_modifier = advanced_rail
+					owner = { has_country_flag = hyti_magic_trains }
+				}
+				if = {
+					limit = { owner = { has_estate_privilege = artifice_invention_hyti_magiwind } }
+					add_province_modifier = {
+						name = hyti_magic_trains_on
+						duration = -1
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = hyti_magic_trains_off
+						duration = -1
+					}
+				}
+			}
+		}
 	}
 }
 
@@ -15093,11 +15412,14 @@ anb_on_exploit_effect = {
 	if = { #umbral covenant
 		limit = {
 			owner = {
-				tag = S90
+				OR = {
+					tag = S90
+					tag = S30
+				}
 			}
 		}
 		set_province_flag = S90_exploited_dev
-		S90 = {
+		owner = {
 			change_variable = {
 				which = S90_exploit_count
 				value = 1
@@ -15105,7 +15427,7 @@ anb_on_exploit_effect = {
 		}
 		if = {
 			limit = {
-				S90 = {
+				owner = {
 					has_country_flag = S90_extraction
 				}
 			}
@@ -15115,17 +15437,16 @@ anb_on_exploit_effect = {
 				}
 			}
 		}
-	}
-	if = { #dbco
-		limit = {
-			owner = {
-				tag = S30
-				has_country_modifier = S30_convert_exploit
+		if = { #dbco
+			limit = {
+				owner = {
+					has_country_modifier = S30_convert_exploit
+				}
 			}
-		}
-		add_province_modifier = {
-			name = S30_local_convert
-			duration = 1825
+			add_province_modifier = {
+				name = S30_local_convert
+				duration = 1825
+			}
 		}
 	}
 }
