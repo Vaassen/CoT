@@ -370,7 +370,16 @@ estate_mages_organization_magisterium = {
 	land_share = 5
 	influence = 0.15
 	is_valid = {
-		has_discovered = 8 #Anbenncost
+		OR = {
+			AND = {
+				tag = Z01 #Empire of Anbennar
+				is_revolutionary = no #Blackpowder Anbennar
+			}
+			AND = {  #Magisterium exists and can form a relationship with you
+				knows_country = A85
+				A85 = { knows_country = ROOT }
+			}
+		}
 		NOT = { has_mages_special_organization_privilege = yes }
 	}
 	can_select = {
@@ -413,6 +422,7 @@ estate_mages_organization_magisterium = {
 		modifier = {
 			mages_estate_experience_mod = -0.25
 			mages_ruler_experience_mod = -0.25
+			necromancy_experience_mod = 0.25
 		}
 	}
 	influence_scaled_conditional_modifier = {	#Modifier that are applied if the specified conditions are true. At 100% Influence you gain 100% of the modifier.
@@ -431,6 +441,7 @@ estate_mages_organization_magisterium = {
 		modifier = {
 			mages_estate_experience_mod = 0.1
 			mages_ruler_experience_mod = 0.1
+			necromancy_experience_mod = -0.1
 		}
 	}
 	influence_scaled_conditional_modifier = {	#Modifier that are applied if the specified conditions are true. At 100% Influence you gain 100% of the modifier.
@@ -443,6 +454,7 @@ estate_mages_organization_magisterium = {
 		modifier = {
 			mages_ruler_experience_mod = 0.25
 			mages_estate_experience_mod = 0.25
+			necromancy_experience_mod = -0.25
 		}
 	}
 	penalties = {
@@ -747,6 +759,63 @@ estate_mages_land_grant_academies = {
 	on_revoked = { scaling_with_land_share_privilege_tooltip = { estate_privilege = estate_mages_land_grant_academies } }
 
 	ai_will_do = { factor = 0 }
+}
+
+estate_mages_puppet_of_corrupt_mages = {
+	icon = privilege_cast_spell
+	loyalty = 0.2
+	max_absolutism = -20
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 4 } }
+
+	is_valid = { has_estate_privilege = estate_mages_puppet_of_corrupt_mages } #invisible
+	can_select = { always = no }
+	can_revoke = {
+		OR = {
+			estate_has_infamy_suspicious_or_better = yes
+			ruler_is_witch_king = yes
+		}
+		OR = {
+			custom_trigger_tooltip = {
+				tooltip = is_magocracy_tt
+				has_government_attribute = is_magocracy
+			}
+			NOT = { estate_influence = { estate = estate_mages influence = 60 } }
+		}
+	}
+	on_granted = {
+		custom_tooltip = estate_mages_puppet_of_corrupt_mages_tt
+		tooltip = { add_country_modifier = { name = estate_mages_puppet_of_corrupt_mages_no_witch_king duration = -1 } }
+	}
+	on_revoked = {
+		add_country_modifier = { name = estate_mages_puppet_of_corrupt_mages_consequence duration = 3650 }
+
+		custom_tooltip = estate_mages_puppet_of_corrupt_mages_tt
+		tooltip = { add_country_modifier = { name = estate_mages_puppet_of_corrupt_mages_no_witch_king duration = -1 } }
+	}
+	conditional_modifier = {
+		trigger = { ruler_is_not_witch_king = yes }
+		modifier = {
+			max_absolutism = -20
+			diplomatic_reputation = -2
+			
+			legitimacy = -1
+			devotion = -1
+			republican_tradition = -0.2
+			horde_unity = -1
+		}
+		is_bad = yes
+	}
+
+	penalties = {
+		monarch_admin_power = -1
+		monarch_diplomatic_power = -1
+		monarch_military_power = -1
+		artificers_capacity = -20
+	}
+
+	ai_will_do = {
+		factor = 0
+	}
 }
 
 ######################
@@ -1496,73 +1565,6 @@ estate_mages_soul_bound_weaponry = { #Shadow Pact
 #			factor = 0
 #			
 #		}
-	}
-}
-
-# NOTE: this is a little experimental and hotfix-y, to prevent high-infamy rulers being griefed by high-infamy estates
-# it may need to be revisited and potentially retuned in the future
-estate_mages_endorse_corrupted_mages = {
-	icon = privilege_cast_spell
-	loyalty = 0
-	influence = 0.05
-	land_share = 5
-	is_valid = {
-		ruler_has_infamy_suspicious_or_worse = yes
-	}
-	can_select = {
-		ruler_has_infamy_suspicious_or_worse = yes # for the tooltip
-		estate_has_infamy_suspicious_or_worse = yes
-		#NOT = { has_estate_privilege = estate_mages_expelling_corrupted_mages }
-	}
-	can_revoke = {
-	}
-	on_granted = {
-		custom_tooltip = estate_mages_endorse_corrupted_mages_tt
-	}
-	on_invalid = {
-	}
-	on_revoked = {
-		custom_tooltip = estate_mages_endorse_corrupted_mages_revoke_tt
-	}
-	conditional_modifier = {
-		trigger = { type_has_infamy_suspicious = { type = country } }
-		modifier = {
-			mages_loyalty_modifier = 0.1 #as much as the suspicious loyalty debuff
-			diplomatic_reputation = -1 # half as much as suspicious
-		}
-	}
-	conditional_modifier = {
-		trigger = { type_has_infamy_denounced = { type = country } }
-		modifier = {
-			mages_loyalty_modifier = 0.25 #as much as the denounced loyalty debuff
-			diplomatic_reputation = -1.5 # half as much as denounced
-		}
-	}
-	conditional_modifier = {
-		trigger = { estate_has_infamy_witch_king = yes }
-		modifier = {
-			mages_loyalty_modifier = 0.5 #as much as the witch king loyalty debuff
-			diplomatic_reputation = -2 # half as much as witch king
-		}
-	}
-	# NOTE: if having the privilege negate the loyalty modifiers like this turns out to be too confusing,
-	# or it would be preferred not to duplicate the loyalty modifiers in the estate loyalty breakdown,
-	# this could instead by implemented via adding
-	#NOT = { AND = { <has this privilege> <ruler is suspicious or worse> } }
-	# to the triggers for the mage estate loyalty malus for suspicious+ instead
-	
-	benefits = {
-		mages_ruler_experience_mod = 0.05
-		mages_estate_experience_mod = 0.05
-	}
-	penalties = {
-		all_estate_loyalty_equilibrium = -0.1
-	}
-	
-	cooldown_years = 10
-
-	ai_will_do = {
-		factor = 0
 	}
 }
 
