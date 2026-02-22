@@ -165,7 +165,7 @@ country_event = {
 						which = hinuibird_disaster_month
 						value = trigger_value:is_month
 					}
-					change_variable = { # I'm not sure exactly why but the month seems off by 1 for the ending
+					change_variable = { # is_month is 0-indexed (January is month 0, December is month 11) so increment it by 1 for the loc
 						which = hinuibird_disaster_month
 						value = 1
 					}
@@ -551,10 +551,9 @@ country_event = {
 		}
 
 		hidden_effect = {
-			REB = {
-				clr_country_flag = hinuibird_migration_end_flag
-				clr_country_flag = hinuibird_migration_start_flag
-			}
+			set_global_flag = charkuchin_kobold_supplies_finished # This ensures newly released kobolds don't get the supplies mechanic
+			# I don't clear the REB flags because it's possible for a kobold tag to still exist outside the range who still needs to deal
+			# with the regular disaster
 			regenerate_government_mechanics = yes
 			end_disaster = hinuibird_migration_disaster
 		}
@@ -576,7 +575,7 @@ province_event = {
 	}
 }
 
-# Trigger to start de-developing provinces and decolonising them if you are at 0 supplies
+# Trigger to let the player know they are out of supplies
 country_event = {
 	id = charkuchin_kobold.12
 	title = charkuchin_kobold.12.title
@@ -585,11 +584,23 @@ country_event = {
 
 	is_triggered_only = yes
 
+	trigger = {
+		NOT = { # This keeps it to every 1 year at most
+			has_country_modifier = charkuchin_kobold_no_supplies_cooldown
+		}
+	}
+
 	immediate = {
-		hidden_effect = {
-			country_event = {
-				id = charkuchin_kobold.7
-				days = 120 # 4 months
+		hidden_effect = { # Just so the decolonisation doesn't happen immediately
+			add_country_modifier = {
+				name = charkuchin_kobold_decolonisation_cooldown
+				duration = 122 # 4 months
+				hidden = yes
+			}
+			add_country_modifier = { # This is so you don't see the event every other month if you are hovering around 0 and keep hitting it
+				name = charkuchin_kobold_no_supplies_cooldown
+				duration = 365 # 1 year
+				hidden = yes
 			}
 		}
 	}
