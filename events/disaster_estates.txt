@@ -1097,25 +1097,41 @@ country_event = { # The Mages take control
 	}
 
 	immediate = {
-		set_country_flag = estate_mages_in_power
 		hidden_effect = {
-			# set_country_flag = estate_vaisyas_in_power
 			set_country_flag = has_estate_disaster_flag
+
+			add_country_modifier = { name = generic_war_wizard_rebels_mod duration = 1 }
+			capital_scope = { mage_disaster_rebels = 3 }
+			export_to_variable = { which = total_dev_var value = total_development }
+			while = {
+				limit = { check_variable = { total_dev_var = 150 } }
+				subtract_variable = { total_dev_var = 150 }
+				random_owned_province = { mage_disaster_rebels = 3 }
+			}
+			remove_country_modifier = generic_war_wizard_rebels_mod
 		}
 	}
 	
-	option = {
+	option = { #Okay okay I give up
 		name = estate_disasters.200.a
 		ai_chance = { factor = 1 }
-		add_stability = -1
-		add_country_modifier = {
-			name = mages_dominance
-			duration = -1
-		}
+		
+		disband_rebels = mage_disaster_rebels
+		end_disaster = estate_mages_disaster
+		change_adm = -1
+		change_dip = -1
+		change_mil = -1
+		set_estate_privilege = estate_mages_puppet_of_corrupt_mages
+	}
+
+	option = { #Fight it out
+		name = estate_disasters.200.b
+		ai_chance = { factor = 1 }
+		custom_tooltip = mages_want_magocracy_tt
 	}
 	
 	option = { #Escanni witch-king
-		name = estate_disasters.200.b
+		name = estate_disasters.200.c
 		ai_chance = { factor = 1000 }
 		trigger = {
 			capital_scope = { province_group = escann_proper }
@@ -1125,20 +1141,31 @@ country_event = { # The Mages take control
 		change_government = theocracy
 		add_government_reform = magocracy_reform
 
-		define_ruler = {
-			hide_skills = yes
+		if = {
+			limit = { ruler_is_powerful_mage = yes }
+			change_adm = 1
+			change_dip = 1
+			change_mil = 1
 		}
-		define_powerful_mage = {
-			type = ruler
-			witch_king = yes
+		else = {
+			define_ruler = {
+				change_adm = 1
+				change_dip = 1
+				change_mil = 1
+			}
+			define_powerful_mage = {
+				type = ruler
+				witch_king = yes
+			}
 		}
-		clr_country_flag = estate_mages_in_power
 		clr_estate_witch_king_points = yes
-		add_country_modifier = { name = mages_crushed duration = 7300 }
+
+		disband_rebels = mage_disaster_rebels
+		end_disaster = estate_mages_disaster
 	}
 }
 
-country_event = { # Mages brought to heel/Magocratic Coup Succeeds
+country_event = { # Mages brought to heel
 	id = estate_disasters.201
 	title = estate_disasters.201.t
 	desc = estate_disasters.201.d
@@ -1161,27 +1188,17 @@ country_event = { # Mages brought to heel/Magocratic Coup Succeeds
 	option = { #old system won
 		name = estate_disasters.201.a
 		ai_chance = { factor = 1 }
-		trigger = { NOT = { has_country_flag = estate_mages_in_power } }
 
-		clr_estate_witch_king_points = yes
-	}
-
-	option = { #mages took over
-		name = estate_disasters.201.b
-		ai_chance = { factor = 1 }
-		trigger = { has_country_flag = estate_mages_in_power }
-
-		change_government = theocracy
-		add_government_reform = magocracy_reform
-
-		define_ruler = { hide_skills = yes }
-		define_powerful_mage = { type = ruler bonus = 4 }
-
-		transfer_witch_king_points_to_ruler = { from = country } #take witch-king points from estate
-		hidden_effect = { calculate_magical_infamy_modifier = yes }
-
-		remove_country_modifier = mages_dominance
-		add_country_modifier = { name = mages_crushed duration = 7300 }
+		change_adm = 1
+		change_dip = 1
+		change_mil = 1
+		decrease_estate_witch_king_points = { size = large }
+		add_estate_influence_modifier = {
+			estate = estate_mages
+			desc = EST_VAL_MAGES_COWED
+			influence = -40
+			duration = 7300
+		}
 	}
 }
 
