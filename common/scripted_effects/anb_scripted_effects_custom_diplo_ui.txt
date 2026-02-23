@@ -1199,34 +1199,208 @@ L80_fealty_ai_acceptance_calc_effect = {
 			set_variable = { which = ai_accept_var_button_1 value = 0 }
 			set_variable = { which = ai_accept_var_button_1_pos value = 0 }
 			set_variable = { which = ai_accept_var_button_1_neg value = 0 }
-			set_variable = { which = zongjiPrestigious value = 0 }
-			set_variable = { which = custdip_ruler_dip value = 0 }
-			set_variable = { which = custdip_ruler_mil value = 0 }
+	
+			export_to_variable = { which = custdip_our_autonomy value = average_autonomy who = FROM }
+			export_to_variable = { which = custdip_their_autonomy value = average_autonomy who = ROOT }
 
-			##Positive
-			#Y25OurSize
+			divide_variable = { which = custdip_our_autonomy value = 100 }
+			divide_variable = { which = custdip_their_autonomy value = 100 }
+			change_variable = { which = custdip_our_autonomy value = -1 }
+			change_variable = { which = custdip_their_autonomy value = -1 }
+			multiply_variable = { which = custdip_our_autonomy value = -1 }
+			multiply_variable = { which = custdip_their_autonomy value = -1 }
+
 			export_to_variable = {
-				which = custdip_our_development
+				which = custdip_our_development_zulbur
 				value = total_development
 			}
-			change_variable = { which = ai_accept_var_button_1_pos which = custdip_our_development }
-			#Y25Powerful
+
+			export_to_variable = {
+				which = custdip_their_development_zulbur
+				value = total_development
+				who = ROOT
+			}
+
+			#Below calculations are for the relative economic base calculation listed on the vassal page in the wiki. I am ignoring existing vassals because fuck that
+			#Calculate rDev+1 
+			multiply_variable = { which = custdip_our_development_zulbur which = custdip_our_autonomy }
+			change_variable = { which = custdip_our_development_zulbur value = 10 }
+			divide_variable = { which = custdip_our_development_zulbur value = 2 }
+			change_variable = { which = custdip_our_development_zulbur value = 1 }
+
+			#Calculate tDev^2/2+1 
+			multiply_variable = { which = custdip_their_development_zulbur which = custdip_their_autonomy }
+			change_variable = { which = custdip_their_development_zulbur value = 10 }
+			divide_variable = { which = custdip_their_development_zulbur value = 2 }
+			multiply_variable = { which = custdip_their_development_zulbur which = custdip_their_development_zulbur }
+			divide_variable = { which = custdip_their_development_zulbur value = 2 }
+			change_variable = { which = custdip_their_development_zulbur value = 1 }
+			
+			#divide r and t dev, multiply by 30, and subtract 90
+			divide_variable = { which = custdip_our_development_zulbur which = custdip_their_development_zulbur }
+			multiply_variable = { which = custdip_their_development_zulbur value = 30 }
+			change_variable = { which = custdip_our_development_zulbur value = -90 }
+
+			#change_variable = { which = ai_accept_var which = custdip_our_development_zulbur }
+			round_variable = {
+				which = custdip_our_development_zulbur
+				value = 0
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = custdip_our_development_zulbur
+						value = 0
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_our_development_zulbur }	
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_our_development_zulbur }
+			}
+
+			change_variable = { which = ai_accept_var_button_1_pos value = 25 } #Zulbur +25 bonus	
+
+			#Ai acceptance from attitude
+			if = {
+				limit = {
+					ROOT = {
+						OR = {
+							ai_attitude = { who = FROM attitude = attitude_allied }
+							ai_attitude = { who = FROM attitude = attitude_friendly }
+						}
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_hostile } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_outraged } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_rivalry } }
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -1000 }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } }
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -20 }
+			}
+
+			#scale based on army strength, wiki doesnt say how military power is calculated so we are going off of vibes
 			if = {
 				limit = {
 					army_strength = {
 						who = ROOT
-						value = 1.5
+						value = 3
 					}
 				}
-				change_variable = { which = ai_accept_var_button_1_pos value = 15 }
+				change_variable = { which = ai_accept_var_button_1_pos value = 20 }
 			}
-			#Ambiguous
-			#Y25DipRep
+			else_if = {
+				limit = {
+					army_strength = {
+						who = ROOT
+						value = 3
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						army_strength = {
+							who = ROOT
+							value = 1.5
+						}
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -10 }
+			}
+			else_if = {
+				limit = {
+					NOT = {
+						army_strength = {
+							who = ROOT
+							value = 1
+						}
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -20 }
+			}
+
+			#trust
+			if = {
+				limit = { ROOT = { trust = { who = FROM value = 100 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 95 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 9 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 90 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 8 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 85 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 7 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 80 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 6 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 75 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 5 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 70 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 4 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 65 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 3 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 60 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 2 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 55 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 1 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 50 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 0 }
+			}
+			else_if = {
+				limit = { NOT = { ROOT = { trust = { who = FROM value = 50 } } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = -40 }
+			}
+			else_if = {
+				limit = { NOT = { ROOT = { trust = { who = FROM value = 30 } } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = -2000 }
+			}
+
+			#royal marriage
+			if = {
+				limit = { ROOT = { marriage_with = FROM } }
+				change_variable = { ai_accept_var_button_1_pos = 10 }
+			}
+
+			#dip rep
 			export_to_variable = {
 				which = custdip_diplo_rep
 				value = modifier:diplomatic_reputation
 			}
-			multiply_variable = { which = custdip_diplo_rep value = 2 }
+			multiply_variable = { which = custdip_diplo_rep value = 3 }
 			if = {
 				limit = { diplomatic_reputation = 0 }
 				change_variable = { which = ai_accept_var_button_1_pos which = custdip_diplo_rep }
@@ -1234,7 +1408,8 @@ L80_fealty_ai_acceptance_calc_effect = {
 			else = {
 				change_variable = { which = ai_accept_var_button_1_neg which = custdip_diplo_rep }
 			}
-			#Y25vassalizationReasons
+
+			#vassalization reasons
 			export_to_variable = {
 				which = custdip_vassalization_reasons
 				value = modifier:accept_vassalization_reasons
@@ -1247,72 +1422,19 @@ L80_fealty_ai_acceptance_calc_effect = {
 			else = {
 				change_variable = { which = ai_accept_var_button_1_neg which = custdip_vassalization_reasons }
 			}
-	
-			#Negative
-			#Base acceptance
-			change_variable = { ai_accept_var_button_1_neg = -45 }
-			#Y25TheirSize
-			export_to_variable = {
-				which = custdip_their_development
-				value = total_development
-				who = ROOT
-			}
-			multiply_variable = { which = custdip_their_development value = 5 }
-			multiply_variable = { which = custdip_their_development value = -1 }
-			change_variable = { which = ai_accept_var_button_1_neg which = custdip_their_development }
-			#Y25TooBig
-			if = {
-				limit = {
-					ROOT = { total_development = 100 }
-				}
-				change_variable = { ai_accept_var_button_1_neg = -1000 }
-			}
-			#Y25Weak
-			if = {
-				limit = {
-					NOT = {
-						army_strength = {
-							who = ROOT
-							value = 0.6
-						}
-					}
-				}
-				change_variable = { which = ai_accept_var_button_1_neg value = -45 }
-			}
 
-			#attitude_neutral_DIPLO_ATTITUDE_TT
-			if = {
-				limit = { ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } } }
-				change_variable = { which = ai_accept_var_button_1_neg value = -20 }
-			}
-			#attitude_friendly_DIPLO_ATTITUDE_TT
-			#attitude_threatened_DIPLO_ATTITUDE_TT
+			#gov rank, not bothering to compare to target because ai ashhanna wont get higher than duchy before unficiation
 			if = {
 				limit = {
-					ROOT = {
-						ai_attitude = { who = FROM attitude = attitude_friendly }
-						ai_attitude = { who = FROM attitude = attitude_threatened }
-						ai_attitude = { who = FROM attitude = attitude_allied }
-					}
+					government_rank = 3
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 20 }
+			}
+			else_if = {
+				limit = {
+					government_rank = 2
 				}
 				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
-			}
-			#attitude_rivalry_DIPLO_ATTITUDE_TT
-			#attitude_hostile_DIPLO_ATTITUDE_TT
-			#attitude_outraged_DIPLO_ATTITUDE_TT
-			#attitude_domineering_DIPLO_ATTITUDE_TT
-			if = {
-				limit = {
-					ROOT = {
-						OR = {
-							ai_attitude = { who = FROM attitude = attitude_rivalry }
-							ai_attitude = { who = FROM attitude = attitude_hostile }
-							ai_attitude = { who = FROM attitude = attitude_outraged }
-							ai_attitude = { who = FROM attitude = attitude_domineering }
-						}
-					}
-				}
-				change_variable = { which = ai_accept_var_button_1_neg value = -1000 }
 			}
 
 			change_variable = { which = ai_accept_var_button_1 which = ai_accept_var_button_1_pos }

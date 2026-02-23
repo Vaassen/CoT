@@ -1047,89 +1047,245 @@ L80_fealty_ai_acceptance_trigger = {
 		export_to_variable = { which = ai_accept_var value = trigger_value:always } #=0
 		export_to_variable = { which = temp_vassalisation_reasons value = modifier:accept_vassalization_reasons who = FROM with = THIS }
 		export_to_variable = { which = temp_diplomatic_reputation value = modifier:diplomatic_reputation who = FROM }
-		export_to_variable = { which = temp_dip value = DIP who = FROM }
-		export_to_variable = { which = temp_mil value = MIL who = FROM }
 		export_to_variable = { which = temp_our_dev value = total_development who = FROM }
 		export_to_variable = { which = temp_their_dev value = total_development who = ROOT }
-		export_to_variable = { which = temp_prestige value = prestige who = FROM }
+		export_to_variable = { which = temp_our_autonomy value = average_autonomy who = FROM }
+		export_to_variable = { which = temp_their_autonomy value = average_autonomy who = ROOT }
 
-		#Y25Base
-		change_variable = { which = ai_accept_var value = -45 }
-		#Y25OurSize
+		divide_variable = { which = temp_our_autonomy value = 100 }
+		divide_variable = { which = temp_their_autonomy value = 100 }
+		change_variable = { which = temp_our_autonomy value = -1 }
+		change_variable = { which = temp_their_autonomy value = -1 }
+		multiply_variable = { which = temp_our_autonomy value = -1 }
+		multiply_variable = { which = temp_their_autonomy value = -1 }
+
+
+		#Below calculations are for the relative economic base calculation listed on the vassal page in the wiki. I am ignoring existing vassals because fuck that
+		#Calculate rDev+1 
+		multiply_variable = { which = temp_our_dev which = temp_our_autonomy }
+		change_variable = { which = temp_our_dev value = 10 }
+		divide_variable = { which = temp_our_dev value = 2 }
+		change_variable = { which = temp_our_dev value = 1 }
+
+		#Calculate tDev^2/2+1 
+		multiply_variable = { which = temp_their_dev which = temp_their_autonomy }
+		change_variable = { which = temp_their_dev value = 10 }
+		divide_variable = { which = temp_their_dev value = 2 }
+		multiply_variable = { which = temp_their_dev which = temp_their_dev }
+		divide_variable = { which = temp_their_dev value = 2 }
+		change_variable = { which = temp_their_dev value = 1 }
+		
+		#divide r and t dev, multiply by 30, and subtract 90
+		divide_variable = { which = temp_our_dev which = temp_their_dev }
+		multiply_variable = { which = temp_their_dev value = 30 }
+		change_variable = { which = temp_our_dev value = -90 }
+
+		round_variable = {
+			which = temp_our_dev
+			value = 0
+		}
+
 		change_variable = { which = ai_accept_var which = temp_our_dev }
-		#Y25TheirSize
-		multiply_variable = { which = temp_their_dev value = 5 }
-		subtract_variable = { which = ai_accept_var which = temp_their_dev }
-		#Y25vassalizationreasons
-		change_variable = { which = ai_accept_var which = temp_vassalisation_reasons }
-		#Y25dipRep
-		multiply_variable = { which = temp_diplomatic_reputation value = 2 }
-		change_variable = { which = ai_accept_var which = temp_diplomatic_reputation }
-		#Y25TooBig
+
+		change_variable = { which = ai_accept_var value = 25 } #Zulbur +25 bonus
+
+		#Ai acceptance from attitude
 		if = {
-			limit = { ROOT = { total_development = 100 } }
+			limit = {
+				OR = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_allied } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_friendly } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_threatened } }
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 10 }
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_hostile } }
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_outraged } }
+				}
+			}
 			variable_arithmetic_trigger = {
 				change_variable = { which = ai_accept_var value = -1000 }
 			}
 		}
-		#Y25Powerful
+		else_if = {
+			limit = {
+				OR = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } }
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -20 }
+			}
+		}
+
+		#army strength scaling
 		if = {
 			limit = {
 				FROM = {
 					army_strength = {
 						who = ROOT
-						value = 1.5
+						value = 2
 					}
 				}
 			}
 			variable_arithmetic_trigger = {
-				change_variable = { which = ai_accept_var value = 15 }
+				change_variable = { which = ai_accept_var value = 10 }
 			}
 		}
-		#Y25Weak
+		if = {
+			limit = {
+				FROM = {
+					army_strength = {
+						who = ROOT
+						value = 3
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 20 }
+			}
+		}
 		if = {
 			limit = {
 				FROM = {
 					NOT = {
 						army_strength = {
 							who = ROOT
-							value = 0.6
+							value = 1.5
 						}
 					}
 				}
 			}
 			variable_arithmetic_trigger = {
-				change_variable = { which = ai_accept_var value = -45 }
+				change_variable = { which = ai_accept_var value = -10 }
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					NOT = {
+						army_strength = {
+							who = ROOT
+							value = 1
+						}
+					}
+				}
+			}
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -10 }
 			}
 		}
 
+		#trust acceptance scaling
 		if = {
-			limit = {
-				OR = {
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_rivalry } }
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_hostile } }
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_outraged } }
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_domineering } }
-				}
-			}
+			limit = { ROOT = { trust = { who = FROM value = 100 } } }
 			variable_arithmetic_trigger = {
-				change_variable = { which = ai_accept_var value = -1000 }
+				change_variable = { which = ai_accept_var value = 10 }
 			}
 		}
-		if = {
-			limit = { ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } } }
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 95 } } }
 			variable_arithmetic_trigger = {
-				change_variable = { which = ai_accept_var value = -20 }
+				change_variable = { which = ai_accept_var value = 9 }
 			}
 		}
-		if = {
-			limit = {
-				OR = {
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_friendly } }
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_threatened } }
-					ROOT = { ai_attitude = { who = FROM attitude = attitude_allied } }
-				}
+		ielse_iff = {
+			limit = { ROOT = { trust = { who = FROM value = 90 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 8 }
 			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 85 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 7 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 80 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 6 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 75 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 5 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 70 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 4 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 65 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 3 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 60 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 2 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 60 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 1 }
+			}
+		}
+		else_if = {
+			limit = { ROOT = { trust = { who = FROM value = 50 } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 0 }
+			}
+		}
+		else_if = {
+			limit = { NOT = { ROOT = { trust = { who = FROM value = 50 } } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -40 }
+			}
+		}
+		else_if = {
+			limit = { NOT = { ROOT = { trust = { who = FROM value = 30 } } } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = -2000 }
+			}
+		}
+
+		#royal marriage
+		if = {
+			limit = { ROOT = { marriage_with = FROM } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 10 }
+			}
+		}
+
+		#vassalization reasons
+		change_variable = { which = ai_accept_var which = temp_vassalisation_reasons }
+
+		#Dip rep
+		multiply_variable = { which = temp_diplomatic_reputation value = 3 }
+		change_variable = { which = ai_accept_var which = temp_diplomatic_reputation }
+
+		#gov rank
+		if = {
+			limit = { FROM = { government_rank = 3 } }
+			variable_arithmetic_trigger = {
+				change_variable = { which = ai_accept_var value = 20 }
+			}
+		}
+		else_if = {
+			limit = { FROM = { government_rank = 2 } }
 			variable_arithmetic_trigger = {
 				change_variable = { which = ai_accept_var value = 10 }
 			}
