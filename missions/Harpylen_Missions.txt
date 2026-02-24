@@ -302,9 +302,24 @@ F98_col_2 = {
 
 		trigger = {
 			# unlocked 3 harpy spells
+			# Probably need a custom tooltip
+			calc_true_if = {
+				amount = 3
+				custom_spell_harpy_default_2_trigger = yes # I think this works, since I don't want $player$ since I don't care about mana
+				custom_spell_harpy_default_3_trigger = yes
+				custom_spell_harpy_default_4_trigger = yes
+				custom_spell_harpy_default_5_trigger = yes
+			}
 			# cast harpy spells 10 times
+			check_variable = {
+				which = F98_harpy_spells_cast
+				value = 10
+			}
 			estate_has_infamy_paragon = yes
-			# mages have >=15% land share
+			estate_territory = {
+				estate = estate_mages
+				territory = 15
+			}
 		} 
 
 		effect = {
@@ -323,20 +338,109 @@ F98_col_2 = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			at_least_magic_project_level = { project = harpylen_project level = 1 }
+			religious_unity = 0.9
+			OR = {
+				has_global_modifier_value = {
+					which = tolerance_own
+					value = 6
+				}
+				has_global_modifier_value = {
+					which = tolerance_heathen
+					value = 3
+				}
+			}
+			if = {
+				limit = {
+					religion = the_hunt
+				}
+				OR = {
+					has_country_modifier = harpy_rites_of_peace_unrest
+					has_country_modifier = harpy_rites_of_peace_conversion
+				}
+				check_variable = {
+					which = F98_hunt_power_used_count
+					value = 10
+				}
+			}
+			else = {
+				calc_true_if = {
+					amount = 5
+					all_subject_country = { 
+						NOT = { liberty_desire = 50 }
+						has_matching_religion = ROOT
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			#moderate tolerance increase of all races in an owned province
+			increase_all_existing_tolerances = { size = medium }
+			if = {
+				limit = {
+					religion = the_hunt
+				}
+				custom_tooltip = F98_hunt_power_refund_tt
+			}
+			else = {
+				add_country_modifier = {
+					name = F98_doctrinal_competition
+					duration = -1
+				}
+			}
+		} 
 	}
 
 	F98_ascend_the_spine = {
 		icon = mission_the_caucasus_rus
 		position = 6
 		required_missions = { F98_beyond_bulwar } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			region = nomsyulhan_region
+			NOT = {
+				country_or_non_sovereign_subject_holds = ROOT
+				owned_by = V20
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			nomsyulhan_region = {
+				type = all
+				OR = {
+					country_or_non_sovereign_subject_holds = ROOT
+					owned_by = V20 # Zoherin Apunsorya
+				}
+			}
+			OR = { # placeholder custom tooltip?
+				NOT = { # Either V20 owns none of them (so you own them all) or you've made friends
+					nomsyulhan_region = {
+						owned_by = V20
+					}
+				}
+				V20 = {
+					allied_with = ROOT
+					has_trust = {
+						who = ROOT
+						trust = 100
+					}
+					# placeholder custom tooltip
+					has_country_flag = F98_harpylen_soothe_ruffled_feathers_targeted
+					has_country_flag = F98_harpylen_encourage_migration_targeted
+				}
+			}
+			precursor_relics = 10
+			# placeholder custom tooltip
+			has_country_flag = F98_nuzenpau_migration_done
+		} 
 
-		effect = {  } 
+		effect = {
+			# fire event Nuzenpau homecoming
+			hidden_effect = {
+				clr_country_flag = F98_nuzenpau_migration_done
+			}
+		} 
 	}
 
 	F98_elemental_artifice = {
@@ -346,11 +450,103 @@ F98_col_2 = {
 			F98_wings_of_stone
 			F98_ascend_the_spine
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					region = nomsyulhan_region
+					trade_goods = precursor_relics
+					NOT = {
+						AND = {
+							has_production_building_trigger = yes
+							has_any_manufactory_trigger = yes
+							OR = {
+								num_of_times_expanded_infrastructure = 1
+								AND = {
+									NOT = { has_dlc = "Leviathan" }
+									development = 15	
+								}
+							}
+						}
+					}
+				}
+				AND = {
+					region = nomsyulhan_region
+					OR = {
+						trade_goods = iron
+						trade_goods = copper
+						trade_goods = gold
+					}
+					NOT = {
+						AND = {
+							has_production_building_trigger = yes
+							OR = {
+								has_any_manufactory_trigger = yes
+								trade_goods = gold
+							}
+							OR = {
+								num_of_times_expanded_infrastructure = 1
+								AND = {
+									NOT = { has_dlc = "Leviathan" }
+									development = 15	
+								}
+							}
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			nomsyulhan_region = {
+				type = all
+				OR = {
+					NOT = { trade_goods = precursor_relics }
+					AND = {
+						has_production_building_trigger = yes
+						has_any_manufactory_trigger = yes
+						if = {
+							limit = {
+								has_dlc = "Leviathan"
+							}
+							num_of_times_expanded_infrastructure = 1
+						}
+						else = {
+							development = 15	
+						}
+					}
+				}
+			}
+			akasik_region = {
+				type = all
+				OR = {
+					NOT = {
+						trade_goods = iron
+						trade_goods = copper
+						trade_goods = gold
+					}
+					AND = {
+						has_production_building_trigger = yes
+						OR = {
+							has_any_manufactory_trigger = yes
+							trade_goods = gold
+						}
+						if = {
+							limit = {
+								has_dlc = "Leviathan"
+							}
+							num_of_times_expanded_infrastructure = 1
+						}
+						else = {
+							development = 15	
+						}
+					}
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = { 
+			# placeholder make some inventions better
+		} 
 	}
 
 	F98_distant_sisters_departed = {
