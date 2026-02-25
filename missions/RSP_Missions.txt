@@ -87,10 +87,6 @@ RSP_shared_3 = {
 		required_missions = { RSP_what_we_do_best } 
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			NOT = {
-				has_fort_building_trigger = yes
-				has_coast_defense_building_trigger = yes
-			}
 		} 
 
 		trigger = {
@@ -109,6 +105,15 @@ RSP_shared_3 = {
 					name = RSP_den_of_piracy_capital
 					duration = -1
 				}
+				custom_tooltip = RSP_protect_our_loot_effect_tt
+				#hidden_effect = { - Bon, this shows as a Parsing error, the goal is to remove cores of all tags but the current owner
+				#	every_country = {
+				#		limit = { is_core = PREV }
+				#		remove_core = PREV
+				#		remove_territorial_core = PREV
+				#		remove_claim = PREV
+				#	}
+				#}
 			}
 		} 
 	}
@@ -122,8 +127,15 @@ RSP_shared_3 = {
 			RSP_piratical_diplomacy
 		}
 		provinces_to_highlight = {
-			is_capital_of = ROOT
-			NOT = { num_of_times_expanded_infrastructure = 1 }
+			OR = {
+				is_capital_of = ROOT
+				owner = {
+					AND = {
+						NOT = { tag = ROOT }
+						1527 = { is_strongest_trade_power = PREV }
+					}
+				}
+			}
 		} 
 
 		trigger = {
@@ -167,9 +179,15 @@ RSP_shared_3 = {
 		}
 		provinces_to_highlight = {
 			owned_by = ROOT
-			NOT = {
-				has_shipyard_building_trigger = yes
-				has_dock_building_trigger = yes
+			OR = {
+				AND = {
+					NOT = { has_shipyard_building_trigger = yes }
+					has_dock_building_trigger = yes
+				}
+				AND = {
+					has_shipyard_building_trigger = yes
+					NOT = { has_dock_building_trigger = yes }
+				}
 			}
 		} 
 
@@ -203,13 +221,9 @@ RSP_shared_3 = {
 		} 
 
 		trigger = {
-			if = { limit = { has_country_flag = magic_artificery_artificery_only } innovativeness = 25 }
 			endralliande_region = {
 				owned_by = ROOT
-				OR = {
-					owner = { has_country_flag = magic_artificery_artificery_only }
-					has_building = mage_tower
-				}
+				has_building = mage_tower
 				has_shipyard_building_trigger = yes
 				has_dock_building_trigger = yes
 			}
@@ -227,10 +241,7 @@ RSP_shared_3 = {
 						region = endralliande_region
 						has_shipyard_building_trigger = yes
 						has_dock_building_trigger = yes
-						OR = {
-							owner = { has_country_flag = magic_artificery_artificery_only }
-							has_building = mage_tower
-						}
+						has_building = mage_tower
 					}
 					add_base_tax = 2
 					add_base_production = 4
@@ -306,10 +317,8 @@ RSP_shared_4 = {
 						OR = {
 							NOT = { has_reform = pirate_republic_reform }
 							NOT = {
-								OR = {
-									capital_scope = { continent = north_america }
-									capital_scope = { continent = south_america }
-								}
+								capital_scope = { continent = north_america }
+								capital_scope = { continent = south_america }
 							}
 						}
 					}
@@ -584,10 +593,6 @@ RSP_shared_5 = {
 		required_missions = { RSP_what_we_do_best } 
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			AND = {
-				NOT = { has_manpower_building_trigger = yes }
-				NOT = { base_manpower = 5 }
-			}
 		} 
 
 		trigger = {
@@ -689,7 +694,7 @@ RSP_shared_5 = {
 					add_mil_power = 100
 				}
 				else = {													#Give Ruler Legendary Pirate personality if they are not one
-					force_add_normal_ruler_personality = { personality = legendary_pirate_personality }
+					force_add_ruler_personality = { personality = legendary_pirate_personality }
 				}
 			}
 		} 
@@ -726,11 +731,9 @@ RSP_rhasail_1 = {
 		} 
 
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = RSP_rhasail_letters_of_marque_ctt
-			}
 			calc_true_if = {
 				amount = 2
+				desc = RSP_rhasail_letters_of_marque_ctt
 				all_known_country = {
 					capital_scope = { continent = europe }
 					any_rival_country = {
@@ -779,7 +782,7 @@ RSP_rhasail_1 = {
 				}
 				trust = {
 					who = ROOT
-					value = 75
+					value = 60
 				}
 			}
 			OR = {
@@ -789,18 +792,36 @@ RSP_rhasail_1 = {
 		} 
 
 		effect = {
-			capital_scope = {
-				add_human_minority_size_effect = yes
-				add_elven_minority_size_effect = yes
-				add_dwarven_minority_size_effect = yes
-				add_halfling_minority_size_effect = yes
-				add_half_elven_minority_size_effect = yes
-			}
-			if = {
-				limit = {
-					calc_true_if = {
-						amount = 5
-						all_known_country = {
+			custom_tooltip = RSP_rhasail_charming_rogues_effect_tt
+			hidden_effect = {
+				capital_scope = {
+					add_human_minority_size_effect = yes
+					add_elven_minority_size_effect = yes
+					add_dwarven_minority_size_effect = yes
+					add_halfling_minority_size_effect = yes
+					add_half_elven_minority_size_effect = yes
+				}
+				if = {
+					limit = {
+						calc_true_if = {
+							amount = 5
+							all_known_country = {
+								capital_scope = {
+									continent = europe
+								}
+								has_opinion = {
+									who = ROOT
+									value = 100
+								}
+							}
+						}
+					}
+					add_republican_tradition = 15
+					add_prestige = 25
+				}
+				else = {
+					every_known_country = {
+						limit = {
 							capital_scope = {
 								continent = europe
 							}
@@ -809,31 +830,14 @@ RSP_rhasail_1 = {
 								value = 100
 							}
 						}
-					}
-				}
-				add_republican_tradition = 15
-				add_prestige = 25
-			}
-			else = {
-				every_known_country = {
-					limit = {
-						all_known_country = {
-							capital_scope = {
-								continent = europe
-							}
-						}
-						has_opinion = {
-							who = ROOT
-							value = 100
+						ROOT = {
+							add_republican_tradition = 3
+							add_prestige = 5
 						}
 					}
-					ROOT = {
-						add_republican_tradition = 3
-						add_prestige = 5
-					}
 				}
+				set_country_flag = RSP_rhasail_improved_nobles_officer_corp
 			}
-			set_country_flag = RSP_rhasail_improved_noble_officer_right
 		} 
 	}
 
@@ -844,11 +848,34 @@ RSP_rhasail_1 = {
 			RSP_rhasail_charming_rogues
 			RSP_rhasail_honour_among_thieves
 		}
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			prestige = 50
+			calc_true_if = {
+				amount = 50
+				desc = RSP_rhasail_yours_truly_ctt
+				europe = {
+					type = all
+					owner = {
+						OR = {
+							alliance_with = ROOT
+							overlord = { alliance_with = ROOT }
+						}
+					}
+				}
+			}
+			check_variable = {
+				which = sell_ships_variable
+				value = 10
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			custom_tooltip = RSP_rhasail_yours_truly_effect_tt
+			hidden_effect = {
+				set_country_flag = RSP_yours_truly_effect
+			}
+		} 
 	}
 }
 RSP_rhasail_2 = {
@@ -867,8 +894,6 @@ RSP_rhasail_2 = {
 		}
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			NOT = { if = { limit = { has_dlc = "Leviathan" } num_of_times_expanded_infrastructure = 2 } else = { development = 30 } }
-			NOT = { has_courthouse_building_trigger = yes }
 		} 
 
 		trigger = {
@@ -995,20 +1020,18 @@ RSP_lamentaire_1 = {
 		} 
 
 		trigger = {
-			custom_trigger_tooltip = {
-				tooltip = RSP_lamentaire_praise_be_to_uelos_ctt
-				calc_true_if = {
-					amount = 2
-					has_country_flag = uelos_avenging_kraken
-					has_country_flag = uelos_devouring_shark
-					has_country_flag = uelos_lightning_sailfish
-					has_country_flag = uelos_spectral_whale
-					has_country_flag = uelos_eternal_jellyfish
-					has_country_flag = uelos_endless_coral
-					has_country_flag = uelos_mourning_cuttlefish
-				}
+			calc_true_if = {
+				amount = 2
+				desc = RSP_lamentaire_praise_be_to_uelos_ctt
+				has_country_flag = uelos_avenging_kraken
+				has_country_flag = uelos_devouring_shark
+				has_country_flag = uelos_lightning_sailfish
+				has_country_flag = uelos_spectral_whale
+				has_country_flag = uelos_eternal_jellyfish
+				has_country_flag = uelos_endless_coral
+				has_country_flag = uelos_mourning_cuttlefish
 			}
-			num_of_owned_provinces_with = {
+			num_of_religion = {
 				value = 10
 				religion = uelos_cult
 			}
@@ -1067,12 +1090,12 @@ RSP_lamentaire_1 = {
 
 		effect = {
 			custom_tooltip = RSP_lamentaire_worthy_servants_tt
+			add_country_modifier = {
+				name = sea_beast_kraken
+				duration = -1
+			}
 			hidden_effect = {
 				set_country_flag = RSP_lamentaire_worthy_servants_effect
-				add_country_modifier = {
-					name = sea_beast_kraken
-					duration = -1
-				}
 			}
 		} 
 	}
@@ -1093,8 +1116,6 @@ RSP_lamentaire_2 = {
 		}
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			NOT = { if = { limit = { has_dlc = "Leviathan" } num_of_times_expanded_infrastructure = 2 } else = { development = 30 } }
-			NOT = { has_tax_building_trigger = yes }
 		} 
 
 		trigger = {
@@ -1219,7 +1240,19 @@ RSP_trollshaunt_1 = {
 		icon = mission_magic_tower
 		position = 3
 		required_missions = { RSP_trollshaunt_dreaded_mists } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			has_port = yes
+			OR = {
+				AND = {
+					ROOT = { NOT = { has_country_flag = RSP_trollshaunt_raided_damestear_province } }
+					trade_goods = damestear
+				}
+				AND = {
+					ROOT = { NOT = { has_country_flag = RSP_trollshaunt_raided_precursor_relics_province } }
+					trade_goods = precursor_relics
+				}
+			}
+		} 
 
 		trigger = {
 			has_estate_privilege = estate_mages_development_of_mage_towers
@@ -1244,19 +1277,11 @@ RSP_trollshaunt_1 = {
 		} 
 
 		effect = {
-			capital_scope = {
-				change_trade_goods = damestear
-				set_province_flag = permanent_damestear
-			}
+			custom_tooltip = RSP_trollshaunt_focus_the_magic_effect_tt
 			hidden_effect = {
 				set_country_flag = RSP_trollshaunt_improved_development_of_mage_towers
 				if = {
-					limit = {
-						num_of_owned_provinces_with = {
-							value = 5
-							has_building = mage_tower
-						}
-					}
+					limit = { mage_tower = 5 }
 					change_mana = { amount = 75 }
 				}
 				else = {
@@ -1264,6 +1289,10 @@ RSP_trollshaunt_1 = {
 						limit = { has_building = mage_tower }
 						ROOT = { change_mana = { amount = 15 } }
 					}
+				}
+				capital_scope = {
+					change_trade_goods = damestear
+					set_province_flag = permanent_damestear
 				}
 			}
 		} 
@@ -1312,8 +1341,6 @@ RSP_trollshaunt_2 = {
 		}
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			NOT = { if = { limit = { has_dlc = "Leviathan" } num_of_times_expanded_infrastructure = 2 } else = { development = 30 } }
-			NOT = { has_building = mage_tower }
 		} 
 
 		trigger = {
@@ -1325,10 +1352,7 @@ RSP_trollshaunt_2 = {
 				estate = estate_mages
 				influence = 50
 			}
-			OR = {
-				is_estate_illusion_level_2_minimum = yes
-				is_ruler_illusion_level_2_minimum = yes
-			}
+			is_overall_illusion_level_2_minimum = yes
 			capital_scope = {
 				if = { limit = { has_dlc = "Leviathan" } num_of_times_expanded_infrastructure = 2 } else = { development = 30 }
 				has_building = mage_tower
@@ -1339,6 +1363,7 @@ RSP_trollshaunt_2 = {
 			country_event = {
 				id = flavour_RSP.21
 			}
+			custom_tooltip = RSP_trollshaunt_the_beacon_ei
 		}  
 	}
 }
@@ -1416,9 +1441,19 @@ RSP_palegold_1 = {
 		icon = mission_recruiting_only_the_best
 		position = 2
 		required_missions = { RSP_what_we_do_best } 
-		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			OR = {
+				is_ahead_of_time_in_technology = { tech = dip }
+				is_ahead_of_time_in_technology = { tech = adm }
+				is_ahead_of_time_in_technology = { tech = mil }
+			}
+			AND = {
+				has_adm_advisor = yes
+				has_dip_advisor = yes
+				has_mil_advisor = yes
+			}
+		} 
 
 		effect = {
 			add_country_modifier = {
@@ -1448,12 +1483,19 @@ RSP_palegold_1 = {
 		position = 3
 		required_missions = { RSP_palegold_pirates_of_tomorrow } 
 		provinces_to_highlight = {
-			province_id = 1670
+			OR = {
+				province_id = 1670
+				owner = {
+					precursor_relics = 1
+					NOT = { tag = ROOT }
+					NOT = { has_spy_network_from = { who = ROOT value = 25 } }
+				}
+			}
 		} 
 
 		trigger = {
 			any_known_country = {
-				any_owned_province = { trade_goods = precursor_relics }
+				precursor_relics = 1
 				has_spy_network_from = {
 					who = ROOT
 					value = 25
@@ -1470,11 +1512,33 @@ RSP_palegold_1 = {
 		} 
 
 		effect = {
-			capital_scope = {
-				change_trade_goods = precursor_relics
-				add_goblin_minority_size_effect = yes
-				add_kobold_minority_size_effect = yes
-				add_gnomish_minority_size_effect = yes
+			custom_tooltip = RSP_palegold_acquiring_good_stuff_effect_tt
+			hidden_effect = {
+				set_country_flag = RSP_palegold_improved_artificer_generals
+				if = {
+					limit = { precursor_relics = 5 }
+					add_estate_loyalty = {
+						estate = estate_artificers
+						loyalty = 25
+					}
+				}
+				else = {
+					every_owned_province = {
+						limit = { trade_goods = precursor_relics }
+						ROOT = {
+							add_estate_loyalty = {
+								estate = estate_artificers
+								loyalty = 25
+							}
+						}
+					}
+				}
+				capital_scope = {
+					change_trade_goods = precursor_relics
+					add_goblin_minority_size_effect = yes
+					add_kobold_minority_size_effect = yes
+					add_gnomish_minority_size_effect = yes
+				}
 			}
 		} 
 	}
@@ -1535,6 +1599,7 @@ RSP_palegold_1 = {
 		} 
 
 		effect = {
+			custom_tooltip = RSP_palegold_the_mecha_pirates_effect_tt
 			hidden_effect = {
 				set_country_flag = unlocked_artifice_invention_clockwork_rope_swingers
 				set_country_flag = RSP_palegold_the_mecha_pirates_effect
@@ -1561,8 +1626,6 @@ RSP_palegold_2 = {
 		}
 		provinces_to_highlight = {
 			is_capital_of = ROOT
-			NOT = { if = { limit = { has_dlc = "Leviathan" } num_of_times_expanded_infrastructure = 2 } else = { development = 30 } }
-			NOT = { has_trade_building_trigger = yes }
 		} 
 
 		trigger = {
