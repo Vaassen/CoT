@@ -7,7 +7,10 @@ can_use_magic = { #Can I cast spells?
 		tooltip = can_use_magic
 		NOT = { has_country_flag = J84_no_casting_spells_flag }
 		OR = {
-			has_magic_estate_or_equiv = yes
+			AND = {
+				has_magic_estate_or_equiv = yes
+				NOT = { has_country_modifier = mages_strike }	#loc is generic, reuse at will
+			}
 			has_ruler_flag = zokka_phoenix_flag
 			AND = {
 				ruler_is_powerful_mage = yes
@@ -24,7 +27,7 @@ has_magic_estate_or_equiv = { #Do I have a mage estate?
 			has_estate = estate_mages
 			tag = Y01	#azjakuma
 			has_estate_privilege = artifice_invention_korashi_tuners #Command
-		}
+		}		
 	}
 }
 
@@ -2034,157 +2037,145 @@ has_mana = { #faster to write
 }
 
 #Keep in sync with 'has_mana_to_cast_magical_tradition_spell'
-has_mana_to_cast_spell = { ###This could possibly be bugged due to using if-else in a trigger. If it is, we'll have to restructure
+has_mana_to_cast_spell = {
 
-	# Ok so basically, the below trigger is our intended function, but it doesn't work properly
+	# Ok so basically, we wanted to make an if-else chain checking for discounts, but that didn't work.
 	# Country modifier limit checks don't work when inside the else part of an else-if construction in a scripted trigger
 	# In other words, having the country modifier check does the same as not having it.
-	# They also don't function while inside an OR, but that was solvable
-	# We had two real choices: remove the modifier functionality (removing timed spell discounts) and go back to just flags
-	# or require that you have the amount of mana in your pool ready to cast the spell.
-	# our third choice? leave it bugged until we find out more.
-	# This was our choice of evils. Sorry.
+	# They also don't function while inside an OR/NOT.
+	# However, we discovered that the OR/NOT checks do function if we put them inside of another scripted trigger
+	# This is because of trigger validation - each scripted trigger is validated separately and recursively validates all triggers inside.
+	# Therefore we can't have any else_if = { limit = {} } constructions, but we can have OR statements at least.
+
+	# Alternatively, we could've put everything into a big OR = { AND = { OR = {} } } custom trigger tooltip
+	# And then that tooltip would have linked to has_mana_to_cast_$id$_spell
+	# And has_mana_to_cast_$id$_spell would look like §MCurrent Mana§! (§Y[Root.currentMana.GetValue]§!) is at least §Y[GetGuidanceDiscount]§!
+	# The problem, of course, being that we would have to create custom loca for every single spell
+	# It would be slightly more performant but also a lot more work, and either way the AI doesn't check mana costs
+	# So we went with this solution because it was slightly easier
 
 	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_free
-				has_country_flag = all_spell_free_next_cast
-				has_ruler_flag = all_spell_free
-
-				has_country_modifier = $school$_$level$_$id$_spell_free
-				has_country_flag = $school$_$level$_$id$_spell_free_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_free
-
-				has_country_modifier = $school$_spell_free
-				has_country_flag = $school$_spell_free_next_cast
-				has_ruler_flag = $school$_spell_free
-			}
-		}
+		limit = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = free } }
 		custom_trigger_tooltip = {
 			tooltip = spell_is_free_tt
 			always = yes
 		}
 	}
-	else_if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				has_country_modifier = $school$_$level$_$id$_spell_half
-				has_country_flag = $school$_$level$_$id$_spell_half_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_half
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
+	
+	if = {
+		limit = { mana_proxy_half = { school = $school$ level = $level$ id = $id$ } } #Proxied because scripted triggers don't work in scripted trigger if limit constructions with NOT = {} around them
 		custom_trigger_tooltip = {
 			tooltip = spell_is_half_tt
 			always = yes
 		}
 		has_half_mana_to_cast_level_$level$_spell = yes
 	}
-	else_if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_three_quarter
-				has_country_flag = all_spell_three_quarter_next_cast
-				has_ruler_flag = all_spell_three_quarter
 
-				has_country_modifier = $school$_$level$_$id$_spell_three_quarter
-				has_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast
-				has_ruler_flag = $school$_$level$_$id$_spell_three_quarter
-
-				has_country_modifier = $school$_spell_three_quarter
-				has_country_flag = $school$_spell_three_quarter_next_cast
-				has_ruler_flag = $school$_spell_three_quarter
-			}
-		}
+	if = {
+		limit = { mana_proxy_three_quarter = { school = $school$ level = $level$ id = $id$ } }
 		custom_trigger_tooltip = {
 			tooltip = spell_is_three_quarter_tt
 			always = yes
 		}
 		has_three_quarter_mana_to_cast_level_$level$_spell = yes
 	}
-	else = { has_mana_to_cast_level_$level$_spell = yes }
+
+	if = {
+		limit = { mana_proxy_full = { school = $school$ level = $level$ id = $id$ } }
+		has_mana_to_cast_level_$level$_spell = yes
+	}
+}
+has_mana_discount = { #this is important to help us bypass the fact that country mods don't work inside OR checks in if limits
+	OR = {
+		has_country_modifier = all_spell_$discount$
+		has_country_flag = all_spell_$discount$_next_cast
+		has_ruler_flag = all_spell_$discount$
+
+		has_country_modifier = $school$_$level$_$id$_spell_$discount$
+		has_country_flag = $school$_$level$_$id$_spell_$discount$_next_cast
+		has_ruler_flag = $school$_$level$_$id$_spell_$discount$
+
+		has_country_modifier = $school$_spell_$discount$
+		has_country_flag = $school$_spell_$discount$_next_cast
+		has_ruler_flag = $school$_spell_$discount$
+	}
+}
+mana_proxy_half = {
+	has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = half }
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = free } }
+}
+mana_proxy_three_quarter = {
+	has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = three_quarter }
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = free } }
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = half } }
+}
+mana_proxy_full = {
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = free } }
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = half } }
+	NOT = { has_mana_discount = { school = $school$ level = $level$ id = $id$ discount = three_quarter } }
 }
 has_mana_to_cast_magical_tradition_spell = { ### Derivative of 'has_mana_to_cast_spell' for magical traditions. Keep in sync.
 	if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_free
-				has_country_flag = all_spell_free_next_cast
-				has_ruler_flag = all_spell_free
-
-				[[has_spell_specific_discounts]
-					has_country_modifier = $school$_$level$_$id$_spell_free
-					has_country_flag = $school$_$level$_$id$_spell_free_next_cast
-					has_ruler_flag = $school$_$level$_$id$_spell_free
-				]
-
-				has_country_modifier = $school$_spell_free
-				has_country_flag = $school$_spell_free_next_cast
-				has_ruler_flag = $school$_spell_free
-			}
-		}
+		limit = { has_magical_tradition_mana_discount = { school = $school$ discount = free [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
 		custom_trigger_tooltip = {
 			tooltip = spell_is_free_tt
 			always = yes
 		}
 	}
-	else_if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_half
-				has_country_flag = all_spell_half_next_cast
-				has_ruler_flag = all_spell_half
-
-				[[has_spell_specific_discounts]
-					has_country_modifier = $school$_$level$_$id$_spell_half
-					has_country_flag = $school$_$level$_$id$_spell_half_next_cast
-					has_ruler_flag = $school$_$level$_$id$_spell_half
-				]
-
-				has_country_modifier = $school$_spell_half
-				has_country_flag = $school$_spell_half_next_cast
-				has_ruler_flag = $school$_spell_half
-			}
-		}
+	
+	if = {
+		limit = { magical_tradition_mana_proxy_half = { school = $school$ [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } } #Proxied because scripted triggers don't work in scripted trigger if limit constructions with NOT = {} around them
 		custom_trigger_tooltip = {
 			tooltip = spell_is_half_tt
 			always = yes
 		}
 		has_half_mana_to_cast_level_$level$_spell = yes
 	}
-	else_if = {
-		limit = {
-			OR = {
-				has_country_modifier = all_spell_three_quarter
-				has_country_flag = all_spell_three_quarter_next_cast
-				has_ruler_flag = all_spell_three_quarter
 
-				[[has_spell_specific_discounts]
-					has_country_modifier = $school$_$level$_$id$_spell_three_quarter
-					has_country_flag = $school$_$level$_$id$_spell_three_quarter_next_cast
-					has_ruler_flag = $school$_$level$_$id$_spell_three_quarter
-				]
-
-				has_country_modifier = $school$_spell_three_quarter
-				has_country_flag = $school$_spell_three_quarter_next_cast
-				has_ruler_flag = $school$_spell_three_quarter
-			}
-		}
+	if = {
+		limit = { magical_tradition_mana_proxy_three_quarter = { school = $school$ [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
 		custom_trigger_tooltip = {
 			tooltip = spell_is_three_quarter_tt
 			always = yes
 		}
 		has_three_quarter_mana_to_cast_level_$level$_spell = yes
 	}
-	else = { has_mana_to_cast_level_$level$_spell = yes }
+
+	if = {
+		limit = { magical_tradition_mana_proxy_full = { school = $school$ [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+		has_mana_to_cast_level_$level$_spell = yes
+	}
+}
+has_magical_tradition_mana_discount = { #this is important to help us bypass the fact that country mods don't work inside else limits
+	OR = {
+		has_country_modifier = all_spell_$discount$
+		has_country_flag = all_spell_$discount$_next_cast
+		has_ruler_flag = all_spell_$discount$
+
+		[[has_spell_specific_discounts]
+			has_country_modifier = $school$_$level$_$id$_spell_$discount$
+			has_country_flag = $school$_$level$_$id$_spell_$discount$_next_cast
+			has_ruler_flag = $school$_$level$_$id$_spell_$discount$
+		]
+
+		has_country_modifier = $school$_spell_$discount$
+		has_country_flag = $school$_spell_$discount$_next_cast
+		has_ruler_flag = $school$_spell_$discount$
+	}
+}
+magical_tradition_mana_proxy_half = {
+	has_magical_tradition_mana_discount = { school = $school$ discount = half [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] }
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = free [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+}
+magical_tradition_mana_proxy_three_quarter = {
+	has_magical_tradition_mana_discount = { school = $school$ discount = three_quarter [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] }
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = free [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = half [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+}
+magical_tradition_mana_proxy_full = {
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = free [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = half [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
+	NOT = { has_magical_tradition_mana_discount = { school = $school$ discount = three_quarter [[has_spell_specific_discounts] level = $level$ id = $id$ has_spell_specific_discounts = yes ] } }
 }
 
 has_half_mana_to_cast_level_0_spell = { has_mana = { amount = 12.5 } }
@@ -2249,6 +2240,13 @@ siege_interface_siege_trigger = {
 		custom_trigger_tooltip = {
 			tooltip = cannot_siege_magical_fortress
 			always = no
+		}
+	}
+	if = {
+		limit = { owner = { has_estate_privilege = estate_artificers_porcelain_shields } }
+		custom_trigger_tooltip = {
+			tooltip = cannot_siege_porcelain_ramparts
+			NOT = { has_building = ramparts }
 		}
 	}
 }
@@ -2318,7 +2316,7 @@ has_cast_spell_count_trigger = { # school/all, count
 	custom_trigger_tooltip = {
 		tooltip = has_cast_spell_count_trigger_$school$_$count$_tt
 		check_variable = {
-			which = count_$school$_spells
+			which = $school$_spell_count
 			value = $count$
 		}
 	}
@@ -2381,10 +2379,7 @@ abjuration_2_mage_armor_trigger = { # Mage Armour
 	is_overall_abjuration_level_2_minimum = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_spell = { school = abjuration level = 2 id = mage_armor } ]
-	NOT = {
-		has_country_modifier = abjuration_2_mage_armor_mod
-		has_country_modifier = abjuration_2_mage_armor_mod_buffed
-	}
+	has_not_cast_mage_armor = yes
 }
 abjuration_3_field_of_forbiddance_trigger = { # Field of Forbiddance
 	if = {
@@ -2422,6 +2417,15 @@ has_cast_mage_armor = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_mage_armor
 		OR = {
+			has_country_modifier = abjuration_2_mage_armor_mod
+			has_country_modifier = abjuration_2_mage_armor_mod_buffed
+		}
+	}
+}
+has_not_cast_mage_armor = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_mage_armor
+		NOT = {
 			has_country_modifier = abjuration_2_mage_armor_mod
 			has_country_modifier = abjuration_2_mage_armor_mod_buffed
 		}
@@ -2510,18 +2514,12 @@ conjuration_1_conjure_supplies_trigger = { # Conjure Supplies
 conjuration_2_summon_elementals_trigger = { # Summon Elementals
 	is_overall_conjuration_level_2_minimum = yes
 	[[player] has_mana_to_cast_spell = { school = conjuration level = 2 id = summon_elementals } ]
-	NOT = {
-		has_country_modifier = conjuration_2_summon_elementals_mod
-		has_country_modifier = conjuration_2_greater_summon_elementals_mod
-	}
+	has_not_cast_summon_elementals = yes
 }
 conjuration_2_aid_construction_trigger = { # Aid Construction
 	is_overall_conjuration_level_2_minimum = yes
 	[[player] has_mana_to_cast_spell = { school = conjuration level = 2 id = aid_construction } ]
-	NOT = {
-		has_country_modifier = conjuration_2_aid_construction_mod
-		has_country_modifier = conjuration_2_aid_construction_mod_buffed
-	}
+	has_not_cast_aid_construction = yes
 }
 conjuration_3_extraplanar_contact_trigger = { # Extraplanar Contact
 	if = {
@@ -2569,6 +2567,15 @@ has_cast_summon_elementals = {
 		}
 	}
 }
+has_not_cast_summon_elementals = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_summon_elementals
+		NOT = {
+			has_country_modifier = conjuration_2_summon_elementals_mod
+			has_country_modifier = conjuration_2_greater_summon_elementals_mod
+		}
+	}
+}
 has_cast_greater_summon_elementals = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_greater_summon_elementals
@@ -2579,6 +2586,17 @@ has_cast_aid_construction = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_aid_construction
 		OR = {
+			has_country_modifier = conjuration_2_aid_construction_mod
+			has_country_modifier = conjuration_2_aid_construction_mod_buffed
+			has_country_modifier = Y63_minor_rune_gulan_amekh
+			has_country_modifier = Y63_minor_rune_gulan_amekh_subject
+		}
+	}
+}
+has_not_cast_aid_construction = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_aid_construction
+		NOT = {
 			has_country_modifier = conjuration_2_aid_construction_mod
 			has_country_modifier = conjuration_2_aid_construction_mod_buffed
 			has_country_modifier = Y63_minor_rune_gulan_amekh
@@ -2630,7 +2648,7 @@ divination_1_eye_for_talent_trigger = { # Eye for Talent
 divination_1_deposit_divination_trigger = { # Deposit Divination
 	is_overall_divination_level_1_minimum = yes
 	[[player] has_mana_to_cast_spell = { school = divination level = 1 id = deposit_divination } ]
-	NOT = { has_country_modifier = divination_1_deposit_divination_cooldown_mod }
+	NOT = { has_country_modifier = divination_1_deposit_divination_mod }
 	custom_trigger_tooltip = {
 		tooltip = divination_1_deposit_divination_trigger
 		OR = {
@@ -2659,10 +2677,7 @@ divination_2_manipulated_fortune_trigger = { # Manipulated Fortune
 	is_overall_divination_level_2_minimum = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_spell = { school = divination level = 2 id = manipulated_fortune } ]
-	NOT = {
-		has_country_modifier = divination_2_manipulated_fortune_mod
-		has_country_modifier = divination_2_manipulated_fortune_mod_buffed
-	}
+	has_not_cast_manipulated_fortune = yes
 }
 divination_3_foresight_trigger = { # Foresight
 	if = {
@@ -2678,10 +2693,7 @@ divination_3_foresight_trigger = { # Foresight
 	}
 	else = { is_overall_divination_level_3 = yes }
 	[[player] has_mana_to_cast_spell = { school = divination level = 3 id = foresight } ]
-	NOT = {
-		has_country_modifier = divination_3_foresight_mod
-		has_country_modifier = divination_3_foresight_mod_buffed
-	}
+	has_not_cast_foresight = yes
 }
 
 has_cast_guidance_amount = { #Currently has tooltips for 1, 3, 5, 10, & 20
@@ -2707,7 +2719,7 @@ has_cast_eye_for_talent_amount = { #Currently has tooltips for 1
 has_cast_deposit_divination = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_deposit_divination
-		has_country_modifier = divination_1_deposit_divination_cooldown_mod
+		has_country_modifier = divination_1_deposit_divination_mod
 	}
 }
 has_cast_scry = {
@@ -2737,10 +2749,28 @@ has_cast_manipulated_fortune = {
 		}
 	}
 }
+has_not_cast_manipulated_fortune = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_manipulated_fortune
+		NOT = {
+			has_country_modifier = divination_2_manipulated_fortune_mod
+			has_country_modifier = divination_2_manipulated_fortune_mod_buffed
+		}
+	}
+}
 has_cast_foresight = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_foresight
 		OR = {
+			has_country_modifier = divination_3_foresight_mod
+			has_country_modifier = divination_3_foresight_mod_buffed
+		}
+	}
+}
+has_not_cast_foresight = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_foresight
+		NOT = {
 			has_country_modifier = divination_3_foresight_mod
 			has_country_modifier = divination_3_foresight_mod_buffed
 		}
@@ -2767,10 +2797,7 @@ has_cast_any_divination_spell = {
 
 enchantment_0_enchanting_envoy_trigger = { # Enchanting Envoy
 	[[player] has_mana_to_cast_spell = { school = enchantment level = 0 id = enchanting_envoy } ]
-	NOT = {
-		has_country_modifier = enchantment_0_enchanting_envoy_mod
-		has_country_modifier = enchantment_2_enchanting_embassy_mod
-	}
+	has_not_cast_enchanting_envoy_embassy = yes
 }
 enchantment_1_mass_charm_trigger = { # Mass Charm
 	is_overall_enchantment_level_1_minimum = yes
@@ -2854,6 +2881,15 @@ has_cast_enchanting_envoy_embassy = {
 		}
 	}
 }
+has_not_cast_enchanting_envoy_embassy = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_enchanting_envoy_embassy
+		NOT = {
+			has_country_modifier = enchantment_0_enchanting_envoy_mod
+			has_country_modifier = enchantment_2_enchanting_embassy_mod
+		}
+	}
+}
 has_cast_enchanting_embassy = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_enchanting_embassy
@@ -2903,19 +2939,15 @@ evocation_1_shock_and_awe_trigger = { # Shock and Awe
 	is_overall_evocation_level_1_minimum = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_spell = { school = evocation level = 1 id = shock_and_awe } ]
-	NOT = {
-		has_country_modifier = evocation_1_shock_and_awe_mod
-		has_country_modifier = evocation_3_elemental_fury_mod
-	}
+	has_not_cast_shock_and_awe = yes
+	has_not_cast_elemental_fury = yes
 }
 evocation_1_flaming_munitions_trigger = { # Flaming Munitions
 	is_overall_evocation_level_1_minimum = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_spell = { school = evocation level = 1 id = flaming_munitions } ]
-	NOT = {
-		has_country_modifier = evocation_1_flaming_munitions_mod
-		has_country_modifier = evocation_3_elemental_fury_mod
-	}
+	has_not_cast_flaming_munitions = yes
+	has_not_cast_elemental_fury = yes
 }
 evocation_2_meteor_swarm_trigger = { # Meteor Swarm
 	if = {
@@ -2970,13 +3002,24 @@ evocation_3_elemental_fury_trigger = { # Elemental Fury
 	is_overall_evocation_level_3 = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_spell = { school = evocation level = 3 id = elemental_fury } ]
-	NOT = { has_country_modifier = evocation_3_elemental_fury_mod }
+	has_not_cast_elemental_fury = yes
 }
 
 has_cast_shock_and_awe = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_shock_and_awe
 		OR = {
+			has_country_modifier = evocation_1_shock_and_awe_mod
+			has_country_modifier = patron_green_shock_and_awe
+			has_country_modifier = patron_ice_shock_and_awe
+			has_country_modifier = patron_diranbe_shock_and_awe
+		}
+	}
+}
+has_not_cast_shock_and_awe = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_shock_and_awe
+		NOT = {
 			has_country_modifier = evocation_1_shock_and_awe_mod
 			has_country_modifier = patron_green_shock_and_awe
 			has_country_modifier = patron_ice_shock_and_awe
@@ -2996,11 +3039,33 @@ has_cast_flaming_munitions = {
 		}
 	}
 }
+has_not_cast_flaming_munitions = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_flaming_munitions
+		NOT = {
+			has_country_modifier = evocation_1_flaming_munitions_mod
+			has_country_modifier = patron_green_munitions
+			has_country_modifier = patron_ice_munitions
+			has_country_modifier = patron_diranbe_munitions
+		}
+	}
+}
 
 has_cast_elemental_fury = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_elemental_fury
 		OR = {
+			has_country_modifier = evocation_3_elemental_fury_mod
+			has_country_modifier = patron_green_elemental_fury
+			has_country_modifier = patron_ice_elemental_fury
+			has_country_modifier = patron_diranbe_elemental_fury
+		}
+	}
+}
+has_not_cast_elemental_fury = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_elemental_fury
+		NOT = {
 			has_country_modifier = evocation_3_elemental_fury_mod
 			has_country_modifier = patron_green_elemental_fury
 			has_country_modifier = patron_ice_elemental_fury
@@ -3203,17 +3268,28 @@ necromancy_0_false_life_trigger = { # False Life
 	[[player] has_mana_to_cast_spell = { school = necromancy level = 0 id = false_life } ]
 	NOT = { has_country_modifier = necromancy_0_false_life_mod }
 }
-necromancy_1_ghoulish_grandeur_trigger = { # Ghoulish Grandeur
+necromancy_1_steal_vitality_trigger = { # Steal Vitality
 	has_not_banned_necromancy = yes
 	is_overall_necromancy_level_1_minimum = yes
-	[[player] has_mana_to_cast_spell = { school = necromancy level = 1 id = ghoulish_grandeur } ]
-	NOT = { has_country_modifier = necromancy_1_ghoulish_grandeur_mod }
+	[[player] has_mana_to_cast_spell = { school = necromancy level = 1 id = steal_vitality } ]
+	has_not_cast_steal_vitality = yes
+	custom_trigger_tooltip = {
+		tooltip = necromancy_1_steal_vitality_trigger
+		OR = {
+			glass = 1
+			paper = 1
+			cloth = 1
+			chinaware = 1
+			precursor_relics = 1
+			slaves = 1
+		}
+	}
 }
 necromancy_1_contagion_trigger = { #Contagion
 	has_not_banned_necromancy = yes
 	is_overall_necromancy_level_1_minimum = yes
 	[[player] has_mana_to_cast_spell = { school = necromancy level = 1 id = contagion } ]
-	siege_magic_trigger = { offense = yes [[menu] menu = yes defense_trigger = "necromancy_1_contagion_local_trigger = yes" ] }
+	siege_magic_trigger = { [[menu] menu = yes defense_trigger = "necromancy_1_contagion_local_trigger = yes" ] }
 }
 necromancy_1_contagion_local_trigger = { # Contagion
 	NOT = { has_province_modifier = necromancy_1_contagion_local_mod }
@@ -3228,12 +3304,15 @@ necromancy_2_speak_with_dead_trigger = { # Speak With Dead
 	else = { is_overall_necromancy_level_2_minimum = yes }
 	[[player] has_mana_to_cast_spell = { school = necromancy level = 2 id = speak_with_dead } ]
 	is_lesser_in_union = no
-	NOT = { has_ruler_modifier = necromancy_2_speak_with_dead_mod }
+	custom_trigger_tooltip = {
+		tooltip = necromancy_2_speak_with_dead_spell_trigger_tt
+		NOT = { has_ruler_modifier = necromancy_2_speak_with_dead_cooldown_mod }
+	}
 	OR = {
 		NOT = { adm = 5 }
 		NOT = { dip = 5 }
 		NOT = { mil = 5 }
-		ruler_is_lich = yes
+		ruler_is_immortal = yes
 	}
 	hidden_trigger = {
 		NOT = {
@@ -3245,22 +3324,31 @@ necromancy_2_speak_with_dead_trigger = { # Speak With Dead
 		}
 	}
 }
-necromancy_2_steal_vitality_trigger = { # Steal Vitality
+necromancy_2_remove_pain_trigger = { # Remove Pain
 	has_not_banned_necromancy = yes
 	is_overall_necromancy_level_2_minimum = yes
-	[[player] has_mana_to_cast_spell = { school = necromancy level = 2 id = steal_vitality } ]
-	NOT = { has_country_modifier = necromancy_2_steal_vitality_mod }
-	capital_scope = {
-		base_tax = 2
-		base_production = 2
-		base_manpower = 2
+	[[player] has_mana_to_cast_spell = { school = necromancy level = 2 id = remove_pain } ]
+	if = {
+		limit = { has_country_modifier = witch_king_armies_modifier }
+		custom_trigger_tooltip = {
+			tooltip = magic_booster_by_witch_king_tt
+			always = yes
+		}
 	}
+	else_if = {
+		limit = { has_ruler_flag = winter_everfrost_patron }
+		custom_trigger_tooltip = {
+			tooltip = magic_booster_by_patron_tt
+			always = yes
+		}
+	}
+	else = { army_tradition = 10 }
 }
-necromancy_3_undead_army_trigger = { # Undead Army
+necromancy_3_chronophage_trigger = { # Chronophage
 	has_not_banned_necromancy = yes
 	is_overall_necromancy_level_3 = yes
-	[[player] has_mana_to_cast_spell = { school = necromancy level = 3 id = undead_army } ]
-	has_not_cast_undead_army = yes
+	[[player] has_mana_to_cast_spell = { school = necromancy level = 3 id = chronophage } ]
+	has_not_cast_chronophage = yes
 }
 
 has_cast_false_life = {
@@ -3269,10 +3357,16 @@ has_cast_false_life = {
 		has_country_modifier = necromancy_0_false_life_mod
 	}
 }
-has_cast_ghoulish_grandeur = {
+has_cast_steal_vitality = {
 	custom_trigger_tooltip = {
-		tooltip = has_cast_ghoulish_grandeur
-		has_country_modifier = necromancy_1_ghoulish_grandeur_mod
+		tooltip = has_cast_steal_vitality
+		has_country_modifier = necromancy_1_steal_vitality_cooldown_mod
+	}
+}
+has_not_cast_steal_vitality = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_steal_vitality
+		NOT = { has_country_modifier = necromancy_1_steal_vitality_cooldown_mod }
 	}
 }
 has_cast_contagion = {
@@ -3290,25 +3384,19 @@ province_has_contagion = {
 has_cast_speak_with_dead = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_speak_with_dead
-		has_country_modifier = necromancy_2_speak_with_dead_mod
+		has_ruler_flag = has_spoken_with_dead
 	}
 }
-has_cast_steal_vitality = {
+has_cast_chronophage = {
 	custom_trigger_tooltip = {
-		tooltip = has_cast_steal_vitality
-		has_country_modifier = necromancy_2_steal_vitality_mod
+		tooltip = has_cast_chronophage
+		has_country_modifier = necromancy_3_chronophage_mod
 	}
 }
-has_cast_undead_army = {
+has_not_cast_chronophage = {
 	custom_trigger_tooltip = {
-		tooltip = has_cast_undead_army
-		has_country_modifier = undead_military
-	}
-}
-has_not_cast_undead_army = {
-	custom_trigger_tooltip = {
-		tooltip = has_not_cast_undead_army
-		NOT = { has_country_modifier = undead_military }
+		tooltip = has_not_cast_chronophage
+		NOT = { has_country_modifier = necromancy_3_chronophage_mod }
 	}
 }
 
@@ -3317,11 +3405,10 @@ has_cast_any_necromancy_spell = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_any_necromancy_spell_tt
 		OR = {
-			has_cast_undead_army = yes
-			has_cast_steal_vitality = yes
+			has_cast_chronophage = yes
 			has_cast_speak_with_dead = yes
 			has_cast_contagion = yes
-			has_cast_ghoulish_grandeur = yes
+			has_cast_steal_vitality = yes
 			has_cast_false_life = yes
 		}
 	}
@@ -3369,6 +3456,13 @@ transmutation_1_mass_enlarge_local_trigger = {
 transmutation_2_transmute_to_gold_trigger = { # Transmute to Gold
 	is_overall_transmutation_level_2_minimum = yes
 	[[player] has_mana_to_cast_spell = { school = transmutation level = 2 id = transmute_to_gold } ]
+	if = {
+		limit = { has_country_modifier = JY_LF_recent_trade }
+		custom_trigger_tooltip = {
+			tooltip = JY_LF_not_trading
+			NOT = { has_country_modifier = JY_LF_recent_trade }
+		}
+	}
 }
 transmutation_2_reshape_terrain_trigger = { # Reshape Terrain
 	is_overall_transmutation_level_2_minimum = yes
@@ -3845,7 +3939,7 @@ is_advancing_homunculus = { is_advancing_specific_project = { project = homuncul
 is_advancing_theatre_of_simulacra = { is_advancing_specific_project = { project = theatre_of_simulacra } }
 is_advancing_summon_extraplanars = { is_advancing_specific_project = { project = summon_extraplanars } }
 is_advancing_magical_fortress = { is_advancing_specific_project = { project = magical_fortress } }
-is_advancing_lichdom = { is_advancing_specific_project = { project = lichdom } }
+is_advancing_army_of_the_dead = { is_advancing_specific_project = { project = army_of_the_dead } }
 
 at_least_magic_project_level = {
 	check_variable = { which = $project$_level value = $level$ }
@@ -3872,6 +3966,17 @@ can_upgrade_project = {
 			is_estate_$school$_level_2_minimum = yes
 		}
 		else = { is_estate_$school$_level_1_minimum = yes }
+	]
+	[[school2]
+		if = {
+			limit = { check_variable = { which = $project$_level value = 2 } }
+			is_estate_$school2$_level_3 = yes
+		}
+		else_if = {
+			limit = { check_variable = { which = $project$_level value = 1 } }
+			is_estate_$school2$_level_2_minimum = yes
+		}
+		else = { is_estate_$school2$_level_1_minimum = yes }
 	]
 	hidden_trigger = {
 		NOT = {
@@ -3947,6 +4052,20 @@ ruler_is_not_lich = {
 	custom_trigger_tooltip = {
 		tooltip = ruler_is_not_lich
 		NOT = { has_country_flag = ruled_by_lich }
+	}
+}
+
+ruler_is_homunculus = {
+	custom_trigger_tooltip = {
+		tooltip = ruler_is_homunculus
+		has_ruler_flag = is_a_homunculus
+	}
+}
+
+ruler_is_not_homunculus = {
+	custom_trigger_tooltip = {
+		tooltip = ruler_is_not_homunculus
+		NOT = { has_ruler_flag = is_a_homunculus }
 	}
 }
 
@@ -4387,8 +4506,8 @@ has_bulwar_spell_list_non_default = {
 
 
 #Magical traditions spell triggers
-# usage: magical_traditions_spell_trigger = { group = <group> subgroup = <subgroup> slot = <spellnumber> [optional:player = yes] }
-magical_traditions_spell_trigger = {
+# usage: magical_tradition_spell_trigger = { group = <group> subgroup = <subgroup> slot = <spellnumber> [optional:player = yes] }
+magical_tradition_spell_trigger = {
 	custom_spell_$group$_$subgroup$_$slot$_trigger = { [[player] player = $player$ ] }
 }
 #custom_spell_$group$_$subgroup$_$slot$_trigger
@@ -4643,6 +4762,12 @@ enchantment_2_bulwar_default_2_trigger = {
 conjuration_1_bulwar_default_3_trigger = {
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = conjuration level = 1 id = bulwar_default_3 } ]
 	is_overall_conjuration_level_2_minimum = yes
+	custom_trigger_tooltip = {
+		tooltip = conjuration_1_bulwar_default_3_cooldown_tt
+		NOT = {
+			has_country_modifier = conjuration_1_bulwar_default_3_tracking_mod
+		}
+	}
 }
 transmutation_2_bulwar_default_4_trigger = {
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = transmutation level = 2 id = bulwar_default_4 } ]
@@ -4656,6 +4781,20 @@ transmutation_2_bulwar_default_4_trigger = {
 			has_country_modifier = transmutation_2_bulwar_vessel
 			has_country_modifier = transmutation_2_bulwar_hammer
 			has_country_modifier = transmutation_2_bulwar_ring
+		}
+	}
+}
+
+### Miscellaneous Triggers ###
+has_unregulated_research = {
+	custom_trigger_tooltip = {
+		tooltip = tt_has_unregulated_research
+		OR = {
+			has_estate_privilege = estate_mages_reduced_research_regulations
+			AND = {
+				NOT = { has_estate = estate_mages }
+				has_country_flag = inherently_immoral_research
+			}
 		}
 	}
 }
