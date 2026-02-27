@@ -1,21 +1,62 @@
 namespace = charkuchin_kobold
 
+# Initial event to set flags, create province modifiers for supplies, and give the AI some help
 country_event = {
 	id = charkuchin_kobold.0
-	title = charkuchin_kobold.0.t
-	desc = charkuchin_kobold.0.d
+	title = charkuchin_kobold.0.title
+	desc = charkuchin_kobold.0.desc
 	picture = TRADEGOODS_eventPicture
 
 	is_triggered_only = yes
 
 	trigger = {
-		OR = {
-			culture = yawasichya_kobold
-			culture = jatukyu_kobold
-			culture = unitsan_kobold
-		}
+		charkuchin_kobold_culture = yes
+		NOT = { has_country_flag = charkuchin_kobold_start }
 	}
 
+	immediate = {
+		hidden_effect = {
+			capital_scope = {
+				add_permanent_province_modifier = {
+					name = charkuchin_kobold_citadel_1
+					duration = -1
+				}
+			}
+			set_country_flag = charkuchin_kobold_start
+			REB = {
+				if = { # Make sure this is only set at game start when neither flag is set, not when new kobolds are released. See insyaa_charkuchin_kobolds_released_setup
+					limit = {
+						NOT = { has_country_flag = hinuibird_migration_end_flag }
+						NOT = { has_country_flag = hinuibird_migration_start_flag }
+					}
+					set_country_flag = hinuibird_migration_end_flag # Used to trigger the disaster after 12 years and keep it in sync among all Insyaan kobolds
+				}
+			}
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_charkuchar_range_colony_count = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_lowlands_colony_count = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_titanoflora_colony_count = 0 }
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_charkuchar_range_city_count = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_lowlands_city_count = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_titanoflora_city_count = 0 }
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_charkuchar_range_colony_cost = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_lowlands_colony_cost = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_titanoflora_colony_cost = 0 }
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_charkuchar_range_city_cost = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_lowlands_city_cost = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_titanoflora_city_cost = 0 }
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_total_cost = 0 }
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_citadel_gain = 5 } #from a citadel level 1
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count = 0 }
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain = 5 } #from admin tech 2
+
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_total_gain = 10 }
+		}
+	}
 	option = {
 		name = charkuchin_kobold.0.a
 		ai_chance = { factor = 1 }
@@ -31,6 +72,10 @@ country_event = {
 				name = charkuchin_expansion_ai_help
 				duration = 72
 			}
+			change_variable = { #AI isn't good at building supply facilities or doing the dives
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+				value = 100
+			}
 		}
 		else = {
 			add_country_modifier = {
@@ -41,10 +86,11 @@ country_event = {
 	}
 }
 
+# Name choice when forming the Charkuchin Empire
 country_event = {
 	id = charkuchin_kobold.1
-	title = charkuchin_kobold.1.t
-	desc = charkuchin_kobold.1.d
+	title = charkuchin_kobold.1.title
+	desc = charkuchin_kobold.1.desc
 	picture = TRADEGOODS_eventPicture
 
 	is_triggered_only = yes
@@ -86,5 +132,623 @@ country_event = {
 		}
 		ai_chance = { factor = 10 }
 		override_country_name = charkuchin_republic_name
+	}
+}
+
+# Hinuibird migration start
+country_event = {
+	id = charkuchin_kobold.2
+	title = charkuchin_kobold.2.title
+	desc = charkuchin_kobold.2.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			# These variables will be used in the disaster tooltip to show when it will end
+			REB = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = hinuibird_migration_start_flag }
+					}
+					export_to_variable = {
+						which = hinuibird_disaster_year_end
+						value = trigger_value:is_year
+					}
+					change_variable = {
+						which = hinuibird_disaster_year_end
+						value = 4
+					}
+					export_to_variable = {
+						which = hinuibird_disaster_month
+						value = trigger_value:is_month
+					}
+					change_variable = { # is_month is 0-indexed (January is month 0, December is month 11) so increment it by 1 for the loc
+						which = hinuibird_disaster_month
+						value = 1
+					}
+					set_country_flag = hinuibird_migration_start_flag
+					clr_country_flag = hinuibird_migration_end_flag
+				}
+			}
+			# Supply costs are tripled
+			multiply_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+				value = 3
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.2.a
+		ai_chance = { factor = 1 }
+		custom_tooltip = charkuchin_kobold.2.a.tt
+	}
+}
+
+# Hinuibird Predation
+country_event = {
+	id = charkuchin_kobold.3
+	title = charkuchin_kobold.3.title
+	desc = charkuchin_kobold.3.desc
+	picture = TRADEGOODS_eventPicture
+	goto = hinuibird_predation
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					NOT = { has_charkuchin_kobold_citadel = yes }
+				}
+				save_event_target_as = hinuibird_predation
+			}
+			add_country_modifier = {
+				name = hinuibird_disaster_event_wait
+				duration = 365
+				hidden = yes
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.3.a
+		ai_chance = { factor = 1 }
+		custom_tooltip = charkuchin_kobold.3.a.tt
+
+		# Succeeding in this event just prevents a loss, and the AI will auto-complete
+		# since they can't aim for a PTM, so just skip it for the AI
+		if = {
+			limit = {
+				ai = no
+			}
+			hidden_effect = {
+				event_target:hinuibird_predation = {
+					add_province_triggered_modifier = charkuchin_kobold_hinuibird_predation
+					# Failure event after 2 months
+					province_event = {
+						id = charkuchin_kobold.13
+						days = 61
+					}
+				}
+			}
+		}
+	}
+}
+
+# Hinuibird Carcass
+country_event = {
+	id = charkuchin_kobold.4
+	title = charkuchin_kobold.4.title
+	desc = charkuchin_kobold.4.desc
+	picture = TRADEGOODS_eventPicture
+	goto = hinuibird_carcass
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					NOT = { has_charkuchin_kobold_citadel = yes }
+				}
+				save_event_target_as = hinuibird_carcass
+			}
+			add_country_modifier = {
+				name = hinuibird_disaster_event_wait
+				duration = 365
+				hidden = yes
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.4.a
+		ai_chance = { factor = 1 }
+		custom_tooltip = charkuchin_kobold.4.a.tt
+
+		# The AI will auto-complete since they can't aim for a PTM, so just skip it for the AI
+		if = {
+			limit = {
+				ai = no
+			}
+			hidden_effect = {
+				event_target:hinuibird_carcass = {
+					add_province_triggered_modifier = charkuchin_kobold_hinuibird_carcass
+					# Failure event after 4 months
+					province_event = {
+						id = charkuchin_kobold.14
+						days = 122
+					}
+				}
+			}
+		}
+		else = { # Just give the AI the free supplies from the reward
+			add_government_power = {
+				mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+				power_type = citadel_supplies
+				value = 15
+			}
+		}
+	}
+}
+
+# Hinuibird Landslide
+country_event = {
+	id = charkuchin_kobold.5
+	title = charkuchin_kobold.5.title
+	desc = charkuchin_kobold.5.desc
+	picture = TRADEGOODS_eventPicture
+	goto = hinuibird_landslide
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					NOT = { has_charkuchin_kobold_citadel = yes }
+				}
+				save_event_target_as = hinuibird_landslide
+			}
+			add_country_modifier = {
+				name = hinuibird_disaster_event_wait
+				duration = 365
+				hidden = yes
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.5.a
+		ai_chance = { factor = 10 }
+
+		trigger = {
+			has_government_power = {
+				mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+				power_type = citadel_supplies
+				value = 25
+			}
+		}
+
+		add_government_power = {
+			mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+			power_type = citadel_supplies
+			value = -25
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.5.b
+		ai_chance = { factor = 1 }
+
+		# Reduce dev by 1/1/1 unless it's already at 1/1/1
+		event_target:hinuibird_landslide = {
+			if = {
+				limit = {
+					NOT = { base_tax = 2 }
+					NOT = { base_production = 2 }
+					NOT = { base_manpower = 2 }
+				}
+				decolonize = THIS
+			}
+			else = {
+				add_base_tax = -1
+				add_base_production = -1
+				add_base_manpower = -1
+			}
+		}
+	}
+}
+
+# Hinuibird migration end
+country_event = {
+	id = charkuchin_kobold.6
+	title = charkuchin_kobold.6.title
+	desc = charkuchin_kobold.6.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			REB = {
+				if = {
+					limit = {
+						NOT = { has_country_flag = hinuibird_migration_end_flag }
+					}
+					set_country_flag = hinuibird_migration_end_flag
+					clr_country_flag = hinuibird_migration_start_flag
+				}
+			}
+			# Supply costs go back to normal
+			divide_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+				value = 3
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.6.a
+		ai_chance = { factor = 1 }
+		custom_tooltip = charkuchin_kobold.6.a.tt
+	}
+}
+
+# Reduce dev/decolonise at 0 suppplies
+country_event = {
+	id = charkuchin_kobold.7
+	title = charkuchin_kobold.7.title
+	desc = charkuchin_kobold.7.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
+		NOT = {
+			has_government_power = {
+				mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+				power_type = citadel_supplies
+				value = 0.1
+			}
+		}
+		NOT = { # This keeps it to every 4 months
+			has_country_modifier = charkuchin_kobold_decolonisation_cooldown
+		}
+		any_owned_province = {
+			is_city = yes
+			NOT = { has_charkuchin_kobold_citadel = yes }
+			NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			add_country_modifier = {
+				name = charkuchin_kobold_decolonisation_cooldown
+				duration = 122 # 4 months
+				hidden = yes
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.7.a
+		ai_chance = { factor = 1 }
+		custom_tooltip = charkuchin_kobold.7.a.tt
+
+		hidden_effect = {
+		#Target lowland and titanoflora provinces first
+			if = {
+				limit = {
+					any_owned_province = {
+						is_city = yes
+						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+						OR = {
+							region = west_insyaan_lowlands_region
+							region = titanoflora_valley_region
+							region = titanoflora_savanna_region
+							superregion = hinuilands_superregion
+						}
+					}
+				}
+				every_owned_province = {
+					limit = {
+						is_city = yes
+						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+						OR = {
+							region = west_insyaan_lowlands_region
+							region = titanoflora_valley_region
+							region = titanoflora_savanna_region
+							superregion = hinuilands_superregion
+						}
+					}
+					if = {
+						limit = {
+							development = 4 #Needs to be able to remove dev
+						}
+						remove_random_development = yes
+					}
+					else = {
+						decolonize = THIS
+					}
+				}
+			}
+			else = {
+				every_owned_province = {
+					limit = {
+						is_city = yes
+						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+					}
+					if = {
+						limit = {
+							development = 4 #Needs to be able to remove dev
+						}
+						remove_random_development = yes
+					}
+					else = {
+						decolonize = THIS
+					}
+				}
+			}
+		}
+	}
+}
+
+# Can we finish the supply system?
+country_event = {
+	id = charkuchin_kobold.9
+	title = charkuchin_kobold.9.title
+	desc = charkuchin_kobold.9.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		jalaarkuchar_region = {
+			type = all
+			owned_by = ROOT
+		}
+		gamunkuchar_region = {
+			type = all
+			owned_by = ROOT
+		}
+		pirzakuchar_region = {
+			type = all
+			owned_by = ROOT
+		}
+		wayamokuchar_region = {
+			type = all
+			owned_by = ROOT
+		}
+		# You need to have a positive monthly gain during the disaster, not just a surplus
+		check_variable = {
+			which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.9.a
+		ai_chance = { factor = 1 }
+		
+		custom_tooltip = charkuchin_kobold.9.a.tt
+		
+		# Swap out your T1 reform to the equivalent one without the Supplies mechanic
+		trigger_switch = {
+			on_trigger = government
+			monarchy = { add_government_reform = feudalism_reform }
+			republic = { add_government_reform = oligarchy_reform }
+			theocracy = { add_government_reform = monastic_order_reform }
+		}
+
+		hidden_effect = {
+			set_global_flag = charkuchin_kobold_supplies_finished # This ensures newly released kobolds don't get the supplies mechanic
+			# I don't clear the REB flags because it's possible for a kobold tag to still exist outside the range who still needs to deal
+			# with the regular disaster
+			regenerate_government_mechanics = yes
+			end_disaster = hinuibird_migration_disaster
+		}
+	}
+}
+
+# Destroy a captured Supply Facility if you already have 10
+province_event = {
+	id = charkuchin_kobold.11
+	title = charkuchin_kobold.11.title
+	desc = charkuchin_kobold.11.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = charkuchin_kobold.11.a
+		ai_chance = { factor = 1 }
+	}
+}
+
+# Trigger to let the player know they are out of supplies
+country_event = {
+	id = charkuchin_kobold.12
+	title = charkuchin_kobold.12.title
+	desc = charkuchin_kobold.12.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { # This keeps it to every 1 year at most
+			has_country_modifier = charkuchin_kobold_no_supplies_cooldown
+		}
+	}
+
+	immediate = {
+		hidden_effect = { # Just so the decolonisation doesn't happen immediately
+			add_country_modifier = {
+				name = charkuchin_kobold_decolonisation_cooldown
+				duration = 122 # 4 months
+				hidden = yes
+			}
+			add_country_modifier = { # This is so you don't see the event every other month if you are hovering around 0 and keep hitting it
+				name = charkuchin_kobold_no_supplies_cooldown
+				duration = 365 # 1 year
+				hidden = yes
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.12.a
+		ai_chance = { factor = 1 }
+	}
+}
+
+# Hinuibird Predation failure
+province_event = {
+	id = charkuchin_kobold.13
+	title = charkuchin_kobold.13.title
+	desc = charkuchin_kobold.13.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_active_triggered_province_modifier = charkuchin_kobold_hinuibird_predation
+	}
+
+	immediate = {
+		hidden_effect = {
+			remove_province_triggered_modifier = charkuchin_kobold_hinuibird_predation
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.12.a
+		ai_chance = { factor = 1 }
+
+		# Reduce dev by 1/1/1 unless it's already at 1/1/1
+		if = {
+			limit = {
+				NOT = { base_tax = 2 }
+				NOT = { base_production = 2 }
+				NOT = { base_manpower = 2 }
+			}
+			decolonize = THIS
+		}
+		else = {
+			add_base_tax = -1
+			add_base_production = -1
+			add_base_manpower = -1
+		}
+	}
+}
+
+# Hinuibird Carcass failure
+province_event = {
+	id = charkuchin_kobold.14
+	title = charkuchin_kobold.14.title
+	desc = charkuchin_kobold.14.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	trigger = {
+		has_active_triggered_province_modifier = charkuchin_kobold_hinuibird_carcass
+	}
+
+	immediate = {
+		hidden_effect = {
+			remove_province_triggered_modifier = charkuchin_kobold_hinuibird_carcass
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.12.a
+		ai_chance = { factor = 1 }
+	}
+}
+
+# Hinuibird Predation success
+province_event = {
+	id = charkuchin_kobold.15
+	title = charkuchin_kobold.15.title
+	desc = charkuchin_kobold.15.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			remove_province_triggered_modifier = charkuchin_kobold_hinuibird_predation
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.15.a
+		ai_chance = { factor = 1 }
+	}
+}
+
+# Hinuibird Carcass success
+province_event = {
+	id = charkuchin_kobold.16
+	title = charkuchin_kobold.16.title
+	desc = charkuchin_kobold.16.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			remove_province_triggered_modifier = charkuchin_kobold_hinuibird_carcass
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.16.a
+		ai_chance = { factor = 1 }
+
+		owner = {
+			add_government_power = {
+				mechanic_type = charkuchin_kobold_citadel_supplies_mechanic
+				power_type = citadel_supplies
+				value = 15
+			}
+		}
+	}
+}
+
+# Hinuibird Migration disaster event handler (to save some trigger checks)
+country_event = {
+	id = charkuchin_kobold.17
+	title = charkuchin_kobold.17.title
+	desc = charkuchin_kobold.17.desc
+	picture = TRADEGOODS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
+		any_owned_province = {
+			NOT = { has_charkuchin_kobold_citadel = yes }
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.17.a
+
+		random_list = {
+			1 = { country_event = { id = charkuchin_kobold.3 } }
+			1 = { country_event = { id = charkuchin_kobold.4 } }
+			1 = { country_event = { id = charkuchin_kobold.5 } }
+		}
 	}
 }
