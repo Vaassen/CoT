@@ -29,8 +29,8 @@ F98_col_1 = {
 
 		effect = {
 			# Future heirs are better. See on_new_heir in on_actions
-			custom_tooltip = heirs_powerful_mage_chance_extra_stats_tt
-			custom_tooltip = subjugation_cb_kheterata_region_tt
+			custom_tooltip = F98_heirs_powerful_mage_chance_extra_stats_tt
+			custom_tooltip = F98_subjugation_cb_kheterata_region_tt
 			hidden_effect = { # What's the fastest way to find all countries with a capital in Khetarata...?
 				# every_capital_province = {
 				# 	limit = {
@@ -123,7 +123,7 @@ F98_col_1 = {
 		}
 
 		effect = {
-			custom_tooltip = cheaper_flourishing_roots_retroactive_tt
+			custom_tooltip = F98_cheaper_flourishing_roots_retroactive_tt
 			# Apply this discount retroactively
 			every_owned_province = {
 				limit = {
@@ -630,9 +630,10 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			# provinces with harpy pops cost -20% warscore. Hmm. Province modifiers when I declare war maybe?
+			# provinces with harpy pops cost -20% warscore. Place province modifiers when you declare war and clear them when you make peace
+			custom_tooltip = F98_harpy_provinces_cheaper_tt
 			bulwar_superregion = {
-				limit = { # placeholder should you get a claim on your subjects' provs?
+				limit = {
 					NOT = { country_or_non_sovereign_subject_holds = ROOT }
 				}
 				add_permanent_claim = ROOT
@@ -704,6 +705,7 @@ F98_col_3 = {
 					duration = -1
 				}
 			}
+			custom_tooltip = F98_harpyway_future_golden_highway_tt
 		} 
 	}
 
@@ -716,22 +718,146 @@ F98_col_3 = {
 			F98_the_oddest_hunts
 			F98_wing_and_wave
 		}
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			# Maybe I'll highlight your roost provinces that don't yet satisfy the conditions
+			# rather than highlighting every province you own
+			OR = {
+				AND = {
+					harpy_roost_st_has_any_roost = yes
+					NOT = {
+						AND = {
+							has_province_modifier = harpy_roost_mod_roost_flourishing_active
+							num_of_units_in_province = {
+								amount = 5
+								type = infantry
+								who = ROOT
+							}
+							has_supply_depot = ROOT
+						}
+					}
+				}
+				AND = { # This is for the two specified provinces
+					OR = {
+						province_id = 676 # Firanyalen
+						province_id = 3263 # Khinkeion
+					}
+					NOT = {
+						AND = {
+							has_manpower_building_trigger = yes
+							harpy_roost_st_has_any_roost = yes
+							num_of_units_in_province = {
+								amount = 10
+								type = infantry
+								who = ROOT
+							}
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			num_of_owned_provinces_with = {
+				value = 5
+				has_province_modifier = harpy_roost_mod_roost_flourishing_active
+				num_of_units_in_province = {
+					amount = 5
+					type = infantry
+					who = ROOT
+				}
+				has_supply_depot = ROOT
+			}
+			676 = { # Firanyalen
+				has_manpower_building_trigger = yes
+				harpy_roost_st_has_any_roost = yes
+				num_of_units_in_province = {
+					amount = 10
+					type = infantry
+					who = ROOT
+				}
+			}
+			3263 = { # Khinkeion
+				has_manpower_building_trigger = yes
+				harpy_roost_st_has_any_roost = yes
+				num_of_units_in_province = {
+					amount = 10
+					type = infantry
+					who = ROOT
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			# fire hundred flocks event
+		} 
 	}
 
 	F98_siadunan_sisters = {
 		icon = mission_fortify_rajputana
 		position = 4
 		required_missions = { F98_once_flew } 
-		provinces_to_highlight = {  } 
+		provinces_to_highlight = {
+			OR = {
+				AND = {
+					region = far_salahad_region
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					OR = {
+						province_id = 2908
+						province_id = 2904
+						province_id = 2921
+					}
+					NOT = {
+						AND = {
+							num_of_times_improved = 5
+							has_manpower_building_trigger = yes
+							num_of_buildings_in_province = 3
+						}
+					}
+				}
+			}
+		} 
 
-		trigger = {  } 
+		trigger = {
+			far_salahad_region = {
+				type = all
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			# placeholder traced the Siadunan migration
+			2908 = { #Larfira
+				num_of_times_improved = 5
+				has_manpower_building_trigger = yes
+				num_of_buildings_in_province = 3
+			}
+			2904 = { #Siadunaiun
+				num_of_times_improved = 5
+				has_manpower_building_trigger = yes
+				num_of_buildings_in_province = 3
+			}
+			2921 = { # Mermigan
+				num_of_times_improved = 5
+				has_manpower_building_trigger = yes
+				num_of_buildings_in_province = 3
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			if = { # placeholder I probably want to explain this in the tooltip with a tick or cross
+				limit = { # F49 Elaienna F50 Mulen
+					F48 = { # Siadan
+						is_subject_of = ROOT
+						# have 15 provinces or fewer
+						NOT = { num_of_cities = 16 }
+					}
+				}
+				inherit = F48
+			}
+			add_country_modifier = {
+				name = F98_daughters_of_siadanlen
+				duration = -1
+			}
+		} 
 	}
 
 	F98_beyond_bulwar = {
@@ -743,9 +869,32 @@ F98_col_3 = {
 		}
 		provinces_to_highlight = {  } 
 
-		trigger = {  } 
+		trigger = {
+			check_variable = {
+				which = F98_render_unto_total_dev_transferred
+				value = 100
+			}
+			calc_true_if = {
+				amount = 3
+				all_subject_country = {
+					capital_scope = {
+						NOT = { superregion = bulwar_superregion }
+					}
+					development = 250
+				}
+			}
+			capital_scope = {
+				num_of_units_in_province = {
+					amount = 50
+					type = infantry
+					who = ROOT
+				}
+			}
+		} 
 
-		effect = {  } 
+		effect = {
+			# event Puruse the past
+		} 
 	}
 
 	F98_sunderings_wake = {
