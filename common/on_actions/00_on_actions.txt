@@ -4073,6 +4073,42 @@ on_siege_lost_country = {
 		}
 		I78 = { country_event = { id = flavour_wild_hunt.7 } }
 	}
+
+	# Parusahan Saya MT - The Great War Peace Out
+	if = {
+		limit = {
+			# if great war is active, capital is in haless and not controlled by owner, and warscore is -40
+			R54 = { has_country_flag = R54_great_war_active }
+			capital_scope = {
+				OR = {
+					superregion = vimdatrong_superregion
+					superregion = yanshen_superregion
+					superregion = gozengun_superregion
+					superregion = rahen_superregion
+				}
+				NOT = { controlled_by = ROOT }
+			}
+			war_score = -40
+		}
+		# if PS, everyone white peaces you and you lose the war
+		if = {
+			limit = { tag = R54 }
+			R54 = {
+				every_war_enemy_country = {
+					white_peace = R54
+				}
+				country_event = { 
+					id = flavor_parusahan_saya.1001 # you fucking lost
+				}
+			}
+			
+		} 
+		else = { # otherwise just peace yourself out and lose the war
+			white_peace = R54
+		}
+		
+		set_country_flag = R54_lost_great_war
+	}
 }
 
 # province
@@ -5228,6 +5264,62 @@ on_monarch_death = {
 			value = 0
 		}
 	}
+
+	# Parusahan Saya MT - Weakening Grand Ambitions
+	if = {
+		limit = { tag = R54 }
+
+		trigger_switch = {
+			on_trigger = has_country_modifier
+
+			R54_grand_ambitions_V = {
+				remove_country_modifier = R54_grand_ambitions_V
+				add_country_modifier = {
+					name = R54_grand_ambitions_IV
+					duration = -1
+				}
+			}
+			R54_grand_ambitions_IV = {
+				remove_country_modifier = R54_grand_ambitions_IV
+				add_country_modifier = {
+					name = R54_grand_ambitions_III
+					duration = -1
+				}
+			}
+			R54_grand_ambitions_III = {
+				remove_country_modifier = R54_grand_ambitions_III
+				add_country_modifier = {
+					name = R54_grand_ambitions_II
+					duration = -1
+				}
+			}
+			R54_grand_ambitions_II = {
+				remove_country_modifier = R54_grand_ambitions_II
+				add_country_modifier = {
+					name = R54_grand_ambitions_I
+					duration = -1
+				}
+			}
+			R54_grand_ambitions_I = {
+				remove_country_modifier = R54_grand_ambitions_I
+				
+			}
+		}
+	}
+
+	# Parusahan Saya MT - Dawn Of The Second Philosopher King
+	if = {
+		limit = { 
+			tag = R54
+			NOT = { has_ruler_flag = R54_second_philosopher_king }
+		}
+
+		remove_country_modifier = {
+			name = R54_dawn_of_the_second_philosopher_king
+			duration = -1
+		}
+	}
+	
 
 }
 
@@ -8374,41 +8466,164 @@ on_monthly_pulse = {
 		country_event = { id = flavour_endhuvi.101 }
 	}
 
-	# Parusahan Saya MT - Vizier power projection export
+	# Parusahan Saya MT
 	if = {
-		limit = {
-			tag = R54
-			NOT = { mission_completed = R54_reveal_your_hand }
-			NOT = { crown_land_share = 25 }
+		limit = { 
+			is_or_was_tag = { tag = R54 } # Parusahan Saya
 		}
-		remove_country_modifier = R54_the_charismatic_unifier
-	}
 
-	# Parusahan Saya MT - Charismatic Unifier check
-	if = {
-		limit = {
-			tag = R54
-			NOT = { mission_completed = R54_from_the_depths }
+		# - Charismatic Unifier check
+		if = {
+			limit = {
+				has_country_modifier = R54_the_charismatic_unifier
+				NOT = { crown_land_share = 25 }
+			}
+			remove_country_modifier = R54_the_charismatic_unifier
 		}
-		event_target:raj_vizier_global_target = {
-			R54 = {
-				export_to_variable = {
-					variable_name = R54_vizier_power_projection
-					value = trigger_value:power_projection
-					who = PREV
+
+		# - Vizier power projection export
+		if = {
+			limit = {
+				NOT = { mission_completed = R54_reveal_your_hand }
+			}
+			event_target:raj_vizier_global_target = {
+				R54 = {
+					export_to_variable = {
+						variable_name = R54_vizier_power_projection
+						value = trigger_value:power_projection
+						who = PREV
+					}
 				}
 			}
 		}
-	}
 
-	# Parusahan Saya MT - Hemantsen I dynasty buff check
-	if = {
-		limit = {
-			tag = R54
-			has_country_modifier = R54_rule_of_the_iron_raja
-			NOT = { dynasty = "of the Iron Stripe" }
+		# - Hemantsen I dynasty buff check
+		if = {
+			limit = {
+				has_country_modifier = R54_rule_of_the_iron_raja
+				NOT = { dynasty = "of the Iron Stripe" }
+			}
+			remove_country_modifier = R54_rule_of_the_iron_raja
 		}
-		remove_country_modifier = R54_rule_of_the_iron_raja
+		else_if = {
+			limit = {
+				NOT = { has_country_modifier = R54_rule_of_the_iron_raja }
+				dynasty = "of the Iron Stripe"
+			}
+			add_country_modifier = { 
+				name = R54_rule_of_the_iron_raja 
+				duration = -1
+			}
+		}
+
+		# - Decline Of Hemantsen I check
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						has_ruler = "Hemantsen I"
+						ruler_age = 65
+						has_consort = yes
+					}
+					AND = {
+						has_ruler = "Hemantsen I"
+						has_consort = no
+					}
+				}
+			}
+
+			country_event = { 
+				id = flavor_parusahan_saya.13 
+			}
+		}
+
+		# - Reformation Tensions Rebels
+		if = {
+			limit = { 
+				OR = {
+					has_country_flag = R54_HP_rebels 
+					has_country_flag = R54_SP_rebels 
+				}
+				had_country_flag = {
+					flag = R54_rebels_spawned
+					days = 90
+				}
+			}
+			clr_country_flag = R54_HP_rebels_spawned
+			
+			if = {
+				limit = {
+					has_country_flag = R54_HP_rebels
+				}
+				for = {
+					amount = 3
+					effect = "
+						random_owned_province = {
+							spawn_rebels = {
+								type = anti_tax_rebels
+								size = 1
+							}
+						}
+					"
+				}
+			}
+
+			if = {
+				limit = {
+					has_country_flag = R54_SP_rebels
+				}
+				for = {
+					amount = 3
+					effect = "
+						random_owned_province = {
+							spawn_rebels = {
+								type = suhans_praxis_rebels
+								size = 1
+							}
+						}
+					"
+				}
+			}
+			
+			set_country_flag = R54_HP_rebels_spawned
+		}
+
+		# - Right-Hand Mage check
+		if = {
+			limit = { mission_completed = R54_bow_mage_and_fall }
+
+			if = {
+				limit = {
+					employed_advisor = { type = court_mage }
+					NOT = { has_country_modifier = R54_right_hand_mage }
+				}
+				add_country_modifier = { name = R54_right_hand_mage duration = -1 }
+			}
+			if = {
+				limit = {
+					NOT = { employed_advisor = { type = court_mage } }
+					has_country_modifier = R54_right_hand_mage
+				}
+				remove_country_modifier = R54_right_hand_mage
+			}
+		}
+
+		# - Vizier Revolt check
+		if = {
+			limit = {
+				# in the vizier revolt, 90 WS against vizier, no rebels
+				has_country_flag = R54_vizier_revolt
+				war_score_against = {
+					who = event_target:raj_vizier_global_target
+					value = 90
+				}
+				NOT = { has_spawned_rebels = noble_rebels }
+				NOT = { num_of_rebel_controlled_provinces = 1 }	
+			}
+			country_event = {
+				id = flavor_parusahan_saya.18
+			}
+		}
 	}
 
 	#Yezel Mora misery gain

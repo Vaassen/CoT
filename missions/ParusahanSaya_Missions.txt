@@ -1288,6 +1288,7 @@ parusahan_saya_2x4 = {
 			}
 			NOT = { any_owned_province = { has_rebel_faction = high_philosophy_rebels } }
 			NOT = { has_spawned_rebels = high_philosophy_rebels }
+			
 		} 
 
 		effect = {  
@@ -1299,6 +1300,7 @@ parusahan_saya_2x4 = {
 				name = R54_two_paths_to_the_same_truth
 				duration = -1
 			}
+			
 		} 
 	}
 
@@ -1362,7 +1364,15 @@ parusahan_saya_2x5 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			remove_country_modifier = R54_novice_drilling_techniques
+			add_country_modifier = {
+				name = R54_tempered_drilling_techniques
+				duration = -1
+			}
+
+			set_country_flag = R54_temple_outposts_T1
+		} 
 	}
 
 	R54_reasoned_warfare = {
@@ -1391,7 +1401,16 @@ parusahan_saya_2x5 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			clr_country_flag = R54_tactical_maneuvers_T1
+			set_country_flag = R54_tactical_maneuvers_T2
+
+			remove_country_modifier = R54_tempered_drilling_techniques
+			add_country_modifier = {
+				name = R54_sanctified_drilling_techniques
+				duration = -1
+			}
+		} 
 	}
 }
 parusahan_saya_ironrajmission = {
@@ -1412,7 +1431,9 @@ parusahan_saya_ironrajmission = {
 		trigger = { always = no } 
 
 		effect = { 
-			
+			country_event = {
+			id = flavor_parusahan_saya.16
+		}
 		} 
 	}
 }
@@ -1452,7 +1473,11 @@ parusahan_saya_oraclemission = {
 			has_cast_scry = yes
 		}
 
-		effect = {  } 
+		effect = {  
+			country_event = {
+				id = flavor_parusahan_saya.15
+			}
+		} 
 	}
 }
 parusahan_saya_3x1 = {
@@ -1477,7 +1502,11 @@ parusahan_saya_3x1 = {
 			sir_area = { type = all  infantry_in_province = 5 } 
 		}
 
-		effect = {  } 
+		effect = {  
+			country_event = {
+				id = flavor_parusahan_saya.301
+			}
+		} 
 	}
 }
 parusahan_saya_3x2 = {
@@ -1511,7 +1540,9 @@ parusahan_saya_3x2 = {
 			}
 		}
 
-		effect = {  } 
+		effect = {  
+			set_country_flag = R54_the_iron_march_flag
+		} 
 	}
 }
 parusahan_saya_3x3 = {
@@ -1551,7 +1582,19 @@ parusahan_saya_3x3 = {
 			
 		}
 
-		effect = {  } 
+		effect = {  
+			set_defender_of_the_faith = {
+				who = ROOT
+				religion = high_philosophy
+			}
+			set_country_flag = R54_godswall_tunnel_bypass
+			4533 = {
+				add_province_modifier = {
+					name = R54_bastion_of_the_high_gods
+					duration = -1
+				}
+			}
+		} 
 	}
 
 	R54_an_army_worthy_of_harimar = {
@@ -1622,7 +1665,36 @@ parusahan_saya_3x3 = {
 			}
 		}
 
-		effect = {  } 
+		effect = {  
+			every_known_country = {
+				limit = {
+					capital_scope = {
+						OR = {
+							superregion = yanshen_superregion
+							superregion = vimdatrong_superregion
+							superregion = gozengun_superregion
+						}
+					}
+				}
+				
+				add_power_projection = {
+					type = humiliated_by_rival
+					amount = -50
+				}
+			}
+
+			add_army_tradition = 80
+			add_country_modifier = {
+				name = R54_a_sea_of_iron_spears
+				duration = -1
+			}
+
+			clr_country_flag = R54_tactical_maneuvers_T2
+			set_country_flag = R54_tactical_maneuvers_T3
+
+			clr_country_flag = R54_temple_outposts_T1
+			set_country_flag = R54_temple_outposts_T2
+		} 
 	}
 
 	R54_demonstration_of_destiny = {
@@ -1654,7 +1726,58 @@ parusahan_saya_3x3 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			# turn ruler into 100AT general with +1 all stats, if already general become LC
+			add_country_modifier = {
+				name = R54_temp_gen_stats
+				duration = -1
+			}
+			if = {
+				limit = { is_monarch_leader = yes }
+				add_ruler_personality = legendary_conqueror_personality
+			} else = {
+				convert_ruler_to_general = 100
+			}
+			remove_country_modifier = R54_temp_gen_stats
+
+			# find highest dev country in scope and mark them
+			select_highest_dev_known_country_with_limit = {
+				index = 1
+				limit = "
+					capital_scope = {
+						OR = {
+							superregion = yanshen_superregion
+							superregion = vimdatrong_superregion
+							superregion = gozengun_superregion
+						}
+					}
+					NOT = { truce_with = R54 }
+					is_at_war = no
+				"
+				effect = "
+					save_global_event_target_as = R54_warleader
+				"
+			}
+			# declare the great war against marked country
+			declare_war_with_cb = {
+				casus_belli = cb_usurp_emperorship
+				who = event_target:R54_warleader
+			}
+			# all countries in scope join the war with marked country as war leader
+			every_known_country = {
+				limit = {
+					capital_scope = {
+						OR = {
+							superregion = yanshen_superregion
+							superregion = vimdatrong_superregion
+							superregion = gozengun_superregion
+						}
+					}
+					NOT = { truce_with = R54 }
+				}
+				join_all_defensive_wars_of = event_target:R54_warleader
+			}
+		} 
 	}
 
 	R54_the_third_harimraj = {
@@ -1665,10 +1788,35 @@ parusahan_saya_3x3 = {
 
 		trigger = {
 			is_at_war = no
-			has_country_flag = R54_won_great_war
+			NOT = { has_country_flag = R54_lost_great_war }
 		} 
 
-		effect = {  } 
+		effect = {  
+			set_ruler_flag = R54_second_philosopher_king
+			set_heir_flag = R54_second_philosopher_king
+
+			add_country_modifier = {
+				name = R54_dawn_of_the_second_philosopher_king
+				duration = -1
+			}
+
+			add_power_projection = {
+				type = 10_permanent_power_projection
+				amount = 10
+			}
+
+			custom_tooltip = ARB_golden_age_renewal_tt
+			hidden_effect = {
+				if = {
+					limit = { has_had_golden_age = yes } 
+					reset_golden_age = yes 
+				}
+				else_if = {
+					limit = { in_golden_age = yes } 
+					extend_golden_age = 600
+				}
+			}
+		} 
 	}
 }
 parusahan_saya_3x4 = {
@@ -1703,7 +1851,19 @@ parusahan_saya_3x4 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			inherit = R05
+
+			add_country_modifier = {
+				name = R54_oracle_court
+				duration = -1
+			}
+
+			add_country_modifier = {
+				name = R54_right_hand_mage
+				duration = -1
+			}
+		} 
 	}
 
 	R54_philosophical_studies = {
@@ -1728,7 +1888,18 @@ parusahan_saya_3x4 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			set_country_flag = R54_philosophical_studies_flag
+
+			capital_scope = {
+				add_building = cathedral
+				add_building = university
+			}
+			add_country_modifier = {
+				name = R54_discerning_the_path
+				duration = -1
+			}
+		} 
 	}
 }
 parusahan_saya_3x5 = {
@@ -1764,7 +1935,58 @@ parusahan_saya_3x5 = {
 			diplomatic_reputation = 10
 		} 
 
-		effect = {  } 
+		effect = {
+
+			set_variable = {
+				which = R54_province_inherit_cost
+				value = 0
+			}
+
+			every_subject_country = {
+				limit = { has_reform = senapti_reform }
+				
+				every_owned_province = {
+					limit = { superregion = rahen_superregion }
+
+					ROOT = {
+						export_to_variable = {
+							which = R54_province_dev
+							value = trigger_value:development
+							who = PREV
+						}
+						change_variable = {
+							which = R54_province_inherit_cost
+							which = R54_province_dev
+						}
+					}
+					
+					cede_province = ROOT
+					add_core = ROOT
+				}
+
+				raj_become_prabhi = yes
+			}
+
+			multiply_variable = {
+				which = R54_province_inherit_cost
+				value = 4
+			}
+			var_effect = {
+				effect = add_dip_power
+				var = R54_province_inherit_cost
+				sign = -
+			}
+
+			change_variable = {
+				which = raj_max_allowed_senaptia
+				value = -99
+			}
+
+			add_country_modifier = {
+				name = R54_senapti_commanders
+				duration = -1
+			}
+		} 
 	}
 
 	R54_the_last_remnant = {
@@ -1793,7 +2015,12 @@ parusahan_saya_3x5 = {
 			has_dip_advisor_5 = yes
 		} 
 
-		effect = {  } 
+		effect = {  
+			country_event = {
+				id = flavor_parusahan_saya.17
+				days = 30
+			}
+		} 
 	}
 
 	R54_a_court_worthy_of_harimar = {
@@ -1820,7 +2047,70 @@ parusahan_saya_3x5 = {
 			}
 		} 
 
-		effect = {  } 
+		effect = {  
+			every_known_country = {
+				limit = {
+					capital_scope = {
+						OR = {
+							superregion = yanshen_superregion
+							superregion = vimdatrong_superregion
+							superregion = gozengun_superregion
+						}
+					}
+				}
+				
+				add_prestige = -100
+			}
+
+			every_subject_country = {
+				add_opinion = {
+					who = ROOT
+					modifier = R54_perfect_court
+				}
+			}
+
+			define_advisor = {
+				type = court_mage
+				skill = 5
+				cost_multiplier = 0.25
+			}
+			define_advisor = {
+				type = statesman
+				skill = 5
+				cost_multiplier = 0.25
+			}
+			define_advisor = {
+				type = commandant
+				skill = 5
+				cost_multiplier = 0.25
+			}
+
+			if = {
+				limit = { adm = 6 }
+				add_adm_power = 50
+			} else = { change_adm = 1 }
+			if = {
+				limit = { dip = 6 }
+				add_dip_power = 50
+			} else = { change_dip = 1 }
+			if = {
+				limit = { mil = 6 }
+				add_mil_power = 50
+			} else = { change_mil = 1 }
+
+			if = {
+				limit = { heir_adm = 6 }
+				add_adm_power = 50
+			} else = { change_heir_adm = 1 }
+			if = {
+				limit = { heir_dip = 6 }
+				add_dip_power = 50
+			} else = { change_heir_dip = 1 }
+			if = {
+				limit = { heir_mil = 6 }
+				add_mil_power = 50
+			} else = { change_heir_mil = 1 }			
+		} 
 	}
 }
 parusahan_saya_4x1 = {
@@ -1875,6 +2165,57 @@ parusahan_saya_4x1 = {
 			}
 		}
 
-		effect = {  } 
+		effect = {  
+			every_known_country = {
+				limit = {
+					capital_scope = {
+						OR = {
+							superregion = yanshen_superregion
+							superregion = vimdatrong_superregion
+							superregion = gozengun_superregion
+						}
+					}
+				}
+				
+				add_legitimacy = -50
+				add_republican_tradition = -50
+				add_devotion = -50
+			}
+
+			4500 = {
+				ROOT = {
+					export_to_variable = {
+						which = R54_sarisung_production
+						value = trigger_value:base_production
+						who = PREV
+					}
+				}
+				set_base_production = 1
+				add_devastation = 100
+				change_province_name = "Antyapitha"
+				add_province_modifier = {
+					name = R54_the_final_throne_mod
+					duration = -1
+				}
+			}
+			multiply_variable = {
+				which = R54_sarisung_production
+				value = 50
+			}
+			var_effect = {
+				effect = add_treasury
+				var = R54_sarisung_production
+				sign = +
+			}
+
+			sarisung_area = {
+				add_base_tax = 2
+				add_base_manpower = 2
+				add_province_modifier = {
+					name = R54_ancient_urban_architecture
+					duration = -1
+				}
+			}
+		} 
 	}
 }
