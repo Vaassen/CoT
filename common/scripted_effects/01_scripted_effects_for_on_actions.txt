@@ -3176,10 +3176,15 @@ on_province_religion_changed_effect = {
 				} 
 			} 
 		}
-		if = { limit = { has_province_modifier = F80_pmod_hunt_conversion province_religion = bulwari_sun_cult }
+		if = { limit = { religion = bulwari_sun_cult }
 			remove_province_modifier = F80_pmod_hunt_conversion
+			if = { limit = { mission_completed = F80_mission_our_duty }
+				add_province_modifier = { name = F80_pmod_more_control duration = 3650 }
+			}
+			if = { limit = { mission_completed = F80_equal_in_essence NOT = { culture = firanyan_harpy } }
+				add_province_modifier = { name = F80_pmod_harpy_culture_conversion duration = -1 }
+			}
 		}
-
 	}
 }
 
@@ -7109,19 +7114,27 @@ on_war_declaration_effect = {
 				firanyalen_area = { limit = { owned_by = F27 }
 					cede_province = F82
 				}
-				F82 = { 
-					capital_scope = { infantry = F82 } 
-					capital_scope = { infantry = F82 } 
-					capital_scope = { infantry = F82 } 
-					capital_scope = { infantry = F82 } 
-					join_all_offensive_wars_of = ROOT
-				}	
+				F82 = { join_all_offensive_wars_of = ROOT }	
 			}
 			if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_our_southern_cousins } }
 				F33 = { join_all_offensive_wars_of = ROOT }
 			}
 			if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_right_words_right_ears } }
 				F42 = { join_all_offensive_wars_of = ROOT }
+			}
+			F80 = {
+				if = { limit = { NOT = { mission_completed = F80_mission_firanyalen_uprising } }
+					complete_mission = F80_mission_firanyalen_uprising
+				}
+				if = { limit = { NOT = { mission_completed = F80_mission_playing_on_rivalries } }
+					complete_mission = F80_mission_playing_on_rivalries
+				}
+				if = { limit = { NOT = { mission_completed = F80_mission_our_southern_cousins } }
+					complete_mission = F80_mission_our_southern_cousins
+				}
+				if = { limit = { NOT = { mission_completed = F80_mission_right_words_right_ears } }
+					complete_mission = F80_mission_right_words_right_ears
+				}
 			}
 		}
 	}
@@ -10387,9 +10400,6 @@ on_built_tax_building_effect = {
 			else = {
 				change_government_reform_progress = 1
 			}
-		}
-		if = { limit = { religion = the_hunt }
-			add_province_modifier = { name = F80_pmod_hunt_conversion duration = -1 desc = F80_desc_until_conversion }
 		}
 	}
 }
@@ -15172,61 +15182,67 @@ on_province_owner_change_effect = {
 	}
 
 	# Effects from the Nansalen MT. Will generally only apply in Bulwar, so check whether province is there prior to tag checks.
-	if = { 
-		limit = { 
-			superregion = bulwar_superregion
-			owner = {
-				OR = {
-					is_or_was_tag = { tag = F33 }
-					is_or_was_tag = { tag = F80 }
-					AND = {
-						is_subject = yes
-						overlord = {
-							is_or_was_tag = { tag = F80 }
-							is_or_was_tag = { tag = F33 }
+	if = { limit = { superregion = bulwar_superregion }
+		# Check whether province was 623. If so, Nansalen loses a modifier that requires Akalses to own it.
+		if = { limit = { province_id = 623 }
+			F80 = { remove_country_modifier = F80_cmod_gold_mine_shared }
+			F98 = { remove_country_modifier = F80_cmod_gold_mine_shared } # Also removing it from Harpylen, just in case.
+		}
+		if = { 
+			limit = { 
+				owner = {
+					OR = {
+						is_or_was_tag = { tag = F33 }
+						is_or_was_tag = { tag = F80 }
+						AND = {
+							is_subject = yes
+							overlord = {
+								is_or_was_tag = { tag = F80 }
+								is_or_was_tag = { tag = F33 }
+							}
 						}
 					}
 				}
 			}
-		}
-		# Akalses effect from Our Kin in Akalses.
-		if = { 
-			limit = { 
-				owned_by = F33
+			# Akalses effect from Our Kin in Akalses.
+			if = { 
+				limit = { 
+					owned_by = F33
+					F80 = {
+						mission_completed = F80_mission_our_kin_in_akalses
+						all_owned_province = { region = harpy_hills_region } 
+					}
+				}
 				F80 = {
-					mission_completed = F80_mission_our_kin_in_akalses
-					all_owned_province = { region = harpy_hills_region } 
+					if = { limit = { has_country_modifier = monstrous_nation }
+						decrease_monstrous_1 = yes
+					}
+					else = {
+						change_government_reform_progress = 1
+					}
 				}
 			}
-			F80 = {
-				if = { limit = { has_country_modifier = monstrous_nation }
-					decrease_monstrous_1 = yes
-				}
-				else = {
-					change_government_reform_progress = 1
-				}
-			}
-		}
 
-		# Trade good effects from The Gate of Bulwar.
-		if = {
-			limit = {
-				OR = {
-					owner = {
-						is_or_was_tag = { tag = F33 }
-						is_or_was_tag = { tag = F80 }
+			# Trade good effects from The Gate of Bulwar.
+			if = {
+				limit = {
+					OR = {
+						owner = {
+							is_or_was_tag = { tag = F33 }
+							is_or_was_tag = { tag = F80 }
+						}
 					}
-				}
-				OR = {
-					F80 = { mission_completed = F80_mission_the_gate_of_bulwar }
-					AND = {
-						exists = F98
-						F98 = { mission_completed = F80_mission_the_gate_of_bulwar }
+					OR = {
+						F80 = { mission_completed = F80_mission_the_gate_of_bulwar }
+						AND = {
+							exists = F98
+							F98 = { mission_completed = F80_mission_the_gate_of_bulwar }
+						}
 					}
+					OR = { trade_goods = gold trade_goods = sugar trade_goods = silk trade_goods = spices trade_goods = coffee }
 				}
-				OR = { trade_goods = gold trade_goods = sugar trade_goods = silk trade_goods = spices trade_goods = coffee }
+				add_province_modifier = { name = F80_pmod_gate_of_bulwar duration = -1 }
 			}
-			add_province_modifier = { name = F80_pmod_gate_of_bulwar duration = -1 }
 		}
 	}
 }
