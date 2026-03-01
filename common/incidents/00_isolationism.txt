@@ -743,7 +743,7 @@ incident_elves_9_placeholder = {
 	}
 }
 
-incident_teachings_szal_fazil = {
+incident_rebirth_magic = {
 
 	frame = 23
 	variable_initial = 0
@@ -757,8 +757,8 @@ incident_teachings_szal_fazil = {
 	trigger = {
 		is_incident_active = no
 		custom_trigger_tooltip = {
-			tooltip = nsc_teachings_szal_fazil_incident_tt
-			has_country_flag = nsc_teachings_szal_fazil_started
+			tooltip = nsc_rebirth_magic_incident_tt
+			has_country_flag = nsc_rebirth_magic_started
 		}
 	}
 
@@ -766,7 +766,7 @@ incident_teachings_szal_fazil = {
 
 	immediate_effect = {
 		set_country_flag = active_nsc_incident_flag
-		country_event = { id = new_sun_cult.242 } #Find the Szal-Fazil
+		country_event = { id = new_sun_cult.242 } #The Grand Council of the Magi
 	}
 }
 
@@ -1136,7 +1136,8 @@ incident_rinta_path_of_saaxir = {
 					has_global_flag = incident_rinta_light_up_the_night_sky_ongoing_flag
 				}
 			}
-			is_year = 1445
+			is_year = 1444
+			is_month = 11
 		}
 	}
 
@@ -1152,6 +1153,584 @@ incident_rinta_path_of_saaxir = {
 				id = rinta_seeker_events.601
 			}
 			set_global_flag = incident_rinta_path_of_saaxir_ongoing_flag
+		}
+	}
+}
+
+##############################
+## Volcanic Truth Incidents ##
+##############################
+
+# We want these to be "global", happening at the same time for all VT countries
+# For the icons, rather than creating placeholder ones, I am re-using existing ones to save us changing
+# the image another time in the repo
+
+incident_volcanic_organizational_crisis = {
+
+	frame = 1
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		# We'll use the same pattern on all of these VT incidents - check if the global flags for _active or _finished
+		# are set, and if so, start the incident immediately. If not, check the normal conditions, and the first
+		# country to see them as true will set the _active flag
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_organizational_crisis_active
+					has_global_flag = vt_incident_organizational_crisis_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				# Make sure there are no other incidents happening to anyone at the same time
+				NOT = { has_global_flag = vt_incident_taga_ala_influence_active }
+				NOT = { has_global_flag = vt_incident_mass_eruption_active }
+				NOT = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				NOT = { has_global_flag = vt_incident_the_molten_eternity_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				NOT = { has_global_flag = vt_incident_mechanim_awakening_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = vt_twin_under_proper_governance_tt.1
+					# Either one tag with the reform owns both, or neither are owned by a tag with the reform
+					6181 = {
+						owner = {
+							owns = 6182
+							has_reform = cuahu_teotlehu_reform
+						}
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = vt_twin_under_proper_governance_tt.2
+					6181 = { owner = { NOT = { has_reform = cuahu_teotlehu_reform } } }
+					6182 = { owner = { NOT = { has_reform = cuahu_teotlehu_reform } } }
+				}
+			}
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_organizational_crisis_finished }
+				end_incident = incident_volcanic_organizational_crisis
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_organizational_crisis_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_organizational_crisis_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				6162 = {
+					# This resets the variables and sets off other events for voting and the results
+					province_event = {
+						id = volcanic_truth.1
+						days = 1
+					}
+				}
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+				# The owner(s) of these provinces receives an informative warning if they are not Volcanic Truth
+				6181 = { #Muatlaqua
+					owner = {
+						country_event = {
+							id = volcanic_truth.102
+						}
+					}
+				}
+				6182 = { #Quahopilo
+					owner = {
+						country_event = {
+							id = volcanic_truth.102
+						}
+					}
+				}
+			}
+			
+		}
+		
+	}
+}
+
+incident_volcanic_taga_ala_influence = {
+
+	frame = 3
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		# For this incident, since the check about the mangroves is quite expensive, we'll have an outer OR
+		# for a quick check if anyone has started the incident, and the any_known_country stuff will only
+		# check your own knowledge
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_taga_ala_influence_active
+					has_global_flag = vt_incident_taga_ala_influence_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				NOT = { has_global_flag = vt_incident_organizational_crisis_active }
+				NOT = { has_global_flag = vt_incident_mass_eruption_active }
+				NOT = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				NOT = { has_global_flag = vt_incident_the_molten_eternity_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				NOT = { has_global_flag = vt_incident_mechanim_awakening_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			# A VT country can either see a "Mangrove Republic" country, or
+			# the whole mangrove region is discovered
+			custom_trigger_tooltip = {
+				tooltip = vt_tagaala_influence_condition_tt.1
+				OR = {
+					any_known_country = {
+						culture_group = tagaala
+					}
+					tagaala_mangroves_region = {
+						type = all
+						has_discovered = PREV
+					}
+				}
+			}
+			# A VT country has a 5% trade share in Fave Tasaai
+			custom_trigger_tooltip = {
+				tooltip = vt_tagaala_influence_condition_tt.2
+				OR = {
+					any_known_country = {
+						religion = volcanic_truth
+						3572 = { # Fave Tasaai trade node
+							trade_share = {
+								country = PREV
+								share = 5
+							}
+						}
+					}
+					# Of course, any_known_country doesn't include the one actually checking this...
+					3572 = { # Fave Tasaai trade node
+						trade_share = {
+							country = ROOT
+							share = 5
+						}
+					}
+				}
+			}
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_taga_ala_influence_finished }
+				end_incident = incident_volcanic_taga_ala_influence
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_taga_ala_influence_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_taga_ala_influence_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				6162 = {
+					# This resets the variables and sets off other events for voting and the results
+					province_event = {
+						id = volcanic_truth.1
+						days = 1
+					}
+				}
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+		}
+	}
+}
+
+# This incident is a little different as there is no voting, so we don't call volcanic_truth.1
+incident_volcanic_mass_eruption_of_the_twin_gods = {
+
+	frame = 4
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_mass_eruption_active
+					has_global_flag = vt_incident_mass_eruption_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				NOT = { has_global_flag = vt_incident_organizational_crisis_active }
+				NOT = { has_global_flag = vt_incident_taga_ala_influence_active }
+				NOT = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				NOT = { has_global_flag = vt_incident_the_molten_eternity_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				NOT = { has_global_flag = vt_incident_mechanim_awakening_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = vt_twin_god_eruption_trigger_tt
+				has_global_flag = vt_twin_god_eruption_flag
+			}
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_mass_eruption_finished }
+				end_incident = incident_volcanic_mass_eruption_of_the_twin_gods
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_mass_eruption_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+				country_event = {
+					id = volcanic_truth.300
+					days = 200
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_mass_eruption_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+				country_event = {
+					id = volcanic_truth.300
+					days = 200
+				}
+			}
+		}
+	}
+}
+
+incident_volcanic_weakening_of_the_kiamoa = {
+
+	frame = 5
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_weakening_of_the_kiamoa_active
+					has_global_flag = vt_incident_weakening_of_the_kiamoa_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				NOT = { has_global_flag = vt_incident_organizational_crisis_active }
+				NOT = { has_global_flag = vt_incident_taga_ala_influence_active }
+				NOT = { has_global_flag = vt_incident_mass_eruption_active }
+				NOT = { has_global_flag = vt_incident_the_molten_eternity_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				NOT = { has_global_flag = vt_incident_mechanim_awakening_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = vt_kiamoa_opend_incident_trigger_tt
+				has_global_flag = stormwall_open
+			}
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_weakening_of_the_kiamoa_finished }
+				end_incident = incident_volcanic_weakening_of_the_kiamoa
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_weakening_of_the_kiamoa_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				6162 = {
+					# This resets the variables and sets off other events for voting and the results
+					province_event = {
+						id = volcanic_truth.1
+						days = 1
+					}
+				}
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+		}
+	}
+}
+
+incident_volcanic_the_molten_eternity = {
+
+	frame = 7
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_the_molten_eternity_active
+					has_global_flag = vt_incident_the_molten_eternity_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				NOT = { has_global_flag = vt_incident_organizational_crisis_active }
+				NOT = { has_global_flag = vt_incident_taga_ala_influence_active }
+				NOT = { has_global_flag = vt_incident_mass_eruption_active }
+				NOT = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				NOT = { has_global_flag = vt_incident_mechanim_awakening_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			is_religion_enabled = molten_eternity # See event great_plateau_colonization.6
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_the_molten_eternity_finished }
+				end_incident = incident_volcanic_the_molten_eternity
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_the_molten_eternity_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_the_molten_eternity_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				6162 = {
+					# This resets the variables and sets off other events for voting and the results
+					province_event = {
+						id = volcanic_truth.1
+						days = 1
+					}
+				}
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+		}
+	}
+}
+
+# No content or triggers yet
+incident_volcanic_a_dragon_turtles_place = {
+
+	frame = 8
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = vt_sufficient_dragon_turtles_tt
+			always = no
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			end_incident = incident_volcanic_a_dragon_turtles_place
+		}
+	}
+}
+
+incident_volcanic_mechanim_awakening = {
+
+	frame = 9
+	variable_initial = 0
+
+	potential = {
+		has_dlc = "Mandate of Heaven"
+		religion = volcanic_truth
+	}
+
+	trigger = {
+		if = {
+			limit = {
+				NOT = {
+					has_global_flag = vt_incident_mechanim_awakening_active
+					has_global_flag = vt_incident_mechanim_awakening_finished
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = volcanic_no_one_has_incident_active_tt
+				NOT = { has_global_flag = vt_incident_organizational_crisis_active }
+				NOT = { has_global_flag = vt_incident_taga_ala_influence_active }
+				NOT = { has_global_flag = vt_incident_mass_eruption_active }
+				NOT = { has_global_flag = vt_incident_weakening_of_the_kiamoa_active }
+				NOT = { has_global_flag = vt_incident_the_molten_eternity_active }
+				NOT = { has_global_flag = vt_incident_a_dragon_turtles_place_active }
+				# Either enough time has passed since the start of the last incident, or we are in the middle of this incident,
+				# or the incident is over for everyone
+				# This matters because the first country to start the incident adds the modifier, and also a country might
+				# convert to VT during the incident
+				OR = {
+					had_global_flag = {
+						flag = vt_wait_a_few_years_for_next_incident
+						days = 4500 #at least 12 years 120 days between incidents
+					}
+					NOT = { has_global_flag = vt_wait_a_few_years_for_next_incident } #Since we don't start with the flag
+				}
+			}
+			is_year = 1490
+			custom_trigger_tooltip = {
+				tooltip = vt_arrival_of_the_mechanim_tt
+				has_global_flag = vt_arrival_of_the_mechanim_flag
+			}
+		}
+	}
+
+	mean_time_to_happen = { }
+
+	immediate_effect = {
+		hidden_effect = {
+			if = { # If the incident is already over globally, no event popups - just end it. This can happen if you convert to VT late.
+				limit = { has_global_flag = vt_incident_mechanim_awakening_finished }
+				end_incident = incident_volcanic_mechanim_awakening
+			}
+			else_if = { # If someone else has already started it, just give me the popup explaining what's happening.
+						# This should be for every VT coutry except the first to trigger
+				limit = { has_global_flag = vt_incident_mechanim_awakening_active }
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
+			else = { # Otherwise, no-one has started the event, so trigger the control event and set the right flags
+				set_global_flag = vt_incident_mechanim_awakening_active
+				clr_global_flag = vt_wait_a_few_years_for_next_incident
+				set_global_flag = vt_wait_a_few_years_for_next_incident #forced delay between incidents
+				6162 = {
+					# This resets the variables and sets off other events for voting and the results
+					province_event = {
+						id = volcanic_truth.1
+						days = 1
+					}
+				}
+				country_event = {
+					id = volcanic_truth.5 #Different loc depending on the incident
+				}
+			}
 		}
 	}
 }
