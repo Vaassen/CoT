@@ -94,6 +94,46 @@ country_event = { #Remove temporary mercs from conjuration level 2
 		}
 	}
 }
+country_event = { #Remove temporary mercs from conjuration level 2 upgraded by Eka-Idulnazzar
+	id = magic_spell.204
+	title = magic_spell.204.t
+	desc = magic_spell.202.d
+	picture = EP_MANIHOLE_HELMET_eventPicture
+	
+	is_triggered_only = yes
+
+	trigger = { any_hired_mercenary_company = { template = merc_greater_leashed_elementals } }
+
+	option = {
+		name = magic_spell.202.a
+		ai_chance = { factor = 1 }
+
+		random_hired_mercenary_company = {
+			limit = { template = merc_greater_leashed_elementals }
+			disband_mercenary_company = THIS
+		}
+		clr_country_flag = extended_conj_2
+	}
+
+	option = {
+		name = magic_spell.202.b
+		ai_chance = { factor = 0 }
+		trigger = { NOT = { has_country_flag = extended_conj_2 } }
+
+		if = {
+			limit = { conjuration_2_summon_elementals_trigger = { player = yes } }
+			generic_cast_spell = { school = conjuration level = 2 id = summon_elementals }
+			set_country_flag = extended_conj_2
+		}
+		else = {
+			custom_tooltip = not_enough_mana_tt
+			random_hired_mercenary_company = {
+				limit = { template = merc_greater_leashed_elementals }
+				disband_mercenary_company = THIS
+			}
+		}
+	}
+}
 
 ############################
 ### DIVINATION (300-399) ###
@@ -106,20 +146,6 @@ country_event = { #Eye for Talent
 	picture = COURT_INTRIGUE_eventPicture
 	
 	is_triggered_only = yes
-
-	immediate = {
-		hidden_effect = {
-			if = {
-				limit = { exactly_magic_project_level = { project = orb_of_omniscience level = 0 } }
-				randnum_effect = {
-					max = 3
-					case3 = "set_country_flag = adm_advisors"
-					case2 = "set_country_flag = dip_advisors"
-					case1 = "set_country_flag = mil_advisors"
-				}
-			}
-		}
-	}
 
 	option = {
 		name = magic_spell.300.a
@@ -197,7 +223,7 @@ country_event = { #Eye for Talent
 	}
 }
 
-country_event = { #Eye for Talent bounceback, for the upgrade
+country_event = { #Eye for Talent bounceback
 	id = magic_spell.301
 	title = magic_spell.301.t
 	desc = magic_spell.301.desc
@@ -536,262 +562,74 @@ country_event = { #Fear and Loathing
 ### NECROMANCY (700-799) ###
 ############################
 
-country_event = { #Undead Army gains manpower on winning battles
+country_event = { #Chronophage consequences
 	id =  magic_spell.700
-	title =  magic_spell.700.t
+	title = magic_spell.700.t
 	desc =  magic_spell.700.d
-	picture = UNDEAD_ARMY_eventPicture
-	
-	hidden = yes
+	picture = COPTIC_BISHOP_eventPicture
+
 	is_triggered_only = yes
-	
-	trigger = { check_variable = { raise_undead = 3001 } } #Don't raise if it was a nothing battle
-	
-	option = {	#Rise!
+
+	option = {
 		name = magic_spell.700.a
-		ai_chance = { factor = 1 }
 
-		divide_variable = { raise_undead = 3 } #33% of the dead are raised
-		round_variable = { #truncate decimal portion
-			which = raise_undead
-			value = -1
-		}
-		
-		if = {
-			limit = { has_country_flag = hide_necromancy_on_battle }
-			divide_variable = { raise_undead = 1000 }
-			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
-		}
-		else = {
-			country_event = { id = magic_spell.701 }
-		}
-	}
-}
-
-country_event = { #Undead Army Manpower notif event
-	id =  magic_spell.701
-	title =  magic_spell.701.t
-	desc =  magic_spell.701.d
-	picture = UNDEAD_ARMY_eventPicture
-	
-	is_triggered_only = yes
-
-	after = {
+		custom_tooltip = chronophage_consequences_tt
 		hidden_effect = {
-			divide_variable = { raise_undead = 1000 }
-			var_effect_granular = { effect = add_manpower var = raise_undead sign = + }
+			while = {
+				limit = { check_variable = { chronophage_tracker = 1 } }
+				reduce_stability_or_adm_power = yes
+				add_war_exhaustion = 1
+				subtract_variable = { chronophage_tracker = 1 }
+			}
 		}
-	}
-
-	option = {	#Rise!
-		name = magic_spell.701.a
-		
-		custom_tooltip = magic_spell_raise_undead_tt
-	}
-	
-	option = {	#Rise! (But hide these pop-ups from now on)
-		name = magic_spell.701.b
-		
-		custom_tooltip = magic_spell_raise_undead_tt
-		hidden_effect = { set_country_flag = hide_necromancy_on_battle }
 	}
 }
 
-country_event = { #Ruler dies and they gave you access to undead army
-	id =  magic_spell.702
+country_event = { #Let centaurs stay full cav
+	id = magic_spell.702
 	title = magic_spell.702.t
-	desc =  magic_spell.702.d
+	desc = magic_spell.702.desc
 	picture = UNDEAD_ARMY_eventPicture
 	
 	is_triggered_only = yes
-	
-	trigger = {
-		has_cast_undead_army = yes
-		NOT = { has_country_flag = rakkaz_undead_army_not_collapses }
-		NOT = { is_overall_necromancy_level_3 = yes }
-	}
 
-	immediate = {
-		hidden_effect = {
-			every_owned_province = {
-				limit = {
-					infantry_in_province = ROOT
-					NOT = { has_province_modifier = aw_zombies_1 }
-					NOT = { has_province_modifier = aw_zombies_2 }
-					NOT = { has_province_modifier = aw_zombies_3 }
-				}
-				set_province_flag = has_zombies_flag #prevents disband cheese
-
-				if = {
-					limit = { num_of_units_in_province = { who = ROOT type = infantry amount = 80 } }
-					set_province_flag = zombies_doomstack_flag
-				}
-				else_if = {
-					limit = { num_of_units_in_province = { who = ROOT type = infantry amount = 40 } }
-					set_province_flag = zombies_size3_flag
-				}
-				else_if = {
-					limit = { num_of_units_in_province = { who = ROOT type = infantry amount = 20 } }
-					set_province_flag = zombies_size2_flag
-				}
-				else_if = {
-					limit = { num_of_units_in_province = { who = ROOT type = infantry amount = 10 } }
-					set_province_flag = zombies_size1_flag
-				}
-			}
-		}
-	}
-
-	after = {
-		hidden_effect = {
-			every_owned_province = {
-				clr_province_flag = has_zombies_flag
-				clr_province_flag = zombies_doomstack_flag
-				clr_province_flag = zombies_size3_flag
-				clr_province_flag = zombies_size2_flag
-				clr_province_flag = zombies_size1_flag
-			}
-		}
-	}
-	
-	option = {	#We've lost control! Aaaagh!
+	option = { #I like infantry
 		name = magic_spell.702.a
-		ai_chance = { factor = 1 }
+		change_unit_type = tech_undead
 
-		random_owned_province = {
-			limit = {
-				is_in_capital_area = yes
-				NOT = { has_province_modifier = aw_zombies_1 }
-				NOT = { has_province_modifier = aw_zombies_2 }
-				NOT = { has_province_modifier = aw_zombies_3 }
-			}
-			add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
-		}
-
-		custom_tooltip = undead_army_becomes_threat_tt
-
-		clear_racial_military = yes
-		reset_racial_military_via_administration = yes
-
-		hidden_effect = {
-			every_owned_province = {
-				limit = {
-					has_province_flag = has_zombies_flag
-					NOT = { has_province_modifier = aw_zombies_1 }
-					NOT = { has_province_modifier = aw_zombies_2 }
-					NOT = { has_province_modifier = aw_zombies_3 }
-				}
-
-				if = {
-					limit = { has_province_flag = zombies_doomstack_flag } #you doomstacked
-					add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
-					every_neighbor_province = {
-						limit = {
-							owned_by = ROOT
-							NOT = { has_province_flag = zombies_doomstack_flag }
-							NOT = { has_province_modifier = aw_zombies_1 }
-							NOT = { has_province_modifier = aw_zombies_2 }
-							NOT = { has_province_modifier = aw_zombies_3 }
-						}
-						add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 }
-					}
-				}
-				else_if = { limit = { has_province_flag = zombies_size3_flag } add_permanent_province_modifier = { name = aw_zombies_3 duration = -1 } }
-				else_if = { limit = { has_province_flag = zombies_size2_flag } add_permanent_province_modifier = { name = aw_zombies_2 duration = -1 } }
-				else_if = { limit = { has_province_flag = zombies_size1_flag } add_permanent_province_modifier = { name = aw_zombies_1 duration = -1 } }
-				else = {
-					random = {
-						chance = 25
-						add_permanent_province_modifier = { name = aw_zombies_1 duration = -1 }
-					}
+		if = { #Black Herd
+			limit = { mission_completed = I55_1_4_study }
+			custom_tooltip = I55_spawn_infantry_tt
+			hidden_effect = {
+				while = {
+					limit = { check_variable = { bh_undead_infantry_var = 1 } }
+					capital_scope = { infantry = ROOT }
+					change_variable = { bh_undead_infantry_var = -1 }
 				}
 			}
 		}
 	}
-	
-	option = {	#Bring them under my control!
+
+	option = { #Pog full cav
 		name = magic_spell.702.b
-		ai_chance = { factor = 100 }
-		trigger = { is_ruler_necromancy_level_2 = yes }
-		highlight = yes
-
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		
-		add_mil_power = -200
-	}
-
-	option = {
-		name = magic_spell.702.c
-		trigger = { has_country_flag = esthil_lodge_of_necromancers }
-		ai_chance = { factor = 100 }
-		
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		increase_witch_king_points_large = yes
-		
-		add_mil_power = -100
-		
-		custom_tooltip = esthil_tt_has_necromancers_estate
-	}
-}
-country_event = { #Stackwipe for undead army on loss
-	id = magic_spell.703
-	title = magic_spell.703.t
-	desc =  magic_spell.703.desc
-	picture = UNDEAD_ARMY_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-
-	option = {
-		name = magic_spell.703.a
-		ai_chance = { factor = 1 }
-
-		event_target:undead_location = { #Must be an option, to create a delay—otherwise it might crash due to removing units while still processing the on_action
-			kill_units = {
-				who = ROOT
-			}
+		custom_tooltip = necromancy_undead_cavalry_units
+		add_country_modifier = {
+			name = aotd_centaur_mod_initial
+			duration = -1
+			desc = necromancy_undead_cavalry_duration
 		}
 
-		if = {
-			limit = { NOT = { has_country_flag = hide_necromancy_on_battle } }
-			country_event = { id = magic_spell.704 }
-		}
-	}
-}
-country_event = { #Stackwipe for undead army notif
-	id = magic_spell.704
-	title = magic_spell.704.t
-	desc = magic_spell.704.desc
-	picture = UNDEAD_ARMY_eventPicture
-	goto = undead_location
-	
-	is_triggered_only = yes
-
-	option = { #Damn
-		name = magic_spell.704.a
-		ai_chance = { factor = 1 }
-		goto = undead_location
-
-		tooltip = {
-			event_target:undead_location = {
-				kill_units = {
-					who = ROOT
+		if = { #Black Herd
+			limit = { mission_completed = I55_1_4_study }
+			custom_tooltip = I55_spawn_infantry_tt
+			hidden_effect = {
+				while = {
+					limit = { check_variable = { bh_undead_infantry_var = 1 } }
+					capital_scope = { cavalry = ROOT }
+					change_variable = { bh_undead_infantry_var = -1 }
 				}
 			}
 		}
-	}
-
-	option = { #Damn (hide these notification)
-		name = magic_spell.704.b
-		ai_chance = { factor = 1 }
-		goto = undead_location
-
-		set_country_flag = hide_necromancy_on_battle
 	}
 }
 
@@ -1134,5 +972,166 @@ country_event = { #Rite of Conception: Abomination
 
 		remove_consort_effect = yes
 		capital_scope = { magical_abomination = 2 }
+	}
+}
+
+country_event = { #Wish For Order
+	id = magic_spell.805
+	title = magic_spell.805.t
+	desc = magic_spell.805.d
+	picture = SURAKES_SUN_GARDEN_eventPicture
+
+	is_triggered_only = yes
+
+	option = { #Bulwar Proper
+		name = magic_spell.805.a
+		trigger = {
+			any_owned_province = {
+				region = bulwar_proper_region
+			}
+		}
+		custom_tooltip = transmutation_3_bulwar_region_event_tt
+		hidden_effect = {
+			bulwar_spells_region_dev_cost_handler = { REGION = bulwar_proper_region }
+			add_country_modifier = {
+				name = transmutation_3_bulwar_default_1_tracking_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+	}
+	option = { #Far Bulwar
+		name = magic_spell.805.b
+		trigger = {
+			any_owned_province = {
+				region = far_bulwar_region
+			}
+		}
+		custom_tooltip = transmutation_3_bulwar_region_event_tt
+		hidden_effect = {
+			bulwar_spells_region_dev_cost_handler = { REGION = far_bulwar_region }
+			add_country_modifier = {
+				name = transmutation_3_bulwar_default_1_tracking_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+	}
+	option = { #Bahar
+		name = magic_spell.805.c
+		trigger = {
+			any_owned_province = {
+				region = bahar_region
+			}
+		}
+		custom_tooltip = transmutation_3_bulwar_region_event_tt
+		hidden_effect = {
+			bulwar_spells_region_dev_cost_handler = { REGION = bahar_region }
+			add_country_modifier = {
+				name = transmutation_3_bulwar_default_1_tracking_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+	}
+	option = { #Harpy Hills
+		name = magic_spell.805.e
+		trigger = {
+			any_owned_province = {
+				region = harpy_hills_region
+			}
+		}
+		custom_tooltip = transmutation_3_bulwar_region_event_tt
+		hidden_effect = {
+			bulwar_spells_region_dev_cost_handler = { REGION = harpy_hills_region }
+			add_country_modifier = {
+				name = transmutation_3_bulwar_default_1_tracking_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+	}
+	option = { #Far Salahad
+		name = magic_spell.805.f
+		trigger = {
+			any_owned_province = {
+				region = far_salahad_region
+			}
+		}
+		custom_tooltip = transmutation_3_bulwar_region_event_tt
+		hidden_effect = {
+			bulwar_spells_region_dev_cost_handler = { REGION = far_salahad_region }
+			add_country_modifier = {
+				name = transmutation_3_bulwar_default_1_tracking_mod
+				duration = 3650
+				hidden = yes
+			}
+		}
+	}
+}
+
+country_event = { #Commision inscripted artifact
+	id = magic_spell.806
+	title = magic_spell.806.t
+	desc = magic_spell.806.d
+	picture = SUN_CULT_PRIEST_event_picture
+
+	is_triggered_only = yes
+
+	option = {
+		name = magic_spell.806.a
+		add_country_modifier = {
+			name = transmutation_2_bulwar_crown
+			duration = 9125
+		}
+		hidden_effect = {
+			add_country_modifier = {
+				name = transmutation_2_bulwar_default_4_tracking_mod
+				duration = 9125
+				hidden = yes
+			}
+		}
+	}
+	option = {
+		name = magic_spell.806.b
+		add_country_modifier = {
+			name = transmutation_2_bulwar_vessel
+			duration = 9125
+		}
+		hidden_effect = {
+			add_country_modifier = {
+				name = transmutation_2_bulwar_default_4_tracking_mod
+				duration = 9125
+				hidden = yes
+			}
+		}
+	}
+	option = {
+		name = magic_spell.806.c
+		add_country_modifier = {
+			name = transmutation_2_bulwar_hammer
+			duration = 9125
+		}
+		hidden_effect = {
+			add_country_modifier = {
+				name = transmutation_2_bulwar_default_4_tracking_mod
+				duration = 9125
+				hidden = yes
+			}
+		}
+	}
+	option = {
+		name = magic_spell.806.e
+		add_country_modifier = {
+			name = transmutation_2_bulwar_ring
+			duration = 9125
+		}
+		hidden_effect = {
+			add_country_modifier = {
+				name = transmutation_2_bulwar_default_4_tracking_mod
+				duration = 9125
+				hidden = yes
+			}
+		}
 	}
 }

@@ -4300,38 +4300,54 @@ country_event = {
 	
 	trigger = {
 		has_country_modifier = lake_federation_member
+		is_subject = no
 	}
 	
 	immediate = {
-		if = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.105 days = 4 random = 10 }
-		}
+		save_event_target_as = new_federation_leader
 	}
 	
 	option = {
 		name = lake.102.a
 		ai_chance = { factor = 100 }
-		if = {
+		every_country = {
 			limit = {
-				NOT = {
-					calc_true_if = {
-						all_known_country = {
-							check_variable = {
-								which = FederationPoints
-								which = PREV
-							}
-							is_subject = no
-						}
-						amount = 1
-					}
+				has_country_modifier = lake_federation_member
+				check_variable = {
+					which = FederationPoints
+					which = event_target:new_federation_leader
 				}
 				is_subject = no
 			}
-			set_country_flag = federation_leader
+			save_event_target_as = new_federation_leader
 		}
-		else = {
-			clr_country_flag = federation_leader
+	}
+	
+	after = {
+		if = {
+			limit = { 
+				NOT = {
+					event_target:new_federation_leader = { # check for change
+						has_country_flag = federation_leader
+					}
+					any_country = {
+						has_country_flag = federation_leader
+						is_variable_equal = { # check for tie -> no change if tie, current wins
+							which = FederationPoints
+							which = event_target:new_federation_leader
+						}
+					}
+				}
+			}
+			every_country = {
+				clr_country_flag = federation_leader
+			}
+			event_target:new_federation_leader = {
+				set_country_flag = federation_leader
+				country_event = {
+					id = lake.40
+				}
+			}
 		}
 	}
 }
@@ -4548,34 +4564,6 @@ country_event = {
 #	}
 #}
 
-#Federation President Election Tie-Breaker (Current Wins)
-country_event = {
-	id = lake.105
-	title = lake.105.t
-	desc = lake.105.d
-	picture = STREET_SPEECH_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-	
-	option = {
-		name = lake.105.a
-		ai_chance = { factor = 100 }
-		if = {
-			limit = { any_known_country = { has_country_flag = federation_leader } }
-			clr_country_flag = federation_leader
-		}
-		else_if = {
-			limit = { NOT = { has_country_flag = federation_leader } }
-			set_country_flag = federation_leader
-		}
-		every_country = {
-			limit = { has_country_flag = federation_leader }
-			country_event = { id = lake.40 }
-		}
-	}
-}
-
 #[Root] Triumps Over Centaurs
 country_event = {
 	id = lake.106
@@ -4620,22 +4608,18 @@ country_event = {
 	title = lake.200.t
 	desc = lake.200.d
 	picture = NATIVES_eventPicture
-	
+
+	is_triggered_only = yes	
 	fire_only_once = yes
+	hidden = yes
 	
 	trigger = {
 		is_year = 1550
+		owns = 5013 # so that only one tag checks this
 		yyl_moista_region = {
 			type = all
 			is_city = yes
 			owner = { NOT = { has_country_modifier = monstrous_nation } }
-		}
-		any_owned_province = {
-			OR = {
-				area = yyl_moitsa_deep_area
-				area = yyl_moitsa_east_area
-				area = eternal_winter_area
-			}
 		}
 	}
 	
@@ -4646,65 +4630,12 @@ country_event = {
 		}
 	}
 
-	mean_time_to_happen = {
-		months = 12
-	}
-	
 	option = {
-		name = lake.200.a #Ok.
-		random_owned_province = {
-			limit = {
-				OR = {
-					area = yyl_moitsa_deep_area
-					area = yyl_moitsa_east_area
-					area = eternal_winter_area
-				}
-				NOT = { development = 10 }
-			}
-			tooltip = {
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
-			}
-		}
-		hidden_effect = {
-			every_owned_province = {
-				limit = {
-					OR = {
-						area = yyl_moitsa_deep_area
-						area = yyl_moitsa_east_area
-						area = eternal_winter_area
-					}
-					NOT = { development = 10 }
-				}
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
-				hidden_effect = {
-					if = {
-						limit = { 
-							development = 10
-							culture = kukatodic
-						}
-						add_province_modifier = {
-							name = kukatodic_resurgence
-							duration = 3650
-						}
-					}
-				}
-			}
-		}
-		every_known_country = {
+		name = lake.200.a
+		every_country = {
 			limit = { any_owned_province = { region = yyl_moista_region } }
 			country_event = { id = lake.201 }
 		}
-		custom_tooltip = kukatodic_resurgence_tt
 	}
 }
 
@@ -4717,10 +4648,6 @@ country_event = {
 	
 	is_triggered_only = yes
 	
-	trigger = {
-		any_owned_province = { region = yyl_moista_region }
-	}
-	
 	immediate = {
 		hidden_effect = {
 			every_owned_province = {
@@ -4730,19 +4657,16 @@ country_event = {
 						area = yyl_moitsa_east_area
 						area = eternal_winter_area
 					}
-					NOT = { development = 10 }
 				}
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
 				if = {
-					limit = { 
-						development = 10
-						culture = kukatodic
+					limit = {
+						NOT = { development = 10 }
 					}
+					change_culture = kukatodic
+					change_religion = kukatodic_religion
+				}
+				if = {
+					limit = { culture = kukatodic }
 					add_province_modifier = {
 						name = kukatodic_resurgence
 						duration = 3650
@@ -4754,36 +4678,14 @@ country_event = {
 	
 	option = {
 		name = lake.200.a #Ok.
-		if = {
-			limit = {
-				any_owned_province = {
-					OR = {
-						area = yyl_moitsa_deep_area
-						area = yyl_moitsa_east_area
-						area = eternal_winter_area
-					}
-				}
-			}
-			random_owned_province = {
-				limit = {
-					OR = {
-						area = yyl_moitsa_deep_area
-						area = yyl_moitsa_east_area
-						area = eternal_winter_area
-					}
-					NOT = { development = 10 }
-				}
-				tooltip = {
-					add_province_modifier = {
-						name = kukatodic_resurgence
-						duration = 3650
-					}
-					change_culture = kukatodic
-					change_religion = kukatodic_religion
-				}
+		custom_tooltip = kukatodic_resurgence_tt
+		custom_tooltip = kukatodic_resurgence_tt_4
+		tooltip = {
+			add_province_modifier = {
+				name = kukatodic_resurgence
+				duration = 3650
 			}
 		}
-		custom_tooltip = kukatodic_resurgence_tt
 	}
 }
 
@@ -4796,74 +4698,13 @@ province_event = {
 	
 	fire_only_once = yes
 	is_triggered_only = yes
-	
-	trigger = {
-		is_year = 1550
-	}
-	
-	immediate = {
-		hidden_effect = {
-			owner = {
-				every_owned_province = {
-					limit = {
-						OR = {
-							area = far_moitsa_area
-							province_id = 5013
-							province_id = 5014
-							province_id = 5015
-							area = moitsa_siiv_area
-						}
-						NOT = { development = 10 }
-					}
-					add_province_modifier = {
-						name = kukatodic_resurgence
-						duration = 3650
-					}
-					change_culture = kukatodic
-					change_religion = kukatodic_religion
-					if = {
-						limit = { 
-							development = 10
-							culture = kukatodic
-						}
-						add_province_modifier = {
-							name = kukatodic_resurgence
-							duration = 3650
-						}
-					}
-				}
-				every_known_country = {
-					limit = { any_owned_province = { region = yyl_moista_region } }
-					country_event = { id = lake.203 }
-				}
-			}
-		}
-	}
+	hidden = yes
 	
 	option = {
-		name = lake.200.a #Ok.
-		custom_tooltip = kukatodic_resurgence_tt_2
-		owner = {
-			random_owned_province = {
-				limit = {
-						OR = {
-						area = far_moitsa_area
-						province_id = 5013
-						province_id = 5014
-						province_id = 5015
-						area = moitsa_siiv_area
-					}
-					NOT = { development = 10 }
-				}
-				tooltip = {
-					add_province_modifier = {
-						name = kukatodic_resurgence
-						duration = 3650
-					}
-					change_culture = kukatodic
-					change_religion = kukatodic_religion
-				}
-			}
+		name = lake.200.a
+		every_country = {
+			limit = { any_owned_province = { region = yyl_moista_region } }
+			country_event = { id = lake.203 }
 		}
 	}
 }
@@ -4877,39 +4718,30 @@ country_event = {
 	
 	is_triggered_only = yes
 	
-	trigger = {
-		any_owned_province = { region = yyl_moista_region }
-	}
-	
 	immediate = {
 		hidden_effect = {
 			every_owned_province = {
 				limit = {
 					OR = {
 						area = far_moitsa_area
-						province_id = 5013
-						province_id = 5014
-						province_id = 5015
+						area = central_moitsa_area
 						area = moitsa_siiv_area
 					}
-					NOT = { development = 10 }
-				}
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
 				}
 				if = {
-					limit = { 
-						development = 10
-						culture = kukatodic
+					limit = {
+						NOT = { development = 10 }
 					}
+					change_culture = kukatodic
+					change_religion = kukatodic_religion
+				}
+				if = {
+					limit = { culture = kukatodic }
 					add_province_modifier = {
 						name = kukatodic_resurgence
 						duration = 3650
 					}
 				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
 			}
 		}
 	}
@@ -4917,24 +4749,11 @@ country_event = {
 	option = {
 		name = lake.200.a #Ok.
 		custom_tooltip = kukatodic_resurgence_tt_2
-		random_owned_province = {
-			limit = {
-				OR = {
-					area = far_moitsa_area
-					province_id = 5013
-					province_id = 5014
-					province_id = 5015
-					area = moitsa_siiv_area
-				}
-				NOT = { development = 10 }
-			}
-			tooltip = {
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
+		custom_tooltip = kukatodic_resurgence_tt_4
+		tooltip = {
+			add_province_modifier = {
+				name = kukatodic_resurgence
+				duration = 3650
 			}
 		}
 	}
@@ -4949,72 +4768,13 @@ province_event = {
 	
 	fire_only_once = yes
 	is_triggered_only = yes
-	
-	trigger = {
-		is_year = 1550
-	}
-	
-	immediate = {
-		hidden_effect = {
-			owner = {
-				every_owned_province = {
-					limit = {
-						OR = {
-							area = moitsahdi_area
-							province_id = 5109
-							province_id = 5114
-							area = moitsraj_area
-						}
-						NOT = { development = 10 }
-					}
-					add_province_modifier = {
-						name = kukatodic_resurgence
-						duration = 3650
-					}
-					change_culture = kukatodic
-					change_religion = kukatodic_religion
-					if = {
-						limit = { 
-							development = 10
-							culture = kukatodic
-						}
-						add_province_modifier = {
-							name = kukatodic_resurgence
-							duration = 3650
-						}
-					}
-				}
-				every_known_country = {
-					limit = { any_owned_province = { region = yyl_moista_region } }
-					country_event = { id = lake.205 }
-				}
-			}
-		}
-	}
+	hidden = yes	
 	
 	option = {
-		name = lake.200.a #Ok.
-		custom_tooltip = kukatodic_resurgence_tt_3
-		owner = {
-			random_owned_province = {
-				limit = {
-					OR = {
-						area = moitsahdi_area
-						province_id = 5109
-						province_id = 5114
-						area = moitsraj_area
-					}
-					NOT = { development = 10 }
-				}
-				tooltip = {
-					add_province_modifier = {
-						name = kukatodic_resurgence
-						duration = 3650
-					}
-					change_culture = kukatodic
-					change_religion = kukatodic_religion
-				}
-			}
+		name = lake.200.a
+		every_country = {
+			limit = { any_owned_province = { region = yyl_moista_region } }
+			country_event = { id = lake.205 }
 		}
 	}
 }
@@ -5028,10 +4788,6 @@ country_event = {
 	
 	is_triggered_only = yes
 	
-	trigger = {
-		any_owned_province = { region = yyl_moista_region }
-	}
-	
 	immediate = {
 		hidden_effect = {
 			every_owned_province = {
@@ -5042,19 +4798,16 @@ country_event = {
 						province_id = 5114
 						area = moitsraj_area
 					}
-					NOT = { development = 10 }
 				}
-				add_province_modifier = {
-						name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
 				if = {
-					limit = { 
-						development = 10
-						culture = kukatodic
+					limit = {
+						NOT = { development = 10 }
 					}
+					change_culture = kukatodic
+					change_religion = kukatodic_religion
+				}
+				if = {
+					limit = { culture = kukatodic }
 					add_province_modifier = {
 						name = kukatodic_resurgence
 						duration = 3650
@@ -5067,25 +4820,14 @@ country_event = {
 	option = {
 		name = lake.200.a #Ok.
 		custom_tooltip = kukatodic_resurgence_tt_3
+		custom_tooltip = kukatodic_resurgence_tt_4
 		tooltip = {
-			random_owned_province = {
-				limit = {
-					OR = {
-						area = moitsahdi_area
-						province_id = 5109
-						province_id = 5114
-						area = moitsraj_area
-					}
-					NOT = { development = 10 }
-				}
-				add_province_modifier = {
-					name = kukatodic_resurgence
-					duration = 3650
-				}
-				change_culture = kukatodic
-				change_religion = kukatodic_religion
+			add_province_modifier = {
+				name = kukatodic_resurgence
+				duration = 3650
 			}
 		}
+
 	}
 }
 
@@ -6233,5 +5975,94 @@ country_event = {
 	option = {
 		name = lake.511.a
 		clr_global_flag = lake_mage_final_cd
+	}
+}
+
+#Zurka Qarshtuluu startup event
+country_event = {
+	id = lake.512
+	title = lake.512.t
+	desc = lake.512.d
+	picture = REVOLUTION_eventPicture
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	trigger = {
+		tag = J12
+	}
+
+	option = {
+		name = lake.512.a
+		5257 = {
+			add_province_modifier = {
+				name = J12_blockaded
+				duration = 36500
+			}
+		}
+	}
+}
+
+#Zurka Qarshtuluu bait successful
+country_event = {
+	id = lake.513
+	title = lake.513.t
+	desc = lake.513.d
+	picture = TREASURE_FLEET_SHIP_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.513.a
+		J10 = { #Vahjevgiiv
+			declare_war_with_cb = {
+				casus_belli = cb_vassalize_mission
+				who = J12
+			}
+		}
+	}
+}
+
+#Zurka Qarshtuluu city reunited
+country_event = {
+	id = lake.514
+	title = lake.514.t
+	desc = lake.514.d
+	picture = CITY_VIEW_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.514.a
+		
+		qarshtuluu_form_nation_effect = yes
+	}
+}
+
+#Zurka Qarshtuluu jewel of the lakes
+country_event = {
+	id = lake.515
+	title = lake.515.t
+	desc = lake.515.d
+	picture = HIGH_TEMPLE_CITY_eventPicture
+	is_triggered_only = yes
+		
+	option = {
+		name = lake.515.a
+		5256 = {
+			remove_province_modifier = J12_glassworks_freed
+			add_province_modifier = {
+				name = J12_western_jewel
+				duration = -1
+			}
+		}
+		5257 = {
+			remove_province_modifier = J12_barracks_restored
+			remove_province_modifier = J12_harbour_reclaimed
+			add_province_modifier = {
+				name = J12_eastern_jewel
+				duration = -1
+			}
+		}
+		5256 = {
+			add_great_project_tier = { type = grand_archives tier = 1 }
+		}
 	}
 }

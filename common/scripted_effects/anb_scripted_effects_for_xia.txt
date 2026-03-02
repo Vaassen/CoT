@@ -11,13 +11,15 @@
 ###		* xia_path_[path]:0 "Path/School/Way of the XYZ"
 ###		* xia_path_[path]_origin:0 "Path/School/Way of the XYZ"
 ###		* desc_xia_path_[path]_origin:0 "This is the origin of the... Owning this province will... etc."
-###		* xia_path_[path]_mod_0:0 "Path of the XYZ §g(Novice)§!"
-###		* xia_path_[path]_mod_1:0 "Path of the XYZ §O(Empowered)§!"
-###		* xia_path_[path]_mod_2:0 "Path of the XYZ §T(Enlightened)§!"
+###		* xia_path_[path]_mod_0:0 "Path of the XYZ ï¿½g(Novice)ï¿½!"
+###		* xia_path_[path]_mod_1:0 "Path of the XYZ ï¿½O(Empowered)ï¿½!"
+###		* xia_path_[path]_mod_2:0 "Path of the XYZ ï¿½T(Enlightened)ï¿½!"
 ###	4. Add it to the scripted effects:
 ###		* cultivate_active_xia_path
 ###		* cultivate_province_xia_path
 ###		* clr_xia_path
+### 4.5 Add it to the scripted trigger:
+### 	* xia_school_province_trigger - located in anb_scripted_triggers_for_xia.txt
 ###	5. Give it an entry in one_xia.4 and one_xia.5
 ###		* Follow the format in the events
 ###		* Note the two event options have different scripted effects, and are not the same
@@ -74,10 +76,13 @@ add_xia_origin_effect = { #Can be called in any scope, because $path$ is a provi
 	$path$ = {
 		set_province_flag = is_xia_origin
 		[[MT] set_province_flag = is_MT_xia_origin] #Ensures it always appears as an option in One_Xia.4
-		add_permanent_province_modifier = { name = xia_path_$path$_origin duration = -1 }
-		owner = {
-			change_variable = { which = num_xia_origins_owned value = 1 }
-			evaluate_num_xia_origin_effect = yes
+		custom_tooltip = xia_school_origin_create.tt
+		hidden_effect = {
+			add_permanent_province_modifier = { name = xia_path_$path$_origin duration = -1 }
+			owner = {
+				change_variable = { which = num_xia_origins_owned value = 1 }
+				evaluate_num_xia_origin_effect = yes
+			}
 		}
 	}
 }
@@ -148,6 +153,7 @@ cultivate_xia_path_generic = {
 						check_variable = { which = xia_enlightenment_counter value = 5 }
 						NOT = { has_government_attribute = is_in_xia }
 					}
+					set_country_flag = xia_enlightenment_event_not_fired
 					country_event = { id = one_xia.5 }
 				}
 			}
@@ -210,6 +216,10 @@ cultivate_active_xia_path = {
 		xia_path_625 = { cultivate_xia_path_generic = { path = 625 } }
 		xia_path_2909 = { cultivate_xia_path_generic = { path = 2909 } }
 	}
+	if = {
+		limit = { has_country_flag = xia_enlightenment_event_not_fired }
+		country_event = { id = one_xia.5 }
+	}
 }
 
 cultivate_province_xia_path = {
@@ -246,6 +256,12 @@ cultivate_province_xia_path = {
 		4789 = { owner = { cultivate_xia_path_generic = { path = 4789 } } }
 		625 = { owner = { cultivate_xia_path_generic = { path = 625 } } }
 		2909 = { owner = { cultivate_xia_path_generic = { path = 2909 } } }
+	}
+	FROM = {
+		if = {
+			limit = { has_country_flag = xia_enlightenment_event_not_fired }
+			country_event = { id = one_xia.5 }
+		}
 	}
 }
 
