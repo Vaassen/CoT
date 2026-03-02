@@ -253,9 +253,9 @@ groundhawk_2 = {
 			B42_adventurer_diplomacy
 		}
 		trigger = {
-			has_mil_advisor = yes
 			custom_trigger_tooltip = {
-				tooltip = B42_not_has_goblin_advisor_of_category_tt
+				tooltip = B42_not_has_goblin_advisor_of_mil_category_tt
+				has_mil_advisor = yes
 				NOT = { has_goblin_advisor_of_category = { category = MIL } }
 			}
 			
@@ -288,14 +288,21 @@ groundhawk_2 = {
 		trigger = {
 			is_tribal = no
 			OR = {
-				AND = {
-					has_mil_advisor = yes
-					NOT = { has_goblin_advisor_of_category = { category = MIL } }
+				custom_trigger_tooltip = {
+					tooltip = B42_has_non_goblin_advisor_of_mil_category_tt
+					AND = {
+						has_mil_advisor = yes
+						NOT = { has_goblin_advisor_of_category = { category = MIL } }
+					}
 				}
-				AND = {
-					has_dip_advisor = yes
-					NOT = { has_goblin_advisor_of_category = { category = DIP } }
+				custom_trigger_tooltip = {
+					tooltip = B42_has_non_goblin_advisor_of_dip_category_tt
+					AND = {
+						has_dip_advisor = yes
+						NOT = { has_goblin_advisor_of_category = { category = DIP } }
+					}
 				}
+
 			}
 			if = {
 				limit = {
@@ -471,17 +478,20 @@ groundhawk_3 = {
 			add_adm_power = 33
 			add_dip_power = 33
 			add_mil_power = 33
-			
-			every_known_country = {
-				limit = {
-					religion = regent_court
-				}
-				reverse_add_aggressive_expansion = {
-					who = ROOT
-					value = -20
-					apply_calc = no
-				}
+			custom_tooltip = B42_rc_country_ae_reduce_20_tt
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						religion = regent_court
+					}
+					reverse_add_aggressive_expansion = {
+						who = ROOT
+						value = -20
+						apply_calc = no
+					}
+				}			
 			}
+
 		}
 	}
 	
@@ -508,23 +518,18 @@ groundhawk_3 = {
 			num_of_owned_provinces_with = {
 				value = 10
 				is_core = ROOT
-				OR = {
+				NOT = {
+					culture_is_goblin = yes
+				}
+				custom_trigger_tooltip = {
+					tooltip = B42_has_not_accepted_majority_with_large_goblin_minority_tt
 					NOT = {
-						culture_is_goblin = yes
-					}
-					
-					#the trigger printer of pdx cannot display this trigger correctly...
-					#I HATE PDX, why pdx invert a trigger they don't know how to invert... 
-					custom_trigger_tooltip = {
-						tooltip = B42_has_not_accepted_majority_with_large_goblin_minority_tt
-						NOT = {
-							AND = {
-								OR = {
-									has_any_integrated_majority_trigger = yes
-									has_any_coexisting_majority_trigger = yes	
-								}
-								has_large_goblin_minority_trigger = yes
+						AND = {
+							OR = {
+								has_any_integrated_majority_trigger = yes
+								has_any_coexisting_majority_trigger = yes	
 							}
+							has_large_goblin_minority_trigger = yes
 						}
 					}
 				}
@@ -532,49 +537,37 @@ groundhawk_3 = {
 		}
 		
 		effect = {
-			hidden_effect = {
-				set_variable = {
-					which = B42_add_minority_provinces
-					value = 10
-				}
-			}
-			
-			while = {
-				limit = {
-					check_variable = {
-						which = B42_add_minority_provinces
-						value = 0
-					}
-				}
-				random_owned_province = {
-					limit = {
-						NOT = {
-							culture_is_goblin = yes
+			custom_tooltip = B42_spread_goblin_pop_tt
+			for = {
+				amount = 10
+				effect = "
+					random_owned_province = {
+						limit = {
+							NOT = {
+								culture_is_goblin = yes
+							}
+							NOT = {
+								AND = {
+									OR = {
+										has_any_coexisting_majority_trigger = yes
+										has_any_integrated_majority_trigger = yes									
+									}			
+									has_large_goblin_minority_trigger = yes
+								}
+							}					
 						}
-						NOT = {
-							AND = {
-								has_any_integrated_majority_trigger = yes						
+						if = {
+							limit = {
 								has_large_goblin_minority_trigger = yes
 							}
-						}					
-					}
-					if = {
-						limit = {
-							has_large_goblin_minority_trigger = yes
+							change_culture = forest_goblin
 						}
-						change_culture = forest_goblin
+						else = {
+							add_goblin_minority_size_effect = yes
+						}
 					}
-					else = {
-						add_goblin_minority_size_effect = yes
-					}
-				}
 				
-				hidden_effect = {
-					subtract_variable = {
-						which = B42_add_minority_provinces
-						value = 1
-					}				
-				}
+				"
 			}
 		
 		}
@@ -967,10 +960,15 @@ groundhawk_1b = {
 		}
 		
 		effect = {
+			custom_tooltip = B42_spread_goblin_pop_2_tt
 			for = {
 				amount = 7
 				effect = "
 					random_owned_province = {
+						limit = {
+							NOT = { has_large_goblin_minority_trigger = yes }
+							NOT = { culture_is_goblin = yes }
+						}
 						add_goblin_minority_size_effect = yes
 					}				
 				"
@@ -1073,10 +1071,10 @@ groundhawk_1b = {
 				}
 				development = 40
 				is_state_core = ROOT
-				culture_is_goblin = yes
 				num_of_buildings_in_province = 5
 				has_manufactory_trigger = yes
 			}	
+			culture_is_goblin = yes
 		}
 		
 		effect = {
@@ -1457,6 +1455,7 @@ groundhawk_2b = {
 					hidden = yes
 				}
 			}
+			custom_tooltip = B42_upgrade_temple_tt
 			for = {
 				amount = 5
 				effect = "
@@ -2131,7 +2130,11 @@ groundhawk_4b = {
 				limit = {
 					has_country_flag = B42_rejected_slavery
 				}
-				has_orcish_accepted_culture = yes
+				custom_trigger_tooltip = {
+					tooltip = B42_has_any_accepted_orcish_culture_tt
+					has_orcish_accepted_culture = yes
+				}
+				
 				high_tolerance_orcish_race_trigger = yes
 				mission_completed = B42_to_corins_aid
 			}
@@ -2149,50 +2152,44 @@ groundhawk_4b = {
 					has_country_flag = B42_embraced_slavery
 					NOT = { has_global_flag = escann_slave_events_ended }
 				}
-				every_owned_province = {
-					limit = {
-						trade_goods = slaves
-					}
-					add_base_production = 1
-				}
-				if = {
-					limit = {
-						has_country_flag = removing_monstrous
-					}
-					decrease_monstrous_2 = yes
-				}
-			}
-			else = {
+				custom_tooltip = B42_enlarge_slavery_tt
 				hidden_effect = {
-					set_variable = {
-						which = B42_i
-						value = 5
-					}
-				}
-				while = {
-					limit = {
-						check_variable = {
-							which = B42_i
-							value = 0
-						}
-					}
-					random_owned_province = {
+					every_owned_province = {
 						limit = {
-							NOT = { culture_is_orcish = yes }
+							trade_goods = slaves
 						}
-						add_orcish_minority_size_effect = yes					
-					}
-					subtract_variable = {
-						which = B42_i
-						value = 0
+						add_base_production = 1
+					}				
+				}
+
+			}
+			else_if = {
+				limit = {
+					has_country_flag = B42_rejected_slavery
+				}
+				custom_tooltip = B42_add_orcish_minority_tt
+				for = {
+					amount = 5
+					effect = "
+						random_owned_province = {
+							limit = {
+								NOT = { culture_is_orcish = yes }
+							}
+							add_orcish_minority_size_effect = yes					
+						}
+					"
+				}
+				custom_tooltip = B42_ban_slavery_tt
+				hidden_effect = {
+					every_owned_province = {
+						limit = {
+							trade_goods = slaves
+						}
+						change_trade_goods = unknown
 					}
 				}
-				every_owned_province = {
-					limit = {
-						trade_goods = slaves
-					}
-					change_trade_goods = unknown
-				}
+
+				
 			}
 		}
 		
@@ -2547,6 +2544,7 @@ groundhawk_5b = {
 			large_increase_of_dwarven_tolerance_effect = yes
 			large_increase_of_elven_tolerance_effect = yes
 			large_increase_of_halfling_tolerance_effect = yes
+			custom_tooltip = B42_add_race_minority_tt
 			hidden_effect = {
 				for = {
 					amount = 5
