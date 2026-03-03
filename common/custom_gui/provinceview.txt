@@ -162,13 +162,13 @@ custom_button = {
 					limit = { is_capital = yes }
 					setup_digging_deeper_capital = yes
 					start_digging_deeper = yes
+					owner = { set_country_flag = is_digging }
 				}
 				else = {
 					setup_digging_deeper_non_capital = yes
 					start_digging_deeper_non_capital = yes
 				}
 			}
-			set_country_flag = is_digging
 			play_sound = diggy_diggy_pickaxe_sfx
 		}
 	}
@@ -990,23 +990,10 @@ custom_button = { #Dummy closed
 custom_button = { #Transmutative Path UI closed
 	name = transmutative_path_infuse_chi_button
 	potential = {
-		owner = {
-			tag = FROM
-			religion = transmutative_path
-		}
-	}
-	trigger = {
-		hidden_trigger = {
-			owner = {
-				NOT = {
-					has_country_flag = transmutative_path_infuse_chi_menu_open
-					has_country_flag = transmutative_path_infuse_trade_goods_menu_open
-				}
-			}
-		}
+		has_eligible_aPUI_transmutative_path_in_province = yes
 	}
 	effect = {
-		province_event = { id = transmutative_path.1 }
+		open_aPUI_in_province = { name = transmutative_path }
 	}
 	tooltip = infuse_chi_button_tt
 }
@@ -1358,6 +1345,58 @@ custom_button = { #build Lencori Behemoth shipyard
 		lencori_behemoth_add_shipyard_modifier = yes
 	}
 	tooltip = lencori_behemoth_shipyard_button_tt
+}
+
+custom_button = { # Build Charkuchin Kobold supply centre
+	name = charkuchin_kobold_supply_facility_button
+	potential = {
+		owner = {
+			tag = FROM
+			has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
+		}
+	}
+	trigger = {
+		base_production = 4
+		has_fort_building_trigger = yes
+		has_production_building_trigger = yes
+		NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+		NOT = { has_charkuchin_kobold_citadel = yes }
+		owner = {
+			treasury = 50
+			custom_trigger_tooltip = {
+				tooltip = charkuchin_kobold_supply_facility_max_tt
+				NOT = {
+					check_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+						value = 10
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		owner = {
+			add_treasury = -50
+			hidden_effect = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+					value = 1
+				}	
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 10
+				}
+			}
+		}
+		hidden_effect = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_supply_facility
+				duration = -1
+			}
+		}
+		custom_tooltip = charkuchin_kobold_supply_facility_button_add_tt
+	}
+	tooltip = charkuchin_kobold_supply_facility_button_tt
 }
 
 
@@ -1931,6 +1970,7 @@ custom_button = { #Endhuvi Traveling Society Button
 		is_part_of_kharunyana_river = yes
 		NOT = { region = nomsyulhan_region }
 		owned_by = FROM	
+		NOT = { has_province_modifier = R36_cinnabar_lotus_society_barge_3 }
 	}
 	trigger = {
 		event_target:endhuvi_cinnabar_lotus_province = { owned_by = FROM }
@@ -2290,44 +2330,20 @@ custom_button = {
 # }
 
 #Debug button for testing
-custom_button = { #template button to open it, all must set 'aPUI_parent_container_flag'
+custom_button = { #template button to open it, change 'template' to the name of the APUI
 	name = aPUI_debug_button
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_debug_flag
-		}
+		has_eligible_aPUI_template_in_province = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				NOT = {
-					has_province_flag = aPUI_template_flag
-				}
-			}
-			clear_all_aPUI_flags = yes
-			set_province_flag = aPUI_parent_container_flag
-			set_province_flag = aPUI_template_flag
-		}
-		else = {
-			clear_all_aPUI_flags = yes
-		}
+		open_aPUI_in_province = { name = template }
 	}
 	tooltip = "aPUI Debug Button"
 }
-#Baseline UI elements
-custom_window = {
-	name = aPUI_parent_container
-	potential = {
-		has_province_flag = aPUI_parent_container_flag
-		# FROM = {
-		# 	# tag = Z99
-		# }
-	}
-}
+#Baseline UI Element
 custom_button = { #Close button
 	name = aPUI_close_button
 	effect = {
-		#clr_province_flag = aPUI_parent_container_flag
 		clear_all_aPUI_flags = yes
 	}
 }
@@ -2335,8 +2351,7 @@ custom_button = { #Close button
 custom_window = {
 	name = aPUI_template_window
 	potential = {
-		#Must match the format 'aPUI_$name$_flag'
-		has_province_flag = aPUI_template_flag
+		has_open_aPUI_in_province = { name = template }
 	}
 }
 custom_text_box = {
@@ -2392,48 +2407,207 @@ custom_button = {
 }
 
 # New systems go here - removing the above once the example is PRed
+
+# Transmutative Path aPUI Start
+custom_window = {
+	name = aPUI_transmutative_path_window
+	potential = {
+		has_open_aPUI_in_province = { name = transmutative_path }
+	}
+}
+custom_text_box = {
+	name = aPUI_transmutative_path_title
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_1
+	tooltip = aPUI_transmutative_path_button_1_tt
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = build_chi_wellspring_tt
+			province_has_no_chi_wellspring_trigger = yes
+			NOT = {
+				any_neighbor_province = {
+					owned_by = FROM
+					province_has_chi_wellspring_trigger = yes
+				}
+			}
+			NOT = { transmutative_path_infuse_province_trigger = yes }
+			NOT = { is_capital = yes }
+			development = 10
+			owner = {
+				treasury = 100
+				adm_power = 25
+				dip_power = 25
+				mil_power = 25
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = " " #Linebreak
+		owner = {
+			add_treasury = -100
+			add_adm_power = -25
+			add_dip_power = -25
+			add_mil_power = -25
+		}
+		add_chi_wellspring_to_size = yes
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_2_xia
+	tooltip = aPUI_transmutative_path_button_2_xia_tt
+	potential = {
+		has_province_flag = is_xia_origin
+	}
+	trigger = {
+		FROM = { has_church_aspect = transmutative_path_temples_for_warriors }
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_200_chi_tt
+			FROM = { church_power = 200 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_not_empowered_or_enlightened_tt
+			xia_prov_not_empowered_or_enlightened = yes
+		}
+	}
+	effect = {
+		custom_tooltip = " " #Linebreak
+		FROM = { add_church_power = -200 }
+		cultivate_province_xia_path = yes
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_3
+	tooltip = aPUI_transmutative_path_button_3_tt
+	potential = {
+		FROM = {
+			OR = {
+				culture_group = kai
+				culture = naamjyut
+				culture = antmvura
+				culture = gon
+				is_or_was_tag = { tag = Y86 }
+			}
+		}
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_change_trade_good_tt
+			transmutative_path_change_trade_good_trigger = yes
+			transmutative_path_owner_has_chi_trigger = yes
+			owner = { NOT = { has_country_modifier = trade_good_change_cd } }
+		}
+	}
+	effect = {
+		custom_tooltip = " " #Linebreak
+		custom_tooltip = transmutative_path_pay_for_chi_preview
+		transmutative_path_change_trade_good_effect = yes
+		transmutative_path_destroy_chi_wellspring_to_size_effect = yes #edge case
+		hidden_effect = {
+			transmutative_path_pay_chi_effect = yes
+			owner = {
+				add_country_modifier = {
+					name = trade_good_change_cd
+					duration = 9125
+					hidden = yes
+				}
+			}
+		}
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_4
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 1
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 0 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = infuse_province_tt
+			transmutative_path_infuse_province_trigger = yes
+			transmutative_path_owner_has_chi_trigger = yes
+		}
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 0 }
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_5
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 2
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 1 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = infuse_province_tt
+			transmutative_path_infuse_province_trigger = yes
+			transmutative_path_owner_has_chi_trigger = yes
+		}
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 1 }
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_6
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 3
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 2 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = infuse_province_tt
+			transmutative_path_infuse_province_trigger = yes
+			transmutative_path_owner_has_chi_trigger = yes
+		}
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 2 }
+	}
+}
+custom_text_box = {
+	name = aPUI_transmutative_path_textbox
+}
+# Transmutative Path aPUI End
+
+# Gor Vazumbrog aPUI
 custom_text_box = {
     name = aPUI_gor_vazumbrog_vault_textbox
     potential = { always = yes }
     tooltip = aPUI_gor_vazumbrog_vault_textbox_tooltip
 }
 
-# Gor Vazumbrog aPUI
-custom_button = { #gor_vazumbrog_vault button to open it, all must set 'aPUI_parent_container_flag'
+custom_button = {
 	name = aPUI_gor_vazumbrog_vault_button
 	tooltip = "Enter the Vault"
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_gor_vazumbrog_vault_enabled_flag
-		}
-		province_id = 4217
-		is_capital = yes
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				NOT = {
-					has_province_flag = aPUI_gor_vazumbrog_vault_flag
-				}
-			}
-			clear_all_aPUI_flags = yes
-			set_province_flag = aPUI_parent_container_flag
-			set_province_flag = aPUI_gor_vazumbrog_vault_flag
-		}
-		else = {
-			clear_all_aPUI_flags = yes
-		}
+		open_aPUI_in_province = { name = gor_vazumbrog_vault }
 	}
 }
 custom_button = { # dummy copy for the "buildings tab closed" button, which cant open the buildings tab
 	name = aPUI_gor_vazumbrog_vault_button_dummy
 	tooltip = "Access the Vault by opening the Buildings tab"
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_gor_vazumbrog_vault_enabled_flag
-		}
-		province_id = 4217
-		is_capital = yes
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
 	}
 	effect = {
 	}
@@ -2444,8 +2618,7 @@ custom_button = { # dummy copy for the "buildings tab closed" button, which cant
 custom_window = {
 	name = aPUI_gor_vazumbrog_vault_window
 	potential = {
-		#Must match the format 'aPUI_$name$_flag'
-		has_province_flag = aPUI_gor_vazumbrog_vault_flag
+		has_open_aPUI_in_province = { name = gor_vazumbrog_vault }
 	}
 }
 custom_text_box = {
