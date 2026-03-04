@@ -2,8 +2,16 @@
 bivuzena_dev_races_subeffect = {
 	if = {
 		limit = {
-			any_owned_or_subject_province = { 
-				OR = {
+			OR = {
+				fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+				any_subject_country = {
+					fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+				}
+			}
+			OR = {
+				has_coexisting_$race$_pop_trigger = yes
+				has_integrated_$race$_pop_trigger = yes
+				any_subject_country = {
 					has_coexisting_$race$_pop_trigger = yes
 					has_integrated_$race$_pop_trigger = yes
 				}
@@ -245,21 +253,27 @@ bivuzena_racial_increase_effect = { #Large boost in tolerance for any pop that i
 zena_wharf_allies_subjects_tolerance_boost_subeffect = {
 	if = { 
 		limit = {
-			OR = {
-				any_owned_or_subject_province = {
-					fast_has_pop_of_race = { race = $race$ }
-				}
-				any_ally = {
-					any_owned_or_subject_province = {
-						fast_has_pop_of_race = { race = $race$ }
-					}
-				}
-			}
 			NOT = {
 				5847 = {
 					fast_has_pop_of_race = { race = $race$ }
 				}
-			}				
+			}
+			OR = {
+				OR = {
+					fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+					any_subject_country = {
+						fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+					}
+				}
+				any_ally = {
+					OR = {
+						fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+						any_subject_country = {
+							fast_owns_num_pops_of_race = { race = $race$ amount = 1 }
+						}
+					}
+				}
+			}			
 		}
 		ROOT = {
 			medium_increase_of_$race$_tolerance_effect = yes
@@ -584,27 +598,19 @@ zena_relic_purchase_effect = { #Buuying relics
 zena_relic_buy_effect = {
 	custom_tooltip = zena_relic_purchase_tt
 	hidden_effect = {
-		while = {
-			limit = {
-				check_variable = {
-					which = zena_relic_cost
-					value = 1
-				}
-			}
-			add_treasury = -1
-			change_variable = {
-				which = zena_relic_cost
-				value = -1
-			}
-		}
-		change_variable = {
-			which = zena_relics_found
-			value = 1
+		var_effect = {
+			effect = add_treasury
+			var = zena_relic_cost
+			sign = -
 		}
 	}
 }
 
 zena_blueprints_threshold_effect = { #Set it to fire after every blueprint event, basically just checks if you're at your 5,10,15,20 thresholds and have only hit them once
+	change_variable = {
+		which = zena_blueprints_of_tomorrow_value
+		value = 1
+	}
 	if = {
 		limit = {
 			NOT = {
@@ -619,10 +625,13 @@ zena_blueprints_threshold_effect = { #Set it to fire after every blueprint event
 			id = flavour_zena.51
 		}
 	}
-	else_if = {
+	if = {
 		limit = {
 			NOT = {
+				has_country_flag = zena_blueprints_complete
 				has_country_flag = zena_blueprints_fifteen
+				has_country_flag = zena_blueprints_ten
+				has_country_flag = zena_blueprints_five
 			}
 			check_variable = {
 				which = zena_blueprints_of_tomorrow_value
@@ -633,10 +642,11 @@ zena_blueprints_threshold_effect = { #Set it to fire after every blueprint event
 			id = flavour_zena.50
 		}
 	}
-	else_if = {
+	if = {
 		limit = {
 			NOT = {
 				has_country_flag = zena_blueprints_ten
+				has_country_flag = zena_blueprints_five
 			}
 			check_variable = {
 				which = zena_blueprints_of_tomorrow_value
@@ -647,7 +657,7 @@ zena_blueprints_threshold_effect = { #Set it to fire after every blueprint event
 			id = flavour_zena.49
 		}
 	}
-	else_if = {
+	if = {
 		limit = {
 			NOT = {
 				has_country_flag = zena_blueprints_five
@@ -655,6 +665,12 @@ zena_blueprints_threshold_effect = { #Set it to fire after every blueprint event
 			check_variable = {
 				which = zena_blueprints_of_tomorrow_value
 				value = 5
+			}
+			NOT = {
+				check_variable = {
+					which = zena_blueprints_of_tomorrow_value
+					value = 10
+				}
 			}
 		}
 		country_event = {
@@ -1000,61 +1016,37 @@ zena_menagerie_complete_effect = { #Dont need to 'acquire' the Elephants. Otherw
 }
 
 zena_menagerie_acquisition_effect = { #mostly just because i have to repeat this 7 times, makes the event code a lot cleaner. Effect for when you complete a hunt
-	tooltip = {
-		if = {
-			limit = {
-				has_country_flag = zena_blueprints_complete
-			}
-			add_country_modifier = {
-				name = zena_$zena_animal$_upgraded_marquee
-				duration = 9125
-			}
+	if = {
+		limit = {
+			has_country_flag = zena_blueprints_complete
 		}
-		else = {
-			add_country_modifier = {
-				name = zena_$zena_animal$_marquee
-				duration = 9125
-			}
-		}
-		if = {
-			limit = {
-				has_country_modifier = zena_hunt_the_beast
-			}
-			add_prestige = 20
-			add_splendor = 20
+		add_country_modifier = {
+			name = zena_$zena_animal$_upgraded_marquee
+			duration = 9125
 		}
 	}
+	else = {
+		add_country_modifier = {
+			name = zena_$zena_animal$_marquee
+			duration = 9125
+		}
+	}
+	if = {
+		limit = {
+			has_country_modifier = zena_hunt_the_beast
+		}
+		add_prestige = 20
+		add_splendor = 20
+	}
 	hidden_effect = {
-		if = {
-			limit = {
-				has_country_flag = zena_blueprints_complete
-			}
-			add_country_modifier = {
-				name = zena_$zena_animal$_upgraded_marquee
-				duration = 9125
-			}
-		}
-		else = {
-			add_country_modifier = {
-				name = zena_$zena_animal$_marquee
-				duration = 9125
-			}
-		}
-		if = {
-			limit = {
-				has_country_modifier = zena_hunt_the_beast
-			}
-			add_prestige = 20
-			add_splendor = 20
-		}
 		5847 = {
 			add_province_modifier = {
 				name = zena_$zena_animal$_cooldown
 				duration = 9125
 				hidden = yes
 			}
-		}		
-	}
+		}
+	}		
 	custom_tooltip = zena_fauna_hunt_success_tt
 }
 
@@ -1079,7 +1071,7 @@ zena_fauna_spawn_effect = {
 					type = generic_beast_rebels
 				}
 				hidden_effect = {
-					set_province_flag = zena_$animal$_province_flag
+					save_event_target_as = zena_$animal$_province_target
 				}
 			}
 		}
@@ -1106,10 +1098,7 @@ zena_fauna_spawn_effect = {
 zena_fauna_clear_effect_win = {
 	if = {
 		limit = {
-			$location$ = {
-				has_province_modifier = zena_$animal$_province
-				has_province_flag = zena_$animal$_province_flag
-			}
+			has_saved_event_target = zena_$animal$_province_target
 		}
 
 		country_event = {
@@ -1121,26 +1110,11 @@ zena_fauna_clear_effect_win = {
 zena_fauna_clear_effect_loss = {
 	if = {
 		limit = {
-			$location$ = {
-				has_province_modifier = zena_$animal$_province
-				has_province_flag = zena_$animal$_province_flag
-			}
+			has_saved_event_target = zena_$animal$_province_target
 		}
-		[[region]
-			$location$ = {
-				limit = {
-					has_province_modifier = zena_$animal$_province
-					has_province_flag = zena_$animal$_province_flag
-				}
-				clr_province_flag = zena_$animal$_province_flag
-			}
-		]
-
-		[[province]
-			$location$ = {
-				clr_province_flag = zena_$animal$_province_flag
-			}
-		]
+		event_target:zena_$animal$_province_target = {
+			clear_rebels = yes
+		}
 	}
 }
 
@@ -1291,20 +1265,74 @@ zena_bivuzena_add_known_races_effect = { #Meant to be in Bivuzena Province Scope
 				NOT = {
 					fast_has_pop_of_race = { race = $race$ }
 				}
-			}
-			if = {
-				limit = {
-					ROOT = {
-						any_known_country = {
-							any_owned_province = {
-								fast_has_pop_of_race = { race = $race$ }
-							}
-						}
+				ROOT = {
+					any_known_country = {
+						fast_owns_num_pops_of_race = { race = $race$ amount = 1}
 					}
 				}
-				generic_add_race_minority_size_effect = { race = $race$ }
 			}
+			generic_add_race_minority_size_effect = { race = $race$ }
 		}
+	}
+}
+
+zena_bivuzena_add_known_races_posteffect = { #Since I use it twice now, switched it over to it's own scripted effect
+	zena_bivuzena_add_known_races_effect = {
+		race = dwarven
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = gnomish
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = elven
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = halfling
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = half_orcish
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = kobold
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = orcish
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = gnollish
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = ruinborn
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = goblin
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = harpy
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = troll
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = half_elven
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = ogre
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = harimari
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = centaur
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = hobgoblin
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = lizardfolk
+	}
+	zena_bivuzena_add_known_races_effect = {
+		race = mechanim
 	}
 }
 
