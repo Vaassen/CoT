@@ -240,6 +240,9 @@ on_startup = {
 		#Ashhana government setup (all Ashhana are Zaradyrra)
 		zaradyrra.0
 
+		#Amubariz starting with legacy
+		flavour_AYN.500
+
 		anb_settings.1			#Settings - /!\ keep it at the bottom of the list
 	}
 
@@ -1420,6 +1423,34 @@ on_war_won = {
 			change_variable = { 
 				which = orda_conversion_war
 				value =  1 
+			}
+		}
+	}
+
+	if = {
+		limit = { has_global_flag = war_of_salt_and_silence }
+
+		if = {
+			limit = { # Emperor Victory
+				tag = event_target:salt_and_silence_emperor
+				FROM = { tag = event_target:salt_and_silence_giant }
+			}
+			event_target:salt_and_silence_emperor = {
+				country_event = {
+					id = flavor_salt_silence_incident.9
+				}
+			}
+		}
+
+		else_if = {
+			limit = { # Giant Victory
+				tag = event_target:salt_and_silence_giant
+				FROM = { tag = event_target:salt_and_silence_emperor }
+			}
+			event_target:salt_and_silence_emperor = {
+				country_event = {
+					id = flavor_salt_silence_incident.11
+				}
 			}
 		}
 	}
@@ -4786,6 +4817,7 @@ on_new_monarch = {
 		guwaamud.100 # Ruler Ascension needs a consort
 
 		tsukqiao.42 #Yak Command Dead Event
+		planetouched.106 # Ardimya auto-create planetouched ruler
 	}
 
 	random_events = {
@@ -5692,7 +5724,7 @@ on_replace_governor = {
 on_bankruptcy = {
 	events = {
 		racial_modifiers.5		#Racial admin change if unmatching
-		flavour_ovdal_tungr.60 	# Ovdal Tûngr bankruptcy bailout
+		flavour_ovdal_tungr.60 	# Ovdal Tungr bankruptcy bailout
 	}
 	clear_roadwarrior_modifiers = yes
 	if = {
@@ -6278,6 +6310,13 @@ on_new_heir = {
 		country_event = { id = seinathil.16 days = 3650 random = 365 }
 	}
 
+	if = {
+		limit = {
+			has_reform = jinnakah_ardimyan_sultanate
+		}
+		country_event = { id = planetouched.105 }
+	}
+
 	if = { #Salla elyn mt
 		limit = {
 			OR = {
@@ -6378,6 +6417,20 @@ on_emperor_elected = {
 		save_global_event_target_as = Emperor
 		country_event = { id = long_lived_emperor.1 }
 	}
+
+	if = { #Salt and Silence
+        limit = {
+            has_global_flag = war_of_salt_and_silence 
+            has_saved_global_event_target = salt_and_silence_emperor
+            event_target:salt_and_silence_emperor = { 
+                NOT = { has_country_flag = currently_in_salt_silence_war }
+                NOT = { tag = ROOT }
+            }
+        }
+        ROOT = {
+            save_global_event_target_as = salt_and_silence_emperor
+        }
+    }
 	if = { #istralore
 		limit = {
 			ROOT = {
@@ -7047,6 +7100,34 @@ on_annexed = {
 					id = flavor_venomtooth.103
 				}
 			}
+		}
+	}
+	if = {
+		limit = { FROM = { has_country_modifier = gaafhlids_scrolls_legacy_modifier } }
+		clr_global_flag = found_gaafhlids_scrolls_legacy_fl
+		FROM = {
+			remove_country_modifier = gaafhlids_scrolls_legacy_modifier
+		}
+	}
+	if = {
+		limit = { FROM = { has_country_modifier = bajnmra_sextant_legacy_modifier } }
+		clr_global_flag = found_bajnmra_sextant_legacy_fl
+		FROM = {
+			remove_country_modifier = bajnmra_sextant_legacy_modifier
+		}
+	}
+	if = {
+		limit = {FROM = { has_country_modifier = L37_the_bottle_of_nyeekayba } }
+		clr_global_flag = found_bottle_of_nyeekayba_legacy_fl
+		FROM = {
+			remove_country_modifier = L37_the_bottle_of_nyeekayba
+		}
+	}
+	if = {
+		limit = { FROM = { has_country_modifier = faasas_legacy_modifier } }
+		clr_global_flag = found_faasas_legacy_fl
+		FROM = {
+			remove_country_modifier = faasas_legacy_modifier
 		}
 	}
 }
@@ -8826,7 +8907,7 @@ on_yearly_pulse = {
 		genie_cult.12
 		yanzhong.9			#Yanzhong Integration
 		yangcheng.11		#Yangcheng Debates
-		flavour_ovdal_tungr.1001 # Has some yearly checks for Ovdal Tûngr.
+		flavour_ovdal_tungr.1001 # Has some yearly checks for Ovdal Tungr.
 		gushuokguan_event.101 #Gushuokguan Condotierri Counter
 		flavor_rosande.39 #Orc population check
 		flavor_rosande.40 #Orc population check
@@ -9300,6 +9381,7 @@ on_yearly_pulse = {
 			} 
 		}
 	}
+
 	if = { #Events for Path Of Saaxir - Rinta Seekers Incident
 		limit = { has_country_flag = rinta_path_pulse_events }
 		country_event = {
@@ -9366,6 +9448,28 @@ on_yearly_pulse = {
 		}
 		set_global_flag = vt_arrival_of_the_mechanim_flag
 	}
+	
+	if = {
+        limit = {
+            has_global_flag = race_for_ultakal
+            ai = no
+            OR = { tag = J06 tag = J07 }
+            NOT = { has_country_modifier = race_for_ultakal_cooldown }
+        }
+        if = {
+            limit = { tag = J06 }
+            random = {
+                chance = 40
+                country_event = { id = lake.518 }
+            }
+        }
+        else = {
+            random = {
+                chance = 40
+                country_event = { id = lake.523 }
+            }
+        }
+    }
 }
 
 on_yearly_pulse_2 = {
@@ -12823,6 +12927,7 @@ on_four_year_pulse_4 = {
 		gophira.12 #gophira event handler
 		escanni_wars.308 #escanni wars event handler
 		flavor_beiklings.1 #Chinhu Rebellion Event
+		flavor_salt_silence_incident.1
 		cannor_monument_flavour.1
 		cannor_monument_flavour.2
 		cannor_monument_flavour.3
@@ -17995,6 +18100,128 @@ on_province_owner_change = {
 		}
 	}
 	
+	#Ultakal modifiers
+	if = {
+		limit = {
+			province_id = 5239
+		}
+		
+		#Khugatseig loyal extraction corps
+		if = {
+			limit = {
+				has_global_flag = J06_loyalty_ensured
+			}
+			if = {
+				limit = {
+					owner = { 
+						OR = {
+							tag = J06 
+							was_tag = J06 
+						}
+					}
+				}
+				5239 = {
+					add_province_modifier = {
+						name =  J06_ultakal_extraction_corps_loyal
+						duration = -1
+					}
+					remove_province_modifier = J06_ultakal_extraction_corps_disloyal
+				}
+			}
+			else = {
+				5239 = {
+					add_province_modifier = {
+						name =  J06_ultakal_extraction_corps_disloyal
+						duration = -1
+					}
+					remove_province_modifier = J06_ultakal_extraction_corps_loyal
+				}		
+			}
+		}
+		
+		#Tzidoilhol good comparison
+		if = {
+			limit = {
+				has_global_flag = J07_comparison
+			}
+			if = {
+				limit = {
+					owner = { 
+						OR = {
+							tag = J07 
+							was_tag = J07 
+						}
+					}
+				}
+				5239 = {
+					add_province_modifier = {
+						name =  J07_ultakal_good_comparison
+						duration = -1
+					}
+					remove_province_modifier = J07_ultakal_poor_comparison
+				}
+				country_event = {
+					id = lake.527
+					days = 1
+				}
+			}
+			else = {
+				5239 = {
+					add_province_modifier = {
+						name =  J07_ultakal_poor_comparison
+						duration = -1
+					}
+					remove_province_modifier = J07_ultakal_good_comparison
+				}		
+			}
+		}
+	}
+
+
+	if = {
+		limit = { region = ardimya_region }
+
+		if = { #Ardimyan Minors
+			limit = {
+				owner = {
+					culture = guryadagga
+					is_migratory_tribe = yes
+					is_subject = no
+				}
+			}
+			owner = {
+				country_event = { id = flavour_AYN.1200 }
+			}
+		}
+
+		if = { # Qeyikul
+			limit = { owner = { ai = no } has_qeyikul_warband = yes }
+
+			if = {
+				limit = {
+					owner = {
+						NOT = { culture = guryadagga }
+						NOT = { has_country_flag = qeyikul_coloniser_seen_message }
+					}
+				}
+				owner = {
+					country_event = {
+						id = flavour_AYN.1004 
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_province_modifier = large_qeyikul_warband
+					owner = { culture = guryadagga }
+				}
+				add_province_modifier = {
+					name = large_qeyikul_unrest_mod
+					duration = -1
+				}
+			}
+		}
+	}
 }
 
 # country 1.35
@@ -20894,13 +21121,13 @@ on_dependency_gained = {
 		}
 	}
 
-	# Turning Ilatani March into vassal if another tag annexes Ovdal Tûngr.
+	# Turning Ilatani March into vassal if another tag annexes Ovdal Tungr.
 	if = { limit = { NOT = { tag = F23 } FROM = { is_subject_of_type = loyal_crathanor_subject } }
 		# Apparently can crash if done immediately, so moved to an event for a small delay?
 		FROM = { country_event = { id = flavour_ovdal_tungr.9999 } }
 	}
 
-	# Adding truces between new trade protectorates of Ovdal Tûngr and other subjects of Ovdal Tûngr.
+	# Adding truces between new trade protectorates of Ovdal Tungr and other subjects of Ovdal Tungr.
 	if = { limit = { ROOT = { tag = F23 } FROM = { is_subject_of_type = trade_protectorate } }
 		FROM = { 
 			save_event_target_as = F23_new_trade_protectorate
@@ -21293,6 +21520,26 @@ on_dependency_gained = {
 		FROM = { set_country_flag = U09_already_made_tributary }
 	}
 	
+	#Ardimyan Natives
+
+	if = {
+		limit = {
+			FROM = { culture = guryadagga has_any_ardimyan_legacy = yes }
+		}
+		if = {
+			limit = { culture = guryadagga } #steal other natives
+			country_event = { id = flavour_AYN.1201 }
+		}
+		else = {
+			random_country = {
+				limit = {
+					culture = guryadagga
+					is_subject = no
+				}
+				country_event = { id = flavour_AYN.1202 } # sell to another native
+			}
+		}
+	}
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -22355,7 +22602,7 @@ on_flagship_captured = {
 		}
 	}
 
-	# Ovdal Tûngr Sea Hold
+	# Ovdal Tungr Sea Hold
 	FROM = {
 		if = {
 			limit = {
@@ -22406,7 +22653,7 @@ on_flagship_destroyed = {
 		}
 	}
 
-	# Ovdal Tûngr Sea Hold
+	# Ovdal Tungr Sea Hold
 	FROM = {
 		if = {
 			limit = {
@@ -24930,7 +25177,7 @@ on_colony_established = {
 				duration = -1
 			}
 		}
-	}
+	}	
 }
 
 #scope = new country, FROM = parent country 1.35
@@ -26948,6 +27195,31 @@ on_colony_finished = { #ROOT - Province
 		}
 		dauvek_veker_secure_road_colony_finished = yes
 	}
+
+	if = { # Colonists AI
+		limit = {
+			region = ardimya_region
+			has_qeyikul_warband = yes
+			owner = { 
+				OR = {
+					ai = yes
+					NOT = { has_country_flag = manually_fight_qeyikul_fl }
+				}
+			}
+		}
+		remove_province_modifier = small_qeyikul_warband
+		remove_province_modifier = medium_qeyikul_warband
+		remove_province_modifier = large_qeyikul_warband
+		if = {
+			limit = { owner = { ai = no } }
+			change_culture = guryadagga
+			add_province_modifier = {
+				name = qeyikul_guryadaggan_autonomy
+				duration = -1
+			}
+		}
+	}
+	
 }
 
 on_advisor_hired = { #ROOT - Country
@@ -27781,36 +28053,6 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 			id = caergaraen.2 #Judging The Guilty
 		}
 	}
-
-	if = { #Pajeong Disaster
-		limit = {
-			has_country_flag = pajeong_in_zunk_war_flag
-			NOT = { war_with = V26 } #Zunk Kuulgo
-		}
-		clr_country_flag = pajeong_in_zunk_war_flag
-		gain_pajeong_reassimilation_points = {
-			estate = nobles
-			amount = 1
-		}
-	}
-	FROM = { #Pajeong Disaster
-		if = {
-			limit = {
-				has_country_flag = pajeong_in_zunk_war_flag
-				NOT = { war_with = V26 } #Zunk Kuulgo
-			}
-			clr_country_flag = pajeong_in_zunk_war_flag
-			country_event = { #The Lost Frontier
-				id = pajeong.44
-			}
-			ROOT = {
-				country_event = { #The Lost Frontier (Zunk ver.)
-					id = pajeong.45
-				}
-			}
-		}
-	}
-
 	#Gnollakaz
 	if = {
 		limit = {
