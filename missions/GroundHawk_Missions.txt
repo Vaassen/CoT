@@ -405,7 +405,6 @@ groundhawk_3 = {
 			}
 		}
 	}
-	#TODO: NEED TEST FOR EVENTS
 	B42_this_new_land = {
 		icon = mission_grand_trunk_road_mug #TODO:Placeholder
 		position = 2
@@ -431,10 +430,7 @@ groundhawk_3 = {
 				name = B42_staking_our_claim
 				duration = 3650
 			}
-			#I'm not really sure should this need to be in hidden_effect
-			#but I think player should not know when refugees come(especially when it comes at 10 years later)
 			custom_tooltip = B42_goblin_refugees_come_tt
-			#TODO: NEED TEST
 			hidden_effect = {
 			
 				country_event = {
@@ -544,33 +540,24 @@ groundhawk_3 = {
 			custom_tooltip = B42_spread_goblin_pop_tt
 			for = {
 				amount = 10
+				#sorry 512 byte limit...
 				effect = "
 					random_owned_province = {
 						limit = {
-							NOT = {
-								culture_is_goblin = yes
-							}
+							NOT = { culture_is_goblin = yes }
 							NOT = {
 								AND = {
 									OR = {
 										has_any_coexisting_majority_trigger = yes
-										has_any_integrated_majority_trigger = yes									
-									}			
+										has_any_integrated_majority_trigger = yes
+									}
 									has_large_goblin_minority_trigger = yes
 								}
-							}					
-						}
-						if = {
-							limit = {
-								has_large_goblin_minority_trigger = yes
 							}
-							change_culture = forest_goblin
 						}
-						else = {
-							add_goblin_minority_size_effect = yes
-						}
+						if = { limit = { has_large_goblin_minority_trigger = yes} change_culture = forest_goblin }
+						else = { add_goblin_minority_size_effect = yes }
 					}
-				
 				"
 			}
 		
@@ -885,8 +872,10 @@ groundhawk_1b = {
 		trigger = {
 			custom_trigger_tooltip = {
 				tooltip = B42_not_monstrous_or_semi_monsterous_tt
-				NOT = { has_country_modifier = monstrous_nation } 
-				NOT = { is_semi_monstrous = yes }
+				OR = {
+					is_semi_monstrous = yes
+					NOT = { has_country_modifier = monstrous_nation }
+				}
 			}
 
 			religion_group = cannorian
@@ -1084,6 +1073,7 @@ groundhawk_1b = {
 		}
 		
 		trigger = {
+			culture_is_goblin = yes
 			4097 = {
 				hold_condition = {
 					Repaired = yes
@@ -1093,7 +1083,7 @@ groundhawk_1b = {
 				num_of_buildings_in_province = 5
 				has_manufactory_trigger = yes
 			}	
-			culture_is_goblin = yes
+			
 		}
 		
 		effect = {
@@ -1103,13 +1093,17 @@ groundhawk_1b = {
 						province_id = 4097
 					}				
 				}
-
-				change_culture = ROOT
+				4097 = { 
+					change_culture = ROOT
+				}
+				
 			}
 			else = {
-				change_culture = common_goblin
+				4097 = { 
+					change_culture = common_goblin
+				}
 			}
-			change_religion = ROOT
+			4097 = { change_religion = ROOT }
 			country_event = {
 				id = flavour_groundhawk.10
 			}
@@ -1137,7 +1131,7 @@ groundhawk_1b = {
 				}
 			}
 			num_of_owned_provinces_with = {
-				value = 25
+				value = 6
 				superregion = escann_superregion
 				OR = {
 					has_terrain = woods
@@ -1151,16 +1145,21 @@ groundhawk_1b = {
 			}
 		}
 		effect = {
-			escann_superregion = {
-				limit = {
-					OR = {
-						has_terrain = woods
-						has_terrain = forest
-					}					
-				}
-				add_prosperity = 20
-				add_local_autonomy = -25
+			custom_tooltip = B42_bonus_on_escann_forest
+			hidden_effect = {
+				escann_superregion = {
+					limit = {
+						OR = {
+							has_terrain = woods
+							has_terrain = forest
+						}					
+						owned_by = ROOT
+					}
+					add_prosperity = 20
+					add_local_autonomy = -25
+				}				
 			}
+
 			874 = {
 				add_permanent_claim = ROOT		
 			}
@@ -1197,6 +1196,7 @@ groundhawk_1b = {
 					name = B42_pilgrimage_site
 					duration = -1
 				}
+				custom_tooltip = B42_strengthen_mounments
 			}
 		}
 	}
@@ -1433,19 +1433,9 @@ groundhawk_2b = {
 			religion = corinite
 			calc_true_if = {
 				amount = 3
-				employed_advisor = {
-					category = MIL
-					skill = 3
-				}
-				employed_advisor = {
-					category = DIP
-					skill = 3
-				}
-				employed_advisor = {
-					category = ADM
-					skill = 3
-				}
-					
+				has_mil_advisor_3 = yes
+				has_dip_advisor_3 = yes
+				has_adm_advisor_3 = yes
 				has_leader_with = {
 					general = yes
 					total_pips = 15
@@ -1505,20 +1495,95 @@ groundhawk_2b = {
 		
 		effect = {
 			add_yearly_manpower = 0.25
-			define_advisor = {
-				type = spymaster
-				religion = corinite
-				cost_multiplier = 0.50
+			if = {
+				limit = {
+					monthly_income = 50
+				}
+				define_advisor = {
+					type = spymaster
+					religion = corinite
+					skill = 3
+					cost_multiplier = 0.50
+				}
 			}
-			define_advisor = {
-				type = recruitmaster
-				religion = corinite
-				cost_multiplier = 0.50
+			else_if = {
+				limit = {
+					monthly_income = 25
+				}
+				define_advisor = {
+					type = spymaster
+					religion = corinite
+					skill = 2
+					cost_multiplier = 0.50
+				}				
 			}
-			define_advisor = {
-				type = inquisitor
-				religion = corinite
-				cost_multiplier = 0.50
+			else = {
+				define_advisor = {
+					type = spymaster
+					religion = corinite
+					skill = 1
+					cost_multiplier = 0.50
+				}				
+			}
+			if = {
+				limit = {
+					monthly_income = 50
+				}
+				define_advisor = {
+					type = recruitmaster
+					religion = corinite
+					skill = 3
+					cost_multiplier = 0.50
+				}
+			}
+			else_if = {
+				limit = {
+					monthly_income = 25
+				}
+				define_advisor = {
+					type = recruitmaster
+					religion = corinite
+					skill = 2
+					cost_multiplier = 0.50
+				}				
+			}
+			else = {
+				define_advisor = {
+					type = recruitmaster
+					religion = corinite
+					skill = 1
+					cost_multiplier = 0.50
+				}				
+			}
+			if = {
+				limit = {
+					monthly_income = 50
+				}
+				define_advisor = {
+					type = inquisitor
+					religion = corinite
+					skill = 3
+					cost_multiplier = 0.50
+				}
+			}
+			else_if = {
+				limit = {
+					monthly_income = 25
+				}
+				define_advisor = {
+					type = inquisitor
+					religion = corinite
+					skill = 2
+					cost_multiplier = 0.50
+				}				
+			}
+			else = {
+				define_advisor = {
+					type = inquisitor
+					religion = corinite
+					skill = 1
+					cost_multiplier = 0.50
+				}				
 			}
 			deepwoods_border_provinces = {
 				add_permanent_claim = ROOT
@@ -1645,7 +1710,9 @@ groundhawk_2b = {
 			if = {
 				limit = {
 					813 = {
-						NOT = { province_has_current_tech_fort_trigger = yes }
+						any_neighbor_province = {
+							province_has_current_tech_fort_trigger = yes
+						}
 					}
 				}
 				813 = {
@@ -1653,11 +1720,12 @@ groundhawk_2b = {
 						limit = {
 							province_has_current_tech_fort_trigger = yes
 						}
+						add_province_modifier = {
+							name = B42_fey_ward
+							duration = -1
+						}						
 					}
-					add_province_modifier = {
-						name = B42_fey_ward
-						duration = -1
-					}
+
 				}
 			}
 			
@@ -1673,7 +1741,9 @@ groundhawk_2b = {
 			if = {
 				limit = {
 					889 = {
-						NOT = { province_has_current_tech_fort_trigger = yes }
+						any_neighbor_province = {
+							province_has_current_tech_fort_trigger = yes
+						}
 					}
 				}
 				889 = {
@@ -1681,11 +1751,12 @@ groundhawk_2b = {
 						limit = {
 							province_has_current_tech_fort_trigger = yes
 						}
+						add_province_modifier = {
+							name = B42_fey_ward
+							duration = -1
+						}
 					}
-					add_province_modifier = {
-						name = B42_fey_ward
-						duration = -1
-					}
+
 				}
 			}
 			#if there're multiple then give random one.
@@ -1700,14 +1771,17 @@ groundhawk_2b = {
 			deepwoods_border_provinces = {
 				add_base_manpower = 1
 			}
-			escann_superregion = {
-				limit = {
-				
-					has_terrain = woods
-					has_terrain = forest
-				}
-				add_claim = ROOT
+			custom_tooltip = B42_esacnn_forest_claim
+			hidden_effect = {
+				escann_superregion = {
+					limit = {
+						has_terrain = woods
+						has_terrain = forest
+					}
+					add_claim = ROOT
+				}			
 			}
+
 		}
 	}
 	B42_evils_in_escann = {
@@ -1720,7 +1794,7 @@ groundhawk_2b = {
 		trigger = {
 			karma = -10
 			NOT = { karma = 10 }
-			corruption = 0.01
+			NOT = { corruption = 0.01 }
 			OR = {
 				has_global_modifier_value = {
 					which = tolerance_heretic
@@ -1826,26 +1900,30 @@ groundhawk_3b = {
 		}
 		
 		trigger = {
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = crimson_deluge_over_tooltip
-					has_global_flag = crimson_deluge_is_over
-				}
-				AND = {
-					#this is to improve performance when crimson deluge don't even started
-					#but when it started this trigger is kind of useless...
-					hidden_trigger = {
-						has_global_flag = crimson_deluge
-					}
-					num_of_owned_provinces_with = {
-						value = 15
-						NOT = { devastation = 0.01 }
-						OR = {
-							has_province_modifier = crimson_deluge_province_heavy
-							has_province_modifier = crimson_deluge_province
-						}
+			if = {
+				limit = {
+					custom_trigger_tooltip = {
+						tooltip = crimson_deluge_over_tooltip
+						has_global_flag = crimson_deluge_is_over
 					}				
 				}
+				custom_trigger_tooltip = {
+					tooltip = crimson_deluge_is_over
+					always = yes
+				}
+			}
+			else = {
+				hidden_trigger = {
+					has_global_flag = crimson_deluge
+				}
+				num_of_owned_provinces_with = {
+					value = 15
+					NOT = { devastation = 0.01 }
+					OR = {
+						has_province_modifier = crimson_deluge_province_heavy
+						has_province_modifier = crimson_deluge_province
+					}
+				}			
 			}
 		}
 		effect = {
@@ -1920,12 +1998,18 @@ groundhawk_3b = {
 		}
 		
 		trigger = {
-			OR = {
-				has_global_flag = league_war_complete
+			if = {
+				limit = { has_global_flag = league_war_complete }
 				AND = {
 					hre_leagues_enabled = yes
 					in_league = corinite
 					has_estate_privilege = estate_church_for_the_faith
+				}
+			}
+			else = {
+				custom_trigger_tooltip = {
+					tooltip = B42_league_war_complete
+					always = yes
 				}
 			}
 		}
@@ -1942,7 +2026,6 @@ groundhawk_3b = {
 					medium_increase_of_goblin_tolerance_effect = yes
 					add_opinion = {
 						who = ROOT
-						#TODO: check this modifier
 						modifier = B42_corinite_goblin
 					}
 				}
@@ -1986,7 +2069,7 @@ groundhawk_3b = {
 				type = all
 			}
 			832 = {
-				
+				province_has_center_of_trade_of_level = 2
 			}
 			OR = {
 				estate_influence = {
@@ -2041,8 +2124,8 @@ groundhawk_3b = {
 			B42_root_out_the_fey
 			B42_evils_in_escann
 			B42_the_walled_city
-			B42_our_steel_and_gold
-			B42_marcher_united
+			B42_our_own_steel_and_gold
+			B42_marchers_united
 		}
 		
 		provinces_to_highlight = {
@@ -2078,6 +2161,14 @@ groundhawk_3b = {
 		effect = {
 			country_event = {
 				id = flavour_groundhawk.11
+			}
+			#set before use...
+			#just to ensure nothing weird will happen
+			hidden_effect = {
+				set_variable = {
+					which = last_row_counter
+					value = 0
+				}
 			}
 		}
 		
@@ -2135,14 +2226,22 @@ groundhawk_4b = {
 				limit = {
 					has_country_flag = B42_embraced_slavery
 				}
-				OR = {
-					has_global_flag = escann_slave_events_ended
-					production_leader = {
-						trade_goods = slaves
+				if = {
+					limit = { has_global_flag = escann_slave_events_ended }
+					custom_trigger_tooltip = {
+						tooltip = B42_slavery_trade_ended
+						always = yes
 					}
-					trading_bonus = {
-						trade_goods = slaves
-						value = yes
+				}
+				else = {
+					OR = {
+						production_leader = {
+							trade_goods = slaves
+						}
+						trading_bonus = {
+							trade_goods = slaves
+							value = yes
+						}						
 					}
 				}
 				mission_completed = B42_the_cause_of_the_goblins
@@ -2182,7 +2281,7 @@ groundhawk_4b = {
 						add_base_production = 1
 					}				
 				}
-
+				decrease_monstrous_2 = yes
 			}
 			else_if = {
 				limit = {
@@ -2285,7 +2384,7 @@ groundhawk_4b = {
 		}
 	}
 	
-	B42_our_steel_and_gold = {
+	B42_our_own_steel_and_gold = {
 		position = 10
 		icon = mission_grand_trunk_road_mug #TODO: Placeholder
 		required_missions = {
@@ -2393,18 +2492,27 @@ groundhawk_5b = {
 					which = artillery_power
 					value = 0.10
 				}
-				has_global_modifier_value = {
-					which = shock_damage_received
-					value = 0
+				NOT = {
+					has_global_modifier_value = {
+						which = shock_damage_received
+						value = 0
+					}				
 				}
-				has_global_modifier_value = {
-					which = fire_damage_received
-					value = 0
+
+				NOT = {
+					has_global_modifier_value = {
+						which = fire_damage_received
+						value = 0
+					}				
 				}
-				has_global_modifier_value = {
-					which = morale_damage_received
-					value = -0.1
+
+				NOT = {
+					has_global_modifier_value = {
+						which = morale_damage_received
+						value = -0.1
+					}					
 				}
+
 				has_global_modifier_value = {
 					which = global_manpower_modifier
 					value = 0.35
@@ -2497,6 +2605,21 @@ groundhawk_5b = {
 					religion = corinite
 					has_dlc = "Common Sense"
 				}
+				
+				custom_tooltip = B42_add_40_opinion_tt
+				hidden_effect = {
+					every_known_country = {
+						limit = {
+							capital_scope = { superregion = escann_superregion }
+							NOT = { culture_is_orcish = yes }
+						}
+						add_opinion = {
+							who = ROOT
+							modifier = B42_ender_of_the_greentide
+						}
+					}
+				}
+				
 				if = {
 					limit = {
 						karma = 20
@@ -2518,7 +2641,7 @@ groundhawk_5b = {
 			}
 		}
 	}
-	B42_marcher_united = {
+	B42_marchers_united = {
 		position = 10
 		icon = mission_grand_trunk_road_mug #TODO: Placeholder
 		
@@ -2532,6 +2655,7 @@ groundhawk_5b = {
 				high_tolerance_human_race_trigger = yes
 				medium_tolerance_human_race_trigger = yes			
 			}
+			NOT = { has_country_modifier = monstrous_nation }
 			calc_true_if = {
 				amount = 2
 				OR = {
@@ -2554,8 +2678,6 @@ groundhawk_5b = {
 					high_tolerance_dwarven_race_trigger = yes
 					medium_tolerance_dwarven_race_trigger = yes
 				}
-				NOT = { has_country_modifier = monstrous_nation }
-				
 			}
 			
 		}
@@ -2623,9 +2745,7 @@ groundhawk_1c = {
 		effect = {
 			B42_upgrade_marcher_goblin_level = yes
 			B42_refresh_cb_for_missions = yes
-			add_war_exhaustion = -1
-			#0.167 approximately equal to 1/6
-			add_yearly_manpower = 0.167
+			B42_rewards_for_last_row_missions = yes
 		}
 	}
 }
@@ -2686,9 +2806,7 @@ groundhawk_2c = {
 		effect = {
 			B42_upgrade_marcher_goblin_level = yes
 			B42_refresh_cb_for_missions = yes
-			add_war_exhaustion = -1
-			#0.167 approximately equal to 1/6
-			add_yearly_manpower = 0.167	
+			B42_rewards_for_last_row_missions = yes
 		}
 	}
 }
@@ -2718,19 +2836,20 @@ groundhawk_3c = {
 		}
 		trigger = {
 			all_country = {
-				NOT = { capital_scope = { superregion = deepwoods_superregion } }
-				NOT = {
-					religion_group = fey_religion
+				OR = {
+					NOT = { capital_scope = { superregion = deepwoods_superregion } }
+					NOT = {
+						religion_group = fey_religion
+					}				
 				}
+
 			}
 		}
 		
 		effect = {
 			B42_upgrade_marcher_goblin_level = yes
 			B42_refresh_cb_for_missions = yes
-			add_war_exhaustion = -1
-			#0.167 approximately equal to 1/6
-			add_yearly_manpower = 0.167
+			B42_rewards_for_last_row_missions = yes
 		}
 	}
 }
@@ -2788,9 +2907,7 @@ groundhawk_4c = {
 		effect = {
 			B42_upgrade_marcher_goblin_level = yes
 			B42_refresh_cb_for_missions = yes
-			add_war_exhaustion = -1
-			#0.167 approximately equal to 1/6
-			add_yearly_manpower = 0.167	
+			B42_rewards_for_last_row_missions = yes
 		}
 	}
 }
@@ -2841,9 +2958,7 @@ groundhawk_5c = {
 		effect = {
 			B42_upgrade_marcher_goblin_level = yes
 			B42_refresh_cb_for_missions = yes
-			add_war_exhaustion = -1
-			#0.167 approximately equal to 1/6
-			add_yearly_manpower = 0.167	
+			B42_rewards_for_last_row_missions = yes
 		}
 	}
 }
