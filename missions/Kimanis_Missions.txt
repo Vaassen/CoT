@@ -166,6 +166,7 @@ kimanis_1_missions = {
 			G62 = {
 				country_event = { id = flavour_kimanis.21 }
 			}
+			custom_tooltip = G61_glorious_nostos_event_insight_tt
 		}
 	}
 
@@ -234,53 +235,65 @@ kimanis_2_missions = {
 		effect = {
 			add_prestige = 25
 			add_war_exhaustion = -5
-			custom_tooltip = G61_heroic_play_explanation_effect_tt
 			if = {
-				limit = { has_saved_global_event_target = oppressor_kimanis }
+				limit = {
+					is_at_war = no
+					is_subject = yes
+				}
+				custom_tooltip = G61_heroic_play_peace_effect_tt
+				set_country_flag = G61_stab_refund
+			}
+			else = {
+				custom_tooltip = G61_heroic_play_peace_effect_tt_NO
+			}
+			if = {
+				limit = { # at war with releaser
+						has_saved_global_event_target = oppressor_kimanis
+						is_in_war = {
+							casus_belli = cb_independence_war
+							defender_leader = event_target:oppressor_kimanis
+						}
+				}
+				custom_tooltip = G61_heroic_play_siege_effect_tt
+
+				hidden_effect = {
+					exile_ruler_as = {
+						name = G61_heroic_ruler
+					}
+					set_country_flag = G61_heroic_ruler_exiled
+					event_target:oppressor_kimanis = {
+						capital_scope = {
+							change_siege = 5
+						}
+					}
+				}
+				
+			}
+			else = {
+				custom_tooltip = G61_heroic_play_siege_effect_tt_NO
+			}
+			if = {
+				limit = {
+					is_at_war = no
+					is_subject = no
+				}
+				custom_tooltip = G61_heroic_play_free_effect_tt
+				define_advisor = {
+					type = artist
+					skill = 1
+					cost_multiplier = 0.1
+				}
+				clear_global_event_target = oppressor_kimanis
+				
+			}
+			else = {
+				custom_tooltip = G61_heroic_play_free_effect_tt_NO
 				tooltip = {
 					define_advisor = {
 						type = artist
 						skill = 1
 						cost_multiplier = 0.1
 					}
-				}
-				hidden_effect = {
-					if = { # at war with releaser
-						limit = {
-							is_in_war = {
-								casus_belli = cb_independence_war
-								defender_leader = event_target:oppressor_kimanis
-							}
-						}
-						exile_ruler_as = {
-							name = G61_heroic_ruler
-						}
-						set_country_flag = G61_heroic_ruler_exiled
-						event_target:oppressor_kimanis = {
-							capital_scope = {
-								change_siege = 5
-							}
-						}
-					}
-					else_if = {
-						limit = { is_subject = yes }
-						set_country_flag = G61_stab_refund
-					}
-					else = {
-						define_advisor = {
-							type = artist
-							skill = 1
-							cost_multiplier = 0.1
-						}
-						clear_global_event_target = oppressor_kimanis
-					}
-				}
-			}
-			else = {
-				define_advisor = {
-					type = artist
-					skill = 1
-					cost_multiplier = 0.1
 				}
 			}
 		}
@@ -336,12 +349,31 @@ kimanis_2_missions = {
 			G61_replant_the_vines
 		}
 		provinces_to_highlight = {
-			owned_by = ROOT
 			OR = {
-				has_terrain = farmlands 
+				region = devand_region
+				region = alecand_region
+			}
+			OR = {
+				has_terrain = farmlands
 				has_terrain = grasslands
 			}
-			devastation = 1
+			OR = {
+				devastation = 1
+				AND = {
+					NOT = { owned_by = ROOT }
+					ROOT = {
+						NOT = {
+							num_of_owned_provinces_with = {
+								value = 5
+								OR = {
+									has_terrain = farmlands
+									has_terrain = grasslands
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
@@ -393,6 +425,10 @@ kimanis_2_missions = {
 			G61_tragedy_of_kimanis
 		}
 		provinces_to_highlight = {
+			OR = {
+				region = alecand_region
+				region = devand_region
+			}
 			OR = {
 				AND = {
 					trade_goods = silk
@@ -502,6 +538,9 @@ kimanis_2_missions = {
 		effect = {
 			set_country_flag = G61_good_wine
 			custom_tooltip = G61_good_wine_tt
+			country_event = {
+				id = 6419
+			}
 		}
 
 	}
@@ -706,7 +745,7 @@ kimanis_4_missions = {
 		}
 		trigger = {
 			2732 = { # Kimanis province
-				owned_by = G61
+				owned_by = ROOT
 				NOT = { devastation = 1 }
 				has_fort_building_trigger = yes
 				num_of_times_improved_by_owner = 5
@@ -1019,7 +1058,7 @@ kimanis_4_missions = {
 					limit = {
 						has_province_flag = G61_had_wine_cults
 					}
-					G61 = {
+					ROOT = {
 						add_prestige = 2
 						add_splendor = 20
 					}
