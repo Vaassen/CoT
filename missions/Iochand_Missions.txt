@@ -352,7 +352,20 @@ A80_1 = {
 					}
 				}
 			}
-			change_innovativeness = 10
+			if = {
+				limit = {
+					OR = {
+						innovativeness = 100
+						NOT = { has_dlc = "Rule Britannia" }
+					}
+				}
+				add_mil_power = 50
+				add_dip_power = 50
+				add_adm_power = 50
+			}
+			else = {
+				change_innovativeness = 10
+			}
 		}
 	}
 
@@ -416,7 +429,15 @@ A80_1 = {
 				}
 				AND = {
 					owned_by = A20
-					A20 = { is_subject_of = ROOT }
+					A20 = {
+						is_subject_of = ROOT
+						NOT = {
+							has_opinion = {
+								who = ROOT
+								value = 150
+							}
+						}
+					}
 				}
 				AND = {
 					is_capital = yes
@@ -785,7 +806,7 @@ A80_2 = {
 				is_core = ROOT
 			}
 			calc_true_if = {
-				all_country = {
+				all_known_country = {
 					is_free_or_tributary_trigger = yes
 					has_opinion = {
 						who = ROOT
@@ -943,9 +964,9 @@ A80_2 = {
 		required_missions = { A80_2_5 A80_3_5 }
 
 		provinces_to_highlight = {
+			area = viswall_area
 			OR = {
 				AND = {
-					area = viswall_area
 					NOT = {
 						AND = {
 							country_or_non_sovereign_subject_holds = ROOT
@@ -1017,6 +1038,7 @@ A80_2 = {
 		}
 
 		effect = {
+			add_treasury = -500
 			country_event = { id = iochand.11 }
 			66 = {
 				remove_gnomish_minority_size_effect = yes
@@ -1372,9 +1394,12 @@ A80_3 = {
 						area = dragonheights_area
 						area = dragonspine_area
 					}
-					NOT = { owned_by = ROOT }
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
 				}
-				owned_by = Z38
+				AND = {
+					owned_by = Z38
+					NOT = { Z38 = { is_subject_of = ROOT } }
+				}
 			}
 		}
 
@@ -1436,9 +1461,9 @@ A80_3 = {
 		required_missions = { A80_2_3 }
 
 		provinces_to_highlight = {
+			region = small_country_region
 			OR = {
 				AND = {
-					region = small_country_region
 					owner = {
 						NOT = {
 							tag = ROOT
@@ -1456,16 +1481,18 @@ A80_3 = {
 				AND = {
 					owner = {
 						culture_is_halfling = no
-						small_country_region = { owned_by = PREV }
-					}
-					NOT = {
-						ROOT = {
-							any_known_country = {
-								culture_is_halfling = no
-								small_country_region = { owned_by = PREV }
-								has_spy_network_from = {
-									who = ROOT
-									value = 40
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 40
+							}
+							AND = {
+								is_subject = yes
+								overlord = {
+									has_spy_network_from = {
+										who = ROOT
+										value = 40
+									}
 								}
 							}
 						}
@@ -1495,26 +1522,40 @@ A80_3 = {
 				small_country_region = {
 					type = all
 					owner = {
-						tag = ROOT
-						is_subject_of = ROOT
-						AND = {
-							is_subject = no
-							culture_is_halfling = yes
-						}
-						AND = {
-							is_subject = yes
-							overlord = { culture_is_halfling = yes }
+						OR = {
+							tag = ROOT
+							is_subject_of = ROOT
+							AND = {
+								is_subject = no
+								culture_is_halfling = yes
+							}
+							AND = {
+								is_subject = yes
+								overlord = { culture_is_halfling = yes }
+							}
 						}
 					}
 				}
 				custom_trigger_tooltip = {
 					tooltip = A80_free_the_small_ttt
-					any_known_country = {
-						culture_is_halfling = no
-						small_country_region = { owned_by = PREV }
-						has_spy_network_from = {
-							who = ROOT
-							value = 40
+					small_country_region = {
+						owner = {
+							culture_is_halfling = no
+							OR = {
+								has_spy_network_from = {
+									who = ROOT
+									value = 40
+								}
+								AND = {
+									is_subject = yes
+									overlord = {
+										has_spy_network_from = {
+											who = ROOT
+											value = 40
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -1708,7 +1749,7 @@ A80_3 = {
 				type = all
 				has_trade_building_trigger = yes
 			}
-			#invention active
+			has_estate_privilege = artifice_invention_rapid_fermentation
 		}
 
 		effect = {
@@ -1829,11 +1870,8 @@ A80_3 = {
 					amount = 6
 					effect = "every_owned_or_non_tributary_subject_province = { 
 limit = { continent = europe OR = { trade_goods = wool trade_goods = livestock trade_goods = fish }
-development = 20 has_manufactory_trigger = yes has_production_building_trigger = yes }
-set_province_flag = A80_prov_flag iochandized_effect = yes }"
-				}
-				every_owned_or_non_tributary_subject_province = {
-					clr_country_flag = A80_prov_flag
+development = 20 has_manufactory_trigger = yes has_production_building_trigger = yes culture_is_iochandized = no }
+iochandized_effect = yes }"
 				}
 				add_years_of_owned_provinces_production_income = {
 					years = 2
@@ -1865,12 +1903,16 @@ set_province_flag = A80_prov_flag iochandized_effect = yes }"
 					NOT = { development = 15 }
 				}
 				AND = {
-					country_or_non_sovereign_subject_holds = A19
-					NOT = {
+					OR = {
+						superregion = ruin_proper_superregion
+						region = soruin_region
+					}
+					OR = {
 						has_terrain = farmlands
 						has_terrain = grasslands
 						has_terrain = coastline
 					}
+					NOT = { country_or_non_sovereign_subject_holds = A19 }
 					NOT = {
 						A19 = {
 							num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
@@ -2015,7 +2057,7 @@ set_province_flag = A80_prov_flag iochandized_effect = yes }"
 					all_known_country = {
 						is_subject_of = A19
 						is_subject_of_type = hezoggdoum
-						total_development =
+						total_development = 100
 					}
 					amount = 3
 				}
@@ -2111,6 +2153,7 @@ set_province_flag = A80_prov_flag iochandized_effect = yes }"
 		provinces_to_highlight = {
 			OR = {
 				AND = {
+					superregion = western_cannor_superregion
 					OR = {
 						region = lencenor_region
 						region = small_country_region
@@ -2423,7 +2466,20 @@ A80_4 = {
 				change_culture = creek_gnome
 				add_center_of_trade_level = 1
 			}
-			change_innovativeness = 5
+			if = {
+				limit = {
+					OR = {
+						innovativeness = 100
+						NOT = { has_dlc = "Rule Britannia" }
+					}
+				}
+				add_mil_power = 25
+				add_dip_power = 25
+				add_adm_power = 25
+			}
+			else = {
+				change_innovativeness = 5
+			}
 			add_country_modifier = {
 				name = A80_getting_to_the_point
 				duration = 9125
@@ -2830,6 +2886,7 @@ A80_4 = {
 		}
 
 		effect = {
+			add_treasury = -500
 			A19 = { add_liberty_desire = 10 }
 			hidden_effect = {
 				random_known_country = {
