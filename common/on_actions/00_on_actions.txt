@@ -1427,7 +1427,11 @@ on_war_won = {
 	}
 
 	if = {
-		limit = { has_global_flag = war_of_salt_and_silence }
+		limit = {
+			has_global_flag = war_of_salt_and_silence
+			has_saved_global_event_target = salt_and_silence_emperor
+			has_saved_global_event_target = salt_and_silence_giant
+		}
 
 		if = {
 			limit = { # Emperor Victory
@@ -4638,19 +4642,6 @@ on_siege_lost_province =  {
 		}
 		clr_province_flag = raja_new_castle
 	}
-	if = {
-		limit = {
-			ROOT = {
-				has_province_flag = holohana_is_here_flag
-			}
-			FROM = {
-				tag = REB
-			}
-		}
-		province_event = {
-			id = holohana_events.41
-		}
-	}
 	#Great Storm
 	if = { 
 		limit = { 
@@ -4816,7 +4807,9 @@ on_new_monarch = {
 		guwaamud.100 # Ruler Ascension needs a consort
 
 		tsukqiao.42 #Yak Command Dead Event
+
 		planetouched.106 # Ardimya auto-create planetouched ruler
+		planetouched.1 #New Planetouched ruler
 	}
 
 	random_events = {
@@ -6423,13 +6416,17 @@ on_emperor_elected = {
         limit = {
             has_global_flag = war_of_salt_and_silence 
             has_saved_global_event_target = salt_and_silence_emperor
-            event_target:salt_and_silence_emperor = { 
-                NOT = { has_country_flag = currently_in_salt_silence_war }
-                NOT = { tag = ROOT }
-            }
-        }
-        ROOT = {
-            save_global_event_target_as = salt_and_silence_emperor
+		}
+		if = {
+			limit = {
+				event_target:salt_and_silence_emperor = { 
+					NOT = { has_country_flag = currently_in_salt_silence_war }
+					NOT = { tag = ROOT }
+				}
+			}
+			ROOT = {
+				save_global_event_target_as = salt_and_silence_emperor
+			}
         }
     }
 	if = { #istralore
@@ -7482,6 +7479,23 @@ on_mil_development = {
 				modifier = developed_subject_z88
 			}
 		}
+	}
+	if = {
+		limit = {
+			owner = { has_estate = estate_planetouched ai = no }
+			NOT = { has_province_flag = planetouched_improved_mil_dev_twice_flag }
+		}
+		if = {
+			limit = { has_province_flag = planetouched_improved_mil_dev_flag }
+			set_province_flag = planetouched_improved_mil_dev_twice_flag
+			owner = {
+				change_variable = {
+					which = planetouchedImprovedMilDevQuan
+					value = 1
+				}
+			}
+		}
+		else = { set_province_flag = planetouched_improved_mil_dev_flag }
 	}
 	if = {
 		limit = { #Karach
@@ -8953,6 +8967,7 @@ on_monthly_pulse = {
 		limit = { is_or_was_tag = { tag = Z60 } }
 		tsukqiao_calc_might_and_right_effect = yes
 	}
+	planetouched_land_share_equalizer_effect = yes
 }
 
 on_yearly_pulse = {
@@ -12851,6 +12866,8 @@ on_four_year_pulse_3 = {
 		300 = xhazobkult_events.108 # High chance because the event's trigger is fairly rare (armies in enemy land)
 		100 = gnoll_flavor.1
 		100 = gnoll_flavor.3
+		100 = planetouched.2
+		100 = planetouched.3
 	}
 	
 	#taychend flavour events. Moved from five year pulse to make room for future kheionai events + to increase frequency
@@ -18283,6 +18300,20 @@ on_province_owner_change = {
 			}
 		}
 	}
+
+	if = {
+		limit = {
+			owner = { has_estate_privilege = estate_planetouched_oppressed_cursed }
+			OR = {
+				province_has_center_of_trade_of_level = 1
+				has_river_estuary_trigger = yes
+			}
+		}
+		add_province_modifier = {
+			name = estate_planetouched_cot_estuary_dev_cost
+			duration = -1
+		}
+	}
 }
 
 # country 1.35
@@ -21061,6 +21092,14 @@ on_dependency_gained = {
 		}
 	}
 
+	#Ynn River Worship embrace cannorian thought stuff
+	if = {
+		limit = {
+			has_country_modifier = yrw_4a
+		}
+		yrw_check_cannorian_subjects_effect = yes
+	}
+
 	#Drozma Tur
 	dt_aspire_compassion_subject_effect = yes
 
@@ -21679,6 +21718,14 @@ on_dependency_lost = {
 		FROM = {
 			restore_country_color = yes
 		}
+	}
+
+	#Ynn River Worship embrace cannorian thought stuff
+	if = {
+		limit = {
+			has_country_modifier = yrw_4a
+		}
+		yrw_check_cannorian_subjects_effect = yes
 	}
 
 	#Drozma Tur
@@ -26089,44 +26136,11 @@ on_expanded_infrastructure = {
 	if = {
 		limit = {
 			FROM = { has_estate_privilege = artifice_invention_mech_bureau }
+			NOT = { has_province_modifier = artifice_invention_mech_bureau_mod }
 		}
-		if = {
-			limit = { num_of_times_expanded_infrastructure = 5 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod5
+		add_province_modifier = {
+				name = artifice_invention_mech_bureau_mod
 				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod4
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 4 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod4
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod3
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 3 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod3
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod2
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 2 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod2
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod1
-		}
-		else = {
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod1
-				duration = -1
-			}
 		}
 	}
 	if = {
@@ -26236,44 +26250,10 @@ on_expanded_infrastructure_removed = {
 	}
 	if = {
 		limit = {
-			FROM = {
-				has_estate_privilege = artifice_invention_mech_bureau
-				NOT = { num_of_times_expanded_infrastructure = 5 }
-			}
+			FROM = { has_estate_privilege = artifice_invention_mech_bureau }
+			NOT = { num_of_times_expanded_infrastructure = 1 }
 		}
-		if = {
-			limit = { num_of_times_expanded_infrastructure = 4 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod4
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod5
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 3 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod3
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod4
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 2 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod2
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod3
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 1 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod1
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod2
-		}
-		else = { remove_province_modifier = artifice_invention_mech_bureau_mod1 }
+		remove_province_modifier = artifice_invention_mech_bureau_mod
 	}
 }
 
