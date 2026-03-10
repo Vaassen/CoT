@@ -28,7 +28,6 @@ F98_col_1 = {
 		} 
 
 		effect = {
-			# Future heirs are better. See on_new_heir in on_actions
 			custom_tooltip = F98_heirs_powerful_mage_chance_extra_stats_tt
 			custom_tooltip = F98_subjugation_cb_kheterata_region_tt
 			hidden_effect = { 
@@ -44,10 +43,8 @@ F98_col_1 = {
 						months = 1200 
 					}
 				}
-				hidden_effect = {
-					# This is for tracking exploit dev for the Wings of Stone mission later
-					set_country_flag = anb_on_action_tracking_exploit_dev_flag
-				}
+				# This is for tracking exploit dev for the Wings of Stone mission later
+				set_country_flag = anb_on_action_tracking_exploit_dev_flag
 			}
 		}
 	}
@@ -64,6 +61,19 @@ F98_col_1 = {
 				AND = {
 					region = kheterata_region
 					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					OR = {
+						province_id = 475
+						is_capital_of = ROOT
+					}
+					NOT = {
+						ROOT = {
+							capital_scope = {
+								higher_development_than = 475 # Kheterat
+							}
+						}
+					}
 				}
 				AND = {
 					province_id = 463
@@ -128,6 +138,7 @@ F98_col_1 = {
 				}
 				AND = { # It's Seascourge gnoll and it's not exploited with 1 infantry
 					culture = seascourge_gnoll
+					owned_by = ROOT
 					NOT = {
 						AND = {
 							has_province_flag = anb_has_been_exploited_flag
@@ -152,7 +163,7 @@ F98_col_1 = {
 				}
 			}
 			all_owned_province = {
-				OR = { # placeholder custom tooltip. Set anb_on_action_tracking_exploit_dev_flag country flag somewhere
+				OR = { # placeholder custom tooltip
 					NOT = { culture = seascourge_gnoll }
 					AND = {
 						has_province_flag = anb_has_been_exploited_flag
@@ -167,14 +178,9 @@ F98_col_1 = {
 		} 
 
 		effect = {
-			# Stonewing homecoming event
-			hidden_effect = { # Clear unnecessary flags
-				clr_country_flag = anb_on_action_tracking_exploit_dev_flag
-				every_owned_province = {
-					clr_province_flag = anb_has_been_exploited_flag
-				}
-			}
-		} 
+			country_event = { id = flavour_harpylen.2 }
+			clr_country_flag = anb_on_action_tracking_exploit_dev_flag
+		}
 	}
 
 	F98_to_sleep_to_dream = {
@@ -182,7 +188,27 @@ F98_col_1 = {
 		position = 10
 		required_missions = { F98_announce_intent } 
 		provinces_to_highlight = {  
-			#todo
+			OR = {
+				AND = {
+					OR = {
+						region = olavlund_region
+						area = vaengrheim_area
+					}
+					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+				}
+				AND = {
+					province_id = 6271
+					NOT = {
+						AND = {
+							has_province_modifier = F98_t3_roost_yria
+							OR = {
+								development = 45
+								num_of_times_expanded_infrastructure = 3
+							}
+						}
+					}
+				}
+			}
 		} 
 
 		trigger = {
@@ -214,7 +240,7 @@ F98_col_1 = {
 				country_or_non_sovereign_subject_holds = ROOT
 			}
 			6271 = {
-				#has yria trigger todo
+				has_province_modifier = F98_t3_roost_yria
 				OR = {
 					development = 45
 					num_of_times_expanded_infrastructure = 3
@@ -240,10 +266,9 @@ F98_col_2 = {
 		icon = mission_new_dawn
 		position = 1
 		provinces_to_highlight = {
-			# This one might be clearer if I highlight the ones already done
-			culture_group = harpy
+			culture_group = harpy	#I think it was too non-intuitive, players are too used to the highlighted provinces to be the ones that miss stuff
 			harpy_roost_st_has_any_roost = yes
-			num_of_times_improved_by_owner = 1
+			NOT = { num_of_times_improved_by_owner = 1 }
 		} 
 
 		trigger = {
@@ -304,7 +329,7 @@ F98_col_2 = {
 		} 
 
 		effect = {
-			# With Gilded Feather event
+			country_event = { id = flavour_harpylen.4 }
 		} 
 	}
 
@@ -457,10 +482,8 @@ F98_col_2 = {
 		} 
 
 		effect = {
-			# fire event Nuzenpau homecoming
-			hidden_effect = {
-				clr_country_flag = F98_nuzenpau_migration_done
-			}
+			country_event = { id = flavour_harpylen.6 }
+			clr_country_flag = F98_nuzenpau_migration_done
 		} 
 	}
 
@@ -491,7 +514,7 @@ F98_col_2 = {
 					}
 				}
 				AND = {
-					region = nomsyulhan_region
+					region = akasik_region
 					OR = {
 						trade_goods = iron
 						trade_goods = copper
@@ -499,11 +522,8 @@ F98_col_2 = {
 					}
 					NOT = {
 						AND = {
-							has_production_building_trigger = yes
-							OR = {
-								has_manufactory_trigger = yes
-								trade_goods = gold
-							}
+							has_production_or_gold_building_trigger = yes
+							has_production_manufactory_or_gold_trigger = yes
 							OR = {
 								num_of_times_expanded_infrastructure = 1
 								AND = {
@@ -546,11 +566,8 @@ F98_col_2 = {
 						trade_goods = gold
 					}
 					AND = {
-						has_production_building_trigger = yes
-						OR = {
-							has_manufactory_trigger = yes
-							trade_goods = gold
-						}
+						has_production_or_gold_building_trigger = yes
+						has_production_manufactory_or_gold_trigger = yes
 						if = {
 							limit = {
 								has_dlc = "Leviathan"
@@ -567,7 +584,18 @@ F98_col_2 = {
 
 		effect = { 
 			# placeholder make some inventions better
-		} 
+			# needs custom tooltip
+			if = {
+				limit = {
+					has_country_modifier = artifice_seismic_armor_mod
+				}
+				remove_country_modifier = artifice_seismic_armor_mod
+				add_country_modifier = {
+					name = artifice_seismic_armor_mod_harpylen_improved
+					duration = -1
+				}
+			}
+		}
 	}
 
 	F98_distant_sisters_departed = {
@@ -698,7 +726,10 @@ F98_col_2 = {
 		} 
 
 		effect = {
-			# placeholder unlock some more migration traces
+			set_country_flag = F98_pzerangi_migration_unlock
+			set_country_flag = F98_jarnklo_migration_unlock
+			set_country_flag = F98_nzeri_migration_unlock
+			custom_tooltip = harpylen_unlock_far_migrations_tt
 			if = {
 				limit = {
 					NOT = { has_dlc = "Cradle of Civilization" }
@@ -716,9 +747,15 @@ F98_col_2 = {
 		required_missions = { F98_announce_intent } 
 		provinces_to_highlight = {  # TODO WIP
 			region = east_effelai_region
-			NOT = {
-				country_or_non_sovereign_subject_holds = ROOT
-				owned_by = U68
+			OR = {
+				NOT = {
+					country_or_non_sovereign_subject_holds = ROOT
+					owned_by = U68
+				}
+				NOT = {
+					has_province_modifier = effelai_hub_burned
+					has_province_modifier = effelai_hub_dormant
+				}
 			}
 		} 
 
@@ -733,18 +770,16 @@ F98_col_2 = {
 				OR = {
 					exists = no
 					vassal_of = ROOT
-					ROOT = { # placeholder check I don't think this is right
-						any_ally = {
-							tag = F98
-						}
+					AND = {
+						alliance_with = ROOT
 						trust = {
-							who = F98
+							who = ROOT
 							value = 100
 						}
 					}
 				}
 			}
-			effelai_hub_provinces_group = {
+			effelai_hub_provinces_group = { # TODO CHECK this province group or use is_effelai_network_hub?
 				type = all
 				OR = {
 					has_province_modifier = effelai_hub_burned
@@ -783,6 +818,41 @@ F98_col_2 = {
 		}
 		provinces_to_highlight = {  
 			#todo
+			OR = {
+				AND = {
+					OR = {
+						region = dry_coast_region
+						region = dragon_coast_region # todo check which region
+					}
+					NOT = {
+						country_or_non_sovereign_subject_holds = ROOT
+					}
+				}
+				AND = {
+					OR = {
+						has_province_modifier = small_ebonsteel_forge
+						has_province_modifier = medium_ebonsteel_forge
+						has_province_modifier = urviksten_ebonsteel_forge
+					}
+					country_or_non_sovereign_subject_holds = ROOT
+					NOT = {
+						AND = {
+							has_production_building_trigger = yes
+							has_building = mage_tower
+						}
+					}
+				}
+				AND = {
+					is_effelai_network_hub = yes
+					country_or_non_sovereign_subject_holds = ROOT
+					NOT = {
+						AND = {
+							has_tax_building_trigger = yes
+							has_courthouse_building_trigger = yes
+						}
+					}
+				}
+			}
 		} 
 
 		trigger = {
@@ -796,10 +866,13 @@ F98_col_2 = {
 			}
 			all_owned_or_non_tributary_subject_province = {
 				OR = {
-					NOT = {
-						has_province_modifier = small_ebonsteel_forge
-						has_province_modifier = medium_ebonsteel_forge
-						has_province_modifier = urviksten_ebonsteel_forge
+					custom_trigger_tooltip = {
+						tooltip = harpylen_ebonsteel
+						NOT = {
+							has_province_modifier = small_ebonsteel_forge
+							has_province_modifier = medium_ebonsteel_forge
+							has_province_modifier = urviksten_ebonsteel_forge
+						}
 					}
 					AND = {
 						has_building = mage_tower
@@ -838,22 +911,13 @@ F98_col_2 = {
 					harpy_roost_st_terrain_is_valid = yes
 					NOT = { harpy_roost_st_has_non_fledgling_roost = yes }
 				}
+				add_permanent_province_modifier = { name = harpy_roost_mod_roost_fledgling duration = -1 }
+				set_province_flag = harpy_roost_present
 				if = {
-					limit = {
-						region = dragon_coast_region
-					}
-					add_permanent_province_modifier = { name = harpy_roost_mod_roost_fledgling duration = -1 }
-					hidden_effect = { set_province_flag = harpy_roost_present }
+					limit = { region = dragon_coast_region }
 					change_culture = jarnklo_harpy
 				}
-				if = {
-					limit = {
-						region = dry_coast_region
-					}
-					add_permanent_province_modifier = { name = harpy_roost_mod_roost_fledgling duration = -1 }
-					hidden_effect = { set_province_flag = harpy_roost_present }
-					change_culture = kiohalen_harpy
-				}
+				else = { change_culture = kiohalen_harpy }
 			}
 		} 
 	}
@@ -1100,6 +1164,7 @@ F98_col_3 = {
 				country_or_non_sovereign_subject_holds = ROOT
 			}
 			# placeholder traced the Siadunan migration
+			has_country_flag = F98_siadunan_migration_done
 			2908 = { #Larfira
 				num_of_times_improved = 5
 				has_manpower_building_trigger = yes
@@ -1122,7 +1187,7 @@ F98_col_3 = {
 				name = F98_daughters_of_siadanlen
 				duration = -1
 			}
-			simple_dynamic_effect_single_bonus = {
+			complex_dynamic_effect = {
 				first_custom_tooltip = F98_siadan_subject_tt # siadan is your subject and have 15 or fewer provinces
 				first_limit = "
 					F48 = { # Siadan
@@ -1132,7 +1197,7 @@ F98_col_3 = {
 					}"
 				first_effect = "inherit = F48"
 			}
-			simple_dynamic_effect_single_bonus = {
+			complex_dynamic_effect = {
 				first_custom_tooltip = F98_elaienna_subject_tt # Elaienna is your subject and have 15 or fewer provinces
 				first_limit = "
 					F49 = { # Elaienna
@@ -1142,7 +1207,7 @@ F98_col_3 = {
 					}"
 				first_effect = "inherit = F49"
 			}
-			simple_dynamic_effect_single_bonus = {
+			complex_dynamic_effect = {
 				first_custom_tooltip = F98_mulen_subject_tt # Mulen is your subject and have 15 or fewer provinces
 				first_limit = "
 					F50 = { # Mulen
@@ -1166,6 +1231,7 @@ F98_col_3 = {
 				}
 				4124 = { harpy_roost_build_tier_2_free_nocap = yes }
 			}
+			clr_country_flag = F98_siadunan_migration_done
 		} 
 	}
 
@@ -1202,7 +1268,7 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			# event Puruse the past
+			country_event = { id = flavour_harpylen.8 }
 		} 
 	}
 
@@ -1263,7 +1329,7 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			# fire Nalenian homecoming event
+			country_event = { id = flavour_harpylen.9 }
 		} 
 	}
 
@@ -1282,7 +1348,7 @@ F98_col_3 = {
 					NOT = {
 						AND = {
 							country_or_non_sovereign_subject_holds = ROOT
-							#has a yria trigger (t3 roost)
+							has_province_modifier = F98_t3_roost_yria
 							OR = {
 								has_great_project = {
 									type = crater_of_the_martyr
@@ -1303,7 +1369,7 @@ F98_col_3 = {
 			}
 			6118 = { # Senidmot
 				country_or_non_sovereign_subject_holds = ROOT
-				#has a yria trigger (t3 roost)
+				has_province_modifier = F98_t3_roost_yria
 			}
 			any_subject_country = {
 				religion = sky_domain
@@ -1389,7 +1455,7 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			# fire event Nillen
+			country_event = { id = flavour_harpylen.10 }
 		} 
 	}
 
@@ -1538,7 +1604,7 @@ F98_col_3 = {
 				}
 				# Highlight the Yria that aren't developed enough
 				AND = {
-					# has level 3 roost
+					has_province_modifier = F98_t3_roost_yria
 					NOT = {
 						AND = {
 							development = 50
@@ -1559,15 +1625,15 @@ F98_col_3 = {
 			is_hegemon = yes
 			num_of_owned_provinces_with = {
 				value = 15
-				# Yria, level 3 roost
+				has_province_modifier = F98_t3_roost_yria
 				development = 50
 				num_of_times_expanded_infrastructure = 3
 			}
 			capital_scope = { # Capital is highest dev non-hold province in the world TODO custom TT
 				NOT = {
 					any_province = {
-						is_a_hold = no
 						development = PREV
+						NOT = { province_group = hold_province }
 					}
 				}
 			}
@@ -1575,7 +1641,7 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			# fire event As First, Final
+			country_event = { id = flavour_harpylen.11 }
 		} 
 	}
 }
@@ -1969,7 +2035,7 @@ F98_col_4 = {
 
 		effect = {
 			country_event = {
-				id = flavour_harpylen.56
+				id = flavour_harpylen.12
 			}
 		} 
 	}
@@ -2175,7 +2241,7 @@ F98_col_4 = {
 						AND = {
 							has_building = ramparts
 							has_fort_building_trigger = yes
-							#yria t3 trigger
+							has_province_modifier = F98_t3_roost_yria
 						}
 					}
 				}
@@ -2190,7 +2256,7 @@ F98_col_4 = {
 			6125 = {
 				has_building = ramparts
 				has_fort_building_trigger = yes
-				#yria t3 trigger
+				has_province_modifier = F98_t3_roost_yria
 			}
 			has_estate_privilege = estate_church_independent_inquisition
 			has_estate_privilege = estate_church_religious_state
@@ -2201,7 +2267,7 @@ F98_col_4 = {
 		} 
 
 		effect = {
-			country_event = { id = flavour_harpylen.57 }
+			country_event = { id = flavour_harpylen.13 }
 		} 
 	}
 
@@ -2559,7 +2625,7 @@ F98_col_5 = {
 					NOT = {
 						development = 40
 						has_building = mage_tower
-						#has a yria trigger (t3 roost)
+						has_province_modifier = F98_t3_roost_yria
 					}
 				}
 			}
@@ -2577,7 +2643,7 @@ F98_col_5 = {
 				trade_goods = damestear
 				development = 40
 				has_building = mage_tower
-				#has a yria trigger (t3 roost)
+				has_province_modifier = F98_t3_roost_yria
 			}
 		} 
 
@@ -2629,7 +2695,7 @@ F98_col_5 = {
 		} 
 
 		effect = {
-			country_event = { id = flavour_harpylen.55 }
+			country_event = { id = flavour_harpylen.14 }
 		} 
 	}
 }
