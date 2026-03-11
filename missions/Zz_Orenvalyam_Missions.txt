@@ -51,22 +51,69 @@ U39_1_missions_part_1 = {
 				AND = {
 					ruler_is_silverspite = yes
 					has_not_yodhans_sickness_4 = yes
-					alliance_with = H67 #Rezankand
-					H67 = { #Rezankand
-						trust = {
-							who = ROOT
-							value = 75
+					if = {
+						limit = { exists = H66 } #Jaherian Exemplars
+						alliance_with = H66 #Jaherian Exemplars
+						H66 = { #Jaherian Exemplars
+							trust = {
+								who = ROOT
+								value = 75
+							}
+						}
+						army_balance = {
+							who = H66 #Jaherian Exemplars
+							value = 1.5
 						}
 					}
-					army_balance = {
-						who = H67 #Rezankand
-						value = 1.5
+					else = {
+						alliance_with = H67 #Rezankand
+						H67 = { #Rezankand
+							trust = {
+								who = ROOT
+								value = 75
+							}
+						}
+						army_balance = {
+							who = H67 #Rezankand
+							value = 1.5
+						}
 					}
 				}
 			}
 		}
 
 		effect = {
+			if = {
+				limit = { exists = H66 } #Jaherian Exemplars
+				H66 = { #Jaherian Exemplars
+					change_tag = H67 #Rezankand
+					primary_and_ruler_culture_change = { race = elven new_culture = dawn_elf }
+					hidden_effect = {
+						add_accepted_culture = sun_elf
+						every_owned_province = {
+							limit = {
+								culture = sun_elf
+							}
+							change_culture = dawn_elf
+						}
+						if = {
+							limit = {
+								NOT = {
+									employed_advisor = {
+										name = "Karodir I Varamzuir"
+										skill = 3
+										type = court_mage
+									}
+								}
+							}
+							country_event = { #Get Karodir
+								id = flavor_rezankand.12
+								days = 90 #3 Months
+							}
+						}
+					}
+				}
+			}
 			if = {
 				limit = { alliance_with = H67 } #Rezankand
 				tooltip = { country_event = { id = orenvalyam_events.13 } } #Fate of the Heralds
@@ -1021,8 +1068,7 @@ U39_2_missions = {
 				AND = {
 					region = soruin_region
 					NOT = {
-						country_or_non_sovereign_subject_holds = ROOT
-						is_empty = yes
+						country_or_subject_holds_or_uncolonized = ROOT
 						religion = oren_nayiru_reformed
 					}
 				}
@@ -1035,8 +1081,7 @@ U39_2_missions = {
 				soruin_region = {
 					type = all
 					OR = {
-						country_or_non_sovereign_subject_holds = ROOT
-						is_empty = yes
+						country_or_subject_holds_or_uncolonized = ROOT
 						religion = oren_nayiru_reformed
 					}
 				}
@@ -1056,8 +1101,7 @@ U39_2_missions = {
 				soruin_region = {
 					type = all
 					OR = {
-						country_or_non_sovereign_subject_holds = ROOT
-						is_empty = yes
+						country_or_subject_holds_or_uncolonized = ROOT
 						religion = oren_nayiru_reformed
 					}
 				}
@@ -1559,7 +1603,7 @@ U39_3_missions = {
 				AND = {
 					superregion = taychend_superregion
 					is_empty = no
-					NOT = { is_state_core = ROOT }
+					is_state = no
 				}
 				AND = {
 					owned_by = ROOT
@@ -1572,7 +1616,7 @@ U39_3_missions = {
 			taychend_superregion = {
 				type = all
 				OR = {
-					is_state_core = ROOT
+					is_state = no
 					is_empty = yes
 				}
 			}
@@ -1590,17 +1634,28 @@ U39_3_missions = {
 			custom_tooltip = U39_add_guiding_the_faith_tt
 			hidden_effect = {
 				every_owned_province = {
-					limit = { anb_has_seat_in_parliament = yes }
-					add_province_modifier = {
-						name = U39_guiding_the_faith
-						duration = -1
+					if = {
+						limit = { anb_has_seat_in_parliament = yes }
+						add_province_modifier = {
+							name = U39_guiding_the_faith
+							duration = -1
+						}
+					}
+					else = {
+						add_province_modifier = {
+							name = U39_guiding_the_faith_bad
+							duration = -1
+						}
 					}
 				}
-				random_owned_province = {
-					limit = { superregion = taychend_superregion }
+				for = {
 					amount = 20
-					type = random
-					spawn_rebels = { size = 2 type = noble_rebels }
+					effect = "
+						random_owned_province = {
+							limit = { superregion = taychend_superregion }
+							spawn_rebels = { size = 2 type = noble_rebels }
+						}
+					"
 				}
 			}
 		}
@@ -1680,11 +1735,11 @@ U39_3_missions = {
 			owned_by = ROOT
 			OR = {
 				AND = {
-					OR = {
-						superregion = kheionai_superregion
-						superregion = taychend_superregion
+					NOT = {
+						NOT = { superregion = kheionai_superregion }
+						NOT = { superregion = taychend_superregion }
+						is_state_core = ROOT
 					}
-					NOT = { is_state_core = ROOT }
 				}
 				AND = {
 					development = 25
@@ -1750,7 +1805,13 @@ U39_3_missions = {
 				AND = {
 					continent = south_america
 					NOT = {
-						country_or_subject_holds = ROOT
+						country_or_subject_holds_or_uncolonized = yes
+						region = ruined_sea_region
+						region = ravenous_isle_region
+						region = tor_nayyi_region
+						region = turtleback_isle_region
+						region = severed_coast_region
+						is_island = yes
 						is_wasteland = yes
 						is_sea = yes
 						owner = {
@@ -1760,7 +1821,6 @@ U39_3_missions = {
 								is_native_tribe = yes
 							}
 						}
-						is_empty = yes
 					}
 				}
 				AND = {
@@ -1769,7 +1829,7 @@ U39_3_missions = {
 					ROOT = {
 						NOT = {
 							calc_true_if = {
-								amount = 500
+								amount = 450
 								desc = U39_converted_everything_tt
 								all_province = {
 									OR = {
@@ -1785,25 +1845,28 @@ U39_3_missions = {
 		}
 
 		trigger = {
-			south_america = {
-				type = all
-				OR = {
-					custom_trigger_tooltip = {
-						tooltip = U39_own_sa_tt
-						OR = {
-							country_or_subject_holds = ROOT
-							is_wasteland = yes
-							is_sea = yes
+			custom_trigger_tooltip = {
+				tooltip = U39_twilight_conquest_tt
+				south_america = {
+					type = all
+					OR = {
+						country_or_subject_holds_or_uncolonized = yes
+						region = ruined_sea_region
+						region = ravenous_isle_region
+						region = tor_nayyi_region
+						region = turtleback_isle_region
+						region = severed_coast_region
+						is_island = yes
+						is_wasteland = yes
+						is_sea = yes
+						owner = {
+							culture_is_ruinborn = yes
+							OR = {
+								is_tribal = yes
+								is_native_tribe = yes
+							}
 						}
 					}
-					owner = {
-						culture_is_ruinborn = yes
-						OR = {
-							is_tribal = yes
-							is_native_tribe = yes
-						}
-					}
-					is_empty = yes
 				}
 			}
 			calc_true_if = {
@@ -3367,7 +3430,12 @@ U39_5_missions = {
 				country_or_subject_holds_or_uncolonized = yes
 				owner = {
 					culture_is_ruinborn = yes
-					NOT = { is_neighbor_of = ROOT }
+					NOT = {
+						any_owned_province = {
+							is_neighbor_of = ROOT
+							is_empty = no
+						}
+					}
 					OR = {
 						has_spy_network_from = {
 							who = ROOT
@@ -3386,7 +3454,12 @@ U39_5_missions = {
 					country_or_subject_holds_or_uncolonized = yes
 					owner = {
 						culture_is_ruinborn = yes
-						NOT = { is_neighbor_of = ROOT }
+						NOT = { #is_neighbor_of counts tribal land apparently
+							any_owned_province = {
+								is_neighbor_of = ROOT
+								is_empty = no
+							}
+						}
 						OR = {
 							has_spy_network_from = {
 								who = ROOT
@@ -3447,6 +3520,10 @@ U39_5_missions = {
 								value = 33
 							}
 							any_owned_province = { region = amadia_region }
+						}
+						if = {
+							limit = { government = native }
+							add_government_reform = native_settle_down_reform
 						}
 						every_tribal_land_province = {
 							limit = { NOT = { owner = { exists = yes } } }
