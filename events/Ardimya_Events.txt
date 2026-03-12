@@ -47,15 +47,20 @@ country_event = {
 	}
 	
 	immediate = {
-		random_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				culture_is_human = yes
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					region = ardimya_region
+					is_colony = no
+					culture_is_human = yes
+				}
+				#this one could be global...
+				save_global_event_target_as = ardimyan_rise_province
+				
 			}
-			save_event_target_as = ardimyan_rise_province
+			set_global_flag = ardimya_event_chain_started
 		}
-		set_global_flag = ardimya_event_chain_started
+
 	}
 	
 	option = {
@@ -63,24 +68,20 @@ country_event = {
 		event_target:ardimyan_rise_province = {
 			add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
 			change_culture = ardimyan
-		}
-		hidden_effect = {
-			#this one is less important though 
-			country_event = {
-				id = ardimya.2
-				days = 730
-			}
-			#at least 1 country should fire this event to continue event chain.
-			every_country = {
-				limit = {
-					has_country_flag = cannorian_ardimya_colonist
-				}
-				country_event = {
+			hidden_effect = {
+				province_event = {
 					id = ardimya.3
 					days = 7300
 				}
+				set_variable = {
+					which = ardimya_convert_counter
+					value = 10
+				}
+				province_event = {
+					id = ardimya.2
+					days = 730
+				}			
 			}
-
 		}
 	}
 }
@@ -95,10 +96,18 @@ country_event = {
 	
 	is_triggered_only = yes
 	trigger = { 
-		always = yes
+		check_variable = {
+			which = ardimya_convert_counter
+			value = 1
+		}
 	}
 	
 	immediate = {
+		#this event have already HIDDEN...
+		subtract_variable = {
+			which = ardimya_convert_counter
+			value = 1
+		}
 		random_country = {
 			limit = {
 				capital_scope = { continent = europe }
@@ -106,17 +115,19 @@ country_event = {
 				ardimya_region = {
 					owned_by = PREV
 					is_colony = no
+					culture_is_human = yes
+					NOT = { culture = ardimyan }
 				}
 			}
 			save_event_target_as = ardimyan_rise_tag
 		}
-		#in case player (or 1 tag) owned all ardimya colonized provinces.
-		if = {
-			limit = {
-				NOT = { has_saved_event_target = ardimyan_rise_tag }
-			}
-			save_event_target_as = ardimyan_rise_tag
-		}
+		#TODO: Need Test
+		#if = {
+		#	limit = {
+		#		NOT = { has_saved_event_target = ardimyan_rise_tag }
+		#	}
+		#	owner = { save_event_target_as = ardimyan_rise_tag }
+		#}
 	}
 	
 	option = {
@@ -130,7 +141,7 @@ country_event = {
 }
 
 #Choose a tag to create ardimya
-country_event = {
+province_event = {
 	id = ardimya.3
 	title = ardimya.3.t
 	desc = ardimya.3.d
@@ -146,13 +157,11 @@ country_event = {
 	
 	option = {
 		name = ardimya.3.a
-		
-
-		
 		every_country = {
 			limit = {
-				capital_scope = { continent = europe }
+				#I think this one is more restricted 
 				has_country_flag = cannorian_ardimya_colonist
+				capital_scope = { continent = europe }
 			}
 			if = {
 				limit = { NOT = { has_saved_event_target = ardimya_overlord } }
@@ -201,52 +210,71 @@ country_event = {
 		capital_scope = { continent = europe }
 	}
 	
-	
+	immediate = {
+		hidden_effect = {
+			random_owned_province = {
+				limit = {
+					region = ardimya_region
+					is_colony = no
+					culture_is_human = yes
+					NOT = { culture = ardimyan }
+				}
+				
+				save_event_target_as = ardimyan_conversion_1
+			}
+			random_owned_province = {
+				limit = {
+					region = ardimya_region
+					is_colony = no
+					culture_is_human = yes
+					NOT = { culture = ardimyan }
+					NOT = { province_id = event_target:ardimyan_conversion_1 }
+				}
+
+				save_event_target_as = ardimyan_conversion_2
+			}
+			if = {
+				limit = { has_saved_event_target = ardimyan_conversion_2 }
+				random_owned_province = {
+					limit = {
+						region = ardimya_region
+						is_colony = no
+						culture_is_human = yes
+						NOT = { culture = ardimyan }
+						NOT = { province_id = event_target:ardimyan_conversion_1 }
+						NOT = { province_id = event_target:ardimyan_conversion_2 }
+					}
+					save_event_target_as = ardimyan_conversion_3
+				}			
+			}		
+		}
+	}
 	option = {
 		name = ardimya.4.a
-		random_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				culture_is_human = yes
-				NOT = { culture = ardimyan }
-			}
+		event_target:ardimyan_conversion_1 = {
 			add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
 			change_culture = ardimyan
 		}
-		random_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				culture_is_human = yes
-				NOT = { culture = ardimyan }
-			}
-			add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
-			change_culture = ardimyan
-		}
-		random_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				culture_is_human = yes
-				NOT = { culture = ardimyan }
-			}
-			add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
-			change_culture = ardimyan
-		}
-
 		if = {
-			limit = {
-				#I don't really know what I should do better...
-				#maybe a variable shared by all colonist tags who colonized ardimya?
-				#these text will be removed when first round code review ended.
-				NOT = { has_global_flag = ardimya_founded }
+			limit = { has_saved_event_target = ardimyan_conversion_2 }
+			event_target:ardimyan_conversion_2 = {
+				add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
+				change_culture = ardimyan
 			}
-		
-			hidden_effect = {
-				country_event = {
+		}
+		if = {
+			limit = { has_saved_event_target = ardimyan_conversion_3 }
+			event_target:ardimyan_conversion_3 = {
+				add_province_modifier = { name = ardimya_rise_of_new_people duration = 18250 }
+				change_culture = ardimyan
+			}
+		}		
+		#now this recursive have limited
+		hidden_effect = {
+			event_target:ardimyan_rise_province = {
+				province_event = {
 					id = ardimya.2
-					days = 730
+					days = 7300
 				}
 			}
 		}
@@ -267,27 +295,18 @@ country_event = {
 		any_owned_province = {
 			region = ardimya_region
 			is_colony = no
-			owned_by = ROOT
-		}
-	}
-	immediate = {
-		set_global_flag = ardimya_founded
-		random_owned_province = { 
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				owned_by = ROOT
-				
-			}
-			save_event_target_as = S91_spawn_point
+			
 		}
 	}
 	option = {
 		name = ardimya.5.a
-		event_target:S91_spawn_point = {
+		every_owned_province = {
+			limit = {
+				region = ardimya_region
+				is_colony = no
+			}
 			cede_province = S91
 			add_core = S91
-			change_culture = ardimyan
 		}
 		if = {
 			limit = { has_dlc = "Leviathan" }
@@ -302,15 +321,7 @@ country_event = {
 				subject = S91
 			}
 		}
-		every_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				owned_by = ROOT
-			}
-			cede_province = S91
-			add_core = S91
-		}
+
 		6076 = {
 			add_trade_modifier = {
 				who = ROOT
@@ -335,10 +346,18 @@ country_event = {
 	}
 	option = {
 		name = ardimya.5.b
-		event_target:S91_spawn_point = {
+		
+		trigger = {
+			ai = no
+		}
+		
+		every_owned_province = {
+			limit = {
+				region = ardimya_region
+				is_colony = no
+			}
 			cede_province = S91
 			add_core = S91
-			change_culture = ardimyan
 		}
 		if = {
 			limit = { has_dlc = "Leviathan" }
@@ -353,15 +372,6 @@ country_event = {
 				subject = S91
 			}
 		}
-		every_owned_province = {
-			limit = {
-				region = ardimya_region
-				is_colony = no
-				owned_by = ROOT
-			}
-			cede_province = S91
-			add_core = S91
-		}
 		6076 = {
 			add_trade_modifier = {
 				who = ROOT
@@ -374,7 +384,6 @@ country_event = {
 			name = ardimyaan_rise_of_trade
 			duration = -1
 		}
-		switch_tag = S91
 		hidden_effect = {
 			S91 = {
 				primary_and_ruler_culture_change = { race = human new_culture = ardimyan }
@@ -384,13 +393,15 @@ country_event = {
 				days = 7300
 			}
 		}
+		switch_tag = S91
+		
 	}
 	option = {
 		name = ardimya.5.c
-		ardimya_region = {
+		every_owned_province = {
 			limit = {
+				region = ardimya_region
 				is_colony = no
-				owned_by = ROOT
 				has_province_modifier = ardimya_rise_of_new_people
 			}
 			add_province_modifier = {
@@ -434,6 +445,7 @@ country_event = {
 		ardimya_region = {
 			limit = {
 				owned_by = ROOT
+				is_colony = no
 			}
 			add_local_autonomy = -60
 			remove_province_modifier = restless_ardimyans
@@ -497,24 +509,41 @@ country_event = {
 			name = ardimya_independence_war_income
 			duration = 18250
 		}
-		random_owned_province = {
-			limit  = {
-				has_port = yes
-			}
-			build_to_forcelimit = {
-				infantry = 0.65
-				cavalry = 0.15
-				artillery = 0.2
-				heavy_ship = 0.4
-				light_ship = 0.4
-			}
-		}
-		while = {
+		if = {
 			limit = {
-				NOT = { manpower_percentage = 0.99 }
+				ai = yes
 			}
-			add_manpower = 5
+			random_owned_province = {
+				limit  = {
+					has_port = yes
+				}
+				build_to_forcelimit = {
+					infantry = 0.5
+					cavalry = 0.15
+					artillery = 0.2
+					heavy_ship = 0.4
+					light_ship = 0.4
+				}
+			}
+			while = {
+				limit = {
+					NOT = { manpower_percentage = 0.99 }
+				}
+				add_manpower = 5
+			}			
 		}
+		else = {
+			capital_scope = {
+				infantry = ROOT
+				infantry = ROOT
+				infantry = ROOT
+				infantry = ROOT
+				infantry = ROOT
+			}
+			add_manpower = 10
+		}
+
+
 		declare_war_with_cb = {
 			casus_belli = cb_independence_war
 			who = overlord
@@ -544,15 +573,18 @@ country_event = {
 		remove_country_modifier = ardimya_independence_war
 		clr_country_flag = ardimya_war_of_independence
 		custom_tooltip = ardimya_conquest_culture_convert_tt
-		ardimya_region = {
-			limit = {
-				owner = {
-					capital_scope = { continent = europe }
+		hidden_effect = {
+			ardimya_region = {
+				limit = {
+					owner = {
+						capital_scope = { continent = europe }
+					}
 				}
-			}
-			set_province_flag = ardimya_conquer_target
-			add_core = S91
+				set_province_flag = ardimya_conquer_target
+				add_core = S91
+			}		
 		}
+
 		add_country_modifier = {
 			name = ardimya_nation_founded
 			duration = 9125
@@ -651,10 +683,6 @@ country_event = {
 }
 
 #When Ardimya independence wars takes too long
-#actually I want to make a event to give player overlord
-#options to give up ardimya or continue war
-#but maybe It needs another content review or something be like that and I don't have interest right now.
-#these text will be removed after first round code review
 country_event = {
 	id = ardimya.11
 	title = ardimya.11.t
@@ -665,19 +693,26 @@ country_event = {
 	trigger = {
 		is_in_war = {
 			attackers = S91
-			defenders = ROOT
+			participants = ROOT
 			casus_belli = cb_independence_war
 			duration = 3649
 		}
 	}
 	
 	immediate = {
-		if = {
-			limit = {
-				has_country_flag = ardimya_war_of_independence_colonial_power
+		hidden_effect = {
+			if = {
+				limit = {
+					has_country_flag = ardimya_war_of_independence_colonial_power
+				}
+				white_peace = S91
+				clr_country_flag = ardimya_war_of_independence_colonial_power
 			}
-			white_peace = S91
+			else = {
+				clr_country_flag = ardimya_war_of_independence
+			}
 		}
+
 	}
 	option = {
 		trigger = {
@@ -706,7 +741,6 @@ country_event = {
 		any_owned_province = {
 			has_province_flag = ardimya_conquer_target
 		}
-		NOT = { has_country_flag = ardimya_mute_convert }
 	}
 	
 	option = {
@@ -733,5 +767,37 @@ country_event = {
 			clr_province_flag = ardimya_conquer_target
 		}
 		set_country_flag = ardimya_mute_convert
+	}
+} 
+
+#a duplicate of ardimya.12 but hidden
+country_event = {
+	id = ardimya.13
+	title = ardimya.13.t
+	desc = ardimya.13.d
+	picture = COLONIZATION_eventPicture
+	is_triggered_only = yes
+	hidden = yes
+	
+	
+	trigger = {
+		tag = S91
+		any_owned_province = {
+			has_province_flag = ardimya_conquer_target
+		}
+	}
+	
+	
+	option = {
+		name = ardimya.13.a
+		every_owned_province = {
+			limit = {
+				has_province_flag = ardimya_conquer_target
+				#should only convert human
+				culture_is_human = yes
+			}
+			change_culture = ardimyan
+			clr_province_flag = ardimya_conquer_target
+		}
 	}
 } 
