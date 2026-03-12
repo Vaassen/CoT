@@ -32,27 +32,8 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			if = { 
-				limit = {
-					OR = {
-						AND = {
-							F42 = { capital_scope = { controlled_by = ROOT } }
-							F42 = { NOT = { war_score_against = { who = ROOT value = -50 } } }
-						}
-						AND = {
-							F42 = { capital_scope = { controlled_by = F33 } }
-							F42 = { NOT = { war_score_against = { who = F33 value = -50 } } }
-						}
-					}
-				}
-				set_country_flag = F80_cflag_akalses_pu
-			}
-			if = { limit = { F33 = { ai = yes } }
-				create_subject = {
-					subject_type = twin_empire
-					subject = F33
-				}
-				F33 = {
+			F33 = {
+				if = { limit = { ai = yes }
 					if = { limit = { NOT = { religion = bulwari_sun_cult } }
 						change_religion = bulwari_sun_cult
 						add_prestige = 100
@@ -60,38 +41,10 @@ country_event = {
 					set_country_flag = supernaturally_bound_faith # To prevent them from flipping to Jadd.
 					add_country_modifier = { name = F80_cmod_akalses_temp_buff duration = 18250 }
 				}
+				clr_country_flag = F80_cflag_will_aid_nansalen
 			}
-
-			if = { limit = { has_country_flag = F80_cflag_akalses_pu }
-				F33 = {
-					create_subject = {
-						subject_type = personal_union
-						subject = F42
-					}
-					if = { limit = { F30 = { is_subject_of = F42 } }
-						create_subject = {
-							subject_type = vassal
-							subject = F30
-						}
-					}
-				}
-			}
-
-			if = { limit = { F33 = { ai = yes } }
-				F33 = { 
-					join_all_offensive_wars_of = ROOT
-					join_all_defensive_wars_of = ROOT
-				}
-			}
-
-			# Flag cleanup.
-			F33 = { clr_country_flag = F80_cflag_will_aid_nansalen }
 			F42 = { clr_country_flag = F80_cflag_will_aid_nansalen }
 		}
-	}
-
-	after = {
-		clr_country_flag = F80_cflag_akalses_pu
 	}
 
 	option = {
@@ -108,15 +61,14 @@ country_event = {
 			add_country_modifier = { name = F80_cmod_kings_queens_decrease_isolation duration = 9125 }
 		}
 
-		if = { limit = { has_country_flag = F80_cflag_akalses_pu }
-			custom_tooltip = F80_tt_akalses_twin_empire_and_akalses_pu
-		}
-		else_if = { limit = { F33 = { ai = yes } }
-			custom_tooltip = F80_tt_akalses_twin_empire
-		}
-
 		if = { limit = { F33 = { ai = no } }
 			harpy_roost_se_allow_construction_of_extra_roost = yes
+		}
+		else = {
+			create_subject = {
+				subject_type = F80_F33_loyal_subject
+				subject = F33
+			}
 		}
 
 		if = { limit = { F33 = { ai = yes } harpy_hills_region = { OR = { country_or_subject_holds = F42 country_or_subject_holds = F33 } } }
@@ -132,7 +84,7 @@ country_event = {
 		add_war_exhaustion = -4
 
 		custom_tooltip = F80_tt_irregular_demonsterization
-		set_country_flag = no_demonsterization_events
+		set_country_flag = no_demonsterization_events_till_tech_7
 		hidden_effect = { start_demonsterization_effect = yes }
 
 		end_incident = incident_F80_kings_queens_kneeling
@@ -475,6 +427,86 @@ country_event = {
 		}
 	}
 }
+
+# Helper event, determines outcome of Varamhar war.
+country_event = {
+	id = flavor_nansalen.20
+	title = flavor_nansalen.20.t
+	desc = flavor_nansalen.20.d
+	
+	picture = COURT_eventPicture
+
+	trigger = {
+		has_country_flag = F80_cflag_varamhar_pu_war
+	}
+	
+	hidden = yes
+	is_triggered_only = yes
+
+	option = {
+		name = "flavor_nansalen.20.a"
+		ai_chance = {
+			factor = 1
+		}
+		if = { limit = { has_country_flag = F80_cflag_aras_enthroned }
+			country_event = { id = flavor_nansalen.21 } # Victory, enforced PU
+			clr_country_flag = F80_cflag_aras_enthroned
+		}
+		else = {
+			country_event = { id = flavor_nansalen.22 } # Failure, no PU
+		}
+
+		clr_country_flag = F80_cflag_varamhar_pu_war
+	}
+}
+
+country_event = {
+	id = flavor_nansalen.21
+	title = flavor_nansalen.21.t
+	desc = flavor_nansalen.21.d
+	
+	picture = COURT_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = "flavor_nansalen.21.a"
+		ai_chance = {
+			factor = 1
+		}
+		add_stability = 1
+	}
+}
+
+country_event = {
+	id = flavor_nansalen.22
+	title = flavor_nansalen.22.t
+	desc = flavor_nansalen.22.d
+	
+	picture = COURT_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			F42 = {
+				create_subject = {
+					subject_type = vassal
+					subject = F33
+				}
+			}
+		}
+	}
+
+	option = {
+		name = "flavor_nansalen.22.a"
+		ai_chance = {
+			factor = 1
+		}
+		custom_tooltip = F80_tt_aras_wedding_fail
+	}
+}
+
 
 # Peering Past the Pass effect
 country_event = {

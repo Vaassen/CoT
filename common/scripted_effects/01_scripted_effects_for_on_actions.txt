@@ -3169,10 +3169,14 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 			religion = bulwari_sun_cult
 			owner = { is_or_was_tag = { tag = F80 } } 
 		}
-		if = { limit = { mission_completed = F80_mission_our_duty }
+		if = { limit = { owner = { mission_completed = F80_mission_our_duty } }
 			add_province_modifier = { name = F80_pmod_more_control duration = 3650 }
 		}
-		if = { limit = { mission_completed = F80_mission_divine_duties_fulfilled NOT = { culture = firanyan_harpy } }
+		if = {
+			limit = { 
+				owner = { mission_completed = F80_mission_divine_duties_fulfilled } 
+				NOT = { culture = firanyan_harpy } 
+			}
 			add_province_modifier = { name = F80_pmod_harpy_culture_conversion duration = -1 }
 		}
 	}
@@ -7220,45 +7224,68 @@ on_war_declaration_effect = {
 		add_stability = -2
 	}
 
-	# Nansalen anti-Ayarallen stuff
-	if = { limit = { FROM = { tag = F27 } } # Ayarallen
-		hidden_effect = {
-			if = { 
-				limit = { 
-					ROOT = { OR = { tag = F80 tag = F33 } } # Nansalen, Akalses
-					F27 = { has_country_flag = F80_firanyalen_uprising_effect } 
+	# Nansalen stuff
+	if = { limit = { tag = F80 }
+		# Ayarallen stuff.
+		if = { limit = { FROM = { tag = F27 } } # Ayarallen
+			hidden_effect = {
+				if = { 
+					limit = { 
+						ROOT = { OR = { tag = F80 tag = F33 } } # Nansalen, Akalses
+						F27 = { has_country_flag = F80_firanyalen_uprising_effect } 
+					}
+					F27 = { clr_country_flag = F80_firanyalen_uprising_effect }
+					# Doing this first to make sure the capital is in the right place.
+					# Not using release, since that would give them a truce with Ayarallen.
+					676 = { cede_province = F82 }
+					firanyalen_area = { limit = { owned_by = F27 }
+						cede_province = F82
+					}
+					F82 = { join_all_offensive_wars_of = ROOT }
 				}
-				F27 = { clr_country_flag = F80_firanyalen_uprising_effect }
-				# Doing this first to make sure the capital is in the right place.
-				# Not using release, since that would give them a truce with Ayarallen.
-				676 = { cede_province = F82 }
-				firanyalen_area = { limit = { owned_by = F27 }
-					cede_province = F82
+				if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_our_southern_cousins } }
+					F33 = { join_all_offensive_wars_of = ROOT }
 				}
-				F82 = { join_all_offensive_wars_of = ROOT }
-			}
-			if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_our_southern_cousins } }
-				F33 = { join_all_offensive_wars_of = ROOT }
-			}
-			if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_right_words_right_ears } }
-				F42 = { join_all_offensive_wars_of = ROOT }
-			}
-			F80 = {
-				if = { limit = { NOT = { mission_completed = F80_mission_firanyalen_uprising } }
-					complete_mission = F80_mission_firanyalen_uprising
+				if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_right_words_right_ears } }
+					F42 = { join_all_offensive_wars_of = ROOT }
 				}
-				if = { limit = { NOT = { mission_completed = F80_mission_playing_on_rivalries } }
-					complete_mission = F80_mission_playing_on_rivalries
-				}
-				if = { limit = { NOT = { mission_completed = F80_mission_our_southern_cousins } }
-					complete_mission = F80_mission_our_southern_cousins
-				}
-				if = { limit = { NOT = { mission_completed = F80_mission_right_words_right_ears } }
-					complete_mission = F80_mission_right_words_right_ears
+				F80 = {
+					if = { limit = { NOT = { mission_completed = F80_mission_firanyalen_uprising } }
+						complete_mission = F80_mission_firanyalen_uprising
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_playing_on_rivalries } }
+						complete_mission = F80_mission_playing_on_rivalries
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_our_southern_cousins } }
+						complete_mission = F80_mission_our_southern_cousins
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_right_words_right_ears } }
+						complete_mission = F80_mission_right_words_right_ears
+					}
 				}
 			}
 		}
+		# Varamhar declaration.
+		if = {
+			limit = {
+				is_in_war = {
+					attacker_leader = ROOT
+					defender_leader = F42
+					casus_belli = cb_F80_enthroning_aras
+				}
+				F33 = { ai = yes }
+			}
+			if = { limit = { NOT = { exists = F33 } }
+				north_naza_area = { cede_province = F33 }
+			}
+			create_subject = {
+				subject_type = vassal
+				subject = F33
+			}
+			F80 = { set_country_flag = F80_cflag_varamhar_pu_war }
+		}
 	}
+
 	if = {
 		limit = { has_country_modifier = hyti_harpy_harmy FROM = { capital_scope = { continent = serpentspine } } }
 		remove_country_modifier = hyti_harpy_harmy
