@@ -147,20 +147,6 @@ country_event = { #Eye for Talent
 	
 	is_triggered_only = yes
 
-	immediate = {
-		hidden_effect = {
-			if = {
-				limit = { exactly_magic_project_level = { project = orb_of_omniscience level = 0 } }
-				randnum_effect = {
-					max = 3
-					case3 = "set_country_flag = adm_advisors"
-					case2 = "set_country_flag = dip_advisors"
-					case1 = "set_country_flag = mil_advisors"
-				}
-			}
-		}
-	}
-
 	option = {
 		name = magic_spell.300.a
 		ai_chance = { factor = 1 }
@@ -237,7 +223,7 @@ country_event = { #Eye for Talent
 	}
 }
 
-country_event = { #Eye for Talent bounceback, for the upgrade
+country_event = { #Eye for Talent bounceback
 	id = magic_spell.301
 	title = magic_spell.301.t
 	desc = magic_spell.301.desc
@@ -587,13 +573,54 @@ country_event = { #Chronophage consequences
 	option = {
 		name = magic_spell.700.a
 
-		custom_tooltip = chronophage_consequences_tt
-		hidden_effect = {
-			while = {
-				limit = { check_variable = { chronophage_tracker = 1 } }
-				reduce_stability_or_adm_power = yes
-				add_war_exhaustion = 1
-				subtract_variable = { chronophage_tracker = 1 }
+		reduce_stability_or_adm_power = yes
+		add_war_exhaustion = 1
+	}
+}
+
+country_event = { #Let centaurs stay full cav
+	id = magic_spell.702
+	title = magic_spell.702.t
+	desc = magic_spell.702.desc
+	picture = UNDEAD_ARMY_eventPicture
+	
+	is_triggered_only = yes
+
+	option = { #I like infantry
+		name = magic_spell.702.a
+		change_unit_type = tech_undead
+
+		if = { #Black Herd
+			limit = { mission_completed = I55_1_4_study }
+			custom_tooltip = I55_spawn_infantry_tt
+			hidden_effect = {
+				while = {
+					limit = { check_variable = { bh_undead_infantry_var = 1 } }
+					capital_scope = { infantry = ROOT }
+					change_variable = { bh_undead_infantry_var = -1 }
+				}
+			}
+		}
+	}
+
+	option = { #Pog full cav
+		name = magic_spell.702.b
+		custom_tooltip = necromancy_undead_cavalry_units
+		add_country_modifier = {
+			name = aotd_centaur_mod_initial
+			duration = -1
+			desc = necromancy_undead_cavalry_duration
+		}
+
+		if = { #Black Herd
+			limit = { mission_completed = I55_1_4_study }
+			custom_tooltip = I55_spawn_infantry_tt
+			hidden_effect = {
+				while = {
+					limit = { check_variable = { bh_undead_infantry_var = 1 } }
+					capital_scope = { cavalry = ROOT }
+					change_variable = { bh_undead_infantry_var = -1 }
+				}
 			}
 		}
 	}
@@ -665,31 +692,27 @@ country_event = { #Rite of Conception: Total Success!
 			}
 		}
 		if = { 
-			limit = {
-				has_country_flag = boy_child
-			}
+			limit = { has_country_flag = boy_child }
 			define_heir = {
 				age = 0
 				dynasty = ROOT
 				claim = 80
+				adm = 5
+				dip = 5
+				mil = 5
 			}
-			change_heir_adm = 3
-			change_heir_dip = 3
-			change_heir_mil = 3
 		}
 		if = { 
-			limit = {
-				has_country_flag = girl_child
-			}
+			limit = { has_country_flag = girl_child }
 			define_heir = {
 				age = 0
 				dynasty = ROOT
 				claim = 80
 				female = yes
+				adm = 5
+				dip = 5
+				mil = 5
 			}
-			change_heir_adm = 3
-			change_heir_dip = 3
-			change_heir_mil = 3
 		}
 		define_powerful_mage = { type = heir }
 	}
@@ -752,33 +775,33 @@ country_event = { #Rite of Conception: Magical Idiot
 			}
 		}
 		if = { 
-			limit = {
-				has_country_flag = boy_child
-			}
+			limit = { has_country_flag = boy_child }
 			define_heir = {
 				age = 0
 				dynasty = ROOT
 				claim = 20
-				max_random_adm = 3
-				max_random_dip = 3
-				max_random_mil = 3
+				adm = 3
+				dip = 3
+				mil = 3
 			}
 		}
 		if = { 
-			limit = {
-				has_country_flag = girl_child
-			}
+			limit = { has_country_flag = girl_child }
 			define_heir = {
 				age = 0
 				dynasty = ROOT
 				claim = 20
 				female = yes
-				max_random_adm = 3
-				max_random_dip = 3
-				max_random_mil = 3
+				adm = 3
+				dip = 3
+				mil = 3
 			}
 		}
-		define_powerful_mage = { type = heir bonus = 2 }
+		custom_tooltip = powerful_mage_bonus_legendary
+		hidden_effect = {
+			set_country_flag = next_powerful_mage_bonus_legendary_school
+			define_powerful_mage = { type = heir }
+		}
 	}
 
 	option = { #Rather not
@@ -794,118 +817,24 @@ country_event = { #Rite of Conception: Complications During Childbirth...
 	picture = KING_SICK_IN_BED_eventPicture
 	is_triggered_only = yes
 
-	immediate = {
-		hidden_effect = {
-			remove_country_modifier = transmutation_3_rite_of_conception_cooldown_mod
-			random_list = {
-				50 = {
-					trigger = { 
-						NOT = { 
-							ruler_is_harpy = yes
-							consort_is_harpy = yes
-						} 
-					}
-					set_country_flag = boy_child
-				}
-				50 = { set_country_flag = girl_child }
-			}
-		}
-	}
-	after = {
-		clr_country_flag = girl_child
-		clr_country_flag = boy_child
-	}
+	immediate = { hidden_effect = { remove_country_modifier = transmutation_3_rite_of_conception_cooldown_mod } }
 
-	option = { #Sacrifice the heir
+	option = { #Choose the Golden Child
 		name = magic_spell.802.a
-		ai_chance = { factor = 0 }
+
+		country_event = { id = magic_spell.800 }
+		custom_tooltip = golden_child_tt
+		custom_tooltip = other_child_becomes_magical_abom
+		capital_scope = { magical_abomination = 3 }
 	}
 	
-	option = { #Sacrifice your consort
+	option = { #Choose the Laughing Magician
 		name = magic_spell.802.b
-		ai_chance = { factor = 1 }
-		trigger = { has_consort = yes }
 
-		remove_consort_effect = yes
-
-		if = {
-			limit = { has_heir = yes }
-			if = {
-				limit =  { has_reform = magical_elite_reform }
-				custom_tooltip = magic_estate_magical_elite_heir
-			}
-			else = {
-				custom_tooltip = magic_estate_disinherit_heir
-				add_prestige = -50
-			}
-		}
-		if = { 
-			limit = {
-				has_country_flag = boy_child
-			}
-			define_heir = {
-				age = 0
-				dynasty = ROOT
-				claim = 60
-			}
-		}
-		if = { 
-			limit = {
-				has_country_flag = girl_child
-			}
-			define_heir = {
-				age = 0
-				dynasty = ROOT
-				claim = 60
-				female = yes
-			}
-		}
-		define_powerful_mage = { type = heir }
-	}
-
-	option = { #Sacrifice yourself
-		name = magic_spell.802.c
-		ai_chance = { factor = 1 }
-		
-		random_list = {
-			1 = { trigger = { adm = 1 } change_adm = -1 }
-			1 = { trigger = { dip = 1 } change_dip = -1 }
-			1 = { trigger = { mil = 1 } change_mil = -1 }
-		}
-
-		if = {
-			limit = { has_heir = yes }
-			if = {
-				limit =  { has_reform = magical_elite_reform }
-				custom_tooltip = magic_estate_magical_elite_heir
-			}
-			else = {
-				custom_tooltip = magic_estate_disinherit_heir
-				add_prestige = -50
-			}
-		}
-		if = { 
-			limit = {
-				has_country_flag = boy_child
-			}
-			define_heir = {
-				age = 0
-				dynasty = ROOT
-				claim = 60
-			}
-		}
-		if = { 
-			limit = {
-				has_country_flag = girl_child
-			}
-			define_heir = {
-				age = 0
-				dynasty = ROOT
-				claim = 60
-				female = yes
-			}
-		}
-		define_powerful_mage = { type = heir }
+		country_event = { id = magic_spell.801 }
+		custom_tooltip = laughing_magician_tt
+		custom_tooltip = other_child_becomes_magical_abom
+		capital_scope = { magical_abomination = 3 }
 	}
 }
 
@@ -921,23 +850,6 @@ country_event = { #Rite of Conception: Tughayasa Special
 		ai_chance = { factor = 1 }
 
 		define_powerful_mage = { type = ruler }
-	}
-}
-
-country_event = { #Rite of Conception: Abomination
-	id = magic_spell.804
-	title = magic_spell.804.t
-	desc = magic_spell.804.d
-	picture = APOSTLE_eventPicture
-
-	is_triggered_only = yes
-
-	option = { #A monster!
-		name = magic_spell.804.a
-		ai_chance = { factor = 1 }
-
-		remove_consort_effect = yes
-		capital_scope = { magical_abomination = 2 }
 	}
 }
 
