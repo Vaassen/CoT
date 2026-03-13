@@ -4871,6 +4871,14 @@ on_battle_won_country_effect = {
 			}
 		}
 	}
+
+	if = { #Port Palegold bonus
+		limit = {
+			has_country_flag = RSP_palegold_the_mecha_pirates_effect
+			FROM = { precursor_relics = 1 }
+		}
+		capital_scope = { add_or_extend_province_modifier_effect = { MODIFIER = RSP_palegold_victorious_scraps DURATION = 1825 } }
+	}
 }
 
 on_battle_lost_country_effect = {
@@ -5962,13 +5970,17 @@ on_religion_change_effect = {
 	if = { #Someone should really combine these...
 		limit = { religion = transmutative_path }
 		set_country_flag = was_transmutative_path
+		every_owned_province = {
+			limit = { province_has_chi_wellspring_trigger = yes }
+			add_chi_wellspring_to_size = yes
+		}
 	}
 	else_if = {
 		limit = { has_country_flag = was_transmutative_path }
 		clr_country_flag = was_transmutative_path
 		every_owned_province = {
 			limit = { province_has_chi_wellspring_trigger = yes }
-			transmutative_path_destroy_chi_wellspring_to_size_effect = yes
+			add_chi_wellspring_to_size = yes
 		}
 	}
 
@@ -7255,6 +7267,12 @@ on_war_declaration_effect = {
 				duration = -1
 			}
 		}
+	}
+
+	#Ruined Sea Pirates removing Raided Coast on DoW
+	if = {
+		limit = { has_country_flag = RSP_pillaging_the_shores_unlocked }
+		FROM = { every_owned_province = { remove_province_modifier = slaves_raided } }
 	}
 }
 
@@ -8677,6 +8695,9 @@ on_adm_development_effect = {
 		limit = { owner = { has_mission = ap_xiaken_temple_grounds } }
 		change_variable = { num_times_developed_adm = 1 }
 	}
+
+	#mangrove republic
+	mangrove_on_adm_dev_effect = yes
 }
 on_dip_development_effect = {
 	if = {
@@ -8822,6 +8843,9 @@ on_dip_development_effect = {
 			change_variable = { accretive_path_dip_chi = 15 }
 		}
 	}
+
+	#mangrove republic
+	mangrove_on_dip_dev_effect = yes
 }
 on_mil_development_effect = {
 	if = {
@@ -8997,6 +9021,9 @@ on_mil_development_effect = {
 			change_variable = { accretive_path_mil_chi = 15 }
 		}
 	}
+
+	#mangrove republic
+	mangrove_on_mil_dev_effect = yes
 }
 
 on_development_effect = {
@@ -9155,9 +9182,13 @@ on_development_effect = {
 		}
 	}
 
-	if = { #Transmutative Path
-		limit = { province_has_chi_wellspring_trigger = yes }
-		add_chi_wellspring_to_size = yes
+	if_chi_wellspring_reset_size_activity = yes #Transmutative Path
+	if = {
+		limit = {
+			province_has_chi_wellspring_trigger = yes
+			NOT = { has_province_modifier = chi_wellspring_inactive }
+		}
+		owner = { add_church_power = 15 } #15 Chi for developing a Chi Wellspring
 	}
 	
 	if = { #Kheionai
@@ -9990,6 +10021,16 @@ on_main_war_won_effect = {
 			}
 		}
 		add_treasury = 50
+	}
+
+	if = {
+		limit = {
+			NOT = { has_global_flag = mangrove_reclamation_done }
+			has_government_attribute = mangrove_republic
+			FROM = { has_government_attribute = mangrove_republic }
+		}
+		mangrove_win_war = yes
+		FROM = { mangrove_lose_war = yes }
 	}
 }
 
@@ -11950,6 +11991,15 @@ startup_1444_effects = {
 				province_event = { id = insyaa_flavour.10 days = 1875 random = 90 } # year 1450
 			}
 		}
+		#Taga'ala Mangrove
+		if = {
+			limit = { has_government_attribute = mangrove_republic }
+			country_event = { id = mangrove.0 }
+			if = {
+				limit = { owns = 6954 }
+				REB = { country_event = { id = mangrove.100 days = 30 } } # start voting
+			}
+		}
 		if = {
 			limit = { tag = F37 }
 			country_event = {
@@ -11957,7 +12007,6 @@ startup_1444_effects = {
 				days = 7100
 			}
 		}
-
 		if = {
 			limit = { capital_scope = { region = great_plateau_region } ai = no }
 			country_event = { id = utubodi_unification.0 }
@@ -15326,6 +15375,10 @@ on_province_owner_change_effect = {
 		limit = { province_id = 3675 }
 		province_event = { id = utubodi_unification.1 }
 	}
+
+	#Mangrove Republic
+	mangrove_on_province_owner_change_effect = yes
+
 	if = {
 		limit = { owner = { is_or_was_tag = { tag = F81 } } }
 		if = {
@@ -15408,6 +15461,24 @@ on_province_owner_change_effect = {
 		limit = { owner = { religion = foundationism } }
 		remove_province_modifier = religious_zeal_at_conv
 	}
+	if = { #Rinta Seekers - Light up the Night Sky Incident
+		limit = {
+			OR = {
+				has_province_modifier = RS_telescope_lvl_1
+				has_province_modifier = RS_telescope_lvl_2
+				has_province_modifier = RS_telescope_lvl_3
+				has_province_modifier = RS_telescope_lvl_4
+				has_province_modifier = RS_telescope_lvl_5
+			}
+			owner = { NOT = { religion = rinta_seekers } }
+		}
+		remove_province_modifier = RS_telescope_lvl_1
+		remove_province_modifier = RS_telescope_lvl_2
+		remove_province_modifier = RS_telescope_lvl_3
+		remove_province_modifier = RS_telescope_lvl_4
+		remove_province_modifier = RS_telescope_lvl_5
+	}
+	if_chi_wellspring_reset_size_activity = yes
 }
 
 on_primary_culture_changed_effect = {
@@ -15805,7 +15876,7 @@ anb_on_exploit_effect = {
 		}
 	}
 	giberd_exploit_benonhill = yes
-	transmutative_path_lower_chi_wellspring_to_size_effect = yes
+	if_chi_wellspring_reset_size_activity = yes #Transmutative Path
 	diggy_diggy_uesrennu = yes
 	if = { #umbral covenant
 		limit = {
