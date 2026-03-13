@@ -1427,7 +1427,11 @@ on_war_won = {
 	}
 
 	if = {
-		limit = { has_global_flag = war_of_salt_and_silence }
+		limit = {
+			has_global_flag = war_of_salt_and_silence
+			has_saved_global_event_target = salt_and_silence_emperor
+			has_saved_global_event_target = salt_and_silence_giant
+		}
 
 		if = {
 			limit = { # Emperor Victory
@@ -2641,6 +2645,31 @@ on_war_won = {
 			}
 		}
 		set_country_flag = vir_globalism_defeat_flag
+	}
+
+	if = {
+		limit = { 
+			ROOT = { 
+				has_country_flag = RSP_living_legends_create_legendary_pirates
+				NOT = { ruler_has_personality = legendary_pirate_personality }
+			}
+			FROM = {
+				is_great_power = yes
+				all_owned_province = {
+					OR = {
+						has_port = no
+						NOT = { same_continent = CAPITAL }
+						has_province_modifier = slaves_raided
+					}
+				}
+			}
+		}
+		ROOT = {
+			random = {
+				chance = 25
+				force_add_ruler_personality = { personality = legendary_pirate_personality }
+			}
+		}
 	}
 	
 	if = { #Flying Hound 
@@ -4207,6 +4236,15 @@ on_siege_won_country = {
 		}
 		Z60 = { country_event = { id = tsukqiao.6 } }
 	}
+
+	if = {
+		limit = {
+			has_country_flag = RSP_treasure_hunt_system_enabled
+			FROM = { has_province_modifier = RSP_x_marks_the_spot } 
+		}
+		FROM = { remove_province_modifier = RSP_x_marks_the_spot }
+		country_event = { id = flavour_RSP.11 }
+	}
 }
 
 # country
@@ -4656,6 +4694,27 @@ on_siege_lost_province =  {
 	}
 	else = {
 		remove_province_modifier = I80_storm_wake
+	}
+
+	if = {
+		limit = { 
+			FROM = { has_country_flag = RSP_trollshaunt_the_army_of_the_wretched_effect }
+		}
+		if = {
+			limit = { has_province_modifier = RSP_trollshaunt_dreaded_mist }
+			remove_province_modifier = RSP_trollshaunt_dreaded_mist
+			every_neighbor_province = {
+				limit = { NOT = { owned_by = FROM } }
+				add_province_modifier = {
+					name = RSP_trollshaunt_lesser_dreaded_mist
+					duration = 730
+				}
+			}
+		}
+		else_if = {
+			limit = { has_province_modifier = RSP_trollshaunt_lesser_dreaded_mist }
+			remove_province_modifier = RSP_trollshaunt_lesser_dreaded_mist
+		}
 	}
 }
 
@@ -6410,13 +6469,17 @@ on_emperor_elected = {
         limit = {
             has_global_flag = war_of_salt_and_silence 
             has_saved_global_event_target = salt_and_silence_emperor
-            event_target:salt_and_silence_emperor = { 
-                NOT = { has_country_flag = currently_in_salt_silence_war }
-                NOT = { tag = ROOT }
-            }
-        }
-        ROOT = {
-            save_global_event_target_as = salt_and_silence_emperor
+		}
+		if = {
+			limit = {
+				event_target:salt_and_silence_emperor = { 
+					NOT = { has_country_flag = currently_in_salt_silence_war }
+					NOT = { tag = ROOT }
+				}
+			}
+			ROOT = {
+				save_global_event_target_as = salt_and_silence_emperor
+			}
         }
     }
 	if = { #istralore
@@ -7030,6 +7093,13 @@ on_annexed = {
 						}
 					}
 				}
+			}
+		}
+		if = {
+			limit = { has_saved_global_event_target = mangrove_leader }
+			if = {
+				limit = { tag = event_target:mangrove_leader }
+				mangrove_new_leader_on_annexed = yes
 			}
 		}
 	}
@@ -8897,6 +8967,16 @@ on_monthly_pulse = {
 		limit = { is_or_was_tag = { tag = Z60 } }
 		tsukqiao_calc_might_and_right_effect = yes
 	}
+
+	if = {
+		limit = { has_global_flag = mangrove_restart_voting }
+		REB = {
+			country_event = {
+				id = mangrove.100
+			}
+		}
+	}
+
 	planetouched_land_share_equalizer_effect = yes
 }
 
@@ -12105,6 +12185,7 @@ on_four_year_pulse = {
 		#Breluslad revolts
 		flavour_brelar.61
 		centaur.0
+		flavour_RSP.10
 	}
 	random_events = {
 		# randomevents.txt 1.35: moved here from biyearly
@@ -13622,6 +13703,7 @@ on_five_year_pulse = {
 		flavor_umbral_covenant.203 #flavour events
 		flavor_umbral_covenant.204 #flavour events
 		aelantir_cannor_interaction.500	#Aelantir-Cannor Interactions - Overseas Shipments
+		mangrove.200 # mangrove republic influence events
 		shadow_pact.20 #Palace of the Sealed Tree Replastering
 		aakhetist.100 # aakhet_host failsafe
 		hyti.20 #hytiranyalen handler
@@ -16038,7 +16120,6 @@ on_province_owner_change = {
 		kheionai.99 #Fires the nekhei province transfer effects so the game doesn't crash
 		besolaki_events.1100 #Besolaki, Anisikheion gets Andeios islands if they're your subject
 		gerudia.35 #taric and cagodic culture stuff
-		transmutative_path.3 #chi wellspring calc stuff
 		flavour_zokka.9998 #zokka stop slave states leaving spine
 		flavour_eoa_reforms.12 #eoa temple rights
 	}
@@ -22340,7 +22421,10 @@ on_raid_coast = {
 	}
 	if = {
 		limit = {
-			has_government_attribute = raiding_increases_pp
+			OR = {
+				has_government_attribute = raiding_increases_pp
+				has_country_flag = RSP_the_king_of_the_pirates
+			}
 		}
 		add_power_projection = {
 			type = high_sea_power_projection
@@ -22597,6 +22681,69 @@ on_raid_coast = {
 					}
 				}
 			}
+		}
+	}
+	#Ruined Sea Pirates
+	if = {
+		limit = { has_country_flag = RSP_treasure_hunt_system_enabled }
+		if = {
+			limit = { check_variable = { which = RSPTreasureHunt value = 20 } }
+			FROM = { random_neighbor_province = { limit = { has_province_modifier = slaves_raided } set_province_flag = RSP_buried_treasure } }
+			set_variable = { RSPTreasureHunt = 0 }
+		}
+		else = {
+			FROM = {
+				every_neighbor_province = { 
+					limit = { has_province_modifier = slaves_raided }
+					ROOT = {
+						change_variable = { which = RSPTreasureHunt value = 1 }
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_country_flag = RSP_pillaging_the_shores_unlocked }
+		if = {
+			limit = { is_or_was_tag = { tag = J95 } }
+			FROM = { every_neighbor_province = { limit = { has_province_modifier = slaves_raided } ROOT = { add_army_professionalism = 0.00025 } } }
+		}
+		else_if = {
+			limit = { is_or_was_tag = { tag = J96 } }
+			FROM = { every_neighbor_province = { limit = { has_province_modifier = slaves_raided } ROOT = { add_church_power = 0.25 } } }
+		}
+		else_if = {
+			limit = { is_or_was_tag = { tag = J97 } }
+			FROM = { every_neighbor_province = { limit = { has_province_modifier = slaves_raided } ROOT = { change_mana = { amount = 0.25 } } } }
+		}
+		else_if = {
+			limit = { is_or_was_tag = { tag = J98 } }
+			FROM = { every_neighbor_province = { limit = { has_province_modifier = slaves_raided } ROOT = { change_innovativeness = 0.025 } } }
+		}
+	}
+	if = {
+		limit = { tag = J97 }
+		if = { 
+			limit = { 
+				FROM = { 
+					any_neighbor_province = { 
+						has_province_modifier = slaves_raided 
+						trade_goods = precursor_relics 
+					} 
+				} 
+			} 
+			J97 = { set_country_flag = RSP_trollshaunt_raided_precursor_relics_province } 
+		}
+		if = { 
+			limit = { 
+				FROM = { 
+					any_neighbor_province = { 
+						has_province_modifier = slaves_raided 
+						trade_goods = damestear 
+					} 
+				} 
+			} 
+			J97 = { set_country_flag = RSP_trollshaunt_raided_damestear_province } 
 		}
 	}
 }
@@ -25775,10 +25922,6 @@ on_capital_moved = {
 			}
 		}
 	}
-	if = { #edge case, ban chi wellsprings from capitals
-		limit = { province_has_chi_wellspring_trigger = yes }
-		transmutative_path_destroy_chi_wellspring_to_size_effect = yes
-	}
 
 	#karassk itinerant capital
 	if = {
@@ -25897,6 +26040,24 @@ on_capital_moved = {
 			}
 			add_province_modifier = { name = magical_fortress_mod_1 duration = -1 }
 			add_province_modifier = { name = abjuration_1_ward_mod_1 duration = -1 }
+		}
+	}
+	# taga'ala mangrove influence modifier
+	if = {
+		limit = {
+			owner = {
+				has_government_attribute = mangrove_republic
+			}
+			NOT = { has_global_flag = mangrove_reclamation_done }
+		}
+		FROM = {
+			remove_province_modifier = mangrove_influence
+		}
+		ROOT = {
+			add_province_modifier = {
+				name = mangrove_influence
+				duration = -1
+			}
 		}
 	}
 
@@ -26089,44 +26250,11 @@ on_expanded_infrastructure = {
 	if = {
 		limit = {
 			FROM = { has_estate_privilege = artifice_invention_mech_bureau }
+			NOT = { has_province_modifier = artifice_invention_mech_bureau_mod }
 		}
-		if = {
-			limit = { num_of_times_expanded_infrastructure = 5 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod5
+		add_province_modifier = {
+				name = artifice_invention_mech_bureau_mod
 				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod4
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 4 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod4
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod3
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 3 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod3
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod2
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 2 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod2
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod1
-		}
-		else = {
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod1
-				duration = -1
-			}
 		}
 	}
 }
@@ -26218,44 +26346,10 @@ on_expanded_infrastructure_removed = {
 	}
 	if = {
 		limit = {
-			FROM = {
-				has_estate_privilege = artifice_invention_mech_bureau
-				NOT = { num_of_times_expanded_infrastructure = 5 }
-			}
+			FROM = { has_estate_privilege = artifice_invention_mech_bureau }
+			NOT = { num_of_times_expanded_infrastructure = 1 }
 		}
-		if = {
-			limit = { num_of_times_expanded_infrastructure = 4 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod4
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod5
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 3 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod3
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod4
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 2 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod2
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod3
-		}
-		else_if = {
-			limit = { num_of_times_expanded_infrastructure = 1 }
-			add_province_modifier = {
-				name = artifice_invention_mech_bureau_mod1
-				duration = -1
-			}
-			remove_province_modifier = artifice_invention_mech_bureau_mod2
-		}
-		else = { remove_province_modifier = artifice_invention_mech_bureau_mod1 }
+		remove_province_modifier = artifice_invention_mech_bureau_mod
 	}
 }
 
@@ -27722,8 +27816,8 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 	if = {
 		limit = {
 			OR = {
-				has_country_modifier = evocation_1_flaming_munitions_mod
-				has_country_modifier = evocation_3_elemental_fury_mod
+				has_cast_elemental_fury = yes
+				has_cast_flaming_munitions = yes
 			}
 			FROM = {
 				NOT = {
@@ -27763,6 +27857,16 @@ on_naval_barrage = { #ROOT - barraging country, FROM - barraged province
 	if = {
 		limit = { has_naval_doctrine = bulwar_kamelyan_tactics }
 		FROM = { change_siege = 3 }
+	}
+	if = {
+		limit = { has_country_modifier = RSP_trollshaunt_krakens_kiss_prepared }
+		remove_country_modifier = RSP_trollshaunt_krakens_kiss_prepared
+		FROM = { 
+			add_province_modifier = {
+				name = RSP_trollshaunt_dreaded_mist
+				duration = 1095
+			}
+		}
 	}
 }
 
@@ -28096,6 +28200,20 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 		}
 		country_event = {
 			id = caergaraen.2 #Judging The Guilty
+		}
+	}
+
+	if = {
+		limit = {
+			has_global_flag = mangrove_unification_war_ongoing
+			has_government_attribute = mangrove_republic
+			FROM = { has_government_attribute = mangrove_republic }
+		}
+		REB = {
+			country_event = {
+				id = mangrove.119
+				days = 1
+			}
 		}
 	}
 }
