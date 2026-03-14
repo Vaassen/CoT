@@ -15,7 +15,17 @@ F98_col_1 = {
 			has_adm_advisor_2 = yes
 			has_dip_advisor_2 = yes
 			has_mil_advisor_2 = yes
-			legitimacy = 100
+			if = {
+				limit = {
+					NOT = {
+						is_emperor_of_china = yes
+					}
+				}
+				legitimacy = 100
+			}
+			else = {
+				meritocracy = 65
+			}
 			OR = { # placeholder potential custom toolip
 				adm = 6
 				dip = 6
@@ -99,7 +109,7 @@ F98_col_1 = {
 				value = 400
 				region = harpy_hills_region
 			}
-			has_country_modifier = enchantment_3_harpy_mod # Song of Hassi's Queendom spell. Custom tooltip?
+			has_country_modifier = enchantment_0_harpy_mod
 			463 = {
 				has_great_project = {
 					type = koroshesh_library
@@ -157,8 +167,8 @@ F98_col_1 = {
 			akasik_region = {
 				type = all
 				F98_st_country_or_non_sovereign_subject_holds = yes
-				OR = { # placeholder Custom trigger tooltip, probably
-					harpy_roost_st_terrain_is_valid = no
+				OR = {
+					harpy_roost_st_terrain_is_not_valid_tt = yes
 					harpy_roost_st_has_any_roost = yes
 				}
 			}
@@ -284,15 +294,18 @@ F98_col_2 = {
 		} 
 
 		effect = {
-			every_owned_province = {
-				limit = {
-					harpy_roost_st_has_any_roost = yes
-				}
-				add_province_modifier = {
-					name = F98_province_len
-					duration = 3650 # 10 years
+			hidden_effect = {
+				every_owned_province = {
+					limit = {
+						harpy_roost_st_has_any_roost = yes
+					}
+					add_province_modifier = {
+						name = F98_province_len
+						duration = 3650 # 10 years
+					}
 				}
 			}
+			custom_tooltip = F98_len_roost_tt
 			# Developing provinces with roosts give a new modifier. See on_development_effect
 			custom_tooltip = F98_develop_roost_bonus_tt
 		} 
@@ -343,21 +356,44 @@ F98_col_2 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			# unlocked 3 harpy spells
+			# unlocked 2 harpy spells
 			custom_trigger_tooltip = {
 				tooltip = F98_unlock_harpy_spells_tt
 				calc_true_if = {
-				amount = 3
-					custom_spell_harpy_default_2_trigger = yes # I think this works, since I don't want $player$ since I don't care about mana
-					custom_spell_harpy_default_3_trigger = yes
-					custom_spell_harpy_default_4_trigger = yes
-					custom_spell_harpy_default_5_trigger = yes
+					amount = 1 #one because the cantrip is always unlocked
+					OR = {
+						AND = { #Kiovas Gale
+							is_overall_evocation_level_2_minimum = yes
+							check_variable = { ruler_battles_won = 10 }
+						}
+					}
+					OR = {
+						AND = { #Lysis roost
+							num_of_owned_provinces_with = {
+								value = 3
+								harpy_roost_st_has_non_fledgling_roost = yes
+								development = 30
+								has_building = mage_tower
+								if = {
+									limit = { has_dlc = "Leviathan" }
+									num_of_times_expanded_infrastructure = 1
+								}		
+							}
+							is_overall_transmutation_level_2_minimum = yes
+						}
+					}
+					OR = {
+						AND = { #hassis queendom
+							is_overall_enchantment_level_3 = yes
+							government_rank = 3
+							fast_owns_num_pops_of_race = { race = harpy amount = 50 }
+						}
+					}
 				}
 			}
-			# cast harpy spells 10 times
 			check_variable = {
 				which = F98_harpy_spells_cast
-				value = 10
+				value = 3
 			}
 			estate_has_infamy_paragon = yes
 			estate_territory = {
@@ -452,6 +488,7 @@ F98_col_2 = {
 			NOT = {
 				F98_st_country_or_non_sovereign_subject_holds = yes
 				owned_by = V20
+				province_id = 6838
 			}
 		} 
 
@@ -461,14 +498,21 @@ F98_col_2 = {
 				OR = {
 					F98_st_country_or_non_sovereign_subject_holds = yes
 					owned_by = V20 # Zoherin Apunsorya
+					province_id = 6838
 				}
 			}
 			OR = { # placeholder custom tooltip?
-				NOT = { # Either V20 owns none of them (so you own them all) or you've made friends
-					nomsyulhan_region = {
-						owned_by = V20
+				AND = {
+					NOT = { # Either V20 owns none of them (so you own them all) or you've made friends
+						V20 = {
+							exists = yes
+						}
 					}
-				}
+					trade_goods_produced_amount = {
+						trade_goods = precursor_relics
+						amount = 8
+					}
+				}	
 				V20 = {
 					alliance_with = ROOT
 					trust = {
@@ -479,7 +523,6 @@ F98_col_2 = {
 					harpylen_soothed_feathers = yes
 				}
 			}
-			precursor_relics = 10
 			custom_trigger_tooltip = {
 				tooltip = harpylen_traced_nuzenpau
 				has_country_flag = F98_nuzenpau_migration_done
@@ -909,33 +952,36 @@ F98_col_2 = {
 			}
 		} 
 
-		effect = {  
-			add_country_modifier = {
-				name = F98_song_and_steel
-				duration = -1
-			}
-			every_subject_country = {
+		effect = { 
+			hidden_effect = {
+				custom_tooltip = F98_for_good_measure_tt
 				add_country_modifier = {
 					name = F98_song_and_steel
 					duration = -1
 				}
-			}
-			every_owned_or_non_tributary_subject_province = {
-				limit = {
-					OR = {
-						region = dry_coast_region
-						region = dragon_coast_region
+				every_subject_country = {
+					add_country_modifier = {
+						name = F98_song_and_steel
+						duration = -1
 					}
-					harpy_roost_st_terrain_is_valid = yes
-					NOT = { harpy_roost_st_has_non_fledgling_roost = yes }
-				}				
-				if = {
-					limit = { region = dragon_coast_region }
-					change_culture = jarnklo_harpy
 				}
-				else = { change_culture = kiohalen_harpy }
-				harpy_roost_se_add_roost_tier_1_free = yes
-			}
+				every_owned_or_non_tributary_subject_province = {
+					limit = {
+						OR = {
+							region = dry_coast_region
+							region = dragon_coast_region
+						}
+						harpy_roost_st_terrain_is_valid = yes
+						NOT = { harpy_roost_st_has_non_fledgling_roost = yes }
+					}				
+					if = {
+						limit = { region = dragon_coast_region }
+						change_culture = jarnklo_harpy
+					}
+					else = { change_culture = kiohalen_harpy }
+					harpy_roost_se_add_roost_tier_1_free = yes
+				}
+			} 
 		} 
 	}
 }
@@ -1022,7 +1068,7 @@ F98_col_3 = {
 				type = all
 				F98_st_country_or_non_sovereign_subject_holds = yes
 			}
-			# placeholder custom tooltips?
+			
 			golden_highway_far_bulwar = {
 				type = all
 				has_province_modifier = golden_highway
@@ -1037,24 +1083,27 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			every_owned_province = {
-				limit = {
-					OR = {
-						province_group = golden_highway_bulwar_proper
-						province_group = golden_highway_far_bulwar
-						province_group = golden_highway_far_salahad
-						province_group = golden_highway_rahen_coast
-						province_group = golden_highway_dhujat
-						province_group = golden_highway_xianjie
-						province_group = golden_highway_upper_yanshen
-						province_group = golden_highway_yanshen_coast
-						province_group = golden_highway_south_salahad
+			custom_tooltip = F98_golden_highway_harpyway_tt
+			hidden_effect = {
+				every_owned_province = {
+					limit = {
+						OR = {
+							province_group = golden_highway_bulwar_proper
+							province_group = golden_highway_far_bulwar
+							province_group = golden_highway_far_salahad
+							province_group = golden_highway_rahen_coast
+							province_group = golden_highway_dhujat
+							province_group = golden_highway_xianjie
+							province_group = golden_highway_upper_yanshen
+							province_group = golden_highway_yanshen_coast
+							province_group = golden_highway_south_salahad
+						}
 					}
-				}
-				add_province_modifier = {
-					name = F98_harpyway
-					duration = -1
-				}
+					add_province_modifier = {
+						name = F98_harpyway
+						duration = -1
+					}
+				}	
 			}
 			custom_tooltip = F98_harpyway_future_golden_highway_tt
 			if = {
@@ -1426,18 +1475,21 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			every_known_country = {
-				limit = {
-					culture_group = mengi
-				}
-				add_aggressive_expansion = {
-					who = ROOT
-					value = -200
-					apply_calc = no
-				}
-				add_opinion = { # check this
-					who = ROOT
-					modifier = opinion_harpylen_sky_domain_opinion
+			custom_tooltip = F98_mengi_love_us_tt
+			hidden_effect = {
+				every_known_country = {
+					limit = {
+						culture_group = mengi
+					}
+					add_aggressive_expansion = {
+						who = ROOT
+						value = -200
+						apply_calc = no
+					}
+					add_opinion = { # check this
+						who = ROOT
+						modifier = opinion_harpylen_sky_domain_opinion
+					}
 				}
 			}
 			if = {
@@ -1582,14 +1634,17 @@ F98_col_3 = {
 		} 
 
 		effect = {
-			add_country_modifier = {
-				name = F98_fire_in_the_skies
-				duration = -1
-			}
-			every_subject_country = { # Custom tooltip probably
+			custom_tooltip = F98_fire_in_the_skies_tt
+			hidden_effect = {
 				add_country_modifier = {
 					name = F98_fire_in_the_skies
 					duration = -1
+				}
+				every_subject_country = { # Custom tooltip probably
+					add_country_modifier = {
+						name = F98_fire_in_the_skies
+						duration = -1
+					}
 				}
 			}
 		} 
@@ -1645,6 +1700,7 @@ F98_col_3 = {
 				}
 			}
 			diplomatic_reputation = 25
+			has_country_modifier = enchantment_3_harpy_mod # Song of Hassi's Queendom spell. Custom tooltip?
 		} 
 
 		effect = {
@@ -1665,7 +1721,12 @@ F98_col_4 = {
 		provinces_to_highlight = {  } 
 
 		trigger = {
-			has_estate_privilege = estate_nobles_strong_duchies
+			if = {
+				limit = {
+					NOT = { is_emperor_of_china = yes }
+				}
+				has_estate_privilege = estate_nobles_strong_duchies
+			}
 			has_estate_privilege = estate_church_religious_diplomats
 			calc_true_if = {
 				amount = 3
@@ -1716,6 +1777,7 @@ F98_col_4 = {
 				custom_tooltip = harpylen_oddest_hunt_tt_hunt
 			}
 			else = { custom_tooltip = harpylen_oddest_hunt_tt_nohunt }
+			set_country_flag = eduz_mission_bypass_flag #for allowing monument use
 		} 
 	}
 
@@ -1743,15 +1805,27 @@ F98_col_4 = {
 					has_50_opinion_improved_relation = { target = ROOT }
 				}
 			}
-			any_ally = {
-				culture_group = centaur
-				capital_scope = { superregion = forbidden_lands_superregion }
-				harpylen_encouraged_migration = yes
-				harpylen_soothed_feathers = yes
-				trust = {
-					who = ROOT
-					value = 75
-				}				
+			OR = {
+				any_subject_country = {
+					culture_group = centaur
+					capital_scope = { superregion = forbidden_lands_superregion }
+					harpylen_encouraged_migration = yes
+					harpylen_soothed_feathers = yes
+					trust = {
+						who = ROOT
+						value = 75
+					}	
+				}
+				any_ally = {
+					culture_group = centaur
+					capital_scope = { superregion = forbidden_lands_superregion }
+					harpylen_encouraged_migration = yes
+					harpylen_soothed_feathers = yes
+					trust = {
+						who = ROOT
+						value = 75
+					}				
+				}
 			}
 			OR = {
 				medium_tolerance_centaur_race_trigger = yes
@@ -1929,12 +2003,12 @@ F98_col_4 = {
 					5132 = {
 						has_great_project = {
 							type = glyphs_irdaeos
-							tier = 1
+							tier = 3
 						}
 					}
 				}
 				add_country_modifier = {
-					name = harpylen_glyph1
+					name = harpylen_glyph3
 					duration = -1
 				}
 			}
@@ -1957,12 +2031,12 @@ F98_col_4 = {
 					5132 = {
 						has_great_project = {
 							type = glyphs_irdaeos
-							tier = 3
+							tier = 1
 						}
 					}
 				}
 				add_country_modifier = {
-					name = harpylen_glyph3
+					name = harpylen_glyph1
 					duration = -1
 				}
 			}
@@ -2133,11 +2207,16 @@ F98_col_4 = {
 				}
 			}
 			at_least_magic_project_level = { project = harpylen_project level = 3 }
-			check_variable = {	#this will work once cangji is merged
-				which = enchantment_3_harpy_default_5_spell_count 
-				value = 2
+			# check_variable = {	#this will work once cangji is merged - TODO UNCOMMENT
+			# 	which = enchantment_3_harpy_default_5_spell_count 
+			# 	value = 2
+			# }
+			if = {
+				limit = {
+					has_estate = estate_artificers
+				}
+				check_variable = { MaxArtificePoints = 50 }
 			}
-			check_variable = { MaxArtificePoints = 50 }
 			custom_trigger_tooltip = {
 				tooltip = harpylen_all_estate_loyal_or_puny
 				OR = {
@@ -2150,6 +2229,9 @@ F98_col_4 = {
 							estate = estate_artificers
 							influence = 30
 						}
+					}
+					NOT = {
+						has_estate = estate_artificers
 					}
 				}
 				OR = {
@@ -2346,14 +2428,17 @@ F98_col_4 = {
 		} 
 
 		effect = {
-			add_country_modifier = {
-				name = harpylen_garden_mod
-				duration = -1
-			}
-			every_subject_country = {
+			custom_tooltip = F98_of_faith_divergent_tt
+			hidden_effect = {
 				add_country_modifier = {
 					name = harpylen_garden_mod
 					duration = -1
+				}
+				every_subject_country = {
+					add_country_modifier = {
+						name = harpylen_garden_mod
+						duration = -1
+					}
 				}
 			}
 		} 
@@ -2466,20 +2551,37 @@ F98_col_5 = {
 				base_production = 5
 				has_production_building_trigger = yes
 			}
-			any_ally = {
-				OR = {
-					culture = forest_goblin
-					culture = green_orc
-					culture = emerald_orc
-					culture = wood_elf
+			OR = {
+				any_subject_country = {
+					OR = {
+						culture = forest_goblin
+						culture = green_orc
+						culture = emerald_orc
+						culture = wood_elf
+					}
+					trust = {
+						who = ROOT
+						value = 75
+					}
+					capital_scope = { superregion = deepwoods_superregion }
+					harpylen_encouraged_migration = yes
+					harpylen_soothed_feathers = yes
 				}
-				trust = {
-					who = ROOT
-					value = 75
+				any_ally = {
+					OR = {
+						culture = forest_goblin
+						culture = green_orc
+						culture = emerald_orc
+						culture = wood_elf
+					}
+					trust = {
+						who = ROOT
+						value = 75
+					}
+					capital_scope = { superregion = deepwoods_superregion }
+					harpylen_encouraged_migration = yes
+					harpylen_soothed_feathers = yes
 				}
-				capital_scope = { superregion = deepwoods_superregion }
-				harpylen_encouraged_migration = yes
-				harpylen_soothed_feathers = yes
 			}
 		} 
 
