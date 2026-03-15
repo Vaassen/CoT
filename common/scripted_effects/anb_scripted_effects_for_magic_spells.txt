@@ -509,6 +509,10 @@ abjuration_3_field_of_forbiddance_effect = { # Field of Forbiddance
 abjuration_3_field_of_forbiddance_sub_effect = {
 	decrease_estate_witch_king_points = { size = large }
 	custom_tooltip = every_mage_tower_tt
+	if = { #Orenvalyam
+		limit = { has_country_flag = U39_field_of_forbiddance_buff_flag }
+		custom_tooltip = U39_field_of_forbiddance_spell_tt
+	}
 	tooltip = {
 		4160 = {
 			custom_tooltip = abjuration_3_field_of_forbiddance_effect_tt
@@ -521,6 +525,13 @@ abjuration_3_field_of_forbiddance_sub_effect = {
 			limit = { has_building = mage_tower }
 			add_province_modifier = { name = abjuration_3_field_of_forbiddance_local_mod duration = $duration$ }
 			add_local_autonomy = -40
+			if = { #Orenvalyam
+				limit = {
+					PREV = { has_country_flag = U39_field_of_forbiddance_buff_flag }
+					has_province_modifier = U39_hill_top_monastery
+				}
+				PREV = { add_manpower = 1 }
+			}
 		}
 	}
 }
@@ -557,16 +568,14 @@ conjuration_0_summon_familiars_effect = { # Summon Familiars
 		custom_tooltip = conjuration_0_summon_familiars_spell_effect_yes_tt
 	}
 	else = {
-		add_country_modifier = { name = conjuration_0_summon_familiars_mod_1 duration = -1 desc = until_advancement_concludes }
-		custom_tooltip = conjuration_0_summon_familiars_spell_effect_yes_tt
+		add_country_modifier = { name = conjuration_0_summon_familiars_mod duration = -1 desc = until_advancement_concludes }
+		custom_tooltip = conjuration_0_summon_familiars_spell_effect_no_tt
 	}
 }
 conjuration_1_summon_animals_effect = { # Summon Animals
 	custom_tooltip = conjuration_1_summon_animals_spell_effect_tt
 	add_country_modifier = { name = conjuration_1_summon_animals_mod duration = 1825 }
-	hidden_effect = {
-		country_event = { id = magic_spell.202 days = 1825 }
-	}
+	hidden_effect = { country_event = { id = magic_spell.202 days = 1826 } }
 }
 conjuration_1_conjure_supplies_effect = { # Conjure Supplies
 	add_country_modifier = { name = conjuration_1_conjure_supplies_mod duration = 3650 }
@@ -585,29 +594,12 @@ conjuration_2_summon_elementals_effect = { # Summon Elementals
 		}
 		custom_tooltip = conjuration_2_greater_summon_elementals_spell_effect_tt
 		add_country_modifier = { name = conjuration_2_greater_summon_elementals_mod duration = 3650 }
-		hidden_effect = {
-			country_event = { id = magic_spell.204 days = 3650 }
-		}
 	}
-	if = {
-		limit = {
-			NOT = {
-				609 = {
-					owned_by = ROOT
-					has_great_project = {
-						type = eka_idulnazzar
-						tier = 1
-					}
-					sarhal_owner_can_use_eka_idulnazzar = yes
-				}
-			}
-		}
+	else = {
 		custom_tooltip = conjuration_2_summon_elementals_spell_effect_tt
 		add_country_modifier = { name = conjuration_2_summon_elementals_mod duration = 3650 }
-		hidden_effect = {
-			country_event = { id = magic_spell.203 days = 3650 }
-		}
 	}
+	hidden_effect = { country_event = { id = magic_spell.203 days = 3651 } } #Summoned elementals vanishing - we handle everything in one event because events don't like firing inside else-ifs
 }
 conjuration_2_aid_construction_effect = { # Aid Construction
 	if = {
@@ -621,6 +613,13 @@ conjuration_3_extraplanar_contact_effect = { # Extraplanar Contact
 	increase_estate_witch_king_points = { size = large }
 	add_country_modifier = { name = conjuration_3_extraplanar_contact_estate_mod duration = 3650 }
 	
+	if = { #Orenvalyam
+		limit = { has_country_flag = U39_extraplanar_contact_buff_flag }
+		country_event = {
+			id = orenvalyam_events.41 #Answer Me These Riddles Three
+		}
+	}
+
 	if = {
 		limit = { ruler_is_powerful_mage = yes }
 		tooltip = { give_ruler_random_spell_school = yes } #instant feedback on what improved
@@ -1248,6 +1247,7 @@ enchantment_3_dominate_to_surrender_effect = { # Dominate to Surrender
 			save_event_target_as = dominated_province
 			controller = { country_event = { id = magic_spell.405 days = 3 } }
 		}
+		custom_tooltip = enchantment_3_dominate_to_surrender_spell_effect_tt
 		add_core = PREV
 		if = {
 			limit = { PREV = { has_country_modifier = witch_king_armies_modifier } }
@@ -1258,7 +1258,6 @@ enchantment_3_dominate_to_surrender_effect = { # Dominate to Surrender
 				area = { add_territorial_core = event_target:spell_caster }
 			}
 		}
-		custom_tooltip = enchantment_3_dominate_to_surrender_spell_effect_tt
 
 		#We use a modifier instead of change_controller so we can still trigger lich-hunts etc.
 		hidden_effect = { add_province_modifier = { name = enchantment_3_dominate_to_surrender_siege_mod duration = 4 } }
@@ -1285,10 +1284,18 @@ on_evocation_spell_cast = {
 
 evocation_0_fireball_effect = { # Fireball
 	if = {
-		limit = { NOT = { has_estate_privilege = estate_mages_organization_onyxguard } }
+		limit = { 
+			NOT = { 
+				has_estate_privilege = estate_mages_organization_onyxguard 
+				has_country_flag = U39_disable_fireball_infamy_flag #Orenvalyam
+			} 
+		}
 		increase_witch_king_points_small = yes
 	}
-	else = { custom_tooltip = onyxguard_no_infamy_siege }
+	else_if = { 
+		limit = { has_estate_privilege = estate_mages_organization_onyxguard  }
+		custom_tooltip = onyxguard_no_infamy_siege 
+	}
 	PREV = {
 		add_devastation = 20
 		if = {
@@ -1359,10 +1366,8 @@ evocation_1_flaming_munitions_effect = { # Flaming Munitions
 		add_country_modifier = { name = patron_ice_munitions duration = 1825 }
 		custom_tooltip = magic_booster_by_patron_tt
 	}
-	else = {
-		add_country_modifier = { name = evocation_1_flaming_munitions_mod duration = 1825 }
-		custom_tooltip = evocation_fireball_on_barrage_tt
-	}
+	else = { add_country_modifier = { name = evocation_1_flaming_munitions_mod duration = 1825 } }
+	custom_tooltip = evocation_fireball_on_barrage_tt
 	if = { #Great Storm Shenanigans
 		limit = { has_country_flag = I80_fortrending_flag }
 		add_country_modifier = { name = I80_fort_rending duration = 1825 }
@@ -1371,13 +1376,27 @@ evocation_1_flaming_munitions_effect = { # Flaming Munitions
 evocation_2_meteor_swarm_effect = { # Meteor Swarm
 	if = {
 		limit = { NOT = { has_estate_privilege = estate_mages_organization_onyxguard } }
-		increase_witch_king_points_large = { level = evocation_level_2_minimum }
+		if = { #Orenvalyam
+			limit = {
+				mission_completed = U39_4_6_the_solar_hexarchy
+			}
+			increase_witch_king_points_medium = { level = evocation_level_2_minimum }
+		}
+		if = {
+			limit = {
+				NOT = { mission_completed = U39_4_6_the_solar_hexarchy }
+			}
+			increase_witch_king_points_large = { level = evocation_level_2_minimum }
+		}
 	}
-	else = { custom_tooltip = onyxguard_no_infamy_siege }
+	else = {
+		custom_tooltip = onyxguard_no_infamy_siege
+	}
+	
 	PREV = {
-		add_province_modifier = { name = evocation_2_meteor_swarm_local_mod duration = 1825 }
 		add_devastation = 50
 		tooltip = { remove_random_development = yes }
+		add_province_modifier = { name = evocation_2_meteor_swarm_local_mod duration = 1825 }
 		hidden_effect = {
 			randnum_effect = {
 				max = 6
@@ -1479,7 +1498,15 @@ evocation_2_tearfall_sub_effect = { # Tearfall sub-effect
 	#Hidden event that fires two days before, to account for the one-day delay on PTMs and the expiring modifier
 }
 evocation_3_elemental_fury_effect = { # Elemental Fury
-	if = {
+	if = { #Orenvalyam
+		limit = { has_country_flag = U39_elemental_fury_change_flag }
+		random_list = {
+			33 = { add_country_modifier = { name = U39_weak_wild_fury duration = 3650 } } #10 years
+			33 = { add_country_modifier = { name = U39_targeted_wild_fury duration = 3650 } } #10 years
+			33 = { add_country_modifier = { name = U39_uncontrollable_wild_fury duration = 3650 } } #10 years
+		}
+	}
+	else_if = {
 		limit = { has_ruler_flag = hoko_patron }
 		add_country_modifier = { name = patron_green_elemental_fury duration = 3650 }
 		custom_tooltip = magic_booster_by_patron_tt
@@ -1499,10 +1526,8 @@ evocation_3_elemental_fury_effect = { # Elemental Fury
 		add_country_modifier = { name = patron_ice_elemental_fury duration = 3650 }
 		custom_tooltip = magic_booster_by_patron_tt
 	}
-	else = {
-		add_country_modifier = { name = evocation_3_elemental_fury_mod duration = 3650 }
-		custom_tooltip = evocation_fireball_on_barrage_tt
-	}
+	else = { add_country_modifier = { name = evocation_3_elemental_fury_mod duration = 3650 } }
+	custom_tooltip = evocation_fireball_on_barrage_tt
 	if = { #Great Storm Shenanigans
 		limit = { has_country_flag = I80_fortrending_flag }
 		add_country_modifier = { name = I80_fort_rending duration = 3650 }
@@ -1518,7 +1543,17 @@ on_illusion_spell_cast = {
 }
 
 illusion_0_invisibility_effect = { # Invisibility
-	add_country_modifier = { name = illusion_0_invisibility_mod duration = 3650 }
+	if = {
+		limit = { has_country_flag = RSP_trollshaunt_the_army_of_the_wretched_effect }
+		illusion_0_invisibility_sub_effect = { days = 1825 }
+		add_country_modifier = { name = RSP_trollshaunt_krakens_kiss_prepared duration = 1825 }
+	}
+	else = {
+		illusion_0_invisibility_sub_effect = { days = 3650 }
+	}
+}
+illusion_0_invisibility_sub_effect = { #Invisibility Sub Effect
+	add_country_modifier = { name = illusion_0_invisibility_mod duration = $days$ }
 }
 illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 	custom_tooltip = spell_sabotage_effect_tt
@@ -1529,6 +1564,10 @@ illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 	if = {
 		limit = { NOT = { has_country_flag = G61_spell_effect_razzle } }
 		custom_tooltip = illusion_1_fear_and_loathing_spell_effect_tt
+	}
+	if = { #Orenvalyam
+		limit = { has_country_flag = U39_fear_and_loathing_buff_flag }
+		custom_tooltip = U39_fear_and_loathing_spell_tt
 	}
 	custom_tooltip = spell_sabotage_effect2_tt
 	tooltip = { add_country_modifier = { name = illusion_1_fear_and_loathing_debuff duration = 3650 } }
@@ -1553,10 +1592,22 @@ illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 			if = {  # default
 				limit = { PREV = { NOT = { has_country_flag = G61_spell_effect_razzle } } }
 				country_event = { id = magic_spell.601 }
-				capital_scope = { anti_tax_rebels = 1 }
+				if = { #Orenvalyam
+					limit = {
+						PREV = { has_country_flag = U39_fear_and_loathing_buff_flag }
+						total_development = 300
+					}
+					capital_scope = {
+						anti_tax_rebels = 3
+						anti_tax_rebels = 3
+						anti_tax_rebels = 3
+						anti_tax_rebels = 3
+					}
+				}
+				else = { capital_scope = { anti_tax_rebels = 1 } }
 			}
 		}
-		every_enemy_country = {
+		every_war_enemy_country = {
 			add_country_modifier = { name = illusion_1_fear_and_loathing_debuff duration = 3650 }
 		}
 		every_rival_country = {
@@ -1588,14 +1639,20 @@ illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 	}
 	
 	if = {
-		limit = { has_any_active_estate_agenda = yes }
-		custom_tooltip = illusion_1_bread_and_circuses_yes_active_agenda
+		limit = { NOT = { has_reform = U39_kavalali_theo_democracy } } #Orenvalyam
+		if = {
+			limit = { has_any_active_estate_agenda = yes }
+			custom_tooltip = illusion_1_bread_and_circuses_yes_active_agenda
+		}
+		else = { custom_tooltip = illusion_1_bread_and_circuses_no_active_agenda }
 	}
-	else = { custom_tooltip = illusion_1_bread_and_circuses_no_active_agenda }
 
 	#This is the `summon_the_diet` effect block. Any changes should be made to both
 	if = { #Trigger means AI can only cast the spell when they would pass this limit
-		limit = { NOT = { has_any_active_estate_agenda = yes } }
+		limit = {
+			NOT = { has_any_active_estate_agenda = yes }
+			NOT = { has_reform = U39_kavalali_theo_democracy }
+		}
 		# custom_tooltip = ESTATES_SUMMON_THE_DIET_DESC
 		hidden_effect = {
 			if = {
@@ -1626,7 +1683,6 @@ illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 			clr_country_flag = recent_estate_agenda
 		}
 		set_country_flag = recent_estate_agenda
-
 		# Influence was not supposed to be part of the spell - woops
 		# if = {
 		# 	limit = {
@@ -1645,10 +1701,12 @@ illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 		# 		short = yes
 		# 	}
 		# }
-		add_estate_loyalty = {
-			estate = all
-			loyalty = 5
-			short = yes
+		hidden_effect = { #Hidden because it's already in the tooltip and I like the tt formatting more
+			add_estate_loyalty = {
+				estate = all
+				loyalty = 5
+				short = yes
+			}
 		}
 		if = {
 			limit = {
@@ -1699,6 +1757,31 @@ illusion_1_bread_and_circuses_effect = { # Bread and Circuses
 		pashaine_add_clue = yes
 
 		accretive_path_gain_chi = { aspect = meditation_through_labour category = dip amount = 15 }
+	}
+	else_if = { #Orenvalyam
+		limit = { has_reform = U39_kavalali_theo_democracy }
+		custom_tooltip = U39_bread_spell_effect_tt
+		random_owned_province = {
+			limit = {
+				has_seat_in_parliament = yes
+				is_backing_current_issue = no
+			}
+			back_current_issue = yes
+		}
+		random_owned_province = {
+			limit = {
+				has_seat_in_parliament = yes
+				is_backing_current_issue = no
+			}
+			back_current_issue = yes
+		}
+		random_owned_province = {
+			limit = {
+				has_seat_in_parliament = yes
+				is_backing_current_issue = no
+			}
+			back_current_issue = yes
+		}
 	}
 	else = { hidden_effect = { auto_complete_estate_agenda = { estate = all } } }
 }
@@ -2111,6 +2194,36 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 			overlord = { add_opinion = { who = ROOT modifier = cast_plant_growth } }
 		}
 	}
+
+	if = {
+		limit = { tag = U39 } #Orenvalyam
+		if = {
+			limit = { has_country_flag = U39_plant_growth_burn_flag }
+			if = {
+				limit = { 
+					any_owned_province = {
+						is_effelai_network_root = yes
+						province_with_arable_goods = yes
+					}
+				}
+				custom_tooltip = U39_plant_growth_burn_yes_tt
+			}
+			else = { custom_tooltip = U39_plant_growth_burn_no_tt }
+		}
+		if = {
+			limit = { has_country_flag = U39_plant_growth_dormant_flag }
+			if = {
+				limit = { 
+					any_owned_province = {
+						is_effelai_network_root = yes
+						province_with_arable_goods = yes
+					}
+				}
+				custom_tooltip = U39_plant_growth_dormant_yes_tt
+			}
+			else = { custom_tooltip = U39_plant_growth_dormant_no_tt }
+		}
+	}
 }
 transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 	tooltip = {
@@ -2118,17 +2231,11 @@ transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 			add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ }
 
 			if = {
-				limit = {
-					PREV = {
-						has_country_flag = S50_improved_plant_growth
-					}
-				}
+				limit = { PREV = { has_country_flag = S50_improved_plant_growth } }
 				add_prosperity = 10
 			}
 		}
 	}
-
-
 
 	hidden_effect = {
 		if = {
@@ -2156,12 +2263,38 @@ transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 		add_country_modifier = { name = transmutation_1_plant_growth_cooldown_mod duration = $days$ hidden = yes }
 
 		if = {
-			limit = {
-				has_country_flag = S50_improved_plant_growth
-			}
+			limit = { has_country_flag = S50_improved_plant_growth }
 			every_owned_province = {
 				limit = { province_with_arable_goods = yes }
 				add_prosperity = 10
+			}
+		}
+
+		if = { #Orenvalyam
+			limit = {
+				OR = {
+					has_country_flag = U39_plant_growth_burn_flag
+					has_country_flag = U39_plant_growth_dormant_flag
+				}
+			}
+			every_owned_province = {
+				limit = {
+					is_effelai_network_root = yes
+					province_with_arable_goods = yes
+				}
+				if = {
+					limit = { PREV = { has_country_flag = U39_plant_growth_burn_flag } } 
+					add_devastation = 15
+					random = {
+						chance = 50
+						add_base_tax = 1 add_base_production = 1 add_base_manpower = 1 
+					}
+				}
+				if = {
+					limit = { PREV = { has_country_flag = U39_plant_growth_dormant_flag } } 
+					effelai_attune_province = yes 
+					province_event = { id = orenvalyam_events.26 days = $days$ }
+				}
 			}
 		}
 	}
