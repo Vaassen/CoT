@@ -624,7 +624,7 @@ yemo_two = {
 			custom_tooltip = empty_line_tt
 			6718 = {
 				add_province_modifier = {
-					name = S50_cloudfall_tower
+					name = S50_cloudfall_tower_modifier
 					duration = -1
 				}
 			}
@@ -693,10 +693,38 @@ yemo_two = {
 		required_missions = { S50_a_study_in_scarlet } 
 		provinces_to_highlight = { 
 			region = shadow_swamp_region
-			any_neighbor_province = {
-				NOT = { region = shadow_swamp_region }
+			OR = {
+				AND = {
+					any_neighbor_province = {
+						NOT = { region = shadow_swamp_region }
+					}
+					NOT = { owned_by = ROOT }
+				}
+				AND = {
+					owned_by = S70
+					any_neighbor_province = { NOT = { owned_by = S70 } }
+					NOT = {
+						any_neighbor_province = {
+							owned_by = ROOT
+							fort_level = 2
+							if = {
+								limit = {
+									has_dlc = "Mandate of Heaven"
+								}
+								has_state_edict = edict_defensive_edict
+							}
+							else = {
+								num_of_units_in_province = {
+									who = ROOT
+									type = infantry
+									amount = 1
+								}
+							}
+						}
+					}
+				}
 			}
-			NOT = { owned_by = ROOT }
+
 		 } 
 
 		trigger = { 
@@ -715,27 +743,31 @@ yemo_two = {
 				}
 			}
 
-			num_of_owned_provinces_with = {
-				value = 4
-				any_neighbor_province = {
-					owned_by = S70
-				}
-				fort_level = 2
-				if = {
-					limit = {
-						has_dlc = "Mandate of Heaven"
+			shadow_swamp_region = {
+				type = all
+				OR = {
+					NOT = { owned_by = S70 }
+					all_neighbor_province = { owned_by = S70 }
+					any_neighbor_province = {
+						owned_by = ROOT
+						fort_level = 2
+						if = {
+							limit = {
+								has_dlc = "Mandate of Heaven"
+							}
+							has_state_edict = edict_defensive_edict
+						}
+						else = {
+							num_of_units_in_province = {
+								who = ROOT
+								type = infantry
+								amount = 1
+							}
+						}
 					}
-					has_state_edict = edict_defensive_edict
 				}
-				else = {
-					num_of_units_in_province = {
-						who = ROOT
-						type = infantry
-						amount = 1
-					}
-				}
-				
 			}
+
 		 } 
 
 		effect = { 
@@ -772,12 +804,17 @@ yemo_two = {
 				}
 			}
 
-			every_owned_province = {
-				limit = {
-					fort_level = 2
+			custom_tooltip = S50_yezel_fort_manpower_tt
+			hidden_effect = {
+				every_owned_province = {
+					limit = {
+						fort_level = 2
+						any_neighbor_province = { owned_by = S70 }
+					}
+					add_base_manpower = 2
 				}
-				add_base_manpower = 2
 			}
+
 			
 		 } 
 	}
@@ -806,15 +843,25 @@ yemo_two = {
 		 } 
 
 		effect = { 
-			every_owned_province = {
-				limit = {
-					culture = echenka
+			custom_tooltip = S50_echenka_settler_tt
+			hidden_effect = {
+				every_owned_province = {
+					limit = {
+						culture = echenka
+					}
+					add_province_modifier = {
+						name = S50_proactive_settlers
+						duration = -1
+					}
 				}
+			}
+			tooltip = {
 				add_province_modifier = {
 					name = S50_proactive_settlers
 					duration = -1
 				}
 			}
+
 
 			custom_tooltip = S50_troll_purge_grants_army_tradition_tt
 			hidden_effect = {
@@ -904,6 +951,7 @@ yemo_two = {
 				add_casus_belli = {
 					target = F72
 					type = cb_vassalize_mission
+					months = 600
 				}
 			}
 		 } 
@@ -935,6 +983,10 @@ yemo_two = {
 						}
 					}
 				}
+				AND = {
+					is_core = F71
+					NOT = { country_or_subject_holds = ROOT }
+				}
 			}
 		 } 
 
@@ -942,10 +994,7 @@ yemo_two = {
 			NOT = { exists = F71 }
 			F71 = {
 				all_core_province = {
-					OR = {
-						owned_by = ROOT
-						owned_by_subject_of = ROOT
-					}
+					country_or_subject_holds = ROOT
 				}
 			}
 
@@ -1111,8 +1160,8 @@ yemo_three = {
 
 		trigger = { 
 			check_variable = {
-				which = S50_trolls_killed
-				value = 10000
+				which = S50_troll_battles_won
+				value = 5
 			}
 			any_hired_mercenary_company = {
 				template = merc_shadowmarked_deathsworn
@@ -1129,11 +1178,37 @@ yemo_three = {
 			}
 
 			S42 = {
-				add_liberty_desire = 100
+				if = { 
+					limit = { 
+						NOT = { is_subject_of = ROOT } 
+					}
+					add_country_modifier = {
+						name = S50_tanizu_rebellious_spirit
+						duration = -1
+					}
+				}
 			}
 
 			S43 = {
-				add_liberty_desire = 100
+				if = { 
+					limit = { 
+						NOT = { is_subject_of = ROOT } 
+					}
+					add_country_modifier = {
+						name = S50_tanizu_rebellious_spirit
+						duration = -1
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					NOT = {
+						S42 = { is_subject_of = ROOT }
+						S43 = { is_subject_of = ROOT }
+					}
+				}
+				S42 = { create_alliance = S43 }
 			}
 		 } 
 	}
@@ -1155,6 +1230,7 @@ yemo_three = {
 
 		trigger = { 
 			all_owned_province = {
+				is_core = ROOT
 				OR = {
 					custom_trigger_tooltip = {
 						tooltip = S50_no_troll_pop_tt
@@ -1230,8 +1306,8 @@ yemo_three = {
 			num_of_cawa = 10
 
 			check_variable = {
-				which = S50_trolls_killed
-				value = 50000
+				which = S50_troll_battles_won
+				value = 20
 			} 
 		 } 
 
@@ -1408,6 +1484,7 @@ yemo_three = {
 					is_capital = yes
 					owner = {
 						NOT = { culture = ashhana_lizardfolk }
+						NOT = { is_subject_of = ROOT }
 						culture_group = lizardfolk
 						NOT = { has_been_insulted_by_root = yes }
 					}
@@ -1437,12 +1514,14 @@ yemo_three = {
 						culture = ashhana_lizardfolk
 						NOT = { culture_group = lizardfolk }
 						has_been_insulted_by_root = yes
+						is_subject_of = ROOT
 					}
 				}
 				calc_true_if = {
 					amount = 5
 					all_known_country = {
 						NOT = { culture = ashhana_lizardfolk }
+						NOT = { is_subject_of = ROOT}
 						culture_group = lizardfolk
 						has_been_insulted_by_root = yes
 					}
@@ -1600,6 +1679,18 @@ yemo_three = {
 		 } 
 
 		trigger = { 
+			mattabo_area = {
+				type = all
+				country_or_subject_holds = ROOT
+			}
+			shena_muhaqaar_area = {
+				type = all
+				country_or_subject_holds = ROOT
+			}
+			leta_muhaqaar_area = {
+				type = all
+				country_or_subject_holds = ROOT
+			}
 			africa = {
 				type = all
 				OR = {
@@ -1607,9 +1698,6 @@ yemo_three = {
 					NOT = {
 						culture = fieldstalker_gnoll
 						culture = echenka
-						area = mattabo_area
-						area = shena_muhaqaar_area
-						area = leta_muhaqaar_area
 					}
 				}
 			}
@@ -1655,6 +1743,7 @@ yemo_three = {
 			country_event = {
 				id = yemotaferi.8
 			}
+			custom_tooltip = yemotaferi.8.insight
 		 } 
 	}
 
@@ -1666,7 +1755,10 @@ yemo_three = {
 			owned_by = F72
 			OR = {
 				NOT = { has_manpower_building_trigger = yes }
-				NOT = { has_building = soldier_households }
+				NOT = { 
+					has_building = soldier_households
+					base_manpower = 15
+				 }
 			}
 		 } 
 
@@ -1691,7 +1783,10 @@ yemo_three = {
 				}
 				num_of_owned_provinces_with = {
 					value = 20
-					has_building = soldier_households
+					OR = {
+						has_building = soldier_households
+						base_manpower = 15
+					}
 				}
 			}
 
@@ -1819,8 +1914,10 @@ yemo_three = {
 					NOT = {
 						AND = {
 							country_or_subject_holds = ROOT
-							has_building = cathedral
-							development = 30
+							has_great_project = {
+								type = holy_triplets_of_mewomender
+								tier = 3
+							}
 						}
 
 					}
@@ -1829,10 +1926,14 @@ yemo_three = {
 		 } 
 
 		trigger = { 
-			down_river_from_shadow = {
-				type = all
-				country_or_subject_holds = ROOT
+			custom_trigger_tooltip = {
+				tooltip = S50_downstream_provinces_tt
+				down_river_from_shadow = {
+					type = all
+					country_or_subject_holds = ROOT
+				}
 			}
+
 
 			all_subject_country = {
 				capital_scope = {
@@ -1882,9 +1983,10 @@ yemo_three = {
 			}
 			5593 = {
 				country_or_subject_holds = ROOT
-				has_building = cathedral
-				development = 30
-				# TODO: replace with Holy Triplet Temples once implemented
+				has_great_project = {
+					type = holy_triplets_of_mewomender
+					tier = 3
+				}
 			}
 		 } 
 
@@ -1914,7 +2016,7 @@ yemo_four = {
 
 		trigger = { 
 			has_estate_privilege = estate_church_religious_diplomats
-			has_cast_enchanting_embassy = yes
+			has_cast_enchanting_envoy_embassy = yes
 			calc_true_if = {
 				amount = 2
 				all_known_country = {
@@ -1967,6 +2069,8 @@ yemo_four = {
 				alliance_with = S43
 				overlord_of = S43
 			}
+
+			NOT = { is_at_war = yes }
 
 			total_development = 50
 			army_size = 15
@@ -2177,9 +2281,18 @@ yemo_four = {
 					}
 				}
 			}
-			custom_trigger_tooltip = {
-				tooltip = S50_denounce_yrilakites_active_tt
-				has_country_modifier = against_yrilakites
+			OR = {
+				custom_trigger_tooltip = {
+					tooltip = S50_denounce_yrilakites_active_tt
+					has_country_modifier = against_yrilakites
+				}
+				AND = {
+					S70 = {
+						has_been_insulted_by_root = yes
+					}
+					has_eclipsed = S70
+				}
+				NOT = { exists = S70 }
 			}
 		 } 
 
@@ -2341,12 +2454,12 @@ yemo_four = {
 			any_subject_country = {
 				culture = tanizu
 				num_of_cities = 30
-				
-				num_of_owned_provinces_with = {
-					value = 20
-					has_manpower_building_trigger = yes
-				}
 				has_send_officers = yes
+			}
+			num_of_provinces_owned_or_owned_by_subjects_with = {
+				owner = { culture = tanizu }
+				value = 20
+				has_manpower_building_trigger = yes
 			}
 		 } 
 
@@ -2355,10 +2468,33 @@ yemo_four = {
 				limit = {
 					culture = tanizu
 				}
-				add_country_modifier = {
-					name = S50_one_tribe
-					duration = -1
+				
+
+				if = {
+					limit = {
+						NOT = { exists = L59 } # Bwa Tanizu
+					}
+					custom_tooltip = S50_form_bwa_tanizu_tt
+					hidden_effect = {
+						form_bwa_tanizu_effect = yes
+					}
+
+					L59 = {
+						add_country_modifier = {
+							name = S50_one_tribe
+							duration = -1
+						}
+					}
 				}
+				else = {
+					add_country_modifier = {
+						name = S50_one_tribe
+						duration = -1
+					}
+				}
+
+
+				
 
 				custom_tooltip = S50_tanizu_claims_tt
 				hidden_effect = {
@@ -2394,7 +2530,10 @@ yemo_four = {
 						type = shadowroot_matriarch_purified
 						tier = 2
 					}
-					has_building = cathedral
+					OR = {
+						has_building = cathedral
+						base_tax = 10
+					}
 					has_courthouse_building_trigger = yes
 					has_building = state_house
 				}
@@ -2407,7 +2546,10 @@ yemo_four = {
 					type = shadowroot_matriarch_purified
 					tier = 2
 				}
-				has_building = cathedral
+				OR = {
+					has_building = cathedral
+					base_tax = 10
+				}
 				has_courthouse_building_trigger = yes
 				has_building = state_house
 			}
@@ -2599,21 +2741,26 @@ yemo_four = {
 		 } 
 
 		trigger = { 
-			any_subject_country = {
-				culture = ashhana_lizardfolk
-				taneyas_superregion = {
-					type = all
-					OR = {
-						NOT = { culture = ashhana_lizardfolk }
-						owned_by = PREV
+			custom_trigger_tooltip = {
+				tooltip = S50_unified_ashhana_subject_tt
+				any_subject_country = {
+					culture = ashhana_lizardfolk
+					taneyas_superregion = {
+						type = all
+						OR = {
+							NOT = { culture = ashhana_lizardfolk }
+							owned_by = PREV
+						}
 					}
 				}
-				num_of_owned_provinces_with = {
-					value = 30
-					has_manpower_building_trigger = yes
-					has_tax_building_trigger = yes
-					has_production_building_trigger = yes
-				}
+			}
+
+			num_of_provinces_owned_or_owned_by_subjects_with = {
+				value = 30
+				owner = { culture = ashhana_lizardfolk } # Tooltip wont work within any_subject_country, so we do this
+				has_manpower_building_trigger = yes
+				has_tax_building_trigger = yes
+				has_production_building_trigger = yes
 			}
 
 			OR = {
@@ -2888,6 +3035,12 @@ yemo_five = {
 			hidden_effect = {
 				set_country_flag = S50_splintered_lands_age_ability
 			}
+
+			custom_tooltip = empty_line_tt
+			custom_tooltip = S50_holy_triplets_of_mewomender_tt
+			hidden_effect = {
+				set_country_flag = S50_unlock_holy_triplets_of_mewomender
+			}
 		 } 
 	}
 
@@ -2919,7 +3072,7 @@ yemo_five = {
 				AND = {
 					province_id = 5593
 					OR = {
-						NOT = { has_building = cathedral } # TODO: change to Holy Triplet Temples great project once it is added
+						NOT = { has_great_project = { type = holy_triplets_of_mewomender tier = 2 } }
 						NOT = { country_or_subject_holds = ROOT }
 					}
 				}
@@ -2962,7 +3115,10 @@ yemo_five = {
 
 			5593 = {
 				country_or_subject_holds = ROOT
-				has_building = cathedral # TODO: change to Holy Triplet Temples great project once it is added
+				has_great_project = {
+					type = holy_triplets_of_mewomender
+					tier = 2
+				}
 			}
 
 			6118 = {
