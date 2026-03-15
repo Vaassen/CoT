@@ -171,6 +171,7 @@ on_startup = {
 		black_herd_events.0 #Black Herd Starting Event
 		flavour_star_rider.1 #Star Rider Start
 		flavour_nispac.1 #Nispac Starting Event
+		flavor_beikdugang.17 # Beikdugang intro
 
 		#Silver Families
 		silver_families.1		#Silmuna
@@ -242,7 +243,7 @@ on_startup = {
 
 		#Amubariz starting with legacy
 		flavour_AYN.500
-
+		
 		anb_settings.1			#Settings - /!\ keep it at the bottom of the list
 	}
 
@@ -3525,6 +3526,15 @@ on_added_to_trade_company = {
 			duration = -1
 		}
 	}
+	# Beikdugang
+	owner = {
+		if = {
+			limit = {
+				has_government_attribute = is_beikdugang_plutocracy
+			}
+			Y15_calculate_gov_mechanic_ship_trade_power_buff = yes
+		}
+	}
 }
 
 # province
@@ -3540,6 +3550,15 @@ on_removed_from_company = {
 	if = {
 		limit = { has_province_modifier = verne_trade_company_conversion_modifier}
 		remove_province_modifier = verne_trade_company_conversion_modifier
+	}
+	# Beikdugang
+	owner = {
+		if = {
+			limit = {
+				has_government_attribute = is_beikdugang_plutocracy
+			}
+			Y15_calculate_gov_mechanic_ship_trade_power_buff = yes
+		}
 	}
 }
 
@@ -7343,6 +7362,21 @@ on_embrace_revolution = {
 	kill_ruler = yes
 	set_country_flag = revolutionary_republic_flag
 	set_country_flag = had_revolution
+	if = {
+		limit = { 
+			4907 = {
+				owner = { 
+					mission_completed = Y15_light_liberty 
+					NOT = { has_country_flag = Y15_light_at_worlds_end }
+				}
+			}
+			all_country = {
+				is_revolutionary = yes
+			}
+		}
+
+		country_event = { id = flavor_beikdugang.101 }
+	}
 }
 
 # THIS = Revolutionary country being beaten, FROM = Country enforcing the peace treaty
@@ -9761,6 +9795,55 @@ on_yearly_pulse_5 = {
 		lake.200 # kukatodic resurgence
 		flavour_wild_hunt.25 #Wild Hunt Second Incursion events handler
 	}
+	if = {	# Beikdugang
+		limit = {
+			is_or_was_tag = { tag = Y15 }
+		}
+		if = {
+			limit = {
+				mission_completed = Y15_tides_of_change
+			}
+			for = {
+				amount = 20
+				effect = "
+				random_province = {
+					limit = {
+						continent = oceania
+						NOT = { has_revolution_in_province = yes }
+						is_city = yes
+					}
+					set_revolution_in_province = yes
+				}
+				"
+			}
+		}
+
+		if = {
+			limit = {
+				mission_completed = Y15_voice_of_the_people
+			}
+			for = {
+				amount = 20
+				effect = "
+				random_province = {
+					limit = {
+						continent = africa
+						NOT = { has_revolution_in_province = yes }
+						is_city = yes
+					}
+					set_revolution_in_province = yes
+				}
+				"
+			}
+		}
+		if = {
+			limit = {
+				has_government_attribute = is_beikdugang_plutocracy
+			}
+			Y15_calculate_gov_mechanic_trade_node_buff = yes
+		}
+	}
+
 	if = {
 		limit = {
 			tag = S15
@@ -18326,6 +18409,40 @@ on_province_owner_change = {
 			duration = -1
 		}
 	}
+
+	# Beikdugang
+	if = {
+		limit = {
+			has_province_modifier = Y15_east_sarhal_farm_economy
+			owner = {
+				OR = {
+					is_or_was_tag = { tag = Y15 }
+					overlord = {
+						is_or_was_tag = { tag = Y15 }
+					}
+				}
+				
+			}
+		}
+		remove_province_modifier = Y15_east_sarhal_farm_economy
+		change_trade_goods = unknown
+	}
+
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					mission_completed = Y15_corner_market
+					overlord = { mission_completed = Y15_corner_market }
+				}
+			}
+			trade_goods = precursor_relics
+		}
+		add_province_modifier = { 
+			name = Y15_artificer_flamekeepers_buff
+			duration = -1
+		}
+	}
 }
 
 # country 1.35
@@ -21719,6 +21836,56 @@ on_dependency_gained = {
 			}
 		}
 	}
+	# Beikdugang
+	if = {
+		limit = {
+			is_or_was_tag = { tag = Y15 }
+		}
+		if = {
+			limit = {
+				has_government_attribute = is_beikdugang_plutocracy
+				FROM = { is_colonial_nation = yes }
+			}
+			Y15_calculate_gov_mechanic_ship_trade_power_buff = yes
+		}
+
+		if = {
+			limit = {
+				mission_completed = Y15_corner_market
+				FROM = {
+					precursor_relics = 1
+				}
+			}
+			FROM = {
+				every_owned_province = {
+					limit = { trade_goods = precursor_relics}
+					add_province_modifier = { 
+						name = Y15_artificer_flamekeepers_buff
+						duration = -1
+					}
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				mission_completed = Y15_tasteful_monopoly
+				FROM = {
+					any_owned_province = {
+						has_province_modifier = Y15_east_sarhal_farm_economy
+					}
+				}
+			}
+
+			FROM = {
+				every_owned_province = {
+					limit = { has_province_modifier = Y15_east_sarhal_farm_economy }
+					remove_province_modifier = Y15_east_sarhal_farm_economy
+					change_trade_goods = unknown
+				}
+			}
+		}
+	}
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -22191,6 +22358,29 @@ on_dependency_lost = {
 		}
 		ROOT = {
 			clear_global_event_target = oppressor_kimanis
+		}
+	}
+	
+	# Beikdugang
+	if = {
+		limit = {
+			has_government_attribute = is_beikdugang_plutocracy
+			FROM = { is_colonial_nation = yes }
+		}
+		Y15_calculate_gov_mechanic_ship_trade_power_buff = yes
+	}
+	if = {
+		limit = {
+			ROOT = { mission_completed = Y15_corner_market }
+			FROM = {
+				precursor_relics = 1
+			}
+		}
+		FROM = {
+			every_owned_province = {
+				limit = { has_province_modifier = Y15_artificer_flamekeepers_buff }
+				remove_province_modifier = Y15_artificer_flamekeepers_buff
+			}
 		}
 	}
 }
@@ -24934,8 +25124,10 @@ on_country_creation = {
 
 	if = { #Makes Beikdugang created subjects (mainly colonies) tolerate ruinborn more.
 		limit = {
-			is_subject_of = Y15
-			Y15 = { mission_completed = Y15_solstice }
+			overlord = { 
+				is_or_was_tag = { tag = Y15 }
+				mission_completed = Y15_solstice
+			}
 		}
 		largest_increase_of_ruinborn_tolerance_effect = yes
 	}
@@ -27420,6 +27612,39 @@ on_colony_finished = { #ROOT - Province
 		}
 	}
 	
+	
+	# Beikdugang and co
+	if = {
+		limit = {
+			4903 = {
+				owner = {
+					has_country_flag = Y15_robot_colonies
+				}
+			}
+			owner = {
+				OR = {
+					tag = J33
+					is_or_was_tag = { tag = Y15 }
+					AND = {
+						is_subject = yes
+						overlord = {
+							OR = {
+								tag = J33
+								is_or_was_tag = { tag = Y15 }
+							}
+							
+						}
+					}
+				}
+			}
+		}
+		random_list = {
+			6 = {}
+			3 = { add_mechanim_minority_size_effect = yes }
+			1 = { change_culture = seasong_mechanim }
+		}
+
+	}
 }
 
 on_advisor_hired = { #ROOT - Country
@@ -28275,6 +28500,21 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 				id = mangrove.119
 				days = 1
 			}
+		}
+	}
+
+	if = { # Beikdugang
+		limit = {
+			has_country_flag = Y15_baashidi_freedom
+			FROM = {
+				tag = S93 # Alefisol
+			}
+		}
+		clr_country_flag = Y15_baashidi_freedom
+		
+		random_known_country = {
+			limit = { is_or_was_tag = { tag = Y15 }} # Beikdugang
+			country_event = { id = flavor_beikdugang.21 }
 		}
 	}
 }
