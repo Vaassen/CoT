@@ -713,6 +713,44 @@ declarewar = {
 			always = no
 		}
 	}
+
+	condition = {
+		tooltip = YRW_reform_2_no_subject_war
+		potential = {
+			is_subject_of_type = ynnic_iosahar
+			overlord = {
+				OR = {
+					tag = U69
+					tag = U70
+					tag = U71
+				}
+				has_country_modifier = yrw_2b
+				FROM = {
+					is_subject_of = PREV
+				}
+			}
+		}
+		allow = {
+			liberty_desire = 50
+		}
+	}
+
+	condition = { #If mission is done, prevent war between tributaries
+		tooltip = I69_reversing_negeal_war_tt
+		potential = { 
+			is_subject_of_type_with_overlord = {
+				who = I69 #Star Rider
+				type = tributary_state_anb
+			}
+		}
+		allow = { 
+			NOT = {
+				overlord = {
+					mission_completed = I69_reversing_negeal
+				}
+			}
+		}
+	}
 	
 	effect = {
 		on_war_declaration_effect = yes #1.35
@@ -737,6 +775,23 @@ declarewar = {
 				B28 = { ai = yes }
 			}
 			country_event = { id = flavor_clouded_eye.20 }
+		}
+
+		if = {
+			limit = {
+				has_global_flag = war_of_salt_and_silence
+				has_saved_global_event_target = salt_and_silence_emperor
+			}
+			if = {
+				limit = {
+					tag = event_target:salt_and_silence_emperor
+					FROM = { tag = event_target:salt_and_silence_giant }
+				}
+				event_target:salt_and_silence_emperor = {
+					set_country_flag = currently_in_salt_silence_war
+					country_event = { id = flavor_salt_silence_incident.11 days = 1825 }
+				}
+			}
 		}
 
 		if = {
@@ -1548,6 +1603,7 @@ declarewar = {
 				add_country_modifier = {
 					name = S90_communion_cd
 					duration = 3650
+					hidden = yes
 				}
 			}
 			if = {
@@ -1656,6 +1712,47 @@ declarewar = {
 			}
 		}
 
+		# Stop Taga'ala republics from using any land-taking cbs
+		if = {
+			limit = {
+				ai = no
+				has_country_modifier = mangrove_peace
+				has_government_attribute = mangrove_republic
+				NOT = {
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_unification
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_humiliate_rotw
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war_triggered
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict_triggered
+					}
+				}
+			}
+			white_peace = FROM	# Immediate white peace
+			country_event = { id = mangrove.2 }
+		}
+
 		#Tsukqiao
 		if = {
 			limit = { is_or_was_tag = { tag = Z60 } }
@@ -1719,10 +1816,6 @@ declarewar = {
 			}
 		}
 
-		if = { #Chronophage tracking
-			limit = { has_country_modifier = necromancy_3_chronophage_mod }
-			hidden_effect = { change_variable = { chronophage_tracker = 1 } }
-		}
 		if = {
 			limit = {
 				B43 = { has_country_flag = B43_defend_grasshopper }
@@ -3917,6 +4010,30 @@ callaction = {
 			accretive_path_gain_chi = { aspect = fill_the_begging_bowls category = dip amount = 20 }
 		}
 	}
+
+	effect = {
+		if = { #Orenvalyam
+			limit = { has_country_flag = U39_hunted_by_the_righteous_flag }
+			every_war_enemy_country = {
+				add_country_modifier = {
+					name = U39_hunted_by_the_righteous
+					duration = -1
+				}
+			}
+		}
+
+		if = { #Orenvalyam
+			limit = { FROM = { has_country_flag = U39_hunted_by_the_righteous_flag } }
+			FROM = {
+				every_war_enemy_country = {
+					add_country_modifier = {
+						name = U39_hunted_by_the_righteous
+						duration = -1
+					}
+				}
+			}
+		}
+	}
 }
 
 designate_march = {
@@ -4124,7 +4241,7 @@ insultaction = {
 		}
 		if = {
 			limit = { 
-				tag = G61
+				is_or_was_tag = { tag = G61 }
 				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } }
 			}
 			change_variable = {
@@ -4753,12 +4870,27 @@ trade_favors_for_sailors = {
 }
 
 support_independence_action = {
+	#This action works for both Ask to Support Independence (ROOT is a subject, FROM is independent) and Support Independence (FROM is a subject, ROOT is independent).
 	condition = {
-		tooltip = vic_league_no_external_support
+		tooltip = vic_league_no_external_support_1
 		potential = {
-			FROM = {
+			FROM = { #External country (ROOT) can't offer independence support to subject (FROM)
 				is_subject_of_type = vic_league_member
-				NOT = {
+				OR = { #Vic League members without these mechanic can have independence supported
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+			}
+		}
+		allow = { always = no }
+	}
+	condition = {
+		tooltip = vic_league_no_external_support_2
+		potential = {
+			ROOT = { #Subject (ROOT) can't ask another country (FROM) for indep support
+				is_subject_of_type = vic_league_member
+				OR = { #Vic League members without these mechanic can have independence supported
 					has_government_attribute = expand_the_league_1_attribute
 					has_government_attribute = expand_the_league_2_attribute
 					has_government_attribute = expand_the_league_3_attribute
