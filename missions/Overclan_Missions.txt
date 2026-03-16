@@ -19,6 +19,7 @@ northern_holds = {
 				area = inner_drolas_area
 				province_id = 379 #stonegaze
 			}
+			#TODO highlight naval supplies if not enough
 		} 
 
 		trigger = {
@@ -63,8 +64,11 @@ northern_holds = {
 				name = F78_expanding_goblin_fleet
 				duration = -1
 			}
-			western_cannor_superregion = {
-				discover_country = ROOT
+			custom_tooltip = overclan_discover_cannor_tt
+			hidden_effect = {
+				western_cannor_superregion = {
+					discover_country = ROOT
+				}
 			}
 		}
 	}
@@ -79,10 +83,10 @@ northern_holds = {
 					area = tungr_mountains_area
 					has_seat_in_parliament = no
 				}
-				#AND = {
+				AND = {
 					province_id = 526 #Ovdal Tungr
-					has_province_modifier = F78_ca_overboss
-				#}
+					NOT = { has_chief_advisor_present = yes }
+				}
 			}
 		} 
 
@@ -90,7 +94,7 @@ northern_holds = {
 			526 = {
 				owned_by = ROOT
 				has_seat_in_parliament = yes
-				has_province_modifier = F78_ca_overboss
+				has_chief_advisor_present = yes
 			}
 			num_of_owned_provinces_with = {
 				value = 2
@@ -104,16 +108,18 @@ northern_holds = {
 			country_event = { 
 				id = flavour_overclan.8
 			}
-			
 			if = {
 				limit = {
 					mission_completed = F78_promise_of_tolerance
 					mission_completed = F78_winged_mountains
 				}
-				every_owned_province = {
-					remove_province_modifier = F78_mad_religions_folk
+				custom_tooltip = f78_mad_religions_folk_removal_tt
+				hidden_effect = {
+					every_owned_province = {
+						remove_province_modifier = F78_mad_religions_folk
+					}
+					clr_country_flag = F78_mad_religions_folk
 				}
-				clr_country_flag = F78_mad_religions_folk
 			}
 			else = {
 				tungr_mountains_area = {
@@ -192,10 +198,24 @@ northern_holds = {
 		required_missions = { F78_holds_of_marble_and_glass }
 		provinces_to_highlight = {
 			has_terrain = cavern
-			NOT = { owned_by = ROOT }
 			OR = {
 				region = serpentreach_region
 				region = middle_dwarovar_region
+			}
+			AND = {
+				region = serpentreach_region
+				NOT = { owned_by = ROOT }
+				NOT = {
+					ROOT = {
+						num_of_owned_provinces_with = {
+							value = 40
+							region = serpentreach_region
+						}
+					}
+				}
+			}
+			OR = {
+				NOT = { owned_by = ROOT }
 			}
 		} 
 
@@ -300,14 +320,19 @@ northern_holds = {
 		} 
 
 		trigger = {
+			accepted_culture = darkscale_kobold
 			num_of_owned_provinces_with = {
 				value = 2
 				culture = darkscale_kobold
 				has_seat_in_parliament = yes
 			} #TODO test that contingecy isn't needed
 			buradforge_area = {
-				type = all
 				has_pasha = yes
+				has_building = state_house
+			}
+			buradforge_area = {
+				type = all
+				development = 8
 				has_tax_building_trigger = yes
 				has_manpower_building_trigger = yes
 				NOT = { devastation = 0.01 }
@@ -320,52 +345,33 @@ northern_holds = {
 				name = F78_kobold_logistics_study
 				duration = -1
 			}
-			every_owned_province = {
-				limit = { province_group = hold_province }
-				add_kobold_minority_size_effect = yes
-			}
-			random_owned_province = {
-				limit = {
-					superregion = bulwar_superregion
-					has_kobold_minority_trigger = no
+			custom_tooltip = dead_dragon_minorities_tt
+			custom_tooltip = F78_mad_dwarovar_folk_removal_kobold_tt
+			hidden_effect = {
+				every_owned_province = {
+					limit = { province_group = hold_province }
+					add_kobold_minority_size_effect = yes
 				}
-				add_kobold_minority_size_effect = yes
-			}
-			random_owned_province = {
-				limit = {
-					superregion = bulwar_superregion
-					has_kobold_minority_trigger = no
+				for = {
+					amount = 5
+					effect = "
+						random_owned_province = {
+							limit = {
+								superregion = bulwar_superregion
+								has_kobold_minority_trigger = no
+							}
+							add_kobold_minority_size_effect = yes
+						}
+					"
 				}
-				add_kobold_minority_size_effect = yes
-			}
-			random_owned_province = {
-				limit = {
-					superregion = bulwar_superregion
-					has_kobold_minority_trigger = no
+				serpentreach_region = {
+					limit = { culture = darkscale_kobold }
+					remove_province_modifier = F78_mad_dwarovar_folk # TODO test that this gets them all.
+					clr_province_flag = f78_madness_is_due
 				}
-				add_kobold_minority_size_effect = yes
-			}
-			random_owned_province = {
-				limit = {
-					superregion = bulwar_superregion
-					has_kobold_minority_trigger = no
+				buradforge_area = {
+					clr_province_flag = f78_kobolds_are_due
 				}
-				add_kobold_minority_size_effect = yes
-			}
-			random_owned_province = {
-				limit = {
-					superregion = bulwar_superregion
-					has_kobold_minority_trigger = no
-				}
-				add_kobold_minority_size_effect = yes
-			}
-			serpentreach_region = {
-				limit = { culture = darkscale_kobold }
-				remove_province_modifier = F78_mad_dwarovar_folk # TODO test that this gets them all.
-				clr_province_flag = f78_madness_is_due
-			}
-			buradforge_area = {
-				clr_province_flag = f78_kobolds_are_due
 			}
 		}
 	}
@@ -461,6 +467,8 @@ divenhal_eastern_holds = {
 					}
 				}
 			}
+			num_of_trade_embargos = 1
+			NOT = { overextension_percentage = 0.01 }
 			1312 = { #Bahar node
 				trade_share = {
 					country = ROOT
@@ -603,28 +611,31 @@ divenhal_eastern_holds = {
 
 		effect = {
 			#coastal bahar trade centers
+			custom_tooltip = f78_tolerance_gain_tt
 			516 = {
 				add_province_modifier = {
 					name = F78_cannorian_traders_mod
 					duration = -1
 				}
 			}
-			521 = {
-				add_province_modifier = {
-					name = F78_cannorian_traders_mod
-					duration = -1
+			hidden_effect = {
+				521 = {
+					add_province_modifier = {
+						name = F78_cannorian_traders_mod
+						duration = -1
+					}
 				}
-			}
-			526 = {
-				add_province_modifier = {
-					name = F78_cannorian_traders_mod
-					duration = -1
+				526 = {
+					add_province_modifier = {
+						name = F78_cannorian_traders_mod
+						duration = -1
+					}
 				}
-			}
-			536 = {
-				add_province_modifier = {
-					name = F78_cannorian_traders_mod
-					duration = -1
+				536 = {
+					add_province_modifier = {
+						name = F78_cannorian_traders_mod
+						duration = -1
+					}
 				}
 			}
 			if = {
@@ -639,9 +650,11 @@ divenhal_eastern_holds = {
 					}
 				}
 				516 = { add_elven_minority_size_effect = yes }
-				521 = { add_elven_minority_size_effect = yes }
-				526 = { add_elven_minority_size_effect = yes }
-				536 = { add_elven_minority_size_effect = yes }
+				hidden_effect = {
+					521 = { add_elven_minority_size_effect = yes }
+					526 = { add_elven_minority_size_effect = yes }
+					536 = { add_elven_minority_size_effect = yes }
+				}
 			}
 			if = {
 				limit = {
@@ -660,9 +673,11 @@ divenhal_eastern_holds = {
 					}
 				}
 				516 = { add_human_minority_size_effect = yes }
-				521 = { add_human_minority_size_effect = yes }
-				526 = { add_human_minority_size_effect = yes }
-				536 = { add_human_minority_size_effect = yes }
+				hidden_effect = {
+					521 = { add_human_minority_size_effect = yes }
+					526 = { add_human_minority_size_effect = yes }
+					536 = { add_human_minority_size_effect = yes }
+				}
 			}
 			if = {
 				limit = {
@@ -676,9 +691,11 @@ divenhal_eastern_holds = {
 					}
 				}
 				516 = { add_gnomish_minority_size_effect = yes }
-				521 = { add_gnomish_minority_size_effect = yes }
-				526 = { add_gnomish_minority_size_effect = yes }
-				536 = { add_gnomish_minority_size_effect = yes }
+				hidden_effect = {
+					521 = { add_gnomish_minority_size_effect = yes }
+					526 = { add_gnomish_minority_size_effect = yes }
+					536 = { add_gnomish_minority_size_effect = yes }
+				}
 			}
 			if = {
 				limit = {
@@ -693,9 +710,11 @@ divenhal_eastern_holds = {
 					}
 				}
 				516 = { add_dwarven_minority_size_effect = yes }
-				521 = { add_dwarven_minority_size_effect = yes }
-				526 = { add_dwarven_minority_size_effect = yes }
-				536 = { add_dwarven_minority_size_effect = yes }
+				hidden_effect = {
+					521 = { add_dwarven_minority_size_effect = yes }
+					526 = { add_dwarven_minority_size_effect = yes }
+					536 = { add_dwarven_minority_size_effect = yes }
+				}
 			}
 			if = {
 				limit = {
@@ -709,9 +728,11 @@ divenhal_eastern_holds = {
 					}
 				}
 				516 = { add_halfling_minority_size_effect = yes }
-				521 = { add_halfling_minority_size_effect = yes }
-				526 = { add_halfling_minority_size_effect = yes }
-				536 = { add_halfling_minority_size_effect = yes }
+				hidden_effect = {
+					521 = { add_halfling_minority_size_effect = yes }
+					526 = { add_halfling_minority_size_effect = yes }
+					536 = { add_halfling_minority_size_effect = yes }
+				}
 			}
 			
 			if = {
@@ -719,9 +740,12 @@ divenhal_eastern_holds = {
 					mission_completed = F78_winged_mountains
 					mission_completed = F78_descendants_and_ancestors
 				}
-				clr_country_flag = F78_mad_religions_folk
-				every_owned_province = {
-					remove_province_modifier = F78_mad_religions_folk
+				custom_tooltip = f78_mad_religions_folk_removal_tt
+				hidden_effect = {
+					clr_country_flag = F78_mad_religions_folk
+					every_owned_province = {
+						remove_province_modifier = F78_mad_religions_folk
+					}
 				}
 			}
 			else = {
@@ -850,9 +874,15 @@ divenhal_eastern_holds = {
 		} 
 
 		effect = {
-			every_owned_province = {
-				limit = { NOT = { culture_group = kobold } }
-				remove_province_modifier = F78_mad_dwarovar_folk
+			custom_tooltip = F78_mad_dwarovar_folk_removal_tt
+			hidden_effect = {
+				every_owned_province = {
+					limit = {
+						NOT = { culture_group = kobold }
+						NOT = { has_province_flag = f78_kobolds_are_due }
+					}
+					remove_province_modifier = F78_mad_dwarovar_folk
+				}
 			}
 			custom_tooltip = overclan_dwarven_unlocked_tt
 			unlock_issue = { issue = overclan_sponsor_dwarven_settlement }
@@ -872,7 +902,7 @@ divenhal_eastern_holds = {
 				NOT = { owned_by = ROOT }
 				NOT = { num_of_buildings_in_province = 5 }
 				devastation = 0.01
-				NOT = { hold_condition = { Damaged = yes } }
+				hold_condition = { Damaged = yes }
 			}
 		}
 		
@@ -1123,30 +1153,32 @@ central_conflict = {
 		}
 
 		trigger = {
-			OR = {
-				if = {
-					limit = { exists = Z01 }
-					Z01 = {
-						has_opinion = {
-							who = ROOT
-							value = 120
-						}
-					}
-				}
-				emperor = {
+			if = {
+				limit = { exists = Z01 }
+				Z01 = {
 					has_opinion = {
 						who = ROOT
 						value = 120
 					}
 				}
-				calc_true_if = {
-					all_elector = {
+			}
+			else = {
+				OR = {
+					emperor = {
 						has_opinion = {
 							who = ROOT
 							value = 120
 						}
 					}
-					amount = 2
+					calc_true_if = {
+						all_elector = {
+							has_opinion = {
+								who = ROOT
+								value = 120
+							}
+						}
+						amount = 2
+					}
 				}
 			}
 			government_reform_progress = 100
@@ -1182,7 +1214,7 @@ central_conflict = {
 		required_missions = { F78_first_cannorian_idea }
 		provinces_to_highlight = {
 			province_id = 536 #Aqatbar
-			has_province_modifier = F78_ca_overboss
+			NOT = { has_chief_advisor_present = yes }
 		}
 
 		trigger = {
@@ -1204,7 +1236,7 @@ central_conflict = {
 				has_seat_in_parliament = yes
 			}
 			536 = {
-				has_province_modifier = F78_ca_overboss
+				has_chief_advisor_present = yes
 			}
 		} 
 
@@ -1229,8 +1261,10 @@ central_conflict = {
 				name = F78_old_sun_cultist_connections
 				duration = -1
 			}
-			kuzak_area = {
-				remove_province_modifier = F78_mad_religions_folk
+			hidden_effect = {
+				kuzak_area = {
+					remove_province_modifier = F78_mad_religions_folk
+				}
 			}
 			every_owned_province = {
 				limit = { religion = old_bulwari_sun_cult }
@@ -1478,6 +1512,11 @@ central_conflict = {
 			601 = {
 				num_of_buildings_in_province = 5
 				has_seat_in_parliament = yes
+				OR = {#TODO custom tt?
+					has_province_modifier = bulwar_canals_district_1
+					has_province_modifier = bulwar_canals_district_2
+					has_province_modifier = bulwar_canals_district_3
+				}
 			}
 			565 = {
 				development = 25
@@ -1538,6 +1577,7 @@ central_conflict = {
 			688 = {
 				num_of_buildings_in_province = 5
 				has_seat_in_parliament = yes
+				has_building = state_house
 				OR = {
 					has_province_modifier = restored_ekluzagnu_fortress
 					has_province_modifier = restored_ekluzagnu_palace
@@ -1613,7 +1653,7 @@ central_conflict = {
 				has_dwarven_hold_2 = yes
 				has_seat_in_parliament = yes
 				has_pasha = yes
-				num_of_buildings_in_province = 4
+				num_of_buildings_in_province = 5
 				NOT = { devastation = 0.01 }
 			}
 		} 
@@ -1643,7 +1683,7 @@ central_conflict = {
 				AND = {
 					province_id = 643 #azka-sur
 					OR = {
-						has_province_modifier = F78_ca_overboss
+						NOT = { has_chief_advisor_present = yes }
 						NOT = { development = 30 }
 						NOT = { has_province_modifier = F78_dwarven_caravanserais }
 					}
@@ -1673,7 +1713,7 @@ central_conflict = {
 
 		trigger = {
 			643 = {
-				has_province_modifier = F78_ca_overboss #has_chief_advisor_present = yes
+				has_chief_advisor_present = yes
 				has_unique_voltoj_building = yes
 				development = 30
 			}
@@ -1712,10 +1752,10 @@ central_conflict = {
 		provinces_to_highlight = {
 			province_group = voltoj_city_province
 			OR = {
-				NOT = { development = 40 }
+				NOT = { development = 45 }
 				AND = {
 					province_group = voltoj_hold_city_province
-					NOT = { development = 70 }
+					NOT = { development = 80 }
 				}
 				AND = {
 					has_unique_voltoj_building = no
@@ -1738,11 +1778,11 @@ central_conflict = {
 			}
 			voltoj_city_province = {
 				type = all
-				development = 40
+				development = 45
 			}
 			voltoj_hold_city_province = {
 				type = all
-				development = 70
+				development = 80
 			}
 			OR = {
 				in_golden_age = yes
@@ -1993,10 +2033,13 @@ marching_east = {
 					mission_completed = F78_promise_of_tolerance
 					mission_completed = F78_descendants_and_ancestors
 				}
-				every_owned_province = {
-					remove_province_modifier = F78_mad_religions_folk
+				custom_tooltip = f78_mad_religions_folk_removal_tt
+				hidden_effect = {
+					every_owned_province = {
+						remove_province_modifier = F78_mad_religions_folk
+					}
+					clr_country_flag = F78_mad_religions_folk
 				}
-				clr_country_flag = F78_mad_religions_folk
 			}
 			else = {
 				every_owned_province = {
@@ -2018,17 +2061,17 @@ marching_east = {
 				NOT = { has_manufactory_trigger = yes }
 				NOT = { development = 20 }
 				NOT = { province_has_center_of_trade_of_level = 2 }
-				has_province_modifier = F78_ca_overboss
+				NOT = { has_chief_advisor_present = yes }
 			}
 		}
 
 		trigger = {
 			665 = {
-				development = 20
+				development = 30
 				has_manufactory_trigger = yes
 				province_has_center_of_trade_of_level = 2
 				NOT = { devastation = 0.01 }
-				has_province_modifier = F78_ca_overboss
+				has_chief_advisor_present = yes
 			}
 		} 
 
@@ -2236,16 +2279,22 @@ marching_east = {
 				has_seat_in_parliament = yes
 				num_of_buildings_in_province = 5
 			}
+			625 = {
+				has_great_project = {
+					type = ash_palace
+					tier = 2
+				}
+			}
+			OR = {
+				625 = { has_major_voltoj_academy = yes }
+				612 = { has_major_voltoj_academy = yes }
+			}
 			voltoj_city_province = {
 				type = all
 				OR = {
 					development = 30
 					NOT = { province_group = suran_river }
 				} #TODO possibly TT this
-			}
-			suran_river = {
-				province_group = voltoj_city_province #redundant
-				has_major_voltoj_academy = yes
 			}
 		} 
 
@@ -2254,9 +2303,11 @@ marching_east = {
 				id = flavour_overclan.32
 				tooltip = OVERCLAN_NEW_VOLTOJ_SCHOOL
 			}
-			country_event = { #TODO possibly hidden?
-				id = flavour_overclan.15
-				days = 90
+			hidden_effect = {
+				country_event = {
+					id = flavour_overclan.15
+					days = 90
+				}
 			}
 		}
 	}
@@ -2530,31 +2581,46 @@ artifice_and_roads = {
 		}
 		provinces_to_highlight = {
 			OR = {
+				has_province_modifier = golden_highway_under_construction
 				AND = {
 					province_group = golden_highway_aqatbar
 					NOT = { units_in_province = 1 }
 				}
 				AND = {
 					province_id = 536 #Aqatbahar
-					NOT = { development = 40 }
+					NOT = { development = 50 }
 				}
 				AND = {
 					province_id = 665 #Gelkalis
-					NOT = { development = 35 }
+					NOT = { development = 40 }
+				}
+				AND = {
+					province_id = 688 #Ekluzagnu
+					NOT = { development = 40 }
 				}
 			}
 		}
 
 		trigger = {
+			has_global_flag = golden_highway_bulwar_proper_started
+			has_global_flag = golden_highway_far_bulwar_started
+			NOT = {
+				any_owned_province = {
+					has_province_modifier = golden_highway_under_construction
+				}
+			}
 			golden_highway_aqatbar = {
 				type = all
 				units_in_province = 1
 			}
 			536 = {
-				development = 40
+				development = 50
 			}
 			665 = {
-				development = 35
+				development = 40
+			}
+			688 = {
+				development = 40
 			}
 		}
 
@@ -2575,38 +2641,44 @@ artifice_and_roads = {
 		required_missions = { F78_aqatbar_path }
 		provinces_to_highlight = {
 			OR = {
+				has_province_modifier = golden_highway_under_construction
 				AND = {
 					province_group = golden_highway_bahar
 					NOT = { units_in_province = 1 }
 				}
 				AND = {
 					province_id = 526 #Ovdal Tungr province
-					NOT = { development = 70 }
+					NOT = { development = 80 }
 				}
 				AND = {
 					province_id = 510 #Bal Ourd province
-					NOT = { development = 30 }
+					NOT = { development = 50 }
 				}
 				AND = {
 					province_id = 521 #Re-uyel province
-					NOT = { development = 40 }
+					NOT = { development = 50 }
 				}
 			}
 		}
 
 		trigger = {
+			NOT = {
+				any_owned_province = {
+					has_province_modifier = golden_highway_under_construction
+				}
+			}
 			golden_highway_bahar = {
 				type = all
 				units_in_province = 1
 			}
 			526 = {
-				development = 70
+				development = 80
 			}
 			510 = {
-				development = 30
+				development = 50
 			}
 			521 = {
-				development = 40
+				development = 50
 			}
 		} 
 
