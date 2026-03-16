@@ -12,7 +12,7 @@
 	custom_button = { name = artifact_of_enthrallment_project.name potential = { always = no } }
 	custom_button = { name = battlemage_academy_project.name potential = { always = no } }
 	custom_button = { name = theatre_of_simulacra_project.name potential = { always = no } }
-	custom_button = { name = lichdom_project.name potential = { always = no } }
+	custom_button = { name = army_of_the_dead_project.name potential = { always = no } }
 	custom_button = { name = homunculus_project.name potential = { always = no } }
 	custom_button = { name = regional_projects_none }
 	custom_button = { name = tag_projects_none }
@@ -77,7 +77,7 @@
 	custom_text_box = { name = artifact_of_enthrallment_project_button potential = { always = no } }
 	custom_text_box = { name = battlemage_academy_project_button potential = { always = no } }
 	custom_text_box = { name = theatre_of_simulacra_project_button potential = { always = no } }
-	custom_text_box = { name = lichdom_project_button potential = { always = no } }
+	custom_text_box = { name = army_of_the_dead_project_button potential = { always = no } }
 	custom_text_box = { name = homunculus_project_button potential = { always = no } }
 	custom_text_box = { name = study_select_ruler potential = { always = no } }
 	custom_text_box = { name = study_select_heir potential = { always = no } }
@@ -173,7 +173,7 @@
 	custom_text_box = { name = artifact_of_enthrallment_project_progress potential = { always = no } }
 	custom_text_box = { name = battlemage_academy_project_progress potential = { always = no } }
 	custom_text_box = { name = theatre_of_simulacra_project_progress potential = { always = no } }
-	custom_text_box = { name = lichdom_project_progress potential = { always = no } }
+	custom_text_box = { name = army_of_the_dead_project_progress potential = { always = no } }
 	custom_text_box = { name = homunculus_project_progress potential = { always = no } }
 	custom_text_box = { name = magic_menu_spellbook_school_icons_strip potential = { always = no } }
 	custom_text_box = { name = magic_menu_cast_spell_slot_1_icon potential = { always = no } }
@@ -248,7 +248,19 @@ custom_window = {
 		has_country_flag = show_unique_projects
 	}
 }
-
+#Spell windows
+custom_window = {
+	name = magic_menu_standard_spells_window
+	potential = {
+		NOT = { has_country_flag = show_custom_spell_list }
+	}
+}
+custom_window = {
+	name = magic_menu_custom_spells_window
+	potential = {
+		has_country_flag = show_custom_spell_list
+	}
+}
 
 # Spellbook selection windows
 	custom_window = {
@@ -1028,7 +1040,7 @@ custom_text_box = {
 #Magic XP UI
 	#Must first check who is advancing [ruler, heir, country]
 	custom_text_box = { #Magic advancement title + icon
-		name = magic_menu_advancement_textbox
+		name = magic_menu_advancement_target_textbox
 	}
 	custom_text_box = { #Current magical advancement experience
 		name = magic_advancement_current_xp
@@ -1380,9 +1392,7 @@ custom_icon = {
 }
 custom_button = {
 	name = debug_experience_increase_button
-	potential = {
-			has_country_flag = magic_debug
-		}
+	potential = { has_country_flag = magic_debug }
 	trigger = { always = yes }
 	effect = {
 		if = {
@@ -1435,16 +1445,29 @@ custom_button = {
 	tooltip = open_study_menu_tt
 }
 custom_text_box = { name = regional_projects_none }
-custom_text_box = { name = tag_projects_none }
+custom_text_box = { 
+	name = tag_projects_none 
+	potential = {
+		NOT = {
+			tag = S90 #Umbral Covenant
+			tag = I80 #Great Storm
+			tag = I55 #Black Herd
+		}
+	}
+}
 custom_text_box = { name = magical_infrastructure_modifier }
 
-custom_button = {
+custom_button = { #Magic Infrastructure Upgrade
 	name = magical_infrastructure_button
 	potential = { always = yes }
 	trigger = {
 		if = { #Hide the tooltip
 			limit = { is_overall_advancing_magic = yes }
 			is_overall_not_advancing_magic = yes
+		}
+		if = {
+			limit = { NOT = { has_magic_estate_or_equiv = yes } }
+			has_magic_estate_or_equiv = yes
 		}
 
 		if = { limit = { has_country_modifier = magical_infrastructure_4 }
@@ -1475,53 +1498,167 @@ custom_button = {
 		if = { #Level 4 = requires Global Trade
 			limit = { exactly_magical_infrastructure_level = { level = 3 } }
 			if = {
-				limit = { NOT = { has_institution = printing_press } } #has_unembraced_institution doesn't work if the institution hasn't spawned
-				custom_tooltip = MI_4_missing_two_institutions_tt
-				add_country_modifier = { name = magical_infrastructure_2_institution_penalty duration = -1 desc = until_advancement_concludes }
+				limit = { NOT = { has_MI_X_institution_penalty_bypass = { level = 4 penalty = 2 } } } #Bypasses all Institutions for lvl 4
+				if = {
+					limit = { NOT = { has_institution = printing_press } } #If no printing press, either full penalty or half penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 4 penalty = 1 } }
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 4 penalty = 1 }
+						custom_tooltip = MI_printingpress_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 4 penalty = 2 }
+					}
+				}
+				else_if = { 
+					limit = { NOT = { has_institution = global_trade } } #If no global trade, either half penalty or no penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 4 penalty = 1 } }
+						custom_tooltip = MI_globaltrade_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 4 penalty = 1 }
+					}
+				}
 			}
-			else_if = {
-				limit = { NOT = { has_institution = global_trade } }
-				custom_tooltip = MI_4_missing_institution_tt
-				add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+			else = { #Just for telling the player that they have a bypass
+				if = {
+					limit = {
+						NOT = { has_institution = printing_press } 
+					}
+					custom_tooltip = MI_printingpress_bypass_tt
+				}
+				if = { 
+					limit = {
+						NOT = { has_institution = global_trade }
+					}
+					custom_tooltip = MI_globaltrade_bypass_tt
+				}
 			}
 		}
+
 		else_if = { #Level 3 = requires Printing Press
 			limit = { exactly_magical_infrastructure_level = { level = 2 } }
 			if = {
-				limit = { NOT = { has_institution = new_world_i } }
-				custom_tooltip = MI_3_missing_two_institutions_tt
-				add_country_modifier = { name = magical_infrastructure_2_institution_penalty duration = -1 desc = until_advancement_concludes }
+				limit = { NOT = { has_MI_X_institution_penalty_bypass = { level = 3 penalty = 2 } } } #Bypasses all Institutions for lvl 3
+				if = {
+					limit = { NOT = { has_institution = new_world_i } } #If no colonialism, either full penalty or half penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 3 penalty = 1 } }
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 3 penalty = 1 }
+						custom_tooltip = MI_colonialism_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 3 penalty = 2 }
+					}
+				}
+				else_if = { 
+					limit = { NOT = { has_institution = printing_press } } #If no printing press, either half penalty or no penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 3 penalty = 1 } }
+						custom_tooltip = MI_printingpress_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 3 penalty = 1 }
+					}
+				}
 			}
-			else_if = {
-				limit = { NOT = { has_institution = printing_press } }
-				custom_tooltip = MI_3_missing_institution_tt
-				add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+			else = { #Just for telling the player that they have a bypass
+				if = {
+					limit = {
+						NOT = { has_institution = new_world_i } 
+					}
+					custom_tooltip = MI_colonialism_bypass_tt
+				}
+				if = { 
+					limit = {
+						NOT = { has_institution = printing_press }
+					}
+					custom_tooltip = MI_printingpress_bypass_tt
+				}
 			}
 		}
+
 		else_if = { #Level 2 = requires Colonialism
 			limit = { exactly_magical_infrastructure_level = { level = 1 } }
 			if = {
-				limit = { NOT = { has_institution = renaissance } }
-				custom_tooltip = MI_2_missing_two_institutions_tt
-				add_country_modifier = { name = magical_infrastructure_2_institution_penalty duration = -1 desc = until_advancement_concludes }
+				limit = { NOT = { has_MI_X_institution_penalty_bypass = { level = 2 penalty = 2 } } } #Bypasses all Institutions for lvl 2
+				if = {
+					limit = { NOT = { has_institution = renaissance } } #If no renaissance, either full penalty or half penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 2 penalty = 1 } }
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 2 penalty = 1 }
+						custom_tooltip = MI_renaissance_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 2 penalty = 2 }
+					}
+				}
+				else_if = { 
+					limit = { NOT = { has_institution = new_world_i } } #If no colonialism, either half penalty or no penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 2 penalty = 1 } }
+						custom_tooltip = MI_colonialism_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 2 penalty = 1 }
+					}
+				}
 			}
-			else_if = {
-				limit = { NOT = { has_institution = new_world_i } }
-				custom_tooltip = MI_2_missing_institution_tt
-				add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+			else = { #Just for telling the player that they have a bypass
+				if = {
+					limit = {
+						NOT = { has_institution = renaissance } 
+					}
+					custom_tooltip = MI_renaissance_bypass_tt
+				}
+				if = { 
+					limit = {
+						NOT = { has_institution = new_world_i }
+					}
+					custom_tooltip = MI_colonialism_bypass_tt
+				}
 			}
 		}
-		else_if = { #Level 1 = requires Renaissance
+		else_if = {
 			limit = { has_magical_infrastructure_level_0 = yes }
 			if = {
-				limit = { NOT = { has_institution = feudalism } }
-				custom_tooltip = MI_1_missing_two_institutions_tt
-				add_country_modifier = { name = magical_infrastructure_2_institution_penalty duration = -1 desc = until_advancement_concludes }
+				limit = { NOT = { has_MI_X_institution_penalty_bypass = { level = 1 penalty = 2 } } } #Bypasses all Institutions for lvl 1
+				if = {
+					limit = { NOT = { has_institution = feudalism } } #If no feudalism, either full penalty or half penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 1 penalty = 1 } }
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 1 penalty = 1 }
+						custom_tooltip = MI_feudalism_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 1 penalty = 2 }
+					}
+				}
+				else_if = { 
+					limit = { NOT = { has_institution = renaissance } } #If no renaissance, either half penalty or no penalty (if bypass present)
+					if = { 
+						limit = { has_MI_X_institution_penalty_bypass = { level = 1 penalty = 1 } }
+						custom_tooltip = MI_renaissance_bypass_tt
+					}
+					else = {
+						calc_MI_xp_penalty_for_advancement_effect = { target_level = 1 penalty = 1 }
+					}
+				}
 			}
-			else_if = {
-				limit = { NOT = { has_institution = renaissance } }
-				custom_tooltip = MI_1_missing_institution_tt
-				add_country_modifier = { name = magical_infrastructure_institution_penalty duration = -1 desc = until_advancement_concludes }
+			else = { #Just for telling the player that they have a bypass
+				if = {
+					limit = {
+						NOT = { has_institution = feudalism } 
+					}
+					custom_tooltip = MI_feudalism_bypass_tt
+				}
+				if = { 
+					limit = {
+						NOT = { has_institution = renaissance }
+					}
+					custom_tooltip = MI_renaissance_bypass_tt
+				}
 			}
 		}
 		
@@ -1622,8 +1759,6 @@ custom_button = {
 		name = battlemage_academy_project_button
 		trigger = {
 			can_upgrade_project = { project = battlemage_academy school = evocation }
-			has_enabled_estate_action_with_tooltip = { estate_action = RECRUIT_WAR_WIZARD }
-			at_least_magical_infrastructure_level_1 = yes
 		}
 		effect = {
 			start_magic_project = {
@@ -1648,53 +1783,41 @@ custom_button = {
 		}
 		tooltip = theatre_of_simulacra_project.desc
 	}
-	custom_button = { # Lichdom
-		name = lichdom_project_button
+	custom_button = { # Army of the Dead
+		name = army_of_the_dead_project_button
 		trigger = {
-			ruler_is_powerful_mage = yes
-			can_upgrade_project = { project = lichdom } #no school, schools are special for lichdom
-			if = {
-				limit = { ruler_is_lich = yes }
-				ruler_is_not_lich = yes
-			}
-			else_if = {
-				limit = { has_ruler_modifier = lichdom_mod_2 } ###Separated out for tooltip reasons
-				OR = {
-					is_ruler_necromancy_level_3 = yes
-					is_estate_necromancy_level_3 = yes
+			can_upgrade_project = { project = army_of_the_dead school = necromancy }
+
+			if = { #edge case for some MTs
+				limit = {
+					OR = {
+						has_government_attribute = disables_swap_racial_mil
+						has_country_flag = disable_racial_mil_swap_flag
+					}
 				}
-			}
-			else_if = {
-				limit = { has_ruler_modifier = lichdom_mod_1 }
-				OR = {
-					is_ruler_necromancy_level_2_minimum = yes
-					is_estate_necromancy_level_2_minimum = yes
-				}
-			}
-			else = {
-				OR = {
-					is_ruler_necromancy_level_1_minimum = yes
-					is_estate_necromancy_level_1_minimum = yes
-				}
-			}
-			ruler_is_not_immortal = yes
-			NOT = { ruler_has_personality = xhazobs_chosen_personality }
-			has_not_banned_necromancy = yes
-			if = {
-				limit = { has_country_flag = gemradcurt_immariel_rules }
 				custom_trigger_tooltip = {
-					tooltip = immariel_cant_into_lich_tt
+					tooltip = racial_mil_cannot_switch_gov_attribute_tt
 					always = no
 				}
 			}
 		}
 		effect = {
-			show_magic_project_lichdom_warning = yes
-			country_event = { id = magic_project_lichdom.1 }
-			custom_tooltip = tooltip_magic_project_lookahead
-			custom_tooltip = lichdom_lookahead
+			start_magic_project = {
+				project = army_of_the_dead
+				school = necromancy
+				event_1 = magic_project_army_of_the_dead.1
+				event_2 = magic_project_army_of_the_dead.6
+				event_3 = magic_project_army_of_the_dead.9
+			}
+			custom_tooltip = GetRacialMilUndead
+
+			if = { #Black Herd
+				limit = { has_country_flag = I55_aotd_exp_flag }
+				increase_magic_experience = { unmodified_amount = 500 }
+				clr_country_flag = I55_aotd_exp_flag
+			}
 		}
-		tooltip = lichdom_project.desc
+		tooltip = army_of_the_dead_project.desc
 	}
 	custom_button = { # Homunculus
 		name = homunculus_project_button
@@ -1823,19 +1946,19 @@ custom_button = {
 			trigger = { always = yes }
 		}
 	}
-	custom_icon = { # Lichdom
-		name = lichdom_project_progress
+	custom_icon = { # Army of the Dead
+		name = army_of_the_dead_project_progress
 		frame = {
 			number = 100
-			trigger = { ruler_is_lich = yes }
+			trigger = { exactly_magic_project_level = { project = army_of_the_dead level = 3 } }
 		}
 		frame = {
 			number = 66
-			trigger = { has_ruler_modifier = lichdom_mod_2 }
+			trigger = { exactly_magic_project_level = { project = army_of_the_dead level = 2 } }
 		}
 		frame = {
 			number = 33
-			trigger = { has_ruler_modifier = lichdom_mod_1 }
+			trigger = { exactly_magic_project_level = { project = army_of_the_dead level = 1 } }
 		}
 		frame = {
 			number = 0
@@ -1879,8 +2002,8 @@ custom_button = {
 	custom_text_box = { # Theatre of Simulacra
 		name = theatre_of_simulacra_project.name
 	}
-	custom_text_box = { # Lichdom
-		name = lichdom_project.name
+	custom_text_box = { # Army of the Dead
+		name = army_of_the_dead_project.name
 	}
 	custom_text_box = { # Homunculus
 		name = homunculus_project.name
@@ -2728,24 +2851,24 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 			generic_cast_spell = { school = divination level = 0 id = guidance }
 		}
 	}
-	custom_button = { #Spellbook Menu Cast Eye for Talent Button
-		name = magic_menu_divination_spell_2_button
-		tooltip = divination_1_eye_for_talent_spell_desc
-		trigger = {
-			divination_1_eye_for_talent_trigger = { player = yes }
-		}
-		effect = {
-			generic_cast_spell = { school = divination level = 1 id = eye_for_talent }
-		}
-	}
 	custom_button = { #Spellbook Menu Cast Deposit Divination Button
-		name = magic_menu_divination_spell_3_button
+		name = magic_menu_divination_spell_2_button
 		tooltip = divination_1_deposit_divination_spell_desc
 		trigger = {
 			divination_1_deposit_divination_trigger = { player = yes }
 		}
 		effect = {
 			generic_cast_spell = { school = divination level = 1 id = deposit_divination }
+		}
+	}
+	custom_button = { #Spellbook Menu Cast Eye for Talent Button
+		name = magic_menu_divination_spell_3_button
+		tooltip = divination_1_eye_for_talent_spell_desc
+		trigger = {
+			divination_1_eye_for_talent_trigger = { player = yes }
+		}
+		effect = {
+			generic_cast_spell = { school = divination level = 1 id = eye_for_talent }
 		}
 	}
 	custom_button = { #Spellbook Menu Cast Scry Button
@@ -2781,14 +2904,14 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 
 	### ENCHANTMENT ###
 
-	custom_button = { #Spellbook Cast Enchanting Embassy Button
+	custom_button = { #Spellbook Cast Enchanting Envoy Button
 		name = magic_cast_enchantment_spell1_button
-		tooltip = enchantment_0_enchanting_embassy_spell_desc
+		tooltip = enchantment_0_enchanting_envoy_spell_desc
 		trigger = {
-			enchantment_0_enchanting_embassy_trigger = { player = yes }
+			enchantment_0_enchanting_envoy_trigger = { player = yes }
 		}
 		effect = {
-			generic_cast_spell = { school = enchantment level = 0 id = enchanting_embassy }
+			generic_cast_spell = { school = enchantment level = 0 id = enchanting_envoy }
 		}
 	}
 	custom_button = { #Spellbook Menu Cast Mass Charm Button
@@ -2821,14 +2944,14 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 			generic_cast_spell = { school = enchantment level = 2 id = mass_charm_2 war = yes }
 		}
 	}
-	custom_button = { #Spellbook Menu Cast Enchanting Embassy 2 Button
+	custom_button = { #Spellbook Menu Cast Enchanting Embassy Button
 		name = magic_cast_enchantment_spell5_button
-		tooltip = enchantment_2_enchanting_embassy_2_spell_desc
+		tooltip = enchantment_2_enchanting_embassy_spell_desc
 		trigger = {
-			enchantment_2_enchanting_embassy_2_trigger = { player = yes }
+			enchantment_2_enchanting_embassy_trigger = { player = yes }
 		}
 		effect = {
-			generic_cast_spell = { school = enchantment level = 2 id = enchanting_embassy_2 }
+			generic_cast_spell = { school = enchantment level = 2 id = enchanting_embassy }
 		}
 	}
 	custom_button = { #Spellbook Menu Cast Dominate to Surrender Icon
@@ -3134,14 +3257,14 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 			generic_cast_spell = { school = necromancy level = 0 id = false_life }
 		}
 	}
-	custom_button = { #Spellbook Menu Cast Ghoulish Grandeur Button
+	custom_button = { #Spellbook Menu Cast Steal Vitality Button
 		name = magic_cast_necromancy_spell2_button
-		tooltip = necromancy_1_ghoulish_grandeur_spell_desc
+		tooltip = necromancy_1_steal_vitality_spell_desc
 		trigger = {
-			necromancy_1_ghoulish_grandeur_trigger = { player = yes }
+			necromancy_1_steal_vitality_trigger = { player = yes }
 		}
 		effect = {
-			generic_cast_spell = { school = necromancy level = 1 id = ghoulish_grandeur }
+			generic_cast_spell = { school = necromancy level = 1 id = steal_vitality }
 		}
 	}
 	custom_button = { #Spellbook Cast Contagion Icon
@@ -3168,24 +3291,24 @@ custom_text_box = { #Spellbook Menu XP Regen Text
 			generic_cast_spell = { school = necromancy level = 2 id = speak_with_dead }
 		}
 	}
-	custom_button = { #Spellbook Menu Cast Steal Vitality Button
+	custom_button = { #Spellbook Menu Cast Remove Pain Button
 		name = magic_cast_necromancy_spell5_button
-		tooltip = necromancy_2_steal_vitality_spell_desc
+		tooltip = necromancy_2_remove_pain_spell_desc
 		trigger = {
-			necromancy_2_steal_vitality_trigger = { player = yes }
+			necromancy_2_remove_pain_trigger = { player = yes }
 		}
 		effect = {
-			generic_cast_spell = { school = necromancy level = 2 id = steal_vitality }
+			generic_cast_spell = { school = necromancy level = 2 id = remove_pain }
 		}
 	}
-	custom_button = { #Spellbook Menu Cast Undead Army Button
+	custom_button = { #Spellbook Menu Cast Chronophage Button
 		name = magic_cast_necromancy_spell6_button
-		tooltip = necromancy_3_undead_army_spell_desc
+		tooltip = necromancy_3_chronophage_spell_desc
 		trigger = {
-			necromancy_3_undead_army_trigger = { player = yes }
+			necromancy_3_chronophage_trigger = { player = yes }
 		}
 		effect = {
-			generic_cast_spell = { school = necromancy level = 3 id = undead_army }
+			generic_cast_spell = { school = necromancy level = 3 id = chronophage }
 		}
 	}
 

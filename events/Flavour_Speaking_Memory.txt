@@ -1,0 +1,571 @@
+namespace = flavour_speaking_memory
+
+#Loss of Memory
+country_event = {
+	id = flavour_speaking_memory.1
+	title = flavour_speaking_memory.1.t
+	desc = flavour_speaking_memory.1.d
+	picture = PRIEST_PHANTOM_eventPicture	
+
+	is_triggered_only = yes	
+	trigger = {
+		religion = speaking_memory
+		has_country_modifier = human_administration
+	}
+
+	#Speakers trade stories
+	option = { 
+		name = flavour_speaking_memory.1.a
+		adm_power_cost = 50
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 5
+		}
+	}
+	#Ready a pilgrimage
+	option = { 
+		name = flavour_speaking_memory.1.b
+		if = {
+			limit = { monthly_income = 166 }
+			add_treasury = -1000
+        }
+        else = { add_years_of_income = -0.5 }
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 5
+		}
+	}
+	#Listen to the sky
+	option = { 
+		trigger = {
+			OR = {
+				is_estate_divination_level_1_minimum = yes
+				is_ruler_divination_level_1_minimum = yes
+			}
+			has_mana = { amount = 50 }
+		}		
+		name = flavour_speaking_memory.1.c
+		highlight = yes
+		change_mana = { amount = -50 }
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 5
+		}		
+		change_innovativeness = 5
+	}
+	#Speakers write down their stories
+	option = { 
+		trigger = {
+			has_institution = printing_press
+		}
+		name = flavour_speaking_memory.1.e
+		highlight = yes
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 10
+		}	
+	}
+}
+
+#The Vagaries of Memory
+country_event = { 
+	id = flavour_speaking_memory.2
+	title = flavour_speaking_memory.2.t
+	desc = flavour_speaking_memory.2.d
+	picture = DEBATE_REPUBLICAN_eventPicture
+	
+	is_triggered_only = yes	
+	#there exists another Speaking Memory tag who we are not Rivals with and not Allied with. This event cannot trigger for AI countries. 
+	trigger = {
+		ai = no
+		religion = speaking_memory
+		any_known_country = {
+			religion = speaking_memory
+			ai = yes
+			NOT = { is_enemy = ROOT }
+			NOT = { is_rival = ROOT }
+			NOT = { alliance_with = ROOT }
+		}
+	}
+	#Randomly select another Speaking Memory tag which is not a player, we are not Rivals with, and we are not Allied with as the event target.
+	immediate = {
+		hidden_effect = {
+			random_known_country = {
+				limit = {
+					religion = speaking_memory
+					ai = yes
+					NOT = { is_enemy = ROOT }
+					NOT = { is_rival = ROOT }
+					NOT = { alliance_with = ROOT }
+				}
+				save_event_target_as = speaking_memory_argument
+			}
+		}
+	}
+	
+	#They are lying. They must be
+	option = {
+		name = flavour_speaking_memory.2.a
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_argument
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_insult
+			}
+			add_casus_belli = {
+				type = cb_insult
+				target = ROOT
+				months = 60
+			}
+		}
+		add_casus_belli = {
+			type = cb_insult
+			target = event_target:speaking_memory_argument
+			months = 60
+		}
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 10
+		}	
+	}
+	#Perhaps our version is wrong
+	option = {
+		name = flavour_speaking_memory.2.b
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_argument
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_reconciliation
+			}
+		}
+		add_estate_loyalty = {
+			estate = all
+			loyalty = -10
+		}	
+		change_innovativeness = 2
+	}
+	#Surely the turtles remember
+	option = {
+		name = flavour_speaking_memory.2.c
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_argument
+			}
+		}
+		if = {
+			limit = { monthly_income = 166 }
+			add_treasury = -1000
+        }
+        else = { add_years_of_income = -0.5 }
+		country_event = { 
+			id = flavour_speaking_memory.3 
+			days = 720
+		}
+	}
+	#The truth lies between the two versions.
+	option = {
+		name = flavour_speaking_memory.2.e
+		trigger = {
+			OR = {
+				philosopher = 1
+				ruler_has_personality = charismatic_negotiator_personality
+				ruler_has_personality = scholar_personality
+			}
+		}
+		highlight = yes
+		dip_power_cost = 40
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_argument
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_reconciliation
+			}
+		}
+		change_innovativeness = 5
+	}
+	#The details don't matter
+	option = {
+		name = flavour_speaking_memory.2.f
+		trigger = {
+			OR = {
+				ruler_has_personality = free_thinker_personality
+				has_idea_group = humanist_ideas
+			}
+		}
+		highlight = yes
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_argument
+			}
+		}
+		change_innovativeness = 10
+		add_estate_loyalty = {
+			estate = all
+			loyalty = -10
+		}	
+	}
+}
+
+#The Dragon Turtles Respond
+#This can only be called from flavour_speaking_memory.2
+country_event = { 
+	id = flavour_speaking_memory.3
+	title = flavour_speaking_memory.3.t
+	picture = EP_POLYNESIAN_MARAE_eventPicture
+	is_triggered_only = yes
+	
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				24 = { set_country_flag = turtle_response_1 }
+				24 = { set_country_flag = turtle_response_2 }
+				24 = { set_country_flag = turtle_response_3 }
+				24 = { set_country_flag = turtle_response_4 }
+				4 = { set_country_flag = turtle_response_5 }
+			}
+		}
+	}
+	
+	after = {
+		clr_country_flag = turtle_response_1
+		clr_country_flag = turtle_response_2
+		clr_country_flag = turtle_response_3
+		clr_country_flag = turtle_response_4
+		clr_country_flag = turtle_response_5		
+	}
+	
+	#Both versions are right
+	desc = {
+		trigger = {
+			has_country_flag = turtle_response_1
+		}
+		desc = flavour_speaking_memory.3.d.1
+	}
+	#Their version is right
+	desc = {
+		trigger = {
+			has_country_flag = turtle_response_2
+		}
+		desc = flavour_speaking_memory.3.d.2
+	}
+	#Our version is right
+	desc = {
+		trigger = {
+			has_country_flag = turtle_response_3
+		}
+		desc = flavour_speaking_memory.3.d.3					
+	}	
+	#Both versions are partially right
+	desc = {
+		trigger = {
+			has_country_flag = turtle_response_4
+		}
+		desc = flavour_speaking_memory.3.d.4
+	}
+	#The turtles don't know
+	desc = {
+		trigger = {
+			has_country_flag = turtle_response_5
+		}
+		desc = flavour_speaking_memory.3.d.5
+	}
+	
+	#Now we know the truth - Both Right
+	option = {
+		name = flavour_speaking_memory.3.a
+		trigger = {
+			has_country_flag = turtle_response_1
+		}
+		event_target:speaking_memory_argument = {
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_reconciliation
+			}
+		}
+		add_stability = 1
+	}
+	#Now we know the truth - they're right
+	option = {
+		name = flavour_speaking_memory.3.a
+		trigger = {
+			has_country_flag = turtle_response_2
+		}
+		add_estate_loyalty = {
+			estate = all
+			loyalty = -10
+		}
+		event_target:speaking_memory_argument = {
+			add_prestige = 10
+		}
+	}
+	
+	#Now we know the truth - we're right
+	option = {
+		name = flavour_speaking_memory.3.a
+		trigger = {
+			has_country_flag = turtle_response_3
+		}
+		add_prestige = 10
+		add_estate_loyalty = {
+			estate = all
+			loyalty = 5
+		}
+		event_target:speaking_memory_argument = {
+			add_stability = -1
+		}
+	}
+	
+	#Now we know the truth - right-ish
+	option = {
+		name = flavour_speaking_memory.3.a
+		trigger = {
+			has_country_flag = turtle_response_4
+		}
+		change_innovativeness = 5
+		event_target:speaking_memory_argument = {
+			change_innovativeness = 5
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_reconciliation
+			}			
+		}
+	}
+	
+	#We may never know the truth
+	option = {
+		name = flavour_speaking_memory.3.b	
+		custom_tooltip = flavour_speaking_memory.3.b.tt
+		trigger = {
+			has_country_flag = turtle_response_5
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = {
+					religion = speaking_memory
+				}
+				add_unrest = 5
+			}
+		}
+		add_stability = -1
+		event_target:speaking_memory_argument = {
+			add_stability = -1
+		}	
+	}
+}
+
+
+
+#A Hero of Kanolowele
+#AMILAK_eventPicture
+country_event = {
+	id = flavour_speaking_memory.4
+	title = flavour_speaking_memory.4.t
+	picture = AMILAK_eventPicture
+	is_triggered_only = yes
+	
+	trigger = {
+		religion = speaking_memory
+	}	
+
+	#Choose a random Hero of Kanolowele
+	
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				10 = {
+					set_country_flag = select_hero_1
+				}
+				10 = {
+					set_country_flag = select_hero_2
+				}
+				10 = {
+					set_country_flag = select_hero_3
+				}
+				10 = {
+					set_country_flag = select_hero_4
+				}
+				10 = {
+					set_country_flag = select_hero_5
+				}
+				10 = {
+					set_country_flag = select_hero_6
+				}
+				10 = {
+					set_country_flag = select_hero_7
+				}
+				10 = {
+					set_country_flag = select_hero_8
+				}
+				10 = {
+					set_country_flag = select_hero_9
+				}
+				10 = {
+					set_country_flag = select_hero_10
+				}
+				10 = {
+					set_country_flag = select_hero_11
+				}
+			}
+		}
+	}
+	
+	after = {
+		clr_country_flag = select_hero_1
+		clr_country_flag = select_hero_2
+		clr_country_flag = select_hero_3
+		clr_country_flag = select_hero_4
+		clr_country_flag = select_hero_5
+		clr_country_flag = select_hero_6
+		clr_country_flag = select_hero_7
+		clr_country_flag = select_hero_8
+		clr_country_flag = select_hero_9
+		clr_country_flag = select_hero_10
+		clr_country_flag = select_hero_11
+	}
+	
+	desc = {
+		trigger = { has_country_flag = select_hero_1 }
+		desc = flavour_speaking_memory.4.d.1
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_2 }
+		desc = flavour_speaking_memory.4.d.2
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_3 }
+		desc = flavour_speaking_memory.4.d.3
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_4 }
+		desc = flavour_speaking_memory.4.d.4
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_5 }
+		desc = flavour_speaking_memory.4.d.5
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_6 }
+		desc = flavour_speaking_memory.4.d.6
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_7 }
+		desc = flavour_speaking_memory.4.d.7
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_8 }	
+		desc = flavour_speaking_memory.4.d.8
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_9 }
+		desc = flavour_speaking_memory.4.d.9
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_10 }
+		desc = flavour_speaking_memory.4.d.10
+	}
+	desc = {
+		trigger = { has_country_flag = select_hero_11 }
+		desc = flavour_speaking_memory.4.d.11
+	}
+	
+
+	#Of course the stories are true
+	option = {
+		name = flavour_speaking_memory.4.a
+		custom_tooltip = flavour_speaking_memory.4.a.tt
+		mil_power_cost = 25
+		hidden_effect = {		
+			every_owned_province {
+				limit = {
+					religion = speaking_memory
+				}
+				add_unrest = -2
+			}
+		}
+	}
+	#We can't all be wrong
+	option = {
+		name = flavour_speaking_memory.4.b
+		add_estate_loyalty = {
+			estate = clergy
+			loyalty = -5
+		}
+		every_known_country = {
+			limit = {
+				religion = speaking_memory
+			}
+			add_opinion = {
+				who = ROOT
+				modifier = speaking_memory_shared_legends
+			}
+		}
+	}
+	#Perhaps we were not meant to know
+	option = {
+		name = flavour_speaking_memory.4.c
+		add_adm_power = 25
+		add_prestige = -5
+	}
+	#These legends are more true than truth
+	option = {
+		trigger = {
+			OR = {
+				theologian = 1
+				ruler_has_personality = pious_personality
+				ruler_has_personality = scholar_personality
+				full_idea_group = religious_ideas
+			}
+		}
+		name = flavour_speaking_memory.4.e
+		highlight = yes
+		change_innovativeness = 4
+		add_prestige = 10
+	}
+	#Perhaps the Mechanim remember
+	option = {
+		trigger = {
+			fast_owns_num_pops_of_race = { race = mechanim amount = 1 }
+			high_tolerance_mechanim_race_trigger = yes
+		}
+		name = flavour_speaking_memory.4.f
+		highlight = yes
+		random_list = {
+			20 = {
+				add_stability = 1
+				change_innovativeness = 5
+			}
+			80 = {}
+		}
+	}
+	#Truth matters less than what the people believe to be true
+	option = {
+		trigger = {
+			OR = {				
+				ruler_has_personality = intricate_web_weaver_personality
+				full_idea_group = spy_ideas
+				spymaster = 1
+			}
+		}
+		name = flavour_speaking_memory.4.g
+		custom_tooltip = flavour_speaking_memory.4.g.tt
+		highlight = yes
+		dip_power_cost = 30
+		hidden_effect = {
+			every_owned_province = {
+					limit = { religion = speaking_memory }
+					add_unrest = -5
+			}
+		}
+	}
+}

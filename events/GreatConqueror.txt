@@ -20,6 +20,7 @@ country_event = {
 			NOT = { current_age = age_of_discovery }
 		}
 		ai = yes
+		NOT = { has_country_flag = vile_one_vc }
 	}
 	
 	hidden = yes
@@ -44,14 +45,17 @@ country_event = {
 				name = legacy_of_great_conqueror
 				duration = -1
 			}
-			log = "GREAT CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| stop being a Great Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+			every_owned_province = {
+				remove_province_modifier = seat_of_centaur_gc
+			}
 		}
 	}
 	
+	#NO CONQUEROR
 	option = {
 		name = great_conqueror.0.a
 		ai_chance = { 
-			factor = 0
+			factor = 1
 			
 			modifier = {
 				factor = 1.5
@@ -95,13 +99,14 @@ country_event = {
 		}
 	}
 
+	#CONQUEROR
 	option = {
 		name = great_conqueror.0.b
 		trigger = {
 			NOT = { has_country_flag = previous_ruler_was_great_conqueror_flag } 					#Can't have it 2time in a row
 		}
 		ai_chance = { 
-			factor = 10
+			factor = 5
 			
 			modifier = {
 				factor = 0
@@ -120,7 +125,10 @@ country_event = {
 					}
 					coalition_target = ROOT															#Must not be the coalition target
 					NOT = { num_of_cities = 2 }														#Must have more than one province
-					government = tribal
+					AND = {
+						government = tribal 														#Only certain tribals allowed
+						tribal_elligible_for_gc = no
+					}
 				}
 			}
 			
@@ -178,7 +186,7 @@ country_event = {
 			}
 			
 			modifier = {																			#Weak neighbours give more chance to become one
-				factor = 3
+				factor = 2
 				calc_true_if = {
 					all_neighbor_country = {
 						NOT = { is_part_of_hre = yes }
@@ -191,7 +199,7 @@ country_event = {
 			}
 			
 			modifier = {
-				factor = 4
+				factor = 3
 				calc_true_if = {
 					all_neighbor_country = {
 						NOT = { is_part_of_hre = yes }
@@ -204,7 +212,7 @@ country_event = {
 			}
 			
 			modifier = {
-				factor = 5
+				factor = 4
 				calc_true_if = {
 					all_neighbor_country = {
 						NOT = { is_part_of_hre = yes }
@@ -217,7 +225,7 @@ country_event = {
 			}
 			
 			modifier = {
-				factor = 10
+				factor = 5
 				calc_true_if = {
 					all_neighbor_country = {
 						NOT = { is_part_of_hre = yes }
@@ -230,7 +238,7 @@ country_event = {
 			}
 			
 			modifier = {
-				factor = 15
+				factor = 6
 				calc_true_if = {
 					all_neighbor_country = {
 						NOT = { is_part_of_hre = yes }
@@ -264,6 +272,11 @@ country_event = {
 				has_global_flag = mythical_conqueror
 				is_great_power = yes
 			}
+
+			modifier = {
+				factor = 3
+				centaur_can_become_vc = yes #More common if chance to become Khuraen Caehn
+			}
 		}
 		
 		if = {
@@ -274,93 +287,58 @@ country_event = {
 					total_development = 1000
 				}
 			}
-			force_add_ruler_personality = { personality = mythical_conqueror_personality }
-			add_ruler_modifier = {
-				name = mythical_conqueror_modifier
-				duration = -1
-			}
-			set_ai_personality = {
-				personality = ai_militarist
-				locked = yes
-			}
-			add_stability = 3
-			change_dip = 3
-			change_adm = 3
-			change_mil = 3
-			
-			# Back-end
-			set_country_flag = great_conqueror_flag
-			REB = { change_variable = { nbGC = 1 } }
-			export_to_variable = {
-				which = ownDev
-				value = total_development
-				who = ROOT
-			}
-			log = "MYTHICAL CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| became a Mythical Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+			create_mythical_conqueror = yes
 		}
 		else = {
-			force_add_ruler_personality = { personality = great_conqueror_personality }
-			add_ruler_modifier = {
-				name = great_conqueror_modifier
-				duration = -1
-			}
-			set_ai_personality = {
-				personality = ai_militarist
-				locked = yes
-			}
-			add_stability = 1
-			change_dip = 1
-			change_adm = 1
-			change_mil = 1
-			
-			# Back-end
-			set_country_flag = great_conqueror_flag
-			REB = { change_variable = { nbGC = 1 } }
-			export_to_variable = {
-				which = ownDev
-				value = development
-				who = ROOT
-			}
-			log = "GREAT CONQUEROR ---------------- [Root.GetName] |[Root.ownDev.GetValue]| became a Great Conqueror in [GetYear] [GetMonth]. It's a [Root.GovernmentName] | Number of GC: [REB.nbGC.GetValue]"
+			create_great_conqueror = yes
 		}
 
 		#Randomly spawns a variant conqueror
-		random_list = {
-			#Variant Conqueror
-			1 = {
-				modifier = {
-					factor = 5
-					ruler_has_personality_or_ancestor = { personality = mythical_conqueror_personality }
+		if = {
+			limit = { 
+				has_global_flag = variant_conqueror  						# No variant conquerors without turning them on in settings
+				any_country = {
+					ai = no
+					knows_country = ROOT 									# Requires that a player can see the tag
 				}
-				modifier = {
-					factor = 0
-					NOT = { has_global_flag = variant_conqueror }
-				}
-				modifier = {
-					factor = 0
-					NOT = {
-						any_known_country = {
-							ai = no
+			} 				
+			random_list = {
+				#Variant Conqueror
+				1 = {
+					modifier = {
+						factor = 5
+						ruler_has_personality_or_ancestor = { personality = mythical_conqueror_personality }
+					}
+
+					#Vampire Conqueror
+					if = {
+						limit = {
+							has_estate = estate_vampires
 						}
+						country_event = { id = great_conqueror.3 }
+					}
+
+					#Umbral Covenant
+					else_if = {
+						limit = {
+							sarhali_can_become_vc = yes
+						}
+						set_country_flag = vile_one_vc
+						set_global_flag = umbral_covenant_formed
+						country_event = { id = great_conqueror.7 }
+					}
+
+					#Lich Conqueror
+					else = {
+						country_event = { id = great_conqueror.1 }
 					}
 				}
-				#Vampire Conqueror
-				if = {
-					limit = {
-						has_estate = estate_vampires
-					}
-					country_event = { id = great_conqueror.3 }
+				#No Variant Conqueror
+				30 = {
 				}
-				#Lich Conqueror
-				else = {
-					country_event = { id = great_conqueror.1 }
-				}
-				# TODO - ADD MORE VARIANTS
-			}
-			#No Variant Conqueror
-			30 = {
 			}
 		}
+		
 	}
 }
 
@@ -388,13 +366,25 @@ country_event = {
 			become_a_lich_effect = yes
 		}
 		else = { define_powerful_mage = { type = ruler necromancy = 3 random = 5 lich = yes witch_king = yes war_wizard = yes } }
+
+		while = { #They get some permanent effects, only way to give them undead mil
+			limit = { NOT = { is_estate_necromancy_level_3 = yes } }
+			magic_school_level_up = { type = country school = necromancy }
+		}
+		while = { #AI gets free aotd levels, lol
+			limit = { NOT = { at_least_magic_project_level = { project = army_of_the_dead level = 3 } } }
+			magic_project_level_up = { project = army_of_the_dead }
+		}
+		change_mana = { amount = 200 }
 		
-		necromancy_3_undead_army_effect = yes
 		capital_scope = {
 			save_event_target_as = capital_province
 		}
 		every_country = {
-			limit = { ai = no }
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
 			country_event = { id = great_conqueror.2 }
 		}
 	}
@@ -435,5 +425,208 @@ country_event = {
 		#	limit = { ai = no }
 		#	country_event = { id = great_conqueror.4 }
 		#}
+	}
+}
+
+#Caehn (AI)
+country_event = {
+	id = great_conqueror.5
+	title = great_conqueror.5.t
+	desc = great_conqueror.5.d
+	picture = CENTAUR_CAMPFIRE_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		ai = yes
+		centaur_can_become_vc = yes
+		has_country_flag = great_conqueror_flag
+		total_development = 50
+		army_size = 10
+		if = {
+			limit = { is_at_war = yes }
+			war_score = -10									# isn't in the process of getting stomped
+			all_war_enemy_countries = { ai = yes }			# isn't fighting a player
+		}
+	}
+
+	option = {
+		name = great_conqueror.5.a
+		capital_scope = {
+			save_event_target_as = capital_province
+		}
+
+		#Upgrade from Great Conqueror to Mythical Conqueror
+		create_mythical_conqueror = yes
+
+		form_crimson_caehnate = yes
+
+		every_country = {
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
+			country_event = { id = great_conqueror.6 }
+		}
+	}
+}
+
+#Caehn (player)
+country_event = {
+	id = great_conqueror.6
+	title = great_conqueror.6.t
+	desc = great_conqueror.6.d
+	picture = END_OF_TIME_eventPicture
+	goto = capital_province
+
+	is_triggered_only = yes
+
+	option = {
+		name = great_conqueror.6.a
+		custom_tooltip = caehn_vc_tt
+	}
+}
+
+#Vile One (AI)
+country_event = {
+	id = great_conqueror.7
+	title = great_conqueror.7.t
+	desc = great_conqueror.7.d
+	picture = LOOMING_DEATH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = great_conqueror.7.a
+		capital_scope = {
+			save_event_target_as = capital_province
+		}
+
+		# Can't call the normal events because we need to handle the ruler change logic here.
+
+		form_umbral_covenant = yes
+
+		define_ruler = {
+            name = "The Vile One"
+            dynasty = " "
+            age = 99
+            adm = 6
+            dip = 1
+            mil = 6
+            female = yes
+        }
+        if = {
+            limit = {
+                NOT = {
+                    was_tag = S30
+                }
+            }
+            set_variable = {
+                which = S90_concentrate
+                value = 0
+            }
+            set_variable = {
+                which = S90_exploit_count
+                value = 0
+            }
+        }
+        set_variable = {
+            which = S90_festivals
+            value = 0
+        }
+        set_variable = {
+            which = S90_scorch_count
+            value = 0
+        }
+        set_variable = {
+            which = S90_vileone_battles
+            value = 0
+        }
+        set_variable = {
+            which = S90_major_rift_count
+            value = 0
+        }
+        set_country_flag = count_battles_won
+        set_country_flag = count_wars_won
+        create_mythical_conqueror = yes
+        add_ruler_personality = conqueror_personality
+        add_ruler_personality = shadow_planetouched_personality
+		define_powerful_mage = {
+			type = ruler
+			enchantment = 3
+			evocation = 2
+			illusion = 2
+			necromancy = 1
+		}
+        make_ruler_immortal = yes
+        add_ruler_modifier = {
+        	name = umbral_covenant_gc
+        	duration = 9125
+        }
+        every_owned_province = {
+            limit = {
+                region = shadow_swamp_region
+            }
+            cede_province = S70
+        }
+        every_ally = {
+        	limit = {
+        		NOT = { religion = shadow_pact }
+        		NOT = { religion = night_coven }
+        	}
+        	break_alliance = ROOT
+        	break_marriage = ROOT
+        }
+        S70 = {
+            country_event = {
+                id = flavor_umbral_covenant.2
+            }
+        }
+        country_event = {
+            id = flavor_umbral_covenant.999
+        }
+
+        change_religion = shadow_pact
+        every_owned_province = {
+        	change_religion = shadow_pact
+        }
+
+        create_unit_forcelimit_percentage = {
+        	type = infantry
+        	special_unit_category = mamluks
+        	force_limit_percentage = 0.6
+        }
+
+        custom_tooltip = umbral_alliance_tt
+
+		every_country = {
+			limit = {
+				ai = no
+				knows_country = ROOT
+			}
+			country_event = { id = great_conqueror.8 }
+		}
+	}
+}
+
+#Vile One (player)
+country_event = {
+	id = great_conqueror.8
+	title = great_conqueror.8.t
+	desc = great_conqueror.8.d
+	picture = COMBINED_HAGS_eventPicture
+	goto = capital_province
+
+	is_triggered_only = yes
+
+	trigger = {
+		NOT = { tag = S70 }
+	}
+
+	option = {
+		name = great_conqueror.8.a
+		custom_tooltip = vile_one_vc_tt
 	}
 }
