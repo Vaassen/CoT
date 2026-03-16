@@ -34,6 +34,8 @@ country_event = {
 				num_of_owned_provinces_with = {
 					value = 30
 					region = ardimya_region
+					culture_is_human = yes
+					is_colony = no
 				}
 			}
 			AND = {
@@ -41,6 +43,8 @@ country_event = {
 				num_of_owned_provinces_with = {
 					value = 15
 					region = ardimya_region
+					culture_is_human = yes
+					is_colony = no
 				}
 			}
 		}
@@ -54,8 +58,7 @@ country_event = {
 					is_colony = no
 					culture_is_human = yes
 				}
-				#this one could be global...
-				save_global_event_target_as = ardimyan_rise_province
+				save_event_target_as = ardimyan_rise_province
 				
 			}
 			set_global_flag = ardimya_event_chain_started
@@ -87,7 +90,7 @@ country_event = {
 }
 
 #Choose a tag to spread Ardimyan culture
-country_event = {
+province_event = {
 	id = ardimya.2
 	title = ardimya.2.t
 	desc = ardimya.2.d
@@ -108,19 +111,7 @@ country_event = {
 			which = ardimya_convert_counter
 			value = 1
 		}
-		random_country = {
-			limit = {
-				capital_scope = { continent = europe }
-				has_country_flag = cannorian_ardimya_colonist
-				ardimya_region = {
-					owned_by = PREV
-					is_colony = no
-					culture_is_human = yes
-					NOT = { culture = ardimyan }
-				}
-			}
-			save_event_target_as = ardimyan_rise_tag
-		}
+
 		#TODO: Need Test
 		#if = {
 		#	limit = {
@@ -132,11 +123,27 @@ country_event = {
 	
 	option = {
 		name = ardimya.2.a
-		event_target:ardimyan_rise_tag = {
+		random_country = {
+			limit = {
+				capital_scope = { continent = europe }
+				has_country_flag = cannorian_ardimya_colonist
+				ardimya_region = {
+					owned_by = PREV
+					is_colony = no
+					culture_is_human = yes
+					NOT = { culture = ardimyan }
+				}
+			}
 			country_event = {
 				id = ardimya.4
 			}
 		}
+		ROOT = { 
+            province_event = {
+                id = ardimya.2
+                days = 730
+            }
+        }
 	}
 }
 
@@ -163,11 +170,6 @@ province_event = {
 				has_country_flag = cannorian_ardimya_colonist
 				capital_scope = { continent = europe }
 			}
-			if = {
-				limit = { NOT = { has_saved_event_target = ardimya_overlord } }
-				save_event_target_as = ardimya_overlord
-			}
-
 			every_owned_province = {
 				limit = {
 					region = ardimya_region
@@ -180,14 +182,20 @@ province_event = {
 				}
 			}
 			if = {
-				limit = {
-					check_variable = {
-						which = ardimya_provinces
-						which = event_target:ardimya_overlord
+				limit = {  has_saved_event_target = ardimya_overlord  }
+				if = {
+					limit = {
+						check_variable = {
+							which = ardimya_provinces
+							which = event_target:ardimya_overlord
+						}
 					}
-				}
+					save_event_target_as = ardimya_overlord
+				}						
+			}
+			else = {
 				save_event_target_as = ardimya_overlord
-			}			
+			}
 		}
 		
 		event_target:ardimya_overlord = {
@@ -269,15 +277,6 @@ country_event = {
 				change_culture = ardimyan
 			}
 		}		
-		#now this recursive have limited
-		hidden_effect = {
-			event_target:ardimyan_rise_province = {
-				province_event = {
-					id = ardimya.2
-					days = 7300
-				}
-			}
-		}
 	}
 }
 
@@ -298,6 +297,7 @@ country_event = {
 			
 		}
 	}
+	immediate = { set_global_flag = ardimya_founded }
 	option = {
 		name = ardimya.5.a
 		every_owned_province = {
@@ -496,7 +496,11 @@ country_event = {
 	desc = ardimya.7.d
 	picture = REVOLT_HUNGARIAN_eventPicture
 	is_triggered_only = yes
-
+	
+	trigger = {
+		always = yes
+	}
+	
 	option = {
 		name = ardimya.7.a		
 		set_country_flag = ardimya_war_of_independence
@@ -549,12 +553,6 @@ country_event = {
 			who = overlord
 		}
 		custom_tooltip = ardimya_independece_timelimit_tt
-		hidden_effect = {
-			country_event = {
-				id = ardimya.11
-				days = 3650
-			}
-		}
 
 	}
 
@@ -605,7 +603,6 @@ country_event = {
 	
 	option = {
 		name = ardimya.9.a		
-		clr_country_flag = ardimya_war_of_independence_colonial_power 
 		add_prestige = -25
 	}
 }
@@ -617,10 +614,6 @@ country_event = {
 	desc = ardimya.10.d
 	picture = DEBATE_REPUBLICAN_eventPicture
 	is_triggered_only = yes
-
-	immediate = {
-		clr_country_flag = ardimya_war_of_independence_colonial_power 
-	}
 	
 	option = {
 		name = ardimya.10.a		
@@ -691,48 +684,53 @@ country_event = {
 	is_triggered_only = yes
 	
 	trigger = {
-		is_in_war = {
-			attackers = S91
-			participants = ROOT
-			casus_belli = cb_independence_war
-			duration = 3649
-		}
+		#check with this flag..
+		has_country_flag = ardimya_war_of_independence_colonial_power
 	}
 	
 	immediate = {
 		hidden_effect = {
-			if = {
-				limit = {
-					has_country_flag = ardimya_war_of_independence_colonial_power
+		#in order to get a proper scope..
+			S91 = {
+				country_event = {
+					id = ardimya.12
 				}
-				white_peace = S91
-				clr_country_flag = ardimya_war_of_independence_colonial_power
 			}
-			else = {
-				clr_country_flag = ardimya_war_of_independence
-			}
+			white_peace = S91
 		}
 
 	}
 	option = {
-		trigger = {
-			NOT = { tag = S91 }
-		}
 		name = ardimya.11.a
-	}
-	option = {
-		trigger = {
-			tag = S91
+		tooltip = {
+			white_peace = S91
 		}
-		name = ardimya.11.b
-	}	
+	}
 }
 
-#Ardimyan culture Convert
 country_event = {
 	id = ardimya.12
 	title = ardimya.12.t
 	desc = ardimya.12.d
+	picture = DEBATE_REPUBLICAN_eventPicture
+	is_triggered_only = yes
+	
+	trigger = {
+		has_country_flag = ardimya_war_of_independence
+	}
+	option = {
+		name = ardimya.12.a
+		tooltip = {
+			white_peace = FROM
+		}
+	}
+}
+
+#Ardimyan culture Convert
+country_event = {
+	id = ardimya.13
+	title = ardimya.13.t
+	desc = ardimya.13.d
 	picture = COLONIZATION_eventPicture
 	is_triggered_only = yes
 	
@@ -744,7 +742,7 @@ country_event = {
 	}
 	
 	option = {
-		name = ardimya.12.a
+		name = ardimya.13.a
 		every_owned_province = {
 			limit = {
 				has_province_flag = ardimya_conquer_target
@@ -756,7 +754,7 @@ country_event = {
 		}
 	}
 	option = {
-		name = ardimya.12.b
+		name = ardimya.13.b
 		every_owned_province = {
 			limit = {
 				has_province_flag = ardimya_conquer_target
@@ -770,11 +768,11 @@ country_event = {
 	}
 } 
 
-#a duplicate of ardimya.12 but hidden
+#a duplicate of ardimya.13 but hidden
 country_event = {
-	id = ardimya.13
-	title = ardimya.13.t
-	desc = ardimya.13.d
+	id = ardimya.14
+	title = ardimya.14.t
+	desc = ardimya.14.d
 	picture = COLONIZATION_eventPicture
 	is_triggered_only = yes
 	hidden = yes
@@ -785,11 +783,12 @@ country_event = {
 		any_owned_province = {
 			has_province_flag = ardimya_conquer_target
 		}
+		has_country_flag = ardimya_mute_convert
 	}
 	
 	
 	option = {
-		name = ardimya.13.a
+		name = ardimya.14.a
 		every_owned_province = {
 			limit = {
 				has_province_flag = ardimya_conquer_target
