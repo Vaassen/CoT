@@ -2744,6 +2744,11 @@ on_war_won = {
 		}
 	}
 
+	# Nansalen war with Varamhar, potential success
+	# if = { limit = { ROOT = { tag = F80 } FROM = { tag = F42 } }
+	# 	country_event = { id = flavor_nansalen.20 }
+	# }
+
 	#Artificery
 	update_artifice_points = yes #needs to be last
 
@@ -3030,6 +3035,10 @@ on_war_lost = {
 	}
 	clr_country_flag = I78_released_provinces
 	
+	# Nansalen war with Varamhar, defeat
+	if = { limit = { FROM = { tag = F80 } ROOT = { tag = F42 } }
+		F80 = { country_event = { id = flavor_nansalen.20 } }
+	}
 
 	update_artifice_points = yes #needs to be last
 }
@@ -4753,6 +4762,36 @@ on_siege_lost_province =  {
 	}
 	else = {
 		remove_province_modifier = I80_storm_wake
+	}
+	
+	# Province control changes from Varamhar -> Nansalen, when Nansalen attacks Ayarallen.
+	if = { 
+		limit = { 
+			owner = { 
+				tag = F27
+				is_in_war = { attacker_leader = F80 defender_leader = F27 }
+			}
+			region = harpy_hills_region
+			controller = {
+				is_in_war = { attacker_leader = F80 defender_leader = F27 }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_country_flag = F80_cflag_will_aid_nansalen
+					AND = {
+						is_subject = yes
+						overlord = { has_country_flag = F80_cflag_will_aid_nansalen }
+					}
+				}
+			}
+			change_controller = F80
+		}
+		else = { # Other war participants may hand province occupations over to Varamhar, if so, hand them over.
+			province_event = { id = flavor_nansalen.101 days = 1 }
+			province_event = { id = flavor_nansalen.101 days = 30 }
+		}
 	}
 
 	if = {
@@ -9130,6 +9169,8 @@ on_yearly_pulse = {
 		flavour_zokka.1001
 		flavour_zokka.1002
 
+		drozma_tur_events.8 #Varlengeilt reveal check
+
 		saqraxat.27 # Saqraxat Khet aid handler
 		guwaamud.100 # Harem lady too old (?)
 		golden_tremor_events.22 #Golden Tremor Rebels Dead Fallback Event
@@ -13109,7 +13150,6 @@ on_four_year_pulse_3 = {
 	}
 
 	random_events = { #Varlengeilt stuff
-		100 = drozma_tur_events.8 #Varlen Reveal
 		100 = drozma_tur_events.14 #Varlen comes of age
 	}
 
@@ -13804,6 +13844,7 @@ on_five_year_pulse = {
 
 		ynnsman_events.242	#Iess l, we need to cook
 		ynnsman_events.105 #Poachers Kill Patrol
+		
 
 		flavor_newhavoral.14
 		flavour_plumstead.6
@@ -20759,6 +20800,8 @@ on_primary_culture_changed = {
 
 		escanni_wars.3 # Escanni wars bypass
 		escanni_wars.200 # Joined Escanni wars
+
+		magic_artificery_setup.5 #Incompetent Artificery Culture
 	}
 
 	if = { #Yidablaerun, The Broodmother's Nest
@@ -21953,6 +21996,11 @@ on_dependency_gained = {
 			}
 		}
 	}
+
+	if = {
+		limit = { FROM = { has_country_flag = vanrahar_claims_bomdan } }
+		bomdan_region = { add_permanent_claim = FROM }
+	}
 	if = {
 		limit = { mission_completed = F98_good_measure }
 		FROM = { add_country_modifier = { name = F98_song_and_steel duration = -1 } }
@@ -22729,6 +22777,24 @@ on_holy_order_established = {
 					id = volcanic_truth.200
 				}
 				set_country_flag = vt_war_on_taga_ala_total_conquest
+			}
+		}
+	}
+	ROOT = {
+		if = { limit = { is_or_was_tag = { tag = F80 } religion = bulwari_sun_cult mission_completed = F80_mission_our_duty }
+			FROM = {
+				area = {
+					if = { limit = { culture_group = harpy }
+						owner = {
+							if = { limit = { has_country_modifier = monstrous_nation }
+								decrease_monstrous_1 = yes
+							}
+							else = {
+								change_government_reform_progress = 1
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -25959,6 +26025,10 @@ on_institution_embracement = {
 			}
 		}
 	}
+	if = { #Clearing the artificery cheese flag
+		limit = { has_institution = manufactories }
+		clr_country_flag = non_artificery_culture
+	}
 	if = { #Anbennar - isobelin events
 		limit = {
 			tag = G91
@@ -26424,24 +26494,6 @@ on_capital_moved = {
 			}
 			add_province_modifier = { name = magical_fortress_mod_1 duration = -1 }
 			add_province_modifier = { name = abjuration_1_ward_mod_1 duration = -1 }
-		}
-	}
-	# taga'ala mangrove influence modifier
-	if = {
-		limit = {
-			owner = {
-				has_government_attribute = mangrove_republic
-			}
-			NOT = { has_global_flag = mangrove_reclamation_done }
-		}
-		FROM = {
-			remove_province_modifier = mangrove_influence
-		}
-		ROOT = {
-			add_province_modifier = {
-				name = mangrove_influence
-				duration = -1
-			}
 		}
 	}
 
@@ -28167,6 +28219,13 @@ on_adm_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 			has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
 		}
 		insyaa_charkuchin_kobold_citadel_supplies_tech = yes
+	}
+	if = {
+		limit = {
+			tag = F80
+			adm_tech = 7
+		}
+		clr_country_flag = no_demonsterization_events
 	}
 }
 

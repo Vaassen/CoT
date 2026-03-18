@@ -21478,10 +21478,9 @@ S61_upgrade_ways_of_war = {
 hyti_better_holds_effect = {
 	if = {
 		limit = {
-			owner = { is_or_was_tag = { tag = F81 } }
-			has_terrain = dwarven_hold
+			owner = { is_or_was_tag = { tag = F81 } }			
 		}
-		if = { limit = { has_province_modifier = hyti_cave_mod4 }
+		if = { limit = { has_province_modifier = hyti_cave_mod4 has_terrain = dwarven_hold }
 			owner = {
 				every_owned_province = {
 					limit = { has_terrain = dwarven_hold }
@@ -21490,7 +21489,7 @@ hyti_better_holds_effect = {
 				clr_country_flag = hyti_cave_mod4
 			}
 		}
-		else_if = { limit = { has_province_modifier = hyti_cave_mod5 }
+		else_if = { limit = { has_province_modifier = hyti_cave_mod5 has_terrain = dwarven_hold }
 			owner = {
 				every_owned_province = {
 				limit = { has_terrain = dwarven_hold }
@@ -21504,6 +21503,7 @@ hyti_better_holds_effect = {
 				set_country_flag = hyti_cave_mod4
 			}
 		}
+		else = { remove_province_modifier = hyti_repair_mod }
 	}
 }
 hyti_new_heir_effect = {
@@ -21537,6 +21537,189 @@ G61_add_wine_cults = {
 		province_event = { id = flavour_kimanis.22 }
 	}
 }
+
+## Nansalen scripted effects
+# Monument effect
+F80_se_monument_copy_modifier_effect = {
+	if = { limit = { F80 = { exists = yes mission_completed = $required_mission$ } }
+		F80 = {
+			hidden_effect = {
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_1
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_2
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_3
+			}
+			add_country_modifier = { name = F80_cmod_monument_copy_$monument$_$tier$ duration = -1 } 
+		}
+	}
+	if = { limit = { F98 = { exists = yes mission_completed = $required_mission$ } }
+		F98 = {
+			hidden_effect = {
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_1
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_2
+				remove_country_modifier = F80_cmod_monument_copy_$monument$_3
+			}
+			add_country_modifier = { name = F80_cmod_monument_copy_$monument$_$tier$ duration = -1 } 
+		}
+	}
+}
+
+# Divined Defenses
+F80_se_apply_divined_defenses = {
+	if = { limit = { is_or_was_tag = { tag = F80 } has_estate_privilege = estate_mages_F80_privilege_divined_defenses }
+		custom_tooltip = F80_tt_every_roost_mage_tower
+		tooltip = {
+			add_province_modifier = { name = F80_pmod_divined_defenses duration = $duration$ }
+		}
+		hidden_effect = {
+			every_owned_province = {
+				limit = { has_building = mage_tower harpy_roost_st_has_any_roost = yes }
+				add_province_modifier = { name = F80_pmod_divined_defenses duration = $duration$ }
+			}
+		}
+	}
+}
+
+F80_se_what_the_hills_hold = {
+	if = { limit = { is_or_was_tag = { tag = F80 } mission_completed = F80_mission_what_the_hills_hold }
+		custom_tooltip = F80_tt_what_the_hills_hold_effect
+		hidden_effect = {
+			F80_se_what_the_hills_hold_sub_effect = yes
+			if = { limit = { at_least_magical_infrastructure_level_1 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_2 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_3 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_4 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			harpy_hills_region = {
+				clr_province_flag = F80_pflag_what_the_hills_hold_applied
+			}
+		}
+	}
+}
+
+F80_se_what_the_hills_hold_sub_effect = {
+	if = { 
+		limit = { 
+			any_owned_province = { 
+				region = harpy_hills_region 
+				OR = { trade_goods = livestock trade_goods = grain trade_goods = wool trade_goods = fish } 
+			}
+		}
+		random_owned_province = { 
+			limit = { 
+				region = harpy_hills_region 
+				OR = { trade_goods = livestock trade_goods = grain trade_goods = wool trade_goods = fish }
+			}
+			change_trade_goods = iron
+			add_base_production = 1
+			set_province_flag = F80_pflag_what_the_hills_hold_applied
+		}
+	}
+	# If no such province exists, just add 1 base production to a random valid target for Deposit Divination in Harpy Hills.
+	else = { # Otherwise, 
+		random_owned_province = { 
+			limit = { 
+				region = harpy_hills_region 
+				OR = { province_with_mineable_goods = yes trade_goods = damestear }
+				NOT = { has_province_flag = F80_pflag_what_the_hills_hold_applied } 
+			}
+			add_base_production = 1
+			set_province_flag = F80_pflag_what_the_hills_hold_applied
+		}
+	}
+}
+
+F80_se_divination_discover_forbidden_plains = {
+	if = { limit = { is_or_was_tag = { tag = F80 } mission_completed = F80_mission_peering_past_the_pass }
+		custom_tooltip = F80_tt_fp_divination_discovery_$scope$
+		custom_tooltip = F80_tt_fp_divination_trade_bonus_$power$
+		hidden_effect = {
+			set_country_flag = F80_cflag_divination_discover_forbidden_plains_$scope$
+			country_event = { id = flavor_nansalen.100 }
+		}
+	}
+}
+
+F80_se_divination_discover_forbidden_plains_sub_effect = {
+	1382 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	1444 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5003 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5029 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5085 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5102 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5202 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5312 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+	5315 = { 
+		if = { 
+			limit = { has_merchant = ROOT } 
+			add_trade_modifier = {
+				who = ROOT duration = 1825 power = $power$ key = F80_KEY_DIVINED_TRADE_BONUS
+			}
+		}
+	}
+}
 ## Ardimyan Minors
 # Wattoi
 S86_get_raided_lol = {
@@ -21564,5 +21747,61 @@ S86_get_raided_lol = {
 				modifier = S86_raided_territory_opinion_gain_native
 			}
 		}
+	}
+}
+#Rijalsahil
+S88_move_buildings_effect = {
+	copy_building_to_target_province = { target = $target$ building = native_earthwork }
+	copy_building_to_target_province = { target = $target$ building = native_palisade }
+	copy_building_to_target_province = { target = $target$ building = native_fortified_house }
+	copy_building_to_target_province = { target = $target$ building = native_ceremonial_fire_pit }
+	copy_building_to_target_province = { target = $target$ building = native_irrigation }
+	copy_building_to_target_province = { target = $target$ building = native_storehouse }
+	copy_building_to_target_province = { target = $target$ building = native_longhouse }
+	copy_building_to_target_province = { target = $target$ building = native_sweat_lodge }
+	copy_building_to_target_province = { target = $target$ building = native_great_trail }
+	copy_building_to_target_province = { target = $target$ building = native_three_sisters_field }
+}
+
+S88_sea_migration_effect = {
+	hidden_effect = {
+		$province$ = { cede_province = ROOT move_capital_effect = yes }
+		event_target:S85_old_capital = { S88_move_buildings_effect = { target = $province$ } }
+		add_core = $province$
+		remove_core = event_target:S85_old_capital
+		event_target:S85_old_capital = { change_tribal_land = ROOT decolonize = yes }
+		add_government_reform = native_federation_reform
+		add_government_reform = native_chiefdom_reform
+		$province$ = { change_religion = genie_cult }
+		every_province = {
+			limit = { has_province_flag = S85_tribal_land_fl }
+			change_tribal_land = ROOT
+			clr_province_flag = S85_tribal_land_fl
+		}
+		change_variable = {
+			which = S88_track_sea_migration_count
+			value = 1
+		}
+	}
+}
+#Vanrahar
+vanrahar_apex_effect = {
+	add_country_modifier = { name = vanrahar_apex_$prey$ duration = -1 }
+	if = {
+		limit = {
+			has_country_modifier = vanrahar_apex_harimari
+			has_country_modifier = vanrahar_apex_command
+			has_country_modifier = vanrahar_apex_bulwar
+			has_country_modifier = vanrahar_apex_xia
+			has_country_modifier = vanrahar_apex_nadimraj
+			has_country_modifier = vanrahar_apex_dhujat
+		}
+		remove_country_modifier = vanrahar_apex_harimari
+		remove_country_modifier = vanrahar_apex_command
+		remove_country_modifier = vanrahar_apex_bulwar
+		remove_country_modifier = vanrahar_apex_xia
+		remove_country_modifier = vanrahar_apex_nadimraj
+		remove_country_modifier = vanrahar_apex_dhujat
+		add_country_modifier = { name = vanrahar_apex_all duration = -1 }
 	}
 }

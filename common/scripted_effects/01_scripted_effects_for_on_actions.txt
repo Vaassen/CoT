@@ -3162,6 +3162,24 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 			add_base_manpower = 1
 		}
 	}
+	# Nansalen
+	if = { 
+		limit = { 
+			culture_group = harpy
+			religion = bulwari_sun_cult
+			owner = { is_or_was_tag = { tag = F80 } } 
+		}
+		if = { limit = { owner = { mission_completed = F80_mission_our_duty } }
+			add_province_modifier = { name = F80_pmod_more_control duration = 3650 }
+		}
+		if = {
+			limit = { 
+				owner = { mission_completed = F80_mission_divine_duties_fulfilled } 
+				NOT = { culture = firanyan_harpy } 
+			}
+			add_province_modifier = { name = F80_pmod_harpy_culture_conversion duration = -1 }
+		}
+	}
 	if = {
 		limit = { religion = foundationism owner = { religion = foundationism } is_city = yes }
 		if = {
@@ -4242,7 +4260,13 @@ on_battle_won_country_effect = {
 	if = {
 		limit = { FROM = { NOT = { tag = REB tag = NAT } } }
 		if = {	#for pdx num_of_battles scripted trigger. need to set the country_flag to begin counting
-			limit = { OR = { has_country_flag = count_battles_won has_mission = shuvuush_to_ward } }
+			limit = {
+				OR = {
+					has_country_flag = count_battles_won
+					has_mission = shuvuush_to_ward #generic mission
+					has_mission = vanrahar_4_trials_of_strength #generic mission
+				}
+			}
 			change_variable = {
 				which = num_of_battles_won_var
 				value = 1
@@ -4251,6 +4275,16 @@ on_battle_won_country_effect = {
 		centaur_battle_count_win = yes
 		ogre_battle_count_win = yes
 		vf_battle_count_win = yes
+		if = {
+			limit = {
+				OR = {
+					primary_culture = primal_harimari
+					tag = R77
+				}
+				FROM = { capital_scope = { superregion = bulwar_superregion } }
+			}
+			change_variable = { battles_against_bulwar = 1 }
+		}
 
 		if = {
 			limit = {
@@ -7266,6 +7300,70 @@ on_war_declaration_effect = {
 		}
 		add_stability = -2
 	}
+
+	# Nansalen stuff
+	if = { limit = { tag = F80 }
+		# Ayarallen stuff.
+		if = { limit = { FROM = { tag = F27 } } # Ayarallen
+			hidden_effect = {
+				if = { 
+					limit = { 
+						ROOT = { OR = { tag = F80 tag = F33 } } # Nansalen, Akalses
+						F27 = { has_country_flag = F80_firanyalen_uprising_effect } 
+					}
+					F27 = { clr_country_flag = F80_firanyalen_uprising_effect }
+					# Doing this first to make sure the capital is in the right place.
+					# Not using release, since that would give them a truce with Ayarallen.
+					676 = { cede_province = F82 }
+					firanyalen_area = { limit = { owned_by = F27 }
+						cede_province = F82
+					}
+					harpy_hills_region = { discover_country = F82 }
+					F82 = { join_all_offensive_wars_of = ROOT }
+				}
+				if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_our_southern_cousins } }
+					F33 = { join_all_offensive_wars_of = ROOT }
+				}
+				if = { limit = { ROOT = { tag = F80 mission_completed = F80_mission_right_words_right_ears } }
+					F42 = { join_all_offensive_wars_of = ROOT }
+				}
+				F80 = {
+					if = { limit = { NOT = { mission_completed = F80_mission_firanyalen_uprising } }
+						complete_mission = F80_mission_firanyalen_uprising
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_playing_on_rivalries } }
+						complete_mission = F80_mission_playing_on_rivalries
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_our_southern_cousins } }
+						complete_mission = F80_mission_our_southern_cousins
+					}
+					if = { limit = { NOT = { mission_completed = F80_mission_right_words_right_ears } }
+						complete_mission = F80_mission_right_words_right_ears
+					}
+				}
+			}
+		}
+		# Varamhar declaration.
+		if = {
+			limit = {
+				is_in_war = {
+					attacker_leader = ROOT
+					defender_leader = F42
+					casus_belli = cb_F80_enthroning_aras
+				}
+				F33 = { ai = yes }
+			}
+			if = { limit = { NOT = { exists = F33 } }
+				north_naza_area = { cede_province = F33 }
+			}
+			create_subject = {
+				subject_type = vassal
+				subject = F33
+			}
+			F80 = { set_country_flag = F80_cflag_varamhar_pu_war }
+		}
+	}
+
 	if = {
 		limit = { has_country_modifier = hyti_harpy_harmy FROM = { capital_scope = { continent = serpentspine } } }
 		remove_country_modifier = hyti_harpy_harmy
@@ -7433,6 +7531,10 @@ remove_all_age_of_discovery_modifiers = {
 			has_country_modifier = gor_vazumbrog_fighting_back
 		}
 		remove_country_modifier = gor_vazumbrog_fighting_back
+	}
+
+	if = { limit = { is_or_was_tag = { tag = F80 } } # Nansalen
+		remove_country_modifier = F80_cmod_royals_reform_progress
 	}
 }
 remove_all_age_of_reformation_modifiers = {
@@ -8181,6 +8283,30 @@ on_province_culture_change_effect = {
 			remove_province_modifier = medasi_peak_civilization_reform_modifier
 		}
 	}
+
+	if = {
+		limit = { owner = { mission_completed = vanrahar_4_servitude_of_mankind } }
+		if = {
+			limit = { culture_is_human = yes }
+			add_province_modifier = { name = vanrahar_superior_settlement duration = -1 }
+		}
+		else = { remove_province_modifier = vanrahar_superior_settlement }
+
+		if = {
+			limit = { owner = { has_country_modifier = vanrahar_community_support } }
+			if = {
+				limit = { culture = primal_harimari }
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
+			}
+			else = {
+				add_base_tax = -1
+				add_base_production = -1
+				add_base_manpower = -1
+			}
+		}
+	}
 }
 
 on_province_culture_converted_effect = {
@@ -8213,6 +8339,40 @@ on_province_culture_converted_effect = {
 		add_base_manpower = 1
 		add_base_production = 1
 		set_province_flag = arm_converted_bonus
+	}
+	# Nansalen
+	if = { 
+		limit = { 
+			culture = firanyan_harpy
+			owner = { 
+				is_or_was_tag = { tag = F80 } 
+				mission_completed = F80_mission_back_into_the_flock
+			}
+		}
+		trigger_switch = {
+			on_trigger = has_province_flag
+			F80_pflag_back_into_the_flock_2904 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2904
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = army_reformer skill = 3 cost_multiplier = 0.25 }
+				}			
+			}
+			F80_pflag_back_into_the_flock_2908 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2908
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = inquisitor skill = 3 cost_multiplier = 0.25 }
+				}			
+			}
+			F80_pflag_back_into_the_flock_2921 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2921
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = trader skill = 3 cost_multiplier = 0.25 }
+				}			
+			}
+		}
 	}
 }
 
@@ -8726,12 +8886,6 @@ on_adm_development_effect = {
 			add_church_power = 4
 		}
 	}
-	if = {
-		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
 	#Isobelin urban renewal
 	if = {
 		limit = {
@@ -8861,13 +9015,6 @@ on_dip_development_effect = {
 			add_church_power = 4
 		}
 	}
-	if = {
-		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
-
 	owner = { #Empkeios variable setup/update - will only fire if player-controlled
 		country_event = {
 			id = empkeios_events.1200
@@ -9010,12 +9157,6 @@ on_mil_development_effect = {
 	}
 	if = {
 		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
-	if = {
-		limit = {
 			owner = {
 				tag = Y89
 				mission_completed = yuanszi_black_monks
@@ -9126,6 +9267,17 @@ on_mil_development_effect = {
 
 	#mangrove republic
 	mangrove_on_mil_dev_effect = yes
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					primary_culture = primal_harimari
+					has_mission = vanrahar_5_build_warrior_housing
+				}
+			}
+		}
+		set_province_flag = mil_developed_by_owner
+	}
 }
 
 on_development_effect = {
@@ -9419,8 +9571,15 @@ on_development_effect = {
 				name = Y15_feed_engines
 				duration = 365
 			}
+		}	
+	}
+
+	#Bom Spirit Forts
+	if = {
+		limit = {
+			province_group = spirit_forts_province_group
 		}
-		
+		spirit_fort_awakening_effect = yes
 	}
 }
 
@@ -10178,16 +10337,6 @@ on_main_war_won_effect = {
 		}
 		add_treasury = 50
 	}
-
-	if = {
-		limit = {
-			NOT = { has_global_flag = mangrove_reclamation_done }
-			has_government_attribute = mangrove_republic
-			FROM = { has_government_attribute = mangrove_republic }
-		}
-		mangrove_win_war = yes
-		FROM = { mangrove_lose_war = yes }
-	}
 }
 
 on_change_tag_effect = {
@@ -10718,6 +10867,18 @@ on_built_production_building_effect = {
 
 	#Drozma Tur
 	dt_community_recognition_mil_effect = yes
+
+	# Nansalen
+	if = { 
+		limit = { 
+			owner = {
+				is_or_was_tag = { tag = F80 } 
+				mission_completed = F80_mission_invite_dwarven_migrants
+			}
+			has_dwarven_minority_trigger = no
+		}
+		add_dwarven_minority_size_effect = yes
+	}
 
 }
 
@@ -15483,7 +15644,7 @@ on_province_owner_change_effect = {
 					}
 				}
 			}
-			if = {
+			else_if = {
 				limit = {
 					OR = {
 						AND = {
@@ -15493,10 +15654,20 @@ on_province_owner_change_effect = {
 								owner = { NOT = { has_country_flag = hyti_base_trains } }
 							}
 						}
-						has_terrain = cavern
+						AND = {
+							has_terrain = cavern
+							NOT = { owner = { has_country_flag = hyti_magic_trains } }
+						}
 					}
 				}
 				add_province_modifier = { name = hyti_cave_mod6 duration = -1 }
+			}
+			else_if = {
+				limit = {
+					has_terrain = cavern
+					NOT = { owner = { has_estate_privilege = artifice_invention_hyti_magiwind } }
+				}
+				add_province_modifier = { name = hyti_cave_mod5 duration = -1 }
 			}
 			if = {
 				limit = {
@@ -15516,6 +15687,51 @@ on_province_owner_change_effect = {
 						duration = -1
 					}
 				}
+			}
+		}
+	}
+
+	# Effects from the Nansalen MT. Will generally only apply in Bulwar, so check whether province is there prior to tag checks.
+	if = { limit = { superregion = bulwar_superregion }
+		# Check whether province was 623. If so, Nansalen loses a modifier that requires Akalses to own it.
+		if = { limit = { province_id = 623 }
+			F80 = { remove_country_modifier = F80_cmod_gold_mine_shared }
+			F98 = { remove_country_modifier = F80_cmod_gold_mine_shared } # Also removing it from Harpylen, just in case.
+		}
+		if = {  limit = { owner = { F80_st_is_nansalen_or_akalses_or_subjects = yes } }
+			# Akalses effect from Our Kin in Akalses.
+			if = { 
+				limit = { 
+					owned_by = F33
+					F80 = {
+						mission_completed = F80_mission_our_kin_in_akalses
+						all_owned_province = { OR = { region = harpy_hills_region NOT = { superregion = bulwar_superregion } } } 
+					}
+				}
+				F80 = {
+					if = { limit = { has_country_modifier = monstrous_nation }
+						decrease_monstrous_1 = yes
+					}
+					else = {
+						change_government_reform_progress = 1
+					}
+				}
+			}
+
+			# Trade good effects from The Gate of Bulwar.
+			if = {
+				limit = {
+					owner = { F80_st_is_nansalen_or_akalses_or_subjects = yes }
+					OR = {
+						F80 = { mission_completed = F80_mission_the_gate_of_bulwar }
+						AND = {
+							exists = F98
+							F98 = { mission_completed = F80_mission_the_gate_of_bulwar }
+						}
+					}
+					OR = { trade_goods = gold trade_goods = sugar trade_goods = silk trade_goods = spices trade_goods = coffee }
+				}
+				add_province_modifier = { name = F80_pmod_gate_of_bulwar duration = -1 }
 			}
 		}
 	}
@@ -15601,6 +15817,27 @@ on_province_owner_change_effect = {
 			add_province_modifier = {
 				name = U39_guiding_the_faith_bad
 				duration = -1
+			}
+		}
+	}
+	if = {
+		limit = { owned_by = R77 } #Vanrahar
+		if = {
+			limit = {
+				owner = { mission_completed = vanrahar_4_servitude_of_mankind }
+				culture_is_human = yes
+			}
+			add_province_modifier = { name = vanrahar_superior_settlement duration = -1 }
+		}
+		if = {
+			limit = { owner = { mission_completed = vanrahar_5_build_warrior_housing } }
+			if = {
+				limit = { has_building = regimental_camp }
+				add_province_modifier = { name = vanrahar_improved_impressment_1 duration = -1 }
+			}
+			else_if = {
+				limit = { has_building = conscription_center }
+				add_province_modifier = { name = vanrahar_improved_impressment_2 duration = -1 }
 			}
 		}
 	}
@@ -15943,8 +16180,10 @@ S53_won_battle_against_trolls = {
 }
 
 anb_on_exploit_effect = {
-	if = { limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
+	if = {
+		limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
 		set_province_flag = anb_has_been_exploited_flag
+		add_province_modifier = { name = owner_exploited_$dev$ duration = -1 hidden = yes }
 	}
 	if = {
 		limit = { 
