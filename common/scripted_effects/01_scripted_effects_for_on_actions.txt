@@ -4242,7 +4242,13 @@ on_battle_won_country_effect = {
 	if = {
 		limit = { FROM = { NOT = { tag = REB tag = NAT } } }
 		if = {	#for pdx num_of_battles scripted trigger. need to set the country_flag to begin counting
-			limit = { OR = { has_country_flag = count_battles_won has_mission = shuvuush_to_ward } }
+			limit = {
+				OR = {
+					has_country_flag = count_battles_won
+					has_mission = shuvuush_to_ward #generic mission
+					has_mission = vanrahar_4_trials_of_strength #generic mission
+				}
+			}
 			change_variable = {
 				which = num_of_battles_won_var
 				value = 1
@@ -4251,6 +4257,16 @@ on_battle_won_country_effect = {
 		centaur_battle_count_win = yes
 		ogre_battle_count_win = yes
 		vf_battle_count_win = yes
+		if = {
+			limit = {
+				OR = {
+					primary_culture = primal_harimari
+					tag = R77
+				}
+				FROM = { capital_scope = { superregion = bulwar_superregion } }
+			}
+			change_variable = { battles_against_bulwar = 1 }
+		}
 
 		if = {
 			limit = {
@@ -8162,6 +8178,30 @@ on_province_culture_change_effect = {
 			remove_province_modifier = medasi_peak_civilization_reform_modifier
 		}
 	}
+
+	if = {
+		limit = { owner = { mission_completed = vanrahar_4_servitude_of_mankind } }
+		if = {
+			limit = { culture_is_human = yes }
+			add_province_modifier = { name = vanrahar_superior_settlement duration = -1 }
+		}
+		else = { remove_province_modifier = vanrahar_superior_settlement }
+
+		if = {
+			limit = { owner = { has_country_modifier = vanrahar_community_support } }
+			if = {
+				limit = { culture = primal_harimari }
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
+			}
+			else = {
+				add_base_tax = -1
+				add_base_production = -1
+				add_base_manpower = -1
+			}
+		}
+	}
 }
 
 on_province_culture_converted_effect = {
@@ -8707,12 +8747,6 @@ on_adm_development_effect = {
 			add_church_power = 4
 		}
 	}
-	if = {
-		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
 	#Isobelin urban renewal
 	if = {
 		limit = {
@@ -8842,13 +8876,6 @@ on_dip_development_effect = {
 			add_church_power = 4
 		}
 	}
-	if = {
-		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
-
 	owner = { #Empkeios variable setup/update - will only fire if player-controlled
 		country_event = {
 			id = empkeios_events.1200
@@ -8991,12 +9018,6 @@ on_mil_development_effect = {
 	}
 	if = {
 		limit = {
-			province_group = spirit_forts_province_group
-		}
-		spirit_fort_awakening_effect = yes
-	}
-	if = {
-		limit = {
 			owner = {
 				tag = Y89
 				mission_completed = yuanszi_black_monks
@@ -9107,6 +9128,17 @@ on_mil_development_effect = {
 
 	#mangrove republic
 	mangrove_on_mil_dev_effect = yes
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					primary_culture = primal_harimari
+					has_mission = vanrahar_5_build_warrior_housing
+				}
+			}
+		}
+		set_province_flag = mil_developed_by_owner
+	}
 }
 
 on_development_effect = {
@@ -9385,8 +9417,15 @@ on_development_effect = {
 				name = Y15_feed_engines
 				duration = 365
 			}
+		}	
+	}
+
+	#Bom Spirit Forts
+	if = {
+		limit = {
+			province_group = spirit_forts_province_group
 		}
-		
+		spirit_fort_awakening_effect = yes
 	}
 }
 
@@ -10143,16 +10182,6 @@ on_main_war_won_effect = {
 			}
 		}
 		add_treasury = 50
-	}
-
-	if = {
-		limit = {
-			NOT = { has_global_flag = mangrove_reclamation_done }
-			has_government_attribute = mangrove_republic
-			FROM = { has_government_attribute = mangrove_republic }
-		}
-		mangrove_win_war = yes
-		FROM = { mangrove_lose_war = yes }
 	}
 }
 
@@ -15409,7 +15438,7 @@ on_province_owner_change_effect = {
 					}
 				}
 			}
-			if = {
+			else_if = {
 				limit = {
 					OR = {
 						AND = {
@@ -15419,10 +15448,20 @@ on_province_owner_change_effect = {
 								owner = { NOT = { has_country_flag = hyti_base_trains } }
 							}
 						}
-						has_terrain = cavern
+						AND = {
+							has_terrain = cavern
+							NOT = { owner = { has_country_flag = hyti_magic_trains } }
+						}
 					}
 				}
 				add_province_modifier = { name = hyti_cave_mod6 duration = -1 }
+			}
+			else_if = {
+				limit = {
+					has_terrain = cavern
+					NOT = { owner = { has_estate_privilege = artifice_invention_hyti_magiwind } }
+				}
+				add_province_modifier = { name = hyti_cave_mod5 duration = -1 }
 			}
 			if = {
 				limit = {
@@ -15527,6 +15566,27 @@ on_province_owner_change_effect = {
 			add_province_modifier = {
 				name = U39_guiding_the_faith_bad
 				duration = -1
+			}
+		}
+	}
+	if = {
+		limit = { owned_by = R77 } #Vanrahar
+		if = {
+			limit = {
+				owner = { mission_completed = vanrahar_4_servitude_of_mankind }
+				culture_is_human = yes
+			}
+			add_province_modifier = { name = vanrahar_superior_settlement duration = -1 }
+		}
+		if = {
+			limit = { owner = { mission_completed = vanrahar_5_build_warrior_housing } }
+			if = {
+				limit = { has_building = regimental_camp }
+				add_province_modifier = { name = vanrahar_improved_impressment_1 duration = -1 }
+			}
+			else_if = {
+				limit = { has_building = conscription_center }
+				add_province_modifier = { name = vanrahar_improved_impressment_2 duration = -1 }
 			}
 		}
 	}
@@ -15862,8 +15922,10 @@ S53_won_battle_against_trolls = {
 }
 
 anb_on_exploit_effect = {
-	if = { limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
+	if = {
+		limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
 		set_province_flag = anb_has_been_exploited_flag
+		add_province_modifier = { name = owner_exploited_$dev$ duration = -1 hidden = yes }
 	}
 	if = {
 		limit = { 
