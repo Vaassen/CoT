@@ -806,7 +806,7 @@ ai_random_study = {
 			ai_pay_for_xp = { study = illusion type = $type$ }
 			magic_school_level_up = { type = $type$ school = illusion }
 		}
-		2 = { #Necromancy is a high-impact school and we'd prefer it appear less often
+		1 = { #Necromancy is a high-impact school and we'd prefer it appear less often
 			trigger = { NOT = { has_$type$_flag = necromancy_3 } has_not_banned_necromancy = yes }
 			modifier = { factor = 2 has_$type$_flag = necromancy_1 }
 			modifier = { factor = 4 has_$type$_flag = necromancy_2 }
@@ -1147,8 +1147,15 @@ increase_magic_experience = { #CANNOT BE FIRED INSIDE AN ELSE IN A SCRIPTED EFFE
 				update_advancement_progress_bar = { type = country }
 			}
 
-			divide_variable = { which = months_till_advancement_done which = last_months_xp_gain } #Tooltip bits
-			round_variable = { which = months_till_advancement_done value = 1 } #round up
+			if = { #Avoid division by 0
+				limit = { is_variable_equal = { which = last_months_xp_gain value = 0 } }
+				set_variable = { months_till_advancement_done = 0 }
+			}
+			else = {
+				divide_variable = { which = months_till_advancement_done which = last_months_xp_gain }
+				#Tooltip bits
+				round_variable = { which = months_till_advancement_done value = 1 } #round up
+			}
 		}
 
 		country_event = { id = magic_system.100 } #XP Advancement pulse
@@ -2191,7 +2198,6 @@ estate_action_RECRUIT_COURT_MAGE = {
 		estate = estate_mages
 		loyalty = -10
 	}
-	decrease_estate_witch_king_points = { size = medium }
 }
 
 define_war_wizard = { #Allows access to a few pre-defined war wizards.
@@ -2222,8 +2228,8 @@ define_war_wizard_sub_effect = { #the levels here correspond with the war wizard
 create_war_wizard = { #the more general war-wizard function
 	custom_tooltip = create_war_wizard_tt
 	hidden_effect = {
-		set_saved_name = { key = male_name type = leader }
-		set_saved_name = { key = female_name type = leader female = yes }
+		set_saved_name = { key = ww_male_name type = leader }
+		set_saved_name = { key = ww_female_name type = leader female = yes }
 	}
 
 	if = { #all the tooltips go after this block!
@@ -2255,19 +2261,19 @@ create_war_wizard = { #the more general war-wizard function
 	hidden_effect = { #We need the PRNG for situations like the evocation project
 		if = {
 			limit = { culture_is_harpy = yes }
-			create_general = { name = female_name female = yes }
+			create_general = { name = ww_female_name female = yes }
 		}
 		else = {
 			randnum_effect = {
 				max = 2
-				case1 = "create_general = { name = male_name }"
-				case2 = "create_general = { name = female_name female = yes }"
+				case1 = "create_general = { name = ww_male_name }"
+				case2 = "create_general = { name = ww_female_name female = yes }"
 			}
 		}
 
 		#Clear names
-		clear_saved_name = male_name
-		clear_saved_name = female_name
+		clear_saved_name = ww_male_name
+		clear_saved_name = ww_female_name
 
 		#Clear war wizard modifiers
 		remove_country_modifier = war_wizard_3_mod
