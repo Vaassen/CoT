@@ -359,7 +359,7 @@ zena_relic_purchase_effect = { #Buuying relics
 			value = monthly_income
 			who = ROOT 
 		}
-		export_to_variable = {
+		set_variable = {
 			which = zena_relic_multiplier
 			value = 18
 		}
@@ -458,23 +458,9 @@ zena_relic_purchase_effect = { #Buuying relics
 				value = 3
 			}
 		}
-		if = { #Don't wanna be giving negative money accidentally lol
-			limit = {
-				check_variable = {
-					which = zena_relic_multiplier
-					value = 0
-				}
-			}
-			multiply_variable = {
-				which = zena_relic_cost
-				which = zena_relic_multiplier
-			}
-		}
-		else = {
-			set_variable = {
-				which = zena_relic_cost
-				value = 0
-			}
+		multiply_variable = {
+			which = zena_relic_cost
+			which = zena_relic_multiplier
 		}
 	}
 }
@@ -486,17 +472,21 @@ zena_relic_buy_effect = {
 			which = zena_relics_found
 			value = 1
 		}
-		var_effect = {
-			effect = add_treasury
-			var = zena_relic_cost
-			sign = -
-		}
 		event_target:$zena_relic_event_target$ = { #Realistically should be giving them the money
+			set_variable = {
+				which = zena_relic_cost
+				which = PREV
+			}
 			var_effect = {
 				effect = add_treasury
 				var = zena_relic_cost
 				sign = +
 			}
+		}
+		var_effect = {
+			effect = add_treasury
+			var = zena_relic_cost
+			sign = -
 		}
 	}
 }
@@ -763,6 +753,7 @@ zena_menagerie_acquisition_effect = { #mostly just because i have to repeat this
 			duration = 9125
 			hidden = yes
 		}
+		clear_global_event_target = zena_$zena_animal$_province_target
 	}		
 	custom_tooltip = zena_fauna_hunt_success_tt
 }
@@ -781,28 +772,27 @@ zena_fauna_spawn_effect = {
 				}
 			}
 			$location$ = {
-				[[region]
-					limit = {
-						has_province_modifier = zena_$animal$_province
-					}
-				]
 				spawn_rebels = {
 					size = $rebel_size$
 					type = generic_beast_rebels
 				}
-				hidden_effect = {
-					save_event_target_as = zena_$animal$_province_target
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = zena_already_spawned_rebels }
+				}
+				set_country_flag = zena_already_spawned_rebels
+				hidden_effect = { #Fauna Hunt Completion Check
+					country_event = {
+						id = flavour_zena.69
+						days = 120 
+					}
 				}
 			}
 		}
 		else = {
 			tooltip = {
 				$location$ = {
-					[[region]
-						limit = {
-							has_province_modifier = zena_$animal$_province
-						}
-					]
 					spawn_rebels = {
 						size = $rebel_size$
 						type = generic_beast_rebels
@@ -816,7 +806,11 @@ zena_fauna_spawn_effect = {
 zena_fauna_clear_effect = {
 	if = {
 		limit = {
-			has_saved_event_target = zena_$animal$_province_target
+			OR = {
+				has_saved_global_event_target = zena_$animal$_province_target
+				has_saved_event_target = zena_$animal$_province_target
+			}
+			
 		}
 		if = {
 			limit = {
@@ -863,6 +857,7 @@ zena_fauna_clear_posteffect = {
 		animal = terror_bird
 		id = 64
 	}
+	hidden_effect = { clr_country_flag = zena_already_spawned_rebels }
 }
 
 zena_extension_subeffect = {
