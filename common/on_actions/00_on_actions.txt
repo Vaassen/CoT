@@ -3182,6 +3182,41 @@ on_battle_won_country = {
 		}
 		S53_won_battle_against_trolls = yes
 	}
+
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = anb_track_casualties_from_battles_won
+				has_mission = vanrahar_4_trials_of_strength #generic mission
+			}
+		}
+		change_variable = {
+			which = casualties_from_battles_won
+			which = land_units_killed
+		}
+		change_variable = {
+			which = casualties_from_battles_won
+			which = land_units_lost
+		}
+
+		if = {
+			limit = {
+				OR = {
+					primary_culture = primal_harimari
+					tag = R77
+				}
+				FROM = { capital_scope = { superregion = bulwar_superregion } }
+			}
+			change_variable = {
+				which = casualties_from_battles_won_bulwar
+				which = land_units_killed
+			}
+			change_variable = {
+				which = casualties_from_battles_won_bulwar
+				which = land_units_lost
+			}
+		}
+	}
 	
 	#Accretive Path Chi Stacking
 	if = {
@@ -3858,31 +3893,6 @@ on_siege_won_country = {
 		}
 		country_event = { id = flavour_themarenn.39 }
 	}
-
-	#Gushuokguan Siege Counter
-	if = {
-		limit = {
-			OR = {
-				OR = {
-					tag = Y17 #Gushuokguan
-					was_tag = Y17 #Gushuokguan
-				}
-				is_in_war = { participants = Y17 } #Another country is the siege leader
-			}
-			Y17 = {
-				any_hired_mercenary_company = {
-					template = merc_flying_pebbles
-					location = { province_id = FROM }
-				}
-			}
-		}
-		Y17 = { #Gushuokguan
-			change_variable = {
-				which = gushuokguan_siege_counter
-				value = 1
-			}
-		}
-	}
 	#corinsfield
 	if = { 
 		limit = {
@@ -4337,6 +4347,32 @@ on_siege_lost_country = {
 			has_global_flag = I78_caehns_authority_double_no_war
 		}
 		I78 = { country_event = { id = flavour_wild_hunt.7 } }
+	}
+
+	#Gushuokguan Siege Counter
+	# It's here instead of on_siege_won_country because any_war_enemy_country exists but
+	# something like any_war_ally_country does not
+	# This logic is because you can form another country, like Yanshen, and keep your MT
+	if = {
+		limit = {
+			has_global_flag = merc_flying_pebbles_available # Just so we don't need to iterate through several countries for most of the game
+			any_war_enemy_country = {
+				is_or_was_tag = { tag = Y17 } #Gushuokguan
+				any_hired_mercenary_company = {
+					template = merc_flying_pebbles
+					location = { province_id = FROM }
+				}
+			}
+		}
+		random_war_enemy_country = { # This will only ever be 1 tag
+			limit = {
+				is_or_was_tag = { tag = Y17 } #Gushuokguan
+			}
+			change_variable = {
+				which = gushuokguan_siege_counter
+				value = 1
+			}
+		}
 	}
 }
 
@@ -7561,6 +7597,7 @@ on_monthly_pulse = {
 		flavor_konolkhatep.305
 		oren_nayiru.100 #In Spite of Silver
 		oren_nayiru.101 #A Meeting In The Dark
+		sthanan_events.9 #The Call of Silver
 		oren_nayiru.4 #The Calsithara Revolt
 		insyaa_flavour.100 #Mechanim Over Forcelimit event
 	}
@@ -23857,19 +23894,6 @@ on_trade_good_changed = {
 				}
 			}
 		}
-		if = {	#Copperlords
-			limit = {
-				owner = {
-					has_reform = copperlord_reform
-				}
-				trade_goods = copper
-			}
-			add_province_modifier = { 
-				name = copperlord_copper
-				duration = -1
-				hidden = yes
-			}
-		}
 		if = {	#Telgeir Steel Monarchy
 			limit = {
 				owner = { has_reform = steel_monarchy_reform }
@@ -28213,10 +28237,7 @@ on_scorch_earth = { #ROOT - scorching country, FROM - scorched province
 	}
 	if = {
 		limit = { 
-			OR = {
-				tag = Y17 #Gushuokguan
-				was_tag = Y17 #Gushuokguan
-			}
+			is_or_was_tag = { tag = Y17 } #Gushuokguan
 		}
 		change_variable = {
 			which = gushuokguan_scorched_earth_counter
