@@ -1,5 +1,4 @@
-# What to do if you form Prakheta and then need to reload missions for the Ahati one???
-Column_1 = {
+F60_1_missions = {
 	slot = 1
 	generic = no
 	ai = yes
@@ -80,8 +79,7 @@ Column_1 = {
 				id = flavour_samsumbat.4
 				insight_tooltip = F60_event_insight_4_tt
 			}
-			hidden_effect = { # Now start tracking dev exploit for next mission
-				set_country_flag = anb_on_action_tracking_exploit_dev_flag
+			hidden_effect = {
 				clr_country_flag = count_wars_won # Don't need to count wars anymore
 			}
 		}
@@ -92,9 +90,45 @@ Column_1 = {
 		position = 4
 		required_missions = { F60_the_first_amendment }
 		provinces_to_highlight = {
-			OR = {
-				culture_group = lizardfolk
-				culture_group = gnollish
+			AND = {
+				OR = {
+					culture_group = lizardfolk
+					culture_group = gnollish
+				}
+				OR = {
+					# Either you don't have 5 Nirakhetist ones and we highlight the non-Nirakhetist ones
+					AND = {
+						NOT = {
+							ROOT = {
+								num_of_owned_provinces_with = {
+									value = 5
+									religion = nirakhetist
+									OR = {
+										culture_group = lizardfolk
+										culture_group = gnollish
+									}
+								}
+							}
+						}
+						NOT = { religion = nirakhetist }
+					}
+					# Or you haven't exploited 5 and we highlight the non-exploited ones
+					AND = {
+						NOT = {
+							ROOT = {
+								num_of_owned_provinces_with = {
+									value = 5
+									has_province_flag = anb_has_been_exploited_flag
+									OR = {
+										culture_group = lizardfolk
+										culture_group = gnollish
+									}
+								}
+							}
+						}
+						NOT = { has_province_flag = anb_has_been_exploited_flag }
+					}
+				}
 			}
 			has_discovered = ROOT
 		}
@@ -156,8 +190,8 @@ Column_1 = {
 					num_of_times_improved = 1
 					country_or_subject_holds = ROOT
 					OR = {
-						has_building = marketplace
-						has_building = workshop
+						has_trade_building_trigger = yes 
+						has_production_building_trigger = yes
 					}
 				}
 			}
@@ -171,8 +205,8 @@ Column_1 = {
 				has_terrain = savannah
 				num_of_times_improved = 1
 				OR = {
-					has_building = marketplace
-					has_building = workshop
+					has_trade_building_trigger = yes 
+					has_production_building_trigger = yes
 				}
 			}
 		}
@@ -234,7 +268,16 @@ Column_1 = {
 			F60_reform_the_economy
 			F60_reform_the_ahati
 		}
-		provinces_to_highlight = {  }
+		provinces_to_highlight = {
+			owner = {
+				is_subject_of_type_with_overlord = {
+					who = ROOT
+					type = medasi_subject
+				}
+				NOT = { total_development = 200 }
+			}
+			is_capital = yes
+		}
 
 		trigger = {
 			empire_of_china_reform_passed = republicanism_steward_reform
@@ -297,8 +340,50 @@ Column_1 = {
 					is_capital = yes
 				}
 				AND = {
+					L17 = { exists = no }
+					superregion = fangaula_superregion
+					culture = taafi
+				}
+				# Highlight countries we need a spy network in
+				AND = {
+					NOT = {
+						ROOT = {
+							calc_true_if = {
+								amount = 2
+								desc = F60_west_sarhal_spy_tt
+								all_known_country = {
+									culture_group = west_sarhaly
+									has_spy_network_from = {
+										who = ROOT
+										value = 30
+									}
+									NOT = {
+										alliance_with = ROOT
+										is_subject_of = ROOT
+									}
+								}
+							}
+						}
+					}
+					owner = {
+						culture_group = west_sarhaly
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
+							}
+						}
+						NOT = {
+							alliance_with = ROOT
+							is_subject_of = ROOT
+						}
+
+					}
+				}
+				# Highlight provinces without my soldiers
+				AND = {
 					country_or_subject_holds = ROOT
-					any_neighbor_province {
+					any_neighbor_province = {
 						owner = {
 							culture_group = west_sarhaly
 							NOT = {
@@ -309,7 +394,18 @@ Column_1 = {
 						}
 					}
 					NOT = {
-						units_in_province = 1
+						units_in_province = ROOT
+					}
+				}
+				AND = {
+					province_id = 1465
+					NOT = {
+						ROOT = {
+							trading_policy_in_node = {
+								node = 1465 # Ironwood Coast
+								policy = hostile_trading
+							}
+						}
 					}
 				}
 			}
@@ -322,7 +418,7 @@ Column_1 = {
 			}
 			calc_true_if = {
 				amount = 2
-				desc = F60_west_sarhal_spy_tt #do I need this?
+				desc = F60_west_sarhal_spy_tt
 				all_known_country = {
 					culture_group = west_sarhaly
 					has_spy_network_from = {
@@ -348,7 +444,7 @@ Column_1 = {
 						}
 					}
 				}
-				# I think I can assume if there are none in Fangaula they are all gone
+				# I think I can assume if there are no provinces with Taafi culture in Fangaula they are all gone
 				fangaula_superregion = {
 					type = all
 					NOT = { culture = taafi }
@@ -371,43 +467,22 @@ Column_1 = {
 								}
 							}
 						}
-						units_in_province = 1
+						units_in_province = ROOT
 					}
 				}
 			}
 		}
 
 		effect = {
-			custom_tooltip = F60_support_rebels_improved_tt
-			add_country_modifier = {
-				name = F60_slave_uprising
-				duration = 3650 # 10 years
+			samsumbat_rebel_agitate_other_countries_effect = {
+				custom_tooltip = "F60_taafi_agitators_reward_tt"
+				extra_limit = "culture_group = west_sarhaly"
+				rebel_type = "slave"
 			}
-			hidden_effect = {
-				every_known_country = { #custom tooltip
-					limit = {
-						culture_group = west_sarhaly
-						has_spy_network_from = {
-							who = ROOT
-							value = 30
-						}
-					}
-					add_country_modifier = {
-						name = F60_slave_agitators
-						duration = 3650 # 10 years
-					}
-					capital_scope = {
-						add_province_modifier = {
-							name = F60_slave_agitators_capital
-							duration = 3650 # 10 years
-						}
-					}
-				}
-			}
-			if = {
-				limit = {
-					exists = L17
-				}
+			simple_dynamic_effect_single_bonus = {
+				first_custom_tooltip = F60_taafisi_exists_req_tt
+				first_limit = "exists = L17"
+				first_effect = "
 				L17 = {
 					add_trust = {
 						who = ROOT
@@ -417,7 +492,7 @@ Column_1 = {
 				create_subject = {
 					subject_type = medasi_subject
 					subject = L17
-				}
+				}"
 			}
 			custom_tooltip = F60_gain_fangaula_mine_claims_tt
 			hidden_effect = {
@@ -432,7 +507,7 @@ Column_1 = {
 							trade_goods = gold
 						}
 					}
-					add_claim = ROOT
+					add_permanent_claim = ROOT
 				}
 			}
 		}
@@ -468,16 +543,30 @@ Column_1 = {
 					}
 				}
 				AND = {
+					NOT = { 
+						ROOT = {
+							num_of_owned_provinces_with = {
+								value = 5
+								OR = {
+									trade_goods = iron
+									trade_goods = copper
+									trade_goods = gems
+									trade_goods = salt
+								}
+								has_manufactory_trigger = yes
+							}
+						}
+					}
 					OR = {
 						trade_goods = iron
 						trade_goods = copper
 						trade_goods = gems
 						trade_goods = salt
 					}
+					owned_by = ROOT
 					has_manufactory_trigger = no
 				}
 			}
-			has_discovered = ROOT
 		}
 
 		trigger = {
@@ -508,6 +597,7 @@ Column_1 = {
 			}
 			calc_true_if = {
 				amount = 3
+				desc = F60_fangaula_subjects_tt
 				all_subject_country = {
 					capital_scope = {
 						superregion = fangaula_superregion
@@ -546,7 +636,12 @@ Column_1 = {
 			is_capital = yes
 			owner = {
 				is_subject_of = ROOT
-				NOT = { state_house = 1 }
+				NOT = {
+					state_house = 1
+					all_owned_province = {
+						has_manufactory_trigger = yes
+					}
+				}
 			}
 		}
 
@@ -586,9 +681,18 @@ Column_1 = {
 					type = mil
 					level = 3
 				}
+				adm_power = 100
+				dip_power = 100
+				mil_power = 100
 			}
 			all_subject_country = {
-				state_house = 1
+				OR = {
+					state_house = 1
+					# They can't build a state house if every province has a manufactory
+					all_owned_province = {
+						has_manufactory_trigger = yes
+					}
+				}
 			}
 			stability = 3
 		}
@@ -601,7 +705,7 @@ Column_1 = {
 		}
 	}
 }
-Column_2 = {
+F60_2_missions = {
 	slot = 2
 	generic = no
 	ai = yes
@@ -623,9 +727,12 @@ Column_2 = {
 		}
 
 		effect = {
-			L04 = {
-				every_owned_province = {
-					add_claim = ROOT
+			custom_tooltip = F60_saqraxat_claims_tt
+			hidden_effect = {
+				L04 = {
+					every_owned_province = {
+						add_permanent_claim = ROOT
+					}
 				}
 			}
 			custom_tooltip = F60_clergy_priv_soldiers_freedom_enabled_tt
@@ -651,8 +758,30 @@ Column_2 = {
 		}
 		provinces_to_highlight = {
 			OR = {
-				province_id = 5700
-				province_id = 5679
+				AND = {
+					province_id = 5700
+					NOT = { country_or_subject_holds = ROOT }
+				}
+				AND = {
+					province_id = 5679
+					NOT = {
+						AND = {
+							country_or_subject_holds = ROOT
+							num_of_units_in_province = {
+								who = ROOT
+								amount = 20
+							}
+						}
+					}
+				}
+				AND = {
+					is_capital_of = L04
+					NOT = {
+						L04 = {
+							is_subject_of = ROOT
+						}
+					}
+				}
 			}
 		}
 
@@ -677,13 +806,13 @@ Column_2 = {
 			5700 = {
 				custom_tooltip = removes_slaves_province_tt
 				hidden_effect = {
-						change_trade_goods = unknown
+					change_trade_goods = unknown
 				}
 			}
 			5679  = {
 				custom_tooltip = removes_slaves_province_tt
 				hidden_effect = {
-						change_trade_goods = unknown
+					change_trade_goods = unknown
 				}
 			}
 			add_manpower = 5
@@ -691,15 +820,13 @@ Column_2 = {
 				name = F60_slavers_humbled
 				duration = 7300 #20 years
 			}
-			if = {
-				limit = {
-					L04 = {
-						vassal_of = ROOT
-					}
-				}
+			simple_dynamic_effect_single_bonus = {
+				first_custom_tooltip = F60_saqraxat_vassal_req_tt
+				first_limit = "L04 = { vassal_of = ROOT }"
+				first_effect = "
 				L04 = {
 					add_liberty_desire = -10
-				}
+				}"
 			}
 		}
 	}
@@ -733,7 +860,14 @@ Column_2 = {
 					has_discovered = ROOT
 					owner = {
 						slaves = 1
-						has_been_insulted_by_root = no
+					}
+					NOT = {
+						ROOT = {
+							any_known_country = {
+								slaves = 1
+								has_been_insulted_by_root = yes
+							}
+						}
 					}
 				}
 			}
@@ -775,11 +909,44 @@ Column_2 = {
 		position = 4
 		required_missions = { F60_we_can_free_them_all }
 		provinces_to_highlight = {
-			OR = {
+			AND = {
+				NOT = {
+					ROOT = {
+						any_owned_or_subject_province = {
+							culture = ndurubu
+							has_manpower_building_trigger = yes
+							has_trade_building_trigger = yes
+						}
+					}
+				}
 				culture = ndurubu
+				country_or_subject_holds = ROOT
+			}
+			AND = {
+				culture = ndurubu
+				owned_by = ROOT
+				NOT = { has_state_edict = edict_centralization_effort }
+			}
+			AND = {
+				province_id = 5728
+				NOT = {
+					AND = {
+						country_or_subject_holds = ROOT
+						religion = nirakhetist
+					}
+				}
+			}
+			AND = {
+				ROOT = {
+					any_known_country = {
+						primary_culture = ndurubu
+						NOT = { is_subject_of = ROOT }
+					}
+				}
 				owner = {
 					primary_culture = ndurubu
 				}
+				is_capital = yes
 			}
 		}
 
@@ -800,8 +967,8 @@ Column_2 = {
 			}
 			any_owned_or_subject_province = {
 				culture = ndurubu
-				has_building = barracks
-				has_building = marketplace
+				has_manpower_building_trigger = yes
+				has_trade_building_trigger = yes
 			}
 			custom_trigger_tooltip = {
 				tooltip = F60_ndurubu_state_edict_tt
@@ -828,7 +995,6 @@ Column_2 = {
 					first_custom_tooltip = F60_professionalism_req_tt
 					first_limit = "army_professionalism = 0.1"
 					first_effect = "add_mil_power = 150"
-					
 				}
 			}
 		}
@@ -896,7 +1062,10 @@ Column_2 = {
 		icon = mission_geainne
 		position = 10
 		required_missions = { F60_reform_the_ahati }
-		provinces_to_highlight = {  }
+		provinces_to_highlight = {
+			owned_by = ROOT
+			controlled_by = REB
+		}
 
 		trigger = {
 			custom_trigger_tooltip = {
@@ -935,7 +1104,7 @@ Column_2 = {
 				duration = -1
 			}
 			businor_region = {
-				add_claim = ROOT
+				add_permanent_claim = ROOT
 			}
 		}
 	}
@@ -948,7 +1117,7 @@ Column_2 = {
 			F60_phoenix_agitators
 		}
 		provinces_to_highlight = {
-			OR= {
+			OR = {
 				AND = {
 					region = businor_region
 					NOT = { country_or_subject_holds = ROOT }
@@ -1014,7 +1183,7 @@ Column_2 = {
 	}
 }
 
-Column_3 = {
+F60_3_missions = {
 	slot = 3
 	generic = no
 	ai = yes
@@ -1025,20 +1194,35 @@ Column_3 = {
 		icon = mission_whisper
 		position = 1
 		provinces_to_highlight = {
-			is_capital = yes
-			owner = {
-				OR = {
-					tag = F61 # Muhaqaar
-					tag = F62 # Duwarkani
-					tag = F63 # Aramoole
-					tag = F70 # Mattabo
-					tag = L13 # Samishesha
-					tag = L04 # Saqraxat
+			OR = {
+				AND = {
+					is_capital = yes
+					owner = {
+						OR = {
+							tag = F61 # Muhaqaar
+							tag = F62 # Duwarkani
+							tag = F63 # Aramoole
+							tag = F70 # Mattabo
+							tag = L13 # Samishesha
+							tag = L04 # Saqraxat
+						}
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
+							}
+						}
+					}
 				}
-				NOT = {
-					has_spy_network_from = {
-						who = ROOT
-						value = 30
+				AND = {
+					province_id = 6029
+					NOT = {
+						ROOT = {
+							trading_policy_in_node = {
+								node = 6029 #Khet Highlands
+								policy = hostile_trading
+							}
+						}
 					}
 				}
 			}
@@ -1084,11 +1268,25 @@ Column_3 = {
 		position = 2
 		required_missions = { F60_republican_agitators }
 		provinces_to_highlight = {
-			NOT = { owned_by = ROOT }
 			OR = {
-				area = leta_muhaqaar_area
-				area = shena_muhaqaar_area
-				is_capital_of = F70
+				AND = {
+					NOT = { owned_by = ROOT }
+					OR = {
+						area = leta_muhaqaar_area
+						area = shena_muhaqaar_area
+					}
+				}
+				AND = {
+					is_capital_of = F70
+					NOT = {
+						F70 = {
+							OR = {
+								alliance_with = ROOT
+								is_subject_of = ROOT
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -1128,18 +1326,28 @@ Column_3 = {
 			F60_show_them_the_way
 		}
 		provinces_to_highlight = {
-			province_group = mothers_sorrow_group
-			owner = {
-				is_emperor_of_china = no
-				NOT = {
-					alliance_with = ROOT
-					is_subject_of = ROOT
-					tag = ROOT
+			OR = {
+				AND = {
+					province_group = mothers_sorrow_group
+					owner = {
+						is_emperor_of_china = no
+						NOT = {
+							alliance_with = ROOT
+							is_subject_of = ROOT
+							tag = ROOT
+						}
+						NOT = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 25
+							}
+						}
+					}
 				}
-				NOT = {
-					has_spy_network_from = {
-						who = ROOT
-						value = 25
+				AND = {
+					owner = {
+						is_subject_of = ROOT
+						liberty_desire = 50
 					}
 				}
 			}
@@ -1177,7 +1385,7 @@ Column_3 = {
 
 		effect = {
 			mothers_sorrow_group = {
-				add_claim = ROOT
+				add_permanent_claim = ROOT
 			}
 			add_country_modifier = {
 				name = F60_unite_the_sorrow
@@ -1259,7 +1467,7 @@ Column_3 = {
 					NOT = { num_of_times_improved = 2 }
 				}
 				NOT = {
-					any_province_in_state = {
+					area_for_scope_province = {
 						has_courthouse_building_trigger = yes
 					}
 				}
@@ -1357,12 +1565,33 @@ Column_3 = {
 		position = 11
 		required_missions = { F60_reform_the_army }
 		provinces_to_highlight = {
-			superregion = bulwar_superregion
-			is_capital = yes
-			owner = {
-				OR = {
-					government = monarchy
-					government = republic
+			OR = {
+				AND = {
+					superregion = bulwar_superregion
+					is_capital = yes
+					owner = {
+						OR = {
+							government = monarchy
+							government = republic
+						}
+					}
+				}
+				AND = {
+					province_id = 1309
+					NOT = {
+						AND = {
+							has_privateer_share_in_trade_node = {
+								who = ROOT
+								share = 0.1
+							}
+							ROOT = {
+								trading_policy_in_node = {
+									node = 1309 # Brasan
+									policy = hostile_trading
+								}
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1469,6 +1698,7 @@ Column_3 = {
 				has_cast_enchanting_embassy = yes
 				calc_true_if = {
 					amount = 2
+					desc = F60_monarchy_discontent_calc_tt
 					all_known_country = {
 						capital_scope = { superregion = bulwar_superregion }
 						government = monarchy
@@ -1487,31 +1717,10 @@ Column_3 = {
 		}
 
 		effect = {
-			custom_tooltip = F60_support_rebels_improved_tt
-			add_country_modifier = {
-				name = F60_republic_uprising
-				duration = 3650 # 10 years
-			}
-			hidden_effect = {
-				every_known_country = { 
-					limit = {
-						capital_scope = { superregion = bulwar_superregion }
-						has_spy_network_from = {
-							who = ROOT
-							value = 30
-						}
-					}
-					add_country_modifier = {
-						name = F60_republic_agitators
-						duration = 3650 # 10 years
-					}
-					capital_scope = {
-						add_province_modifier = {
-							name = F60_republic_agitators_capital
-							duration = 3650 # 10 years
-						}
-					}
-				}
+			samsumbat_rebel_agitate_other_countries_effect = {
+				custom_tooltip = "F60_phoenix_agitators_reward_tt.1"
+				extra_limit = "capital_scope = { superregion = bulwar_superregion }"
+				rebel_type = "republic"
 			}
 
 			if = { # If there were enough Republics, gain an alliance and trust with them, removing any rivalry
@@ -1555,6 +1764,7 @@ Column_3 = {
 								NOT = { alliance_with = ROOT }
 							}
 							force_remove_rival = ROOT
+							add_historical_friend = ROOT
 							create_alliance = ROOT
 						}
 					}
@@ -1569,7 +1779,47 @@ Column_3 = {
 		required_missions = { F60_phoenix_agitators }
 		provinces_to_highlight = {
 			superregion = bulwar_superregion
-			NOT = { country_or_subject_holds = ROOT }
+			OR = {
+				NOT = {
+					country_or_subject_holds = ROOT
+					ROOT = {
+						num_of_provinces_owned_or_owned_by_subjects_with = {
+							value = 15
+							superregion = bulwar_superregion
+						}
+					}
+				}
+				AND = {
+					is_capital = yes
+					owner = {
+						government = monarchy
+					}
+					OR = {
+						NOT = {
+							ROOT = {
+								any_known_country = {
+									capital_scope = { superregion = bulwar_superregion }
+									government = monarchy
+									ROOT = {
+										has_spawned_supported_rebels = PREV
+									}
+								}
+							}
+						}
+						NOT = {
+							ROOT = {
+								any_known_country = {
+									capital_scope = { superregion = bulwar_superregion }
+									government = monarchy
+									any_rival_country = {
+										has_15_opinion_getting_subsidies = { target = ROOT }
+									}
+								}
+							}
+						}
+					}
+				}
+			}
 		}
 
 		trigger = {
@@ -1657,6 +1907,22 @@ Column_3 = {
 							}
 						}
 					}
+					overlord = {
+						government = republic
+						OR = {
+							AND = {
+								alliance_with = ROOT
+								trust = {
+									who = ROOT
+									value = 70
+								}
+							}
+							AND = {
+								is_subject_of = ROOT
+								NOT = { liberty_desire = 50 }
+							}
+						}
+					}
 				}
 			}
 		}
@@ -1664,6 +1930,7 @@ Column_3 = {
 		trigger = {
 			# Every country in these regions is a Republic and either your ally with 70 trust or
 			# your subject with less than 50% liberty desire
+			# Or they are subject of your trust republic ally or subject
 			custom_trigger_tooltip = {
 				tooltip = F60_bulwar_all_republics_tt
 				NOT = { # i.e. no country has a capital in these regions and is not ( a republic AND either our ally OR our vassal )
@@ -1676,19 +1943,40 @@ Column_3 = {
 							}
 						}
 						NOT = {
-							AND = {
-								government = republic
-								OR = {
-									AND = {
-										alliance_with = ROOT
-										trust = {
-											who = ROOT
-											value = 70
+							OR = {
+								AND = {
+									government = republic
+									OR = {
+										AND = {
+											alliance_with = ROOT
+											trust = {
+												who = ROOT
+												value = 70
+											}
+										}
+										AND = {
+											is_subject_of = ROOT
+											NOT = { liberty_desire = 50 }
 										}
 									}
-									AND = {
-										is_subject_of = ROOT
-										NOT = { liberty_desire = 50 }
+								}
+								# Allow subjects of your allies/subjects
+								AND = {
+									overlord = {
+										government = republic
+										OR = {
+											AND = {
+												alliance_with = ROOT
+												trust = {
+													who = ROOT
+													value = 70
+												}
+											}
+											AND = {
+												is_subject_of = ROOT
+												NOT = { liberty_desire = 50 }
+											}
+										}
 									}
 								}
 							}
@@ -1765,10 +2053,33 @@ Column_3 = {
 		}
 		provinces_to_highlight = {
 			OR = {
-				region = east_dameshead_region
-				region = west_dameshead_region
+				AND = {
+					OR = {
+						region = east_dameshead_region
+						region = west_dameshead_region
+					}
+					NOT = { country_or_subject_holds = ROOT }
+					NOT = {
+						ROOT = {
+							AND = {
+								num_of_provinces_owned_or_owned_by_subjects_with = {
+									value = 15
+									region = east_dameshead_region
+								}
+								num_of_provinces_owned_or_owned_by_subjects_with = {
+									value = 15
+									region = west_dameshead_region
+								}
+							}
+						}
+					}
+				}
+				is_capital_of = A38
+				AND = {
+					hre_size = 1
+					is_capital_of = emperor
+				}
 			}
-			NOT = { country_or_subject_holds = ROOT }
 		}
 
 		trigger = {
@@ -1807,7 +2118,7 @@ Column_3 = {
 	}
 }
 
-Column_4 = {
+F60_4_missions = {
 	slot = 4
 	generic = no
 	ai = yes
@@ -1820,8 +2131,66 @@ Column_4 = {
 		required_missions = { F60_republican_agitators }
 		provinces_to_highlight = {
 			OR = {
-				province_id = 6022
-				province_id = 5870
+				AND = {
+					OR = {
+						province_id = 6022
+						province_id = 5870
+					}
+					NOT = {
+						OR = {
+							owner = {
+								alliance_with = ROOT
+							}
+							owner = {
+								is_subject_of = ROOT
+							}
+							AND = {
+								owned_by = ROOT
+								has_state_edict = edict_centralization_effort
+							}
+						}
+					}
+				}
+				AND = {
+					is_capital_of = F62
+					NOT = {
+						F62 = {
+							OR = {
+								AND = {
+									alliance_with = ROOT
+									trust = {
+										who = ROOT
+										value = 60
+									}
+								}
+								AND = {
+									is_subject_of = ROOT
+									NOT = { liberty_desire = 50 }
+								}
+							}
+						}
+					}
+				}
+				AND = {
+					is_capital_of = F63
+					NOT = {
+						F63 = {
+							OR = {
+								AND = {
+									alliance_with = ROOT
+									trust = {
+										who = ROOT
+										value = 60
+									}
+								}
+								AND = {
+									is_subject_of = ROOT
+									NOT = { liberty_desire = 50 }
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 
@@ -1883,7 +2252,6 @@ Column_4 = {
 						has_state_edict = edict_centralization_effort
 					}
 				}
-
 			}
 			5870 = { # Aramoole (province)
 				OR = {
@@ -1965,12 +2333,31 @@ Column_4 = {
 						province_id = 6022 # Duwarkani
 						province_id = 5870 # Aramoole
 					}
-					NOT = { num_of_times_improved = 1 }
+					OR = {
+						AND = {
+							country_or_subject_holds = ROOT
+							NOT = { num_of_times_improved = 1 }
+						}
+						AND = {
+							owner = {
+								alliance_with = ROOT
+								NOT = {
+									AND = {
+										has_20_opinion_sent_gift = { target = ROOT }
+										trust = {
+											who = ROOT
+											value = 60
+										}
+									}
+								}
+							}
+						}
+					}
 				}
 				AND = {
 					region = khetapera_region
 					devastation = 1
-					country_or_non_sovereign_subject_holds = ROOT
+					country_or_subject_holds = ROOT
 				}
 			}
 		}
@@ -1987,48 +2374,106 @@ Column_4 = {
 					}
 				}
 			}
-			custom_trigger_tooltip = { # Improve those 4 provinces once if you own it
+			custom_trigger_tooltip = { # Improve those 4 provinces once if you or your subject owns it
 				tooltip = F60_starting_capitals_improved_tt
-				all_owned_or_subject_province = {
-					OR = {
-						NOT = {
-							province_id = 5483 # Muhaqaar
-							province_id = 5489 # Mattabo
-							province_id = 6022 # Duwarkani
-							province_id = 5870 # Aramoole
-						}
-						num_of_times_improved = 1
-					}
+				5483 = { # Muhaqaar
+					country_or_subject_holds = ROOT
+					num_of_times_improved = 1
+				}
+				5489 = { # Mattabo
+					country_or_subject_holds = ROOT
+					num_of_times_improved = 1
+				}
+				6022 = { # Duwarkani
+					country_or_subject_holds = ROOT
+					num_of_times_improved = 1
+				}
+				5870 = { # Aramoole
+					country_or_subject_holds = ROOT
+					num_of_times_improved = 1
 				}
 			}
 			if = {
 				limit = {
-					any_ally = {
-						OR = {
-							owns = 5483 # Muhaqaar
-							owns = 5489 # Mattabo
-							owns = 6022 # Duwarkani
-							owns = 5870 # Aramoole
+					OR = {
+						5483 = { # Muhaqaar
+							owner = {
+								alliance_with = ROOT
+							}
+						}
+						5489 = { # Mattabo
+							owner = {
+								alliance_with = ROOT
+							}
+						}
+						6022 = { # Duwarkani
+							owner = {
+								alliance_with = ROOT
+							}
+						}
+						5870 = { # Aramoole
+							owner = {
+								alliance_with = ROOT
+							}
 						}
 					}
 				}
 				# Any ally that owns an above province has 60 trust and +20 from gifts
 				custom_trigger_tooltip = {
 					tooltip = F60_splinter_states_gift_tt
-					all_ally = {
-						OR = {
-							AND = {
-								has_20_opinion_sent_gift = { target = ROOT }
-								trust = {
-									who = ROOT
-									value = 60
+					5483 = {
+						owner = {
+							OR = {
+								NOT = { alliance_with = ROOT }
+								AND = {
+									has_20_opinion_sent_gift = { target = ROOT }
+									trust = {
+										who = ROOT
+										value = 60
+									}
 								}
 							}
-							NOT = {
-								owns = 5483 # Muhaqaar
-								owns = 5489 # Mattabo
-								owns = 6022 # Duwarkani
-								owns = 5870 # Aramoole
+						}
+					}
+					5489 = {
+						owner = {
+							OR = {
+								NOT = { alliance_with = ROOT }
+								AND = {
+									has_20_opinion_sent_gift = { target = ROOT }
+									trust = {
+										who = ROOT
+										value = 60
+									}
+								}
+							}
+						}
+					}
+					6022 = {
+						owner = {
+							OR = {
+								NOT = { alliance_with = ROOT }
+								AND = {
+									has_20_opinion_sent_gift = { target = ROOT }
+									trust = {
+										who = ROOT
+										value = 60
+									}
+								}
+							}
+						}
+					}
+					5870 = {
+						owner = {
+							OR = {
+								NOT = { alliance_with = ROOT }
+								AND = {
+									has_20_opinion_sent_gift = { target = ROOT }
+									trust = {
+										who = ROOT
+										value = 60
+									}
+								}
 							}
 						}
 					}
@@ -2046,9 +2491,9 @@ Column_4 = {
 						}
 					}
 				}
-				add_prosperity = 20
-				custom_tooltip = F60_khetapera_cot_upgrade_tt
+				custom_tooltip = F60_khetapera_prosperity_cot_upgrade_tt
 				hidden_effect = {
+					add_prosperity = 20
 					if = {
 						limit = {
 							province_has_center_of_trade_of_level = 1
@@ -2074,7 +2519,10 @@ Column_4 = {
 						}
 					}
 				}
-				add_claim = ROOT
+				custom_tooltip = F60_khetapera_claims_tt
+				hidden_effect = {
+					add_permanent_claim = ROOT
+				}
 			}
 		}
 	}
@@ -2158,6 +2606,7 @@ Column_4 = {
 					has_dlc = "Domination"
 				}
 				NOT = { has_estate_privilege = estate_church_development_of_temples }
+				has_estate_privilege = estate_church_clerical_education
 			}
 			else = {
 				NOT = { has_estate_privilege = estate_church_one_faith_one_culture }
@@ -2165,12 +2614,6 @@ Column_4 = {
 			num_of_estate_privileges = {
 				estate = estate_church
 				value = 4
-			}
-			if = {
-				limit = {
-					has_dlc = "Domination"
-				}
-				has_estate_privilege = estate_church_clerical_education
 			}
 		}
 
@@ -2194,10 +2637,35 @@ Column_4 = {
 		position = 10
 		required_missions = { F60_reform_the_clergy }
 		provinces_to_highlight = {
-			region = horashesh_region
-			NOT = {
-				religion = nirakhetist
-				has_tax_building_trigger = yes
+			OR = {
+				AND = {
+					NOT = {
+						ROOT = {
+							num_of_provinces_owned_or_owned_by_subjects_with = {
+								value = 20
+								region = horashesh_region
+								religion = nirakhetist
+								has_tax_building_trigger = yes
+							}
+						}
+					}
+					region = horashesh_region
+					NOT = {
+						AND = {
+							religion = nirakhetist
+							has_tax_building_trigger = yes
+						}
+					}
+				}
+				AND = {
+					NOT = {
+						trading_policy_in_node = {
+							node = 5872 # Gunwa
+							policy = propagate_religion
+						}
+					}
+					province_id = 5872
+				}
 			}
 		}
 
@@ -2287,7 +2755,7 @@ Column_4 = {
 	}
 }
 
-Column_5 = {
+F60_5_missions = {
 	slot = 5
 	generic = no
 	ai = yes
@@ -2314,12 +2782,15 @@ Column_5 = {
 					}
 				}
 				AND = {
-					has_discovered = ROOT
-					province_has_center_of_trade_of_level = 2
-				}
-				AND = {
 					owned_by = ROOT
 					province_has_center_of_trade_of_level = 1
+					ROOT = {
+						NOT = {
+							any_owned_province = {
+								province_has_center_of_trade_of_level = 2
+							}
+						}
+					}
 				}
 			}
 		}
@@ -2418,10 +2889,19 @@ Column_5 = {
 					NOT = {
 						AND = {
 							has_production_building_trigger = yes
-							country_or_non_sovereign_subject_holds = ROOT
+							country_or_subject_holds = ROOT
 						}
 					}
 					has_discovered = ROOT
+					NOT = {
+						ROOT = {
+							num_of_provinces_owned_or_owned_by_subjects_with = {
+								value = 6
+								trade_goods = paper
+								has_production_building_trigger = yes
+							}
+						}
+					}
 				}
 			}
 		}
@@ -2484,10 +2964,7 @@ Column_5 = {
 				name = F60_magic_reform
 				duration = 7300 # 20 years
 			}
-			custom_tooltip = next_all_spell_half
-			hidden_effect = {
-				set_country_flag = all_spell_half_next_cast
-			}
+			make_all_spell_half_off = { next_cast = yes }
 			if = {
 				limit = {
 					has_dlc = "Rule Britannia"
@@ -2510,19 +2987,30 @@ Column_5 = {
 			F60_reform_the_mages_guild
 		}
 		provinces_to_highlight = {
-			owned_by = ROOT
-			NOT = {
-				area_for_scope_province = {
-					OR = {
-						AND = {
-							has_building = university
-							development = 10
+			OR = {
+				AND = {
+					owned_by = ROOT
+					NOT = {
+						area_for_scope_province = {
+							OR = {
+								AND = {
+									has_building = university
+									development = 10
+								}
+								AND = {
+									has_tax_building_trigger = yes
+									has_production_building_trigger = yes
+									development = 15
+								}
+							}
 						}
-						AND = {
-							has_tax_building_trigger = yes
-							has_production_building_trigger = yes
-							development = 15
-						}
+					}
+				}
+				AND = {
+					province_id = 463
+					has_great_project = {
+						type = koroshesh_library
+						tier = 2
 					}
 				}
 			}

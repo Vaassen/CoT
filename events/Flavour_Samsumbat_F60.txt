@@ -26,18 +26,11 @@ country_event = {
 	}
 
 	immediate = {
-		country_event = {
-			id = flavour_samsumbat.1
-			days = 365
-		}
 		hidden_effect = {
-			set_variable = { # Used for a mission later
-				which = samsumbat_steward_battle_won_count
-				value = 0
+			country_event = {
+				id = flavour_samsumbat.1
+				days = 365
 			}
-			set_country_flag = count_wars_won # Need to count wars won for F60_the_first_amendment
-			set_country_flag = can_create_tributaries_flag # This is for the Slave Revolt rebels your MT gives you near the beginning
-			set_country_flag = banned_orc_slaves # Just to disable the "Encourage Orc Slavery" decision if you start colonising
 		}
 	}
 }
@@ -157,10 +150,7 @@ country_event = {
 			factor = 1
 		}
 		
-		custom_tooltip = next_all_spell_half
-		hidden_effect = {
-			set_country_flag = all_spell_half_next_cast
-		}
+		make_all_spell_half_off = { next_cast = yes }
 		define_advisor = {
 			type = court_mage
 			skill = 1
@@ -345,11 +335,11 @@ country_event = {
 
 		custom_tooltip = F60_gain_ndurubu_claims_tt
 		hidden_effect = {
-			kubaci_region = {
+			fangaula_superregion = {
 				limit = {
 					culture = ndurubu
 				}
-				add_claim = ROOT
+				add_permanent_claim = ROOT
 			}
 		}
 
@@ -357,17 +347,12 @@ country_event = {
 		# sadly, every_known_province is not a valid scope
 		custom_tooltip = F60_every_visible_slave_province_tt
 		hidden_effect = {
-			every_known_country = {
+			every_province = {
 				limit = {
-					slaves = 1
+					trade_goods = slaves
+					has_discovered = ROOT
 				}
-				every_owned_province = {
-					limit = {
-						trade_goods = slaves
-						has_discovered = ROOT
-					}
-					add_claim = ROOT
-				}
+				add_permanent_claim = ROOT
 			}
 		}
 	}
@@ -385,36 +370,15 @@ country_event = {
 	option = {
 		name = flavour_samsumbat.7.a
 
-		custom_tooltip = F60_support_rebels_improved_tt
-		add_country_modifier = {
-			name = F60_slave_uprising
-			duration = 3650 # 10 years
+		samsumbat_rebel_agitate_other_countries_effect = {
+			custom_tooltip = "F60_slave_agitators_event_tt.2"
+			rebel_type = "slave"
 		}
-		custom_tooltip = F60_slave_agitators_event_tt.2
-		hidden_effect = {
-			every_known_country = {
-				limit = {
-					has_spy_network_from = {
-						who = ROOT
-						value = 30
-					}
-				}
-				add_country_modifier = {
-					name = F60_slave_agitators
-					duration = 3650 # 10 years
-				}
-				capital_scope = {
-					add_province_modifier = {
-						name = F60_slave_agitators_capital
-						duration = 3650
-					}
-				}
-			}
-		}
-		5483 = { add_claim = ROOT } # Muhaqaar
-		5489 = { add_claim = ROOT } # Mattabo
-		6022 = { add_claim = ROOT } # Duwarkani
-		5870 = { add_claim = ROOT } # Aramoole
+
+		5483 = { add_permanent_claim = ROOT } # Muhaqaar
+		5489 = { add_permanent_claim = ROOT } # Mattabo
+		6022 = { add_permanent_claim = ROOT } # Duwarkani
+		5870 = { add_permanent_claim = ROOT } # Aramoole
 	}
 }
 
@@ -430,22 +394,31 @@ country_event = {
 	option = {
 		name = flavour_samsumbat.8.a
 
-		leta_muhaqaar_area = {
-			limit = {
-				NOT = { religion = nirakhetist }
-			}
+		custom_tooltip = flavour_samsumbat.8.a.tt
+		tooltip = {
 			add_province_modifier = {
 				name = F60_arrogant_mages
 				duration = 3650 # 10 years
 			}
 		}
-		shena_muhaqaar_area = {
-			limit = {
-				NOT = { religion = nirakhetist }
+		hidden_effect = {
+			leta_muhaqaar_area = {
+				limit = {
+					NOT = { religion = nirakhetist }
+				}
+				add_province_modifier = {
+					name = F60_arrogant_mages
+					duration = 3650 # 10 years
+				}
 			}
-			add_province_modifier = {
-				name = F60_arrogant_mages
-				duration = 3650 # 10 years
+			shena_muhaqaar_area = {
+				limit = {
+					NOT = { religion = nirakhetist }
+				}
+				add_province_modifier = {
+					name = F60_arrogant_mages
+					duration = 3650 # 10 years
+				}
 			}
 		}
 		add_estate_loyalty = {
@@ -631,7 +604,6 @@ country_event = {
 			}
 		}
 
-		log = "[Root.GetName] chose option A"
 		FROM = {
 			create_subject = {
 				subject_type = tributary_state
@@ -673,7 +645,6 @@ country_event = {
 			}
 		}
 
-		log = "[Root.GetName] chose option B"
 		change_religion = nirakhetist
 		if = {
 			limit = {
@@ -715,7 +686,6 @@ country_event = {
 			}
 		}
 
-		log = "[Root.GetName] chose option C"
 		break_alliance = FROM
 		reverse_add_casus_belli = {
 			target = FROM # Samsumbat
@@ -743,11 +713,13 @@ country_event = {
 				name = F60_elikhets_promise
 				duration = -1
 			}
-			if = {
-				limit = {
-					trade_goods = slaves
+			hidden_effect = {
+				if = {
+					limit = {
+						trade_goods = slaves
+					}
+					change_trade_goods = unknown
 				}
-				change_trade_goods = unknown
 			}
 		}
 		add_manpower = 5
@@ -777,15 +749,17 @@ country_event = {
 				}
 				change_culture = ROOT
 				add_random_development = 2
-				random_owned_province = {
-					limit = {
-						OR = {
-							trade_goods = copper
-							trade_goods = iron
-							trade_goods = gems
+				ROOT = {
+					random_owned_province = {
+						limit = {
+							OR = {
+								trade_goods = copper
+								trade_goods = iron
+								trade_goods = gems
+							}
 						}
+						remove_random_development = yes
 					}
-					add_random_development = -1
 				}
 			}
 		}
@@ -889,25 +863,8 @@ country_event = {
 		
 		trigger = {
 			estate_influence = {
-				estate = estate_church
+				estate = all
 				influence = 50
-			}
-			estate_influence = {
-				estate = estate_burghers
-				influence = 50
-			}
-			estate_influence = {
-				estate = estate_mages
-				influence = 50
-			}
-			if = {
-				limit = {
-					has_estate = estate_ahati
-				}
-				estate_influence = {
-					estate = estate_mages
-					influence = 50
-				}
 			}
 		}
 		highlight = yes
@@ -972,6 +929,7 @@ country_event = {
 				reverse_add_casus_belli = {
 					type = cb_samsumbat_liberation_of_oppressed_people
 					target = ROOT
+					months = 2400 # 200 years
 				}
 			}
 		}
@@ -1004,11 +962,6 @@ country_event = {
 			west_sarhaly = yes
 		}
 		custom_tooltip = flavour_samsumbat.21.a.tt
-		tooltip = {
-			anb_sarhal_cultural_union = {
-				west_sarhaly = yes
-			}
-		}
 		hidden_effect = {
 			every_subject_country = {
 				limit = {
@@ -1067,10 +1020,11 @@ country_event = {
 
 		custom_tooltip = flavour_samsumbat.23.a.tt.1
 		hidden_effect = {
-			every_known_country = {
+			every_country = {
 				reverse_add_casus_belli = {
 					type = cb_samsumbat_liberation_of_oppressed_people
 					target = ROOT
+					months = 2400 # 200 years
 				}
 			}
 		}
@@ -1106,7 +1060,7 @@ country_event = {
 		}
 		if = { # Add lots of global unrest to a unified EoA if it exists
 			limit = {
-				Z01 = { exists = yes }
+				exists = Z01
 			}
 			custom_tooltip = flavour_samsumbat.23.a.tt.2
 			tooltip = {
@@ -1190,6 +1144,30 @@ country_event = {
 			country_event = {
 				id = flavour_samsumbat.12
 			}
+		}
+	}
+}
+
+# add gov reform to released nations from special CB
+# fired in on_government_change_effect
+country_event = {
+	id = flavour_samsumbat.100
+	title = flavour_samsumbat.100.title
+	desc = flavour_samsumbat.100.desc
+	picture = muslimgfx_FEAST_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = flavour_samsumbat.21.a
+		if = { # I suppose it's possible a country could have the flag from my war but voluntarily change to a 
+		# e.g. Theocracy during the war. So only fire this if they change to a republic
+			limit = {
+				government = republic
+			}
+			add_government_reform = republic_of_free_peoples
+			clr_country_flag = F60_custom_liberation_cb_target_country
 		}
 	}
 }
