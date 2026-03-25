@@ -3182,6 +3182,41 @@ on_battle_won_country = {
 		}
 		S53_won_battle_against_trolls = yes
 	}
+
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = anb_track_casualties_from_battles_won
+				has_mission = vanrahar_4_trials_of_strength #generic mission
+			}
+		}
+		change_variable = {
+			which = casualties_from_battles_won
+			which = land_units_killed
+		}
+		change_variable = {
+			which = casualties_from_battles_won
+			which = land_units_lost
+		}
+
+		if = {
+			limit = {
+				OR = {
+					primary_culture = primal_harimari
+					tag = R77
+				}
+				FROM = { capital_scope = { superregion = bulwar_superregion } }
+			}
+			change_variable = {
+				which = casualties_from_battles_won_bulwar
+				which = land_units_killed
+			}
+			change_variable = {
+				which = casualties_from_battles_won_bulwar
+				which = land_units_lost
+			}
+		}
+	}
 	
 	#Accretive Path Chi Stacking
 	if = {
@@ -3858,31 +3893,6 @@ on_siege_won_country = {
 		}
 		country_event = { id = flavour_themarenn.39 }
 	}
-
-	#Gushuokguan Siege Counter
-	if = {
-		limit = {
-			OR = {
-				OR = {
-					tag = Y17 #Gushuokguan
-					was_tag = Y17 #Gushuokguan
-				}
-				is_in_war = { participants = Y17 } #Another country is the siege leader
-			}
-			Y17 = {
-				any_hired_mercenary_company = {
-					template = merc_flying_pebbles
-					location = { province_id = FROM }
-				}
-			}
-		}
-		Y17 = { #Gushuokguan
-			change_variable = {
-				which = gushuokguan_siege_counter
-				value = 1
-			}
-		}
-	}
 	#corinsfield
 	if = { 
 		limit = {
@@ -4359,6 +4369,32 @@ on_siege_lost_country = {
 			has_global_flag = I78_caehns_authority_double_no_war
 		}
 		I78 = { country_event = { id = flavour_wild_hunt.7 } }
+	}
+
+	#Gushuokguan Siege Counter
+	# It's here instead of on_siege_won_country because any_war_enemy_country exists but
+	# something like any_war_ally_country does not
+	# This logic is because you can form another country, like Yanshen, and keep your MT
+	if = {
+		limit = {
+			has_global_flag = merc_flying_pebbles_available # Just so we don't need to iterate through several countries for most of the game
+			any_war_enemy_country = {
+				is_or_was_tag = { tag = Y17 } #Gushuokguan
+				any_hired_mercenary_company = {
+					template = merc_flying_pebbles
+					location = { province_id = FROM }
+				}
+			}
+		}
+		random_war_enemy_country = { # This will only ever be 1 tag
+			limit = {
+				is_or_was_tag = { tag = Y17 } #Gushuokguan
+			}
+			change_variable = {
+				which = gushuokguan_siege_counter
+				value = 1
+			}
+		}
 	}
 }
 
@@ -6038,7 +6074,7 @@ on_diplomatic_annex = {
 		}
 		add_estate_loyalty_modifier = {
 			estate = estate_nobles
-			desc = EST_VAL_EXAMPLE
+			desc = fogharkarn_palace_fest
 			loyalty = 20
 			duration = 1460
 		}
@@ -6194,126 +6230,8 @@ on_heir_death = {
 }
 
 # country
-on_queen_death = {
-	
-	events = {
-		flavour_covenblad.80 # Covenblad Palatine Arbiter stuff
-		flavor_averilibet.3 #averilibet husband harem 
-		flavor_frozenmaw.14 #the death of Frida
-		guwaamud.100 # Harem lady dead
-	}
-	magic_on_consort_death = yes
-	if = {
-		limit = { has_consort_flag = 10_years_anniversary }
-		set_ruler_flag = had_10_years_anniversary
-	}
-	if = {
-		limit = { has_consort_flag = 20_years_anniversary }
-		set_ruler_flag = had_20_years_anniversary
-	}
-	if = {
-		limit = { has_consort_flag = consort_has_affection_of_ruler }
-		set_ruler_flag = consort_had_affection_of_ruler
-	}
-
-	if = {
-		limit = {
-			has_regency = no
-			NOT = { has_ruler_flag = widow_widower }
-		}
-		set_ruler_flag = widow_widower
-	}
-	if = {
-		limit = { has_consort_regency = no }
-		random_owned_province = {
-			limit = { has_province_modifier = domain_of_spouses_family }
-			remove_province_modifier = domain_of_spouses_family
-		}
-	}
-	if = {
-		limit = { has_ruler_flag = accepted_help_from_spouses_family }
-		clr_ruler_flag = accepted_help_from_spouses_family
-	}
-	if = {
-		limit = { has_ruler_flag = helped_spouses_family }
-		clr_ruler_flag = helped_spouses_family
-	}
-	if = {
-		limit = { has_ruler_flag = refused_to_help_spouses_family }
-		clr_ruler_flag = refused_to_help_spouses_family
-	}
-	if = {
-		limit = { has_ruler_flag = has_lowborn_consort }
-		random_owned_province = {
-			limit = { has_province_modifier = home_of_consort }
-			remove_province_modifier = home_of_consort
-		}
-	}
-	if = {
-		limit = { has_ruler_flag = has_lowborn_consort }
-		clr_ruler_flag = has_lowborn_consort
-	}
-	if = {
-		limit = { has_country_modifier = consort_adm_advice }
-		remove_country_modifier = consort_adm_advice
-	}
-	if = {
-		limit = { has_country_modifier = consort_dip_advice }
-		remove_country_modifier = consort_dip_advice
-	}
-	if = {
-		limit = { has_country_modifier = consort_mil_advice }
-		remove_country_modifier = consort_mil_advice
-	}
-	if = {
-		limit = { has_country_modifier = without_spouse_advice }
-		remove_country_modifier = without_spouse_advice
-	}
-	if = {
-		limit = { has_ruler_modifier = affectionate_royal_couple }
-		remove_country_modifier = affectionate_royal_couple
-	}
-	if = {
-		limit = { has_ruler_modifier = bav_woman_scorned_mod }
-		remove_country_modifier = bav_woman_scorned_mod
-	}
-	if = {
-		limit = { has_ruler_modifier = bav_building_wife_church }
-		remove_country_modifier = bav_building_wife_church
-	}
-
-	#Duwarkani consorts
-	if = {
-		limit = {
-			has_country_modifier = duwarkani_admin_consort
-		}
-		remove_country_modifier = duwarkani_admin_consort
-	}
-	if = {
-		limit = {
-			has_country_modifier = duwarkani_diplo_consort
-		}
-		remove_country_modifier = duwarkani_diplo_consort
-	}
-	if = {
-		limit = {
-			has_country_modifier = duwarkani_mil_consort
-		}
-		remove_country_modifier = duwarkani_mil_consort
-	}
-	
-	clr_ruler_flag = marriage_length
-	
-	if = { #Golden Tremor
-		limit = { has_country_modifier = I57_sweet_riverspeak_mod }
-		remove_country_modifier = I57_sweet_riverspeak_mod
-	}
-	if = { #Harpy Tolerance Event 'Harpy Wife, Happy Life' Cleanup
-		limit = {
-			has_country_flag = harpy_tolerance_harpy_wife_happy_life
-		}
-		clr_country_flag = harpy_tolerance_harpy_wife_happy_life
-	}
+on_queen_death = {					#we use remove consort for deaths of old age, it doesn't fire the on_action
+	on_consort_death_effects = yes	#so, instead of remembering to touch 2 places, put stuff in this scripted effect
 }
 
 # country
@@ -7696,6 +7614,7 @@ on_monthly_pulse = {
 		flavor_konolkhatep.305
 		oren_nayiru.100 #In Spite of Silver
 		oren_nayiru.101 #A Meeting In The Dark
+		sthanan_events.9 #The Call of Silver
 		oren_nayiru.4 #The Calsithara Revolt
 		insyaa_flavour.100 #Mechanim Over Forcelimit event
 	}
@@ -21951,6 +21870,17 @@ on_dependency_gained = {
 			if = {
 				limit = { has_country_flag = I69_mage_tithe }
 				change_mana = { amount = 2 }
+				FROM = {
+					every_war_enemy_country = {
+						limit = {
+							is_subject_of_type_with_overlord = {
+								who = I69
+								type = tributary_state_anb
+							}
+						}
+						white_peace = FROM
+					}
+				}
 			}
 			if = {
 				limit = { has_country_flag = I69_church_power_tribute }
@@ -24083,19 +24013,6 @@ on_trade_good_changed = {
 					duration = -1
 					hidden = yes
 				}
-			}
-		}
-		if = {	#Copperlords
-			limit = {
-				owner = {
-					has_reform = copperlord_reform
-				}
-				trade_goods = copper
-			}
-			add_province_modifier = { 
-				name = copperlord_copper
-				duration = -1
-				hidden = yes
 			}
 		}
 		if = {	#Telgeir Steel Monarchy
@@ -28382,14 +28299,7 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 				has_cast_elemental_fury = yes
 				has_cast_flaming_munitions = yes
 			}
-			FROM = {
-				NOT = {
-					AND = {
-						province_has_magical_ward = yes
-						owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
-					}
-				}
-			}
+			FROM = { province_not_immune_to_siege_magic = yes }
 		}
 		FROM = { ROOT = { evocation_0_fireball_effect = yes } }
 	}
@@ -28413,17 +28323,10 @@ on_naval_barrage = { #ROOT - barraging country, FROM - barraged province
 	if = {
 		limit = {
 			OR = {
-				has_country_modifier = evocation_1_flaming_munitions_mod
-				has_country_modifier = evocation_3_elemental_fury_mod
+				has_cast_elemental_fury = yes
+				has_cast_flaming_munitions = yes
 			}
-			FROM = {
-				NOT = {
-					AND = {
-						province_has_magical_ward = yes
-						owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
-					}
-				}
-			}
+			FROM = { province_not_immune_to_siege_magic = yes }
 		}
 		FROM = { ROOT = { evocation_0_fireball_effect = yes } }
 	}
@@ -28471,10 +28374,7 @@ on_scorch_earth = { #ROOT - scorching country, FROM - scorched province
 	}
 	if = {
 		limit = { 
-			OR = {
-				tag = Y17 #Gushuokguan
-				was_tag = Y17 #Gushuokguan
-			}
+			is_or_was_tag = { tag = Y17 } #Gushuokguan
 		}
 		change_variable = {
 			which = gushuokguan_scorched_earth_counter
@@ -28607,6 +28507,11 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 			clr_country_flag = no_callaction
 			clr_country_flag = allow_subjects_war
 			clr_country_flag = no_allies_war@ROOT
+		}
+
+		if = { #clear the vanrahar bypass flags
+			limit = { tag = R45 FROM = { tag = R38 } } #Umdaj vs. Bhuvauri war
+			every_ally = { clr_country_flag = allow_to_join_war_nonetheless }
 		}
 	}
 	
