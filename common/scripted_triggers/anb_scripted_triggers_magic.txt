@@ -2205,29 +2205,33 @@ siege_magic_trigger = {
 		}
 	]
 	[[offense] has_war_wizard = yes ]
-	[[offense_trigger]
-		any_province = {
-			sieged_by = ROOT
-			hidden_trigger = { unit_in_battle = no } #Reported cases of simultaneous sieges and battles
-			fort_level = 1
-			unit_has_leader = yes
-			$offense_trigger$
+
+	[[offense_trigger] #offense_trigger and defense_trigger are strictly sub-arguments of menu
+		if = {
+			limit = { ai = yes } #AI use a more performant trigger that would error for players
+			any_army = {
+				location = {
+					siege_interface_offensive_trigger = yes
+					$offense_trigger$
+				}
+			}
+		}
+		else = {
+			any_province = {
+				siege_interface_offensive_trigger = yes
+				$offense_trigger$
+			}
 		}
 	]
 	[[defense_trigger]
 		any_owned_province = {
-			fort_level = 1
-			controlled_by = ROOT
-			custom_trigger_tooltip = {
-				tooltip = has_siege
-				has_siege = yes
-			}
-			hidden_trigger = { unit_in_battle = no } #Reported cases of simultaneous sieges and battles
+			siege_interface_defensive_trigger = yes
 			$defense_trigger$
 		}
 	]
 }
-siege_interface_siege_trigger = {
+siege_interface_offensive_trigger = { #This is the trigger for offensive siege spells in the interface
+	fort_level = 1
 	sieged_by = FROM
 	hidden_trigger = { unit_in_battle = no } #Reported cases of simultaneous sieges and battles
 	unit_has_leader = yes
@@ -2235,8 +2239,11 @@ siege_interface_siege_trigger = {
 		limit = { FROM = { ai = yes } }
 		owner = { war_with = FROM }
 	}
+	province_not_immune_to_siege_magic = yes
+}
+province_not_immune_to_siege_magic = { #Cannot use FROM and ROOT here
 	if = {
-		limit = { has_province_modifier = abjuration_1_ward_mod_3 }
+		limit = { magical_fortress_proxy_trigger = yes }
 		custom_trigger_tooltip = {
 			tooltip = cannot_siege_magical_fortress
 			always = no
@@ -2250,7 +2257,19 @@ siege_interface_siege_trigger = {
 		}
 	}
 }
+magical_fortress_proxy_trigger = { #If-limits in scripted triggers don't validate their triggers two layers deep. See has_mana_to_cast_spell for more info
+	owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
+	province_has_magical_ward = yes
+}
 porcelain_shields_proxy_trigger = { owner = { has_estate_privilege = estate_artificers_porcelain_shields } } #If-limits in scripted triggers don't validate their triggers two layers deep. See has_mana_to_cast_spell for more info
+
+siege_interface_defensive_trigger = { #This is the trigger for defensive siege spells in the interface
+	fort_level = 1
+	owned_by = FROM
+	controlled_by = FROM
+	hidden_trigger = { unit_in_battle = no } #Reported cases of simultaneous sieges and battles
+	has_siege = yes
+}
 
 has_war_wizard = {
 	custom_trigger_tooltip = {
@@ -2259,14 +2278,14 @@ has_war_wizard = {
 	}
 }
 
-level_requirement_lowered = {
+level_requirement_lowered = { #use for tooltip when a spell has a level req lowered
 	custom_trigger_tooltip = {
 		tooltip = $cause$_lowered_req
 		always = yes
 	}
 }
 
-war_magic_trigger = {
+war_magic_trigger = { #universal trigger for all war magic spells
 	if = {
 		limit = { has_country_modifier = magical_infrastructure_no_war_magic }
 		NOT = { has_country_modifier = magical_infrastructure_no_war_magic }
@@ -2565,15 +2584,7 @@ province_has_magical_ward = {
 province_has_no_magical_ward = {
 	custom_trigger_tooltip = {
 		tooltip = province_has_no_magical_ward
-		NOT = {
-			has_province_modifier = abjuration_1_ward_mod_0
-			has_province_modifier = abjuration_1_ward_mod_1
-			has_province_modifier = abjuration_1_ward_mod_2
-			has_province_modifier = abjuration_1_ward_mod_3
-			has_province_modifier = Y63_minor_rune_runic_ward_1
-			has_province_modifier = Y63_minor_rune_runic_ward_2
-			has_province_modifier = Y63_minor_rune_runic_ward_3
-		}
+		NOT = { province_has_magical_ward = yes }
 	}
 }
 
