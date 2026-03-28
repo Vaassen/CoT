@@ -71,9 +71,21 @@ custom_button = {
 			NOT = { has_province_modifier = incomplete_hold }
 		}
 		if = { limit = { has_province_modifier = F23_flooded_depths }
-			custom_trigger_tooltip = {
-				tooltip = F23_cannot_dig_why
-				always = no
+			if = {
+				limit = { owner = { tag = F23 } }
+				custom_trigger_tooltip = {
+					tooltip = F23_cannot_dig_why
+					always = no
+				}
+			}
+			else = {
+				OR = {
+					owner = {
+						adm_tech = 10
+						treasury = 1000					
+					}
+					NOT = { has_province_modifier = F23_flooded_depths }
+				}
 			}
 		}
 		hidden_trigger = { NOT = { has_province_modifier = incomplete_hold_0 } }
@@ -138,6 +150,22 @@ custom_button = {
 				NOT = { has_province_flag = I98_befuddling_hold_flag }
 			}
 		}
+		if = {
+			limit = { has_province_modifier = gor_vazumbrog_dragons_wound }
+			custom_trigger_tooltip = {
+				tooltip = gor_vazumbrog_digging_blocked_tt
+				OR = {
+					AND = {
+						has_province_modifier = dig_1
+						has_province_flag = gor_vazumbrog_allowed_dig_2
+					}
+					AND = {
+						has_province_modifier = dig_2
+						has_province_flag = gor_vazumbrog_allowed_dig_3
+					}
+				}
+			}
+		}
 	}
 	effect = {
 		owner = {
@@ -146,14 +174,19 @@ custom_button = {
 					limit = { is_capital = yes }
 					setup_digging_deeper_capital = yes
 					start_digging_deeper = yes
+					owner = { set_country_flag = is_digging }
 				}
 				else = {
 					setup_digging_deeper_non_capital = yes
 					start_digging_deeper_non_capital = yes
 				}
 			}
-			set_country_flag = is_digging
 			play_sound = diggy_diggy_pickaxe_sfx
+		}
+		if = {
+			limit = { has_province_modifier = F23_flooded_depths }
+			remove_province_modifier = F23_flooded_depths
+			owner = { add_treasury = -1000 }
 		}
 	}
 	tooltip = dig_hold_go_button_tt
@@ -528,10 +561,6 @@ custom_window = { #Window for the UI when building UI is open and no monument
 custom_window = { #Window for the UI when building UI is open and there is a monument
     name = province_button_window_with_monument
     potential = {
-		has_great_project = {
-			type = any
-			tier = 0
-		}
 		owner = {
 			OR = {
 				tag = FROM
@@ -618,43 +647,60 @@ custom_button = { #Merfolk Settlements
 		if = { #generate
 			limit = { owner = { has_country_flag = merfolk_opinion_allied } }
 			province_group = dynamic_merfolk_region
-			NOT = { has_province_flag = merfolk_settlement }
-			owner = { has_country_flag = merfolk_opinion_allied }
+			no_merfolk_settlement = yes
+			owner = { is_allied_to_merfolk = yes } # just for a custom tooltip
 			development = 15
 			has_trade_building_trigger = yes
 			OR = { has_shipyard_building_trigger = yes has_dock_building_trigger = yes }
 			
-			if = {
-				limit = { region = fahvanosy_region }
-				NOT = { 6678 = { check_variable = { which = fahvanosyMerfolkCap value = 2 } } }
-			}
-			else_if = {
-				limit = { region = odu_kherass_region }
-				NOT = { 6678 = { check_variable = { which = oduKherassMerfolkCap value = 2 } } }
-			}
-			else_if = {
-				limit = { region = ishyamtumu_region }
-				NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 1 } } }
-			}
-			else_if = {
-				limit = { region = ringlet_isles_region }
-				NOT = { 6678 = { check_variable = { which = ringletIslesMerfolkCap value = 3 } } }
-			}
-			else_if = {
-				limit = { region = bamaliwuni_region }
-				NOT = { 6678 = { check_variable = { which = bamaliwuniMerfolkCap value = 3 } } }
-			}
-			else_if = {
-				limit = { region = throden_gokad_region }
-				NOT = { 6678 = { check_variable = { which = throdenGokadMerfolkCap value = 4 } } }
-			}
-			else_if = {
-				limit = { region = ardimya_region }
-				NOT = { 6678 = { check_variable = { which = ardimyaMerfolkCap value = 7 } } }
-			}
-			else_if = {
-				limit = { region = jasiir_jadid_region }
-				NOT = { 6678 = { check_variable = { which = jasiirJadidMerfolkCap value = 7 } } }
+			custom_trigger_tooltip = {
+				tooltip = merfolk_amount_update_region_tt
+				if = {
+					limit = { region = fahvanosy_region }
+					NOT = { 6678 = { check_variable = { which = fahvanosyMerfolkCap value = 2 } } }
+				}
+				else_if = {
+					limit = { region = odu_kherass_region }
+					NOT = { 6678 = { check_variable = { which = oduKherassMerfolkCap value = 2 } } }
+				}
+				else_if = {
+					limit = { region = ishyamtumu_region }
+					if = {
+						limit = {
+							5631 = {
+								has_great_project = {
+									type = izmeri_the_black_stone_city
+									tier = 3
+								}
+								owner = { can_use_izmeri_the_black_stone_city = yes }
+							}
+						}
+						NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 2 } } }
+					}						
+					else = {
+						NOT = { 6678 = { check_variable = { which = ishyamtumuMerfolkCap value = 1 } } }
+					}
+				}
+				else_if = {
+					limit = { region = ringlet_isles_region }
+					NOT = { 6678 = { check_variable = { which = ringletIslesMerfolkCap value = 3 } } }
+				}
+				else_if = {
+					limit = { region = bamaliwuni_region }
+					NOT = { 6678 = { check_variable = { which = bamaliwuniMerfolkCap value = 3 } } }
+				}
+				else_if = {
+					limit = { region = throden_gokad_region }
+					NOT = { 6678 = { check_variable = { which = throdenGokadMerfolkCap value = 4 } } }
+				}
+				else_if = {
+					limit = { region = ardimya_region }
+					NOT = { 6678 = { check_variable = { which = ardimyaMerfolkCap value = 7 } } }
+				}
+				else_if = {
+					limit = { region = jasiir_jadid_region }
+					NOT = { 6678 = { check_variable = { which = jasiirJadidMerfolkCap value = 7 } } }
+				}
 			}
 		}
 		else = { #interact
@@ -666,6 +712,12 @@ custom_button = { #Merfolk Settlements
 	}
 
 	effect = {
+
+		if = {
+			limit = { owner = { check_variable = { which = MerfolkLoweredPenatly value = 1 } } }
+			custom_tooltip = has_discounted_merfolk_left
+		}
+
 		if = { #generate
 			limit = { owner = { has_country_flag = merfolk_opinion_allied } }
 			province_event = { id = merfolk_events.7 } 
@@ -950,6 +1002,27 @@ custom_button = { #Ebonsteel Expand Infra replacement for players without DLC
 	}
 	tooltip = ebonsteel_expand_infra_button_tt
 }
+custom_button = { #Mangrove Biological Infrastructure
+	name = mangrove_bio_infra_button
+	potential = {
+		has_eligible_aPUI_mangrove_bio_infra_in_province = yes
+	}
+	trigger = {
+		region = tagaala_mangroves_region
+	}
+	effect = {
+		# unlock capstone tooltip
+		if = {
+			limit = {
+				is_capital = yes
+				NOT = { has_province_flag = mangrove_bio_infra_finished }
+			}
+			custom_tooltip = mangrove_unlock_capstone_tt
+		}
+		open_aPUI_in_province = { name = mangrove_bio_infra }
+	}
+	tooltip = mangrove_bio_infra_button_tt
+}
 
 #Slot 3 - Religion specific button
 custom_button = { #Dummy closed
@@ -964,23 +1037,10 @@ custom_button = { #Dummy closed
 custom_button = { #Transmutative Path UI closed
 	name = transmutative_path_infuse_chi_button
 	potential = {
-		owner = {
-			tag = FROM
-			religion = transmutative_path
-		}
-	}
-	trigger = {
-		hidden_trigger = {
-			owner = {
-				NOT = {
-					has_country_flag = transmutative_path_infuse_chi_menu_open
-					has_country_flag = transmutative_path_infuse_trade_goods_menu_open
-				}
-			}
-		}
+		has_eligible_aPUI_transmutative_path_in_province = yes
 	}
 	effect = {
-		province_event = { id = transmutative_path.1 }
+		open_aPUI_in_province = { name = transmutative_path }
 	}
 	tooltip = infuse_chi_button_tt
 }
@@ -1108,6 +1168,12 @@ custom_button = { #Wood Elf Ranger Camps
 		OR = {
 			superregion = deepwoods_superregion
 			region = domandrod_region
+			AND = {
+				region = daravans_folly_region
+				owner = {
+					has_country_flag = I26_folly_rangers
+				}
+			}
 		}
 		NOT = { has_terrain = fey_gladeway }
 		NOT = { has_terrain = gladeway }
@@ -1172,7 +1238,7 @@ custom_button = { #Wood Elf Ranger Camps
 				remove_strategy_effect = yes
 			}
 		}
-		else_if = { limit = { owner = { has_country_modifier = mythical_cavalry_hawks } }
+		else_if = { limit = { owner = { has_country_flag = mythical_cavalry_hawks_aviary_construction_unlocked } }
 			if = { limit = { NOT = { has_province_modifier = I27_great_hawk_aviary_mod } }
 				owner = {
 					add_mil_power = -10
@@ -1198,6 +1264,19 @@ custom_button = { #Wood Elf Ranger Camps
 						I27_se_apply_aviary_adjacency_mods = yes
 					}
 				}
+			}
+		}
+		if = {
+			limit = {
+				region = daravans_folly_region
+				owner = {
+					has_country_flag = I26_free_camp
+				}
+			}
+			owner = {
+				clr_country_flag = I26_free_camp
+				add_mil_power = 10
+				add_treasury = 25
 			}
 		}
 	}
@@ -1249,7 +1328,7 @@ custom_button = { #build Lencori Behemoth shipyard
 			}
 		}
 		if = {
-			limit = { NOT = { owner = { has_country_modifier = improved_behemoth_construction } } }
+			limit = { NOT = { owner = { has_country_flag = improved_behemoth_construction } } }
 			if = {
 				limit = { NOT = { owner = { has_estate_privilege = estate_burghers_control_over_behemoth_shipyards } } }
 				owner_has_less_than_n_lencori_behemoth_shipyards = { n = 5 }
@@ -1276,6 +1355,8 @@ custom_button = { #build Lencori Behemoth shipyard
 					has_province_modifier = lencori_behemoth_shipyard_improved
 					has_province_modifier = lencori_behemoth_shipyard_impress_improved
 					has_province_modifier = lencori_shipyard_of_lament
+					has_province_modifier = lencori_shipyard_of_lament_upgrade
+					has_province_modifier = RSP_rhasail_freefolk_arsenal
 				}
 			}
 		}
@@ -1295,16 +1376,16 @@ custom_button = { #build Lencori Behemoth shipyard
 			}
 			hidden_effect = {
 				if = {
-					limit = { has_country_modifier = improved_behemoth_construction }
+					limit = { has_country_flag = improved_behemoth_construction }
 					subtract_variable = {
 						which = lencori_behemoth_required_naval_supplies
-						value = 5
+						value = 3
 					}
 				}
 				else = {
 					subtract_variable = {
 						which = lencori_behemoth_required_naval_supplies
-						value = 10
+						value = 5
 					}
 				}
 				export_lencori_behemoth_required_naval_supplies_value_for_tt = yes
@@ -1313,6 +1394,58 @@ custom_button = { #build Lencori Behemoth shipyard
 		lencori_behemoth_add_shipyard_modifier = yes
 	}
 	tooltip = lencori_behemoth_shipyard_button_tt
+}
+
+custom_button = { # Build Charkuchin Kobold supply centre
+	name = charkuchin_kobold_supply_facility_button
+	potential = {
+		owner = {
+			tag = FROM
+			has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
+		}
+	}
+	trigger = {
+		base_production = 4
+		has_fort_building_trigger = yes
+		has_production_building_trigger = yes
+		NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
+		NOT = { has_charkuchin_kobold_citadel = yes }
+		owner = {
+			treasury = 50
+			custom_trigger_tooltip = {
+				tooltip = charkuchin_kobold_supply_facility_max_tt
+				NOT = {
+					check_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+						value = 10
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		owner = {
+			add_treasury = -50
+			hidden_effect = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+					value = 1
+				}	
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 10
+				}
+			}
+		}
+		hidden_effect = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_supply_facility
+				duration = -1
+			}
+		}
+		custom_tooltip = charkuchin_kobold_supply_facility_button_add_tt
+	}
+	tooltip = charkuchin_kobold_supply_facility_button_tt
 }
 
 
@@ -1741,6 +1874,58 @@ custom_button = { #Golden Tremor Negeal Button
 	}
 }
 
+custom_button = { #Umbral Covenant Spire Explode Button
+	name = S90_spire_explode_button
+	tooltip = S90_spire_explode_tt
+	potential = { 
+		FROM = { has_country_flag = S90_spire_secrets_complete }
+		OR = {
+			province_id = 5921
+			province_id = 5763
+			province_id = 5863
+			province_id = 5585
+			province_id = 5971
+			province_id = 6032
+			province_id = 5650
+		}
+		NOT = { 
+			has_province_flag = S90_spire_exploded
+		}
+	}
+	trigger = {
+	}
+	effect = {
+		if = {
+			limit = {
+				NOT = {
+					province_id = 5650
+				}
+			}
+			FROM = {
+				change_mana = { amount = 300 }
+			}
+			trigger_switch = {
+				on_trigger = province_id
+				5921 = { destroy_great_project = { type = khus_an_zhyani } }
+				5763 = { destroy_great_project = { type = kazakesh } }
+				5863 = { destroy_great_project = { type = kuiika_gamyi } }
+				5585 = { destroy_great_project = { type = kuvunika_citadel } }
+				5971 = { destroy_great_project = { type = khaga_yatsa } }
+				6032 = { destroy_great_project = { type = arskitse } }
+			}
+			
+		}
+		else = {
+			FROM = {
+				country_event = {
+					id = flavor_umbral_covenant.300
+				}
+			}
+		}
+		set_province_flag = S90_spire_exploded
+	}
+}
+
 custom_button = { #Jungle Fortress for Bibyobi
 	name = jungle_fortress_button
 	potential = {
@@ -1826,6 +2011,345 @@ custom_button = { #Spiked Log - Install Spiky Traps
 		custom_tooltip = spiked_log_spiky_trap_removal_conditions_tt
 	}
 }
+custom_button = { #Endhuvi Traveling Society Button
+	name = R36_traveling_society_button
+	tooltip = R36_traveling_society_button_tt
+	potential = {
+		FROM = { has_country_flag = R36_enable_traveling_society_button_flag }
+		is_part_of_kharunyana_river = yes
+		NOT = { region = nomsyulhan_region }
+		owned_by = FROM	
+		NOT = { has_province_modifier = R36_cinnabar_lotus_society_barge_3 }
+	}
+	trigger = {
+		event_target:endhuvi_cinnabar_lotus_province = { owned_by = FROM }
+		is_core = FROM
+		FROM = { NOT = { has_country_modifier = R36_traveling_society_button_cooldown } }
+	}
+	effect = {
+		FROM = {
+			event_target:endhuvi_cinnabar_lotus_province = {
+				remove_province_modifier = R36_cinnabar_lotus_society_barge_3
+				if = {
+					limit = { NOT = { has_province_flag = R36_traveling_society_button_used_for_first_time } }
+					set_province_flag = R36_traveling_society_button_used_for_first_time
+					add_base_tax = 1
+					add_base_production = 1
+					add_base_manpower = 1
+				}
+			}
+		}
+		add_permanent_province_modifier = {
+			name = R36_cinnabar_lotus_society_barge_3
+			duration = -1
+		}
+		save_global_event_target_as = endhuvi_cinnabar_lotus_province
+		FROM = {
+			hidden_effect = { country_event = { id = flavour_endhuvi.102 } }
+			add_country_modifier = {
+				name = R36_traveling_society_button_cooldown
+				duration = 5475
+			}
+		}
+		custom_tooltip = R36_traveling_society_button_effect_tt
+	}
+}
+
+custom_button = { #Centaur Nomadism Move Capital Button
+	name = IW_move_capital_button
+	tooltip = IW_move_capital_button
+	potential = {
+		owned_by = FROM
+		FROM = { has_government_attribute = centaur_nomadism_attribute }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = IW_not_capital_tt
+			NOT = { is_capital_of = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = nomadic_capital_just_moved_tt
+			FROM = { NOT = { has_country_modifier = nomadic_capital_just_moved } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = IW_adm_power_trigger_tt
+			FROM = { 
+				variable_arithmetic_trigger = {
+					export_to_variable = {
+						which = current_adm
+						value = trigger_value:adm_power
+					}
+					check_variable = {
+						which = current_adm
+						which = nzoc_cost
+					}
+				}
+			}
+		}
+		controlled_by = FROM
+		is_state_core = FROM
+		custom_trigger_tooltip = {
+			tooltip = IW_no_enemies_nearby_tt
+			FROM = {
+				all_war_enemy_countries = {
+					ROOT = {
+						NOT = {
+							num_of_units_in_province = {
+								amount = 1
+								who = PREV
+							}
+						}
+					}
+				}
+			}
+		}
+		if = { #Black Herd
+			limit = { has_province_modifier = I55_home_to_none_but_stone }
+			NOT = { has_province_modifier = I55_home_to_none_but_stone }
+		}
+	}
+	effect = {
+		FROM = { 
+			hidden_effect = {
+				var_effect = {
+					var = nzoc_cost
+					effect = "add_adm_power"
+					sign = -
+				}
+			}
+			set_capital = ROOT
+			custom_tooltip = IW_adm_power_effect_tt
+			add_nomadic_capital_moved_modifier = { scope = ROOT }
+		}
+		custom_tooltip = IW_move_capital_button_tt
+	}
+}
+
+custom_button = {
+	name = IW_move_capital_blocker
+	potential = {
+		owned_by = FROM
+		FROM = { has_government_attribute = centaur_nomadism_attribute }
+	}
+}
+
+# Mechanim Ward Conduit
+custom_button = {
+	name = mechanim_ward_conduit_button
+	tooltip = mechanim_ward_conduit_button_tt
+	potential = {
+		owner = {
+			has_country_modifier = mechanim_administration
+			tag_can_use_mechanim_ward_conduit = yes
+		}
+		continent = oceania
+	}
+	trigger = {
+		NOT = { has_province_modifier = mechanim_ward_conduit }
+		province_can_get_mechanim_ward_conduit = yes
+		NOT = { province_group = gene_pillars }
+		owner = {
+			treasury = 100
+			adm_power = 50
+			dip_power = 50
+			mil_power = 50
+		}
+	}
+	effect = {
+		owner = {
+			add_treasury = -100
+			add_adm_power = -50
+			add_dip_power = -50
+			add_mil_power = -50
+		}
+		add_province_modifier = { name = mechanim_ward_conduit duration = -1 }
+	}
+}
+
+# Gor Vazumbrog province actions
+custom_button = {
+	name = gor_vazumbrog_province_action_road
+	tooltip = "Toggle Singing Glyphs"
+	potential = {
+		owned_by = FROM
+		FROM = {
+			has_country_flag = vault_singing_glyphs
+		}
+		has_terrain = dwarven_road
+	}
+	trigger = {
+		area_for_scope_province = {
+			type = all
+			owned_by = FROM
+		}
+		custom_trigger_tooltip = {
+			tooltip = vault_singing_glyphs_trigger_tt
+			OR = {
+				NOT = { has_province_flag = gor_vazumbrog_singing_glyphs_cooldown }
+				had_province_flag = { flag = gor_vazumbrog_singing_glyphs_cooldown days = 3650 }
+			}
+		}
+	}
+	effect = {
+		if = {
+			limit = {
+				OR = {
+					has_province_modifier = gor_vazumbrog_singing_glyphs
+					has_province_modifier = gor_vazumbrog_singing_glyphs_2
+				}
+			}
+			custom_tooltip = gor_vazumbrog_singing_glyphs_remove_tt
+			hidden_effect = {
+				area = {
+					remove_province_modifier = gor_vazumbrog_singing_glyphs
+					remove_province_modifier = gor_vazumbrog_singing_glyphs_2
+				}
+			}
+		}
+		else = {
+			area = {
+				limit = {
+					owned_by = FROM
+					has_terrain = dwarven_road
+				}
+				set_province_flag = gor_vazumbrog_singing_glyphs_cooldown
+				if = {
+					limit = {
+						FROM = { has_country_flag = vault_singing_glyphs_downside_revealed }
+					}
+					add_province_modifier = {
+						name = gor_vazumbrog_singing_glyphs_2
+						duration = -1
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = gor_vazumbrog_singing_glyphs
+						duration = -1
+					}
+				}
+			}
+			hidden_effect = {
+				FROM = {
+					set_country_flag = vault_singing_glyphs_used_once
+					country_event = { id = flavour_gor_vazumbrog.810 days = 365 }
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = gor_vazumbrog_province_action_cavern
+	tooltip = "Use the Hearthstone Engine"
+	potential = {
+		owned_by = FROM
+		FROM = {
+			has_country_flag = vault_hearthstone_engine
+		}
+		has_terrain = cavern
+	}
+	trigger = {
+		if = {
+			limit = { NOT = { has_province_modifier = vault_hearthstone_engine_mod } }
+			custom_trigger_tooltip = {
+				tooltip = vault_hearthstone_engine_enabled_tt
+				NOT = { FROM = { has_country_flag = vault_hearthstone_engine_enabled } }
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = vault_hearthstone_engine_locked_tt
+			NOT = { has_province_flag = vault_hearthstone_engine_locked }
+		}
+		NOT = { trade_goods = serpentbloom }
+	}
+	effect = {
+		if = {
+			limit = {
+				NOT = { has_province_modifier = vault_hearthstone_engine_mod }
+			}
+			add_province_modifier = {
+				name = vault_hearthstone_engine_mod
+				duration = -1
+			}
+			hidden_effect = {
+				province_event = { id = flavour_gor_vazumbrog.820 days = 90 }
+				province_event = { id = flavour_gor_vazumbrog.821 days = 200 } # 3 months plus a bit
+				set_province_flag = vault_hearthstone_engine_locked
+				FROM = {
+					set_country_flag = vault_hearthstone_engine_enabled
+					set_country_flag = vault_hearthstone_engine_used_once
+				}
+			}
+		}
+		else = {
+			remove_province_modifier = vault_hearthstone_engine_mod
+			hidden_effect = {
+				FROM = { clr_country_flag = vault_hearthstone_engine_enabled }
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = utubodi_unification_own_button
+	potential = {
+		owner = {
+			tag = FROM
+			has_utubodi_unification_mechanic = yes
+		}
+		utubodi_unification_has_collectable_resource = yes
+	}
+	trigger = {
+		owner = {
+			owns = 3675
+			NOT = { is_at_war = yes }
+			has_utubodi_unification_mechanic = yes
+			NOT = { num_of_rebel_armies = 1 }
+		}
+		utubodi_unification_can_collect_resource = yes
+	}
+	effect = {
+		utubodi_unification_add_resource = yes
+		utubodi_unification_spawn_rebels_particularist = yes
+		add_devastation = 100
+		owner = { change_utubodi_unification_leaning = { value = 20 } }
+	}
+	tooltip = utubodi_unification_explanation_tooltip
+}
+
+custom_button = {
+	name = utubodi_unification_vassal_button
+	potential = {
+		owner = {
+			is_subject_of = FROM
+			has_utubodi_unification_mechanic = yes
+			overlord = { has_utubodi_unification_mechanic = yes }
+		}
+		utubodi_unification_has_collectable_resource = yes
+	}
+	trigger = {
+		owner = {
+			overlord = {
+				owns = 3675
+			}
+			NOT = { is_at_war = yes }
+			has_utubodi_unification_mechanic = yes
+			NOT = { num_of_rebel_armies = 1 }
+		}
+		utubodi_unification_can_collect_resource = yes
+	}
+	effect = {
+		utubodi_unification_add_resource = yes
+		utubodi_unification_spawn_rebels_independence = yes
+		owner = {
+			add_liberty_desire = 20
+			overlord = { change_utubodi_unification_leaning = { value = -20 } }
+		}
+	}
+	tooltip = utubodi_unification_explanation_tooltip
+}
+
 #################################
 # Anbennar Province UI Expanded #
 #################################
@@ -1855,44 +2379,20 @@ custom_button = { #Spiked Log - Install Spiky Traps
 # }
 
 #Debug button for testing
-custom_button = { #template button to open it, all must set 'aPUI_parent_container_flag'
+custom_button = { #template button to open it, change 'template' to the name of the APUI
 	name = aPUI_debug_button
 	potential = {
-		FROM = {
-			has_country_flag = aPUI_debug_flag
-		}
+		has_eligible_aPUI_template_in_province = yes
 	}
 	effect = {
-		if = {
-			limit = {
-				NOT = {
-					has_province_flag = aPUI_template_flag
-				}
-			}
-			clear_all_aPUI_flags = yes
-			set_province_flag = aPUI_parent_container_flag
-			set_province_flag = aPUI_template_flag
-		}
-		else = {
-			clear_all_aPUI_flags = yes
-		}
+		open_aPUI_in_province = { name = template }
 	}
 	tooltip = "aPUI Debug Button"
 }
-#Baseline UI elements
-custom_window = {
-	name = aPUI_parent_container
-	potential = {
-		has_province_flag = aPUI_parent_container_flag
-		# FROM = {
-		# 	# tag = Z99
-		# }
-	}
-}
+#Baseline UI Element
 custom_button = { #Close button
 	name = aPUI_close_button
 	effect = {
-		#clr_province_flag = aPUI_parent_container_flag
 		clear_all_aPUI_flags = yes
 	}
 }
@@ -1900,8 +2400,7 @@ custom_button = { #Close button
 custom_window = {
 	name = aPUI_template_window
 	potential = {
-		#Must match the format 'aPUI_$name$_flag'
-		has_province_flag = aPUI_template_flag
+		has_open_aPUI_in_province = { name = template }
 	}
 }
 custom_text_box = {
@@ -1957,3 +2456,1108 @@ custom_button = {
 }
 
 # New systems go here - removing the above once the example is PRed
+
+# Transmutative Path aPUI Start
+custom_window = {
+	name = aPUI_transmutative_path_window
+	potential = {
+		has_open_aPUI_in_province = { name = transmutative_path }
+	}
+}
+custom_text_box = {
+	name = aPUI_transmutative_path_title
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_2_xia
+	tooltip = aPUI_transmutative_path_button_2_xia_tt
+	potential = {}
+	trigger = {
+		province_is_xia_origin = yes
+		FROM = { has_church_aspect = transmutative_path_temples_for_warriors }
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_200_chi_tt
+			FROM = { church_power = 200 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_not_empowered_or_enlightened_tt
+			xia_prov_not_empowered_or_enlightened = yes
+		}
+	}
+	effect = {
+		custom_tooltip = " " #Linebreak
+		FROM = { add_church_power = -200 }
+		cultivate_province_xia_path = yes
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_3
+	tooltip = aPUI_transmutative_path_button_3_tt
+	potential = {}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_change_trade_good_tt
+			FROM = { church_power = 100 }
+			transmutative_path_change_trade_good_trigger = yes
+		}
+	}
+	effect = {
+		custom_tooltip = " " #Linebreak
+		FROM = { add_church_power = -100 }
+		transmutative_path_change_trade_good_effect = yes
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_4
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 1
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 0 } }
+		}
+		transmutative_path_preferred_province_trigger = yes
+		transmutative_path_owner_has_chi_trigger = yes
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 0 }
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_5
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 2
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 1 } }
+		}
+		transmutative_path_preferred_province_trigger = yes
+		transmutative_path_owner_has_chi_trigger = yes
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 1 }
+	}
+}
+custom_button = {
+	name = aPUI_transmutative_path_button_6
+	tooltip = aPUI_transmutative_path_button_infuse_tt
+	frame = {
+		number = 3
+		trigger = { always = yes }
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = transmutative_path_active_aspect_tt
+			owner = { transmutative_path_valid_slot_trigger = { slot = 2 } }
+		}
+		transmutative_path_preferred_province_trigger = yes
+		transmutative_path_owner_has_chi_trigger = yes
+	}
+	effect = {
+		transmutative_path_infuse_province_effect = { slot = 2 }
+	}
+}
+custom_text_box = {
+	name = aPUI_transmutative_path_textbox
+}
+# Transmutative Path aPUI End
+
+# Gor Vazumbrog aPUI
+custom_text_box = {
+    name = aPUI_gor_vazumbrog_vault_textbox
+    potential = { always = yes }
+    tooltip = aPUI_gor_vazumbrog_vault_textbox_tooltip
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button
+	tooltip = "Enter the Vault"
+	potential = {
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
+	}
+	effect = {
+		open_aPUI_in_province = { name = gor_vazumbrog_vault }
+	}
+}
+custom_button = { # dummy copy for the "buildings tab closed" button, which cant open the buildings tab
+	name = aPUI_gor_vazumbrog_vault_button_dummy
+	tooltip = "Access the Vault by opening the Buildings tab"
+	potential = {
+		has_eligible_aPUI_gor_vazumbrog_vault_in_province = yes
+	}
+	effect = {
+	}
+}
+
+
+##Gor_Vazumbrog_Vault begins
+custom_window = {
+	name = aPUI_gor_vazumbrog_vault_window
+	potential = {
+		has_open_aPUI_in_province = { name = gor_vazumbrog_vault }
+	}
+}
+custom_text_box = {
+	#name = loc key to grab your title
+	name = aPUI_gor_vazumbrog_vault_title
+}
+# custom_button = {
+# 	name = aPUI_goto_province
+# 	# tooltip = x
+# 	effect = {
+# 		FROM = { country_event = { id = aPUI_goto.001 } }
+# 	}
+# }
+# }
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_1
+	tooltip = GV_TT_VAULT_DUSKGOLD
+	potential = {
+		FROM = {
+			has_country_flag = vault_duskgold_cache
+		}
+
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = vault_duskgold_cache_trigger_tt
+			FROM = {
+				OR = {
+					NOT = { has_country_flag = vault_duskgold_cache_enabled }
+					had_country_flag = { flag = vault_duskgold_cache_enabled days = 3650
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		if = {
+			limit = {
+				FROM = { has_country_flag = vault_duskgold_cache_downside_revealed }
+			}
+			custom_tooltip = vault_duskgold_cache_downside_tt
+		}
+		if = {
+			limit = {
+				FROM = {
+					NOT = { has_country_flag = vault_duskgold_cache_enabled }
+				}
+			}
+			add_province_modifier = {
+				name = gor_vazumbrog_vault_duskgold_cache
+				duration = -1
+			}
+			hidden_effect = {
+				FROM = {
+					set_country_flag = vault_duskgold_cache_enabled
+					country_event = { id = flavour_gor_vazumbrog.790 days = 730 random = 100 }
+				}
+			}
+		}
+		else = {
+			remove_province_modifier = gor_vazumbrog_vault_duskgold_cache
+			hidden_effect = {
+				FROM = { clr_country_flag = vault_duskgold_cache_enabled }
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_2
+	tooltip = GV_TT_VAULT_CROWN_OF_DOMINION
+	potential = {
+		FROM = {
+			has_country_flag = vault_crown_of_dominion
+		}
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = vault_crown_of_dominion_trigger_tt
+			FROM = {
+				NOT = {
+					AND = {
+						has_country_flag = gor_vazumbrog_crown_of_dominion_downside_revealed
+						has_country_flag = gor_vazumbrog_crown_of_dominion_locked
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		FROM = {
+			if = {
+				limit = { NOT = { has_country_flag = gor_vazumbrog_crown_of_dominion_in_use } } # not currently on
+				add_country_modifier = {
+					name = gor_vazumbrog_crown_of_dominion
+					duration = -1
+				}
+				hidden_effect = {
+					set_country_flag = gor_vazumbrog_crown_of_dominion_in_use # currently on
+					if = {
+						limit = { NOT = { has_country_flag = gor_vazumbrog_crown_of_dominion_downside_revealed } } # 1st round
+						country_event = { id = flavour_gor_vazumbrog.761 days = 300 random = 100 }
+						country_event = { id = flavour_gor_vazumbrog.762 days = 600 random = 100 }
+						country_event = { id = flavour_gor_vazumbrog.763 days = 900 random = 100 }
+						country_event = { id = flavour_gor_vazumbrog.764 days = 1200 random = 100 }
+					}
+					else = { # subsequent rounds
+						set_country_flag = gor_vazumbrog_crown_of_dominion_locked
+						country_event = { id = flavour_gor_vazumbrog.763 days = 300 random = 100 }
+						country_event = { id = flavour_gor_vazumbrog.766 days = 600 random = 100 }
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					has_country_flag = gor_vazumbrog_crown_of_dominion_in_use # currently on
+				}
+				if = {
+					limit = { NOT = { has_country_flag = gor_vazumbrog_crown_of_dominion_locked } } # if not locked yet, you can take it off
+					remove_country_modifier = gor_vazumbrog_crown_of_dominion
+					clr_country_flag = gor_vazumbrog_crown_of_dominion_in_use # currently on
+				}
+				else_if = {
+					limit = { has_country_flag = gor_vazumbrog_crown_of_dominion_locked } # if locked,
+					tooltip = {
+						remove_country_modifier = gor_vazumbrog_crown_of_dominion
+					}
+					hidden_effect = {
+						country_event = { id = flavour_gor_vazumbrog.765 }
+					}
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_3
+	tooltip = GV_TT_VAULT_EARTHSHAPER_SPHERE
+	potential = {
+		FROM = {
+			has_country_flag = vault_earthshaper_sphere
+		}
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = vault_earthshaper_sphere_trigger_tt
+			FROM = {
+				NOT = { has_country_modifier = vault_earthshaper_sphere_cooldown }
+			}
+		}
+		FROM = {
+			any_owned_province = {
+				is_city = yes
+				has_terrain = cavern
+				controlled_by = FROM
+				NOT = {
+					has_province_flag = citadel_province
+					development = 12
+				}
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = GV_TT_VAULT_EARTHSHAPER_SPHERE_EFFECT
+		hidden_effect = {
+			FROM = { add_country_modifier = { name = vault_earthshaper_sphere_cooldown duration = 730 } }
+			add_province_triggered_modifier = gor_vazumbrog_earthshaper_sphere_randomizer_ptm
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_4
+	tooltip = GV_TT_VAULT_LANGUAGE_OF_STONE
+	potential = {
+		FROM = {
+			has_country_flag = vault_language_of_stone
+		}
+	}
+	trigger = {
+	}
+	effect = {
+		if = {
+			limit = {
+				FROM = { NOT = { has_country_flag = vault_language_of_stone_enabled } }
+			}
+			custom_tooltip = GV_TT_VAULT_LANGUAGE_OF_STONE_ENABLE
+			hidden_effect = {
+				add_province_triggered_modifier = gor_vazumbrog_language_of_stone_randomizer_ptm
+				FROM = {
+					set_country_flag = vault_language_of_stone_enabled
+					country_event = { id = flavour_gor_vazumbrog.771 days = 365 }
+				}
+			}
+		}
+		else = {
+			custom_tooltip = GV_TT_VAULT_LANGUAGE_OF_STONE_DISABLE
+			hidden_effect = {
+				FROM = {
+					every_owned_province = {
+						limit = { has_province_flag = vault_language_of_stone_counting_house }
+						clr_province_flag = vault_language_of_stone_counting_house
+						remove_building = counting_house
+						remove_province_modifier = gor_vazumbrog_vault_language_of_stone_downside
+					}
+					clr_country_flag = vault_language_of_stone_enabled
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_5
+	tooltip = GV_TT_VAULT_SEALED_FATES
+	potential = {
+		FROM = {
+			has_country_flag = vault_sealed_fates
+		}
+	}
+	trigger = {
+		FROM = { NOT = { check_variable = { sealed_fates_opened = 6 } } }
+	}
+	effect = {
+		FROM = {
+			if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 6 } } }
+				custom_tooltip = GV_TT_VAULT_SEALED_FATES_EFFECT
+			}
+			if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 1 } } }
+				custom_tooltip = divination_0_guidance_spell
+				divination_0_guidance_effect = yes
+				hidden_effect = { country_event = { id = flavour_gor_vazumbrog.752 days = 90 } }
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 2 } } }
+				custom_tooltip = divination_1_eye_for_talent_spell
+				divination_1_eye_for_talent_effect = yes
+				set_country_flag = flavour_gor_vazumbrog.752_skip_advisor # don't kill advisor here since the spell just gave you a discounted one
+				hidden_effect = { country_event = { id = flavour_gor_vazumbrog.752 days = 90 } }
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 3 } } }
+				custom_tooltip = divination_1_deposit_divination_spell
+				divination_1_deposit_divination_effect = yes
+				hidden_effect = { country_event = { id = flavour_gor_vazumbrog.752 days = 90 } }
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 4 } } }
+				custom_tooltip = divination_2_scry_spell
+				# fire scry in a hidden event to ensure ROOT is set to the country
+				tooltip = { divination_2_scry_effect = yes }
+				hidden_effect = {
+					country_event = { id = flavour_gor_vazumbrog.753 }
+					country_event = { id = flavour_gor_vazumbrog.752 days = 90 }
+				}
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 5 } } }
+				custom_tooltip = divination_2_manipulated_fortune_spell
+				divination_2_manipulated_fortune_effect = yes
+				hidden_effect = { country_event = { id = flavour_gor_vazumbrog.752 days = 90 } }
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { which = sealed_fates_opened value = 6 } } }
+				custom_tooltip = divination_3_foresight_spell
+				divination_3_foresight_effect = yes
+				hidden_effect = { country_event = { id = flavour_gor_vazumbrog.751 days = 90 } }
+			}
+			hidden_effect = {
+				change_variable = {
+					which = sealed_fates_opened
+					value = 1
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_6
+	tooltip = GV_TT_VAULT_CODEX
+	potential = {
+		FROM = {
+			has_country_flag = vault_codex_of_infinite_tactics
+		}
+	}
+	trigger = {
+		custom_trigger_tooltip = {
+			tooltip = vault_codex_of_infinite_tactics_trigger_tt
+			FROM = { NOT = { has_country_modifier = gor_vazumbrog_vault_codex_of_infinite_tactics_cooldown }}
+		}
+		FROM = {
+			mil_power = 50
+		}
+	}
+	effect = {
+		FROM = {
+			add_mil_power = -50
+			custom_tooltip = GV_TT_VAULT_CODEX_EFFECT
+			hidden_effect = {
+				create_general_with_current_tradition = {
+					add_fire = 1
+					add_shock = 1
+					add_manuever = 1
+					add_siege = 1
+					culture = ROOT
+				}
+			}
+			if = {
+				limit = { has_country_modifier = gor_vazumbrog_vault_codex_of_infinite_tactics_downside }
+				remove_country_modifier = gor_vazumbrog_vault_codex_of_infinite_tactics_downside
+				add_country_modifier = { name = gor_vazumbrog_vault_codex_of_infinite_tactics_downside_2 duration = 3650 }
+			}
+			else_if = {
+				limit = { has_country_modifier = gor_vazumbrog_vault_codex_of_infinite_tactics_downside_2 }
+				extend_country_modifier = { name = gor_vazumbrog_vault_codex_of_infinite_tactics_downside_2 duration = 3650 }
+			}
+			hidden_effect = {
+				add_country_modifier = { name = gor_vazumbrog_vault_codex_of_infinite_tactics_cooldown duration = 1825 }
+				country_event = { id = flavour_gor_vazumbrog.711 days = 730 }
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_7
+	tooltip = GV_TT_VAULT_ALGORITHM_OF_ETERNITY
+	potential = {
+		FROM = {
+			has_country_flag = vault_algorithm_of_eternity
+		}
+	}
+	trigger = {
+		FROM = {
+			ruler_is_not_immortal = yes
+		}
+		custom_trigger_tooltip = {
+			tooltip = vault_algorithm_of_eternity_trigger_tt
+			FROM = {
+				OR = {
+					NOT = { has_country_flag = vault_algorithm_of_eternity_enabled }
+					had_country_flag = { flag = vault_algorithm_of_eternity_enabled days = 5475 }
+				}
+			}
+		}
+	}
+	effect = {
+		custom_tooltip = GV_TT_VAULT_ALGORITHM_OF_ETERNITY_EFFECT
+		hidden_effect = {
+			add_province_triggered_modifier = gor_vazumbrog_algorithm_of_eternity_randomizer_ptm
+			FROM = {
+				clr_country_flag = vault_algorithm_of_eternity_enabled
+				set_country_flag = vault_algorithm_of_eternity_enabled
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_8
+	tooltip = GV_TT_VAULT_ENDLESS_LEDGER
+	potential = {
+		FROM = {
+			has_country_flag = vault_endless_ledger
+		}
+	}
+	effect = {
+		FROM = {
+			if = {
+				limit = {
+					NOT = { has_country_flag = vault_endless_ledger_enabled }
+				}
+
+				hidden_effect = { set_country_flag = vault_endless_ledger_enabled }
+				if = {
+					limit = {
+						has_country_flag = vault_endless_ledger_downside_revealed
+					}
+					add_country_modifier = {
+						name = gor_vazumbrog_endless_ledger_2
+						duration = -1
+					}
+				}
+				else = {
+					add_country_modifier = {
+						name = gor_vazumbrog_endless_ledger
+						duration = -1
+					}
+				}
+				hidden_effect = {
+					country_event = { id = flavour_gor_vazumbrog.780 days = 365 }
+				}
+			}
+			else = {
+				FROM = {
+					remove_country_modifier = gor_vazumbrog_endless_ledger
+					remove_country_modifier = gor_vazumbrog_endless_ledger_2
+					hidden_effect = {
+						clr_country_flag = vault_endless_ledger_enabled
+					}
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = aPUI_gor_vazumbrog_vault_button_11
+	tooltip = GV_TT_VAULT_DELVE
+	trigger = {
+		# Custom tooltips to have individual X/OK marks while not having an extra FROM outside
+		custom_trigger_tooltip = {
+			tooltip = gor_vazumbrog_vault_delve_in_progress_tt
+			FROM = { NOT = { has_country_modifier = gor_vazumbrog_vault_delve_in_progress } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = gorVazumbrogVaultDelvesAvailable_tooltip
+			FROM = { check_variable = { gorVazumbrogVaultDelvesAvailable = 1 } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = mil_power_50_tt
+			FROM = { mil_power = 50 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = treasury_500_tt
+			FROM = { treasury = 500 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = gor_vazumbrog_vault_delve_custom_trigger
+			# complicated stuff to hide/consolidate these delve-specific triggers
+			# -- needed because I heard if statements in custom ui triggers spam error log
+			FROM = {
+				NOT = {
+					AND = { # use the cavern action at least once
+						has_country_flag = vault_hearthstone_engine
+						NOT = {	has_country_flag = vault_hearthstone_engine_used_once }
+					}
+					AND = { # use the road action at least once
+						has_country_flag = vault_singing_glyphs
+						NOT = {	has_country_flag = vault_singing_glyphs_used_once }
+					}
+					AND = { # research step 1
+						has_country_flag = vault_crown_of_dominion
+						NOT = {
+							has_country_flag = vault_anvil_of_unmaking_basic_research
+							has_estate = estate_artificers
+						}
+					}
+					AND = { # research step 2
+						has_country_flag = vault_anvil_of_unmaking_basic_research
+						NOT = {
+							has_country_flag = vault_anvil_of_unmaking_advanced_research
+							any_owned_province = { has_province_modifier = gor_vazumbrog_black_damestear_workshop }
+						}
+					}
+				}
+			}
+		}
+	}
+	effect = {
+		FROM = {
+			add_mil_power = -50
+			add_treasury = -500
+			hidden_effect = {
+				country_event = { id = flavour_gor_vazumbrog.555 }
+			}
+		}
+	}
+}
+
+#Zena Bivuzena Medaka's Majestic Menagerie Button Begins
+custom_button = {
+	name = aPUI_zena_medakas_majestic_menagerie_button
+	tooltip = zena_visit_menagerie_tt
+	potential = {
+		has_eligible_aPUI_zena_medakas_majestic_menagerie_in_province = yes
+	}
+	frame = {
+		number = 1
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_one
+		}
+	}
+	frame = {
+		number = 2
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_two
+		}
+	}
+	frame = {
+		number = 3
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_three
+		}
+	}
+	frame = {
+		number = 4
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_four
+		}
+	}
+	trigger = { 
+	}
+	effect = { 
+		open_aPUI_in_province = { name = zena_medakas_majestic_menagerie }
+	}
+}
+custom_button = { #Dummy copy
+	name = aPUI_zena_medakas_majestic_menagerie_button_dummy
+	tooltip = zena_visit_menagerie_dummy_tt
+	potential = { 
+		has_eligible_aPUI_zena_medakas_majestic_menagerie_in_province = yes
+	}
+	frame = {
+		number = 1
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_one
+		}
+	}
+	frame = {
+		number = 2
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_two
+		}
+	}
+	frame = {
+		number = 3
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_three
+		}
+	}
+	frame = {
+		number = 4
+		trigger = {
+			has_province_modifier = zena_medakas_majestic_menagerie_level_four
+		}
+	}
+	effect = { }
+}
+custom_window = {
+	name = aPUI_zena_medakas_majestic_menagerie_window
+	potential = { 
+		has_open_aPUI_in_province = { name = zena_medakas_majestic_menagerie }
+	}
+}
+custom_button = {
+	name = aPUI_zena_medakas_majestic_menagerie_button_1
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			mission_completed = L06_elephants_for_menagerie
+		}
+	}
+	frame = {
+		number = 1
+	}
+	trigger = { 
+		zena_menagerie_button_trigger = {
+			animal = elephant
+		}
+	}
+	effect = {
+		zena_menagerie_button_effect = {
+			animal = elephant
+		}
+	}
+}
+custom_button = { #Cheetahs
+	name = aPUI_zena_medakas_majestic_menagerie_button_2
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_cheetahs_acquired
+		}
+	}
+	frame = {
+		number = 2
+	}
+	trigger = {
+		zena_menagerie_button_trigger = {
+			animal = cheetahs
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = cheetahs
+		}
+	}
+}
+custom_button = { #Landfish
+	name = aPUI_zena_medakas_majestic_menagerie_button_3
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_landfish_acquired
+		}
+	}
+	frame = {
+		number = 3 
+	}
+	trigger = { 
+		zena_menagerie_button_trigger = {
+			animal = landfish
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = landfish
+		}
+	}
+}
+custom_button = { #Varghund
+	name = aPUI_zena_medakas_majestic_menagerie_button_4
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_varghund_acquired
+		}
+	}
+	frame = {
+		number = 4
+	}
+	trigger = {
+		zena_menagerie_button_trigger = {
+			animal = varghund
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = varghund
+		}
+	}
+}
+custom_button = { #Drakon
+	name = aPUI_zena_medakas_majestic_menagerie_button_5
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_drakon_acquired
+		}
+	}
+	frame = {
+		number = 5
+	}
+	trigger = { 
+		zena_menagerie_button_trigger = {
+			animal = drakon
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = drakon
+		}
+	}
+}
+custom_button = { #Tlalusk
+	name = aPUI_zena_medakas_majestic_menagerie_button_6
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_tlalusk_acquired
+		}
+	}
+	frame = {
+		number = 6
+	}
+	trigger = {
+		zena_menagerie_button_trigger = {
+			animal = tlalusk
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = tlalusk
+		}
+	}
+}
+custom_button = { #Terror-Birds
+	name = aPUI_zena_medakas_majestic_menagerie_button_7
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_terror_bird_acquired
+		}
+	}
+	frame = {
+		number = 7
+	}
+	trigger = { 
+		zena_menagerie_button_trigger = {
+			animal = terror_bird
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = terror_bird
+		}
+	}
+}
+custom_button = { #Ghost Corals
+	name = aPUI_zena_medakas_majestic_menagerie_button_8
+	tooltip = zena_marquee_tt
+	potential = { 
+		FROM = {
+			has_country_flag = zena_ghost_coral_acquired
+		}
+	}
+	frame = {
+		number = 8
+	}
+	trigger = { 
+		zena_menagerie_button_trigger = {
+			animal = ghost_coral
+		}
+	}
+	effect = { 
+		zena_menagerie_button_effect = {
+			animal = ghost_coral
+		}
+	}
+}
+
+
+# Mangrove Biological Infrastructure aPUI Start
+custom_window = {
+	name = aPUI_mangrove_bio_infra_window
+	potential = {
+		has_open_aPUI_in_province = { name = mangrove_bio_infra }
+	}
+}
+custom_text_box = {
+	#name = loc key to grab your title
+	name = aPUI_mangrove_bio_infra_title
+}
+custom_text_box = {
+	#name = loc key to grab your loc
+	name = aPUI_mangrove_bio_infra_textbox_text
+}
+
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_adm
+	tooltip = mangrove_bio_infra_button_adm_tt
+	potential = {
+		NOT = { has_province_flag = mangrove_bio_infra_path_chosen }
+	}
+	trigger = {
+		mangrove_check_bio_infra_path_cost = { PATH = adm }
+	}
+	effect = {
+		mangrove_bio_infra_choose_path = { PATH = adm }
+	}
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_dip
+	tooltip = mangrove_bio_infra_button_dip_tt
+	potential = {
+		NOT = { has_province_flag = mangrove_bio_infra_path_chosen }
+	}
+	trigger = {
+		mangrove_check_bio_infra_path_cost = { PATH = dip }
+	}
+	effect = {
+		mangrove_bio_infra_choose_path = { PATH = dip }
+	}
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_mil
+	tooltip = mangrove_bio_infra_button_mil_tt
+	potential = {
+		NOT = { has_province_flag = mangrove_bio_infra_path_chosen }
+	}
+	trigger = {
+		mangrove_check_bio_infra_path_cost = { PATH = mil }
+	}
+	effect = {
+		mangrove_bio_infra_choose_path = { PATH = mil }
+	}
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_aux_button
+	tooltip = mangrove_bio_infra_aux_button_tt
+	trigger = {
+		mangrove_bio_infra_final_trigger = yes
+	}
+	effect = {
+		mangrove_bio_infra_final_upgrade = yes
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_aux_select_glow
+	potential = { has_province_flag = mangrove_bio_infra_finished }
+}
+
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_1
+	tooltip = mangrove_bio_infra_adm_0
+	frame = { number = 1 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = adm UPGRADE = 0 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = adm UPGRADE = 0 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_1_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_adm_0 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_2
+	tooltip = mangrove_bio_infra_adm_1
+	frame = { number = 2 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = adm UPGRADE = 1 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = adm UPGRADE = 1 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_2_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_adm_1 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_3
+	tooltip = mangrove_bio_infra_adm_2
+	frame = { number = 3 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = adm UPGRADE = 2 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = adm UPGRADE = 2 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_3_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_adm_2 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_4
+	tooltip = mangrove_bio_infra_dip_0
+	frame = { number = 4 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = dip UPGRADE = 0 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = dip UPGRADE = 0 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_4_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_dip_0 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_5
+	tooltip = mangrove_bio_infra_dip_1
+	frame = { number = 5 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = dip UPGRADE = 1 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = dip UPGRADE = 1 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_5_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_dip_1 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_6
+	tooltip = mangrove_bio_infra_dip_2
+	frame = { number = 6 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = dip UPGRADE = 2 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = dip UPGRADE = 2 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_6_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_dip_2 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_7
+	tooltip = mangrove_bio_infra_mil_0
+	frame = { number = 7 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = mil UPGRADE = 0 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = mil UPGRADE = 0 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_7_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_mil_0 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_8
+	tooltip = mangrove_bio_infra_mil_1
+	frame = { number = 8 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = mil UPGRADE = 1 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = mil UPGRADE = 1 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_8_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_mil_1 }
+}
+custom_button = {
+	name = aPUI_mangrove_bio_infra_button_9
+	tooltip = mangrove_bio_infra_mil_2
+	frame = { number = 9 }
+	potential = {
+		has_province_flag = mangrove_bio_infra_path_chosen
+	}
+	trigger = {
+		mangrove_bio_infra_button_trigger = { PATH = mil UPGRADE = 2 }
+	}
+	effect = {
+		mangrove_bio_infra_choose_upgrade = { PATH = mil UPGRADE = 2 }
+	}
+}
+custom_icon = {
+	name = aPUI_mangrove_bio_infra_button_9_select_glow
+	potential = { has_province_modifier = mangrove_bio_infra_mil_2 }
+}
+# Mangrove Biological Infrastructure aPUI End
