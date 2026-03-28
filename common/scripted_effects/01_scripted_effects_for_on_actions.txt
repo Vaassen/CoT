@@ -3407,6 +3407,19 @@ on_trade_good_changed_government_effect = {
 	#else = {
 	#	remove_province_modifier = swe_support_of_the_peasantry_prov
 	#}
+	
+	#Copperlords
+	if = {
+		limit = {
+			owner = { has_reform = copperlord_reform }
+			trade_goods = copper
+		}
+		add_province_modifier = { 
+			name = copperlord_copper
+			duration = -1
+			hidden = yes
+		}
+	}
 }
 #1.35
 on_battle_won_unit_effect = {
@@ -4242,7 +4255,13 @@ on_battle_won_country_effect = {
 	if = {
 		limit = { FROM = { NOT = { tag = REB tag = NAT } } }
 		if = {	#for pdx num_of_battles scripted trigger. need to set the country_flag to begin counting
-			limit = { OR = { has_country_flag = count_battles_won has_mission = shuvuush_to_ward } }
+			limit = {
+				OR = {
+					has_country_flag = count_battles_won
+					has_mission = shuvuush_to_ward #generic mission
+					has_mission = vanrahar_4_trials_of_strength #generic mission
+				}
+			}
 			change_variable = {
 				which = num_of_battles_won_var
 				value = 1
@@ -4266,6 +4285,14 @@ on_battle_won_country_effect = {
 				which = land_units_lost
 			}
 			country_event = { id = magic_project_army_of_the_dead.20 } # Undead manpower gain
+		}
+		if = {
+			limit = { has_estate_privilege = artifice_invention_torso_self_repair }
+			set_variable = {
+				which = self_repair
+				which = land_units_lost
+			}
+			country_event = { id = insyaa_flavour.54 }
 		}
 
 		#Anbennar
@@ -4883,9 +4910,13 @@ on_battle_won_country_effect = {
 	if = { #Port Palegold bonus
 		limit = {
 			has_country_flag = RSP_palegold_the_mecha_pirates_effect
+			capital_scope = { NOT = { has_province_modifier = RSP_palegold_victorious_scraps } }
 			FROM = { precursor_relics = 1 }
 		}
-		capital_scope = { add_or_extend_province_modifier_effect = { MODIFIER = RSP_palegold_victorious_scraps DURATION = 1825 } }
+		capital_scope = { 
+			add_province_modifier = { name = RSP_palegold_victorious_scraps duration = 1825 } 
+			add_base_production = 1
+		}
 	}
 }
 
@@ -7457,6 +7488,11 @@ remove_all_age_of_reformation_modifiers = {
 			limit = { has_country_modifier = centaur_valorous_caehnate }
 			remove_country_modifier = centaur_valorous_caehnate
 		}
+		#Gasha MT
+		if = {
+			limit = { has_global_flag = L76_salvation_in_bloodshed_flag }
+			every_owned_province = { remove_province_modifier = L76_salvation_in_bloodshed_mod }
+		}
 	}
 }
 remove_all_age_of_absolutism_modifiers = {
@@ -7559,6 +7595,44 @@ add_country_modifier_for_age = {
 		}
 	]
 }
+
+#Anbennar
+add_province_modifier_for_age = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = $age$_passed }
+		}
+		add_province_modifier = {
+			name = $name$
+			duration = -1
+			desc = until_end_of_$age$_desc
+		}
+	}
+	[[else]
+		else = {
+			$else$
+		}
+	]
+}
+
+add_permanent_province_modifier_for_age = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = $age$_passed }
+		}
+		add_permanent_province_modifier = {
+			name = $name$
+			duration = -1
+			desc = until_end_of_$age$_desc
+		}
+	}
+	[[else]
+		else = {
+			$else$
+		}
+	]
+}
+
 
 on_parliament_abolished_effect = {
 	custom_tooltip = on_parliament_abolished_effect_tt
@@ -8033,7 +8107,7 @@ on_province_culture_change_effect = {
 		}
 		owner = {
 			ashhana_blood_curse_add_control_by_source = {
-				claw_strength = 0.75
+				claw_strength = 1.0
 			}
 		}
 	}
@@ -8161,6 +8235,46 @@ on_province_culture_change_effect = {
 		else = {
 			remove_province_modifier = medasi_peak_civilization_reform_modifier
 		}
+	}
+
+	if = {
+		limit = {
+			has_province_modifier = vanrahar_second_wave_settlement
+			culture = primal_harimari
+		}
+		remove_province_modifier = vanrahar_second_wave_settlement
+	}
+	if = {
+		limit = { owner = { mission_completed = vanrahar_4_servitude_of_mankind } }
+		if = {
+			limit = {
+				has_province_modifier = vanrahar_superior_settlement
+				culture = primal_harimari
+			}
+			remove_province_modifier = vanrahar_superior_settlement
+			add_scaled_local_dip_power = 2
+		}
+
+		if = {
+			limit = { owner = { has_country_modifier = vanrahar_community_support } }
+			if = {
+				limit = { culture = primal_harimari }
+				add_base_tax = 1
+				add_base_production = 1
+				add_base_manpower = 1
+			}
+			else = {
+				add_base_tax = -1
+				add_base_production = -1
+				add_base_manpower = -1
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_province_modifier = L62_receeding_gnoll_population
+		}
+		remove_province_modifier = L62_receeding_gnoll_population
 	}
 }
 
@@ -8444,10 +8558,6 @@ on_colony_finished_effect = {
 			limit = { NOT = { has_terrain = dwarven_hold_surface } }
 			change_culture = exodus_goblin
 			change_religion = goblinic_shamanism
-			add_province_modifier = {
-				name = hyti_cave_mod6
-				duration = -1
-			}
 		}
 		remove_province_modifier = hyti_fast_hold
 	}
@@ -9088,6 +9198,17 @@ on_mil_development_effect = {
 
 	#mangrove republic
 	mangrove_on_mil_dev_effect = yes
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					primary_culture = primal_harimari
+					has_mission = vanrahar_5_build_warrior_housing
+				}
+			}
+		}
+		set_province_flag = mil_developed_by_owner
+	}
 }
 
 on_development_effect = {
@@ -10711,9 +10832,51 @@ on_built_manufactory_effect = {
 		add_base_production = 1
 		add_base_manpower = 1
 	}
+	#Artificery
+	if = {
+		limit = { 
+			owner = {
+				has_estate_privilege = artifice_invention_tgs_farmland
+			}
+			has_province_modifier = artifice_tgs_farmland_modifier
+		}
+		remove_province_modifier = artifice_tgs_farmland_modifier
+		add_province_modifier = {
+			name = artifice_tgs_farmland2_modifier
+			duration = -1
+		}
+	}
+}
+on_destroyed_manufactory_effect = {
+	if = {
+		limit = { 
+			owner = {
+				has_estate_privilege = artifice_invention_tgs_farmland
+			}
+			has_province_modifier = artifice_tgs_farmland2_modifier
+		}
+		remove_province_modifier = artifice_tgs_farmland2_modifier
+		add_province_modifier = {
+			name = artifice_tgs_farmland_modifier
+			duration = -1
+		}
+	}
 }
 
 on_capital_moved_effect = {
+	if = {
+		limit = { terrain_is_titanoterrain = yes }
+		owner = {
+			if = {
+				limit = { has_estate_privilege = artifice_invention_mech_terrain_specialization }
+				remove_country_modifier = artifice_terrain_specialization_modifier
+				add_country_modifier = {
+					name = artifice_terrain_specialization_modifier
+					duration = -1
+				}
+			}
+		}
+	}
 }
 
 on_government_change_effect = {
@@ -10995,6 +11158,18 @@ anb_on_province_owner_change_government_reform_effect = {
 			}
 		}
 	}
+	#Copperlords
+	if = {
+		limit = {
+			owner = { has_reform = copperlord_reform }
+			trade_goods = copper
+		}
+		add_province_modifier = { 
+			name = copperlord_copper
+			duration = -1
+			hidden = yes
+		}
+	}
 }
 
 startup_1444_effects = {
@@ -11012,8 +11187,7 @@ startup_1444_effects = {
 		###########################
 		# STARTUP EFFECTS GO HERE #
 		###########################
-
-
+		
 		#ruler optimization
 
 		if = {
@@ -14750,19 +14924,6 @@ on_province_owner_change_effect = {
 		}
 	}
 
-	#Copperlords
-	if = {
-		limit = {
-			owner = { has_reform = copperlord_reform }
-			trade_goods = copper
-		}
-		add_province_modifier = { 
-			name = copperlord_copper
-			duration = -1
-			hidden = yes
-		}
-	}
-
 	#Xia stuff
 	apply_appropriate_xia_mods_to_province = yes
 	if = {
@@ -15387,7 +15548,7 @@ on_province_owner_change_effect = {
 					}
 				}
 			}
-			if = {
+			else_if = {
 				limit = {
 					OR = {
 						AND = {
@@ -15397,10 +15558,20 @@ on_province_owner_change_effect = {
 								owner = { NOT = { has_country_flag = hyti_base_trains } }
 							}
 						}
-						has_terrain = cavern
+						AND = {
+							has_terrain = cavern
+							NOT = { owner = { has_country_flag = hyti_magic_trains } }
+						}
 					}
 				}
 				add_province_modifier = { name = hyti_cave_mod6 duration = -1 }
+			}
+			else_if = {
+				limit = {
+					has_terrain = cavern
+					NOT = { owner = { has_estate_privilege = artifice_invention_hyti_magiwind } }
+				}
+				add_province_modifier = { name = hyti_cave_mod5 duration = -1 }
 			}
 			if = {
 				limit = {
@@ -15507,6 +15678,187 @@ on_province_owner_change_effect = {
 				duration = -1
 			}
 		}
+	}
+
+	if = {
+		limit = { NOT = { owned_by = R77 } } #Vanrahar
+		remove_province_modifier = vanrahar_second_wave_settlement #remove second-wave settlement on conquest
+	}
+	else = { #owned by Vanrahar
+		if = {
+			limit = {
+				owner = { mission_completed = vanrahar_4_servitude_of_mankind }
+				culture_is_human = yes
+			}
+			add_province_modifier = { name = vanrahar_superior_settlement duration = -1 }
+		}
+		if = {
+			limit = { owner = { mission_completed = vanrahar_5_build_warrior_housing } }
+			if = {
+				limit = { has_building = regimental_camp }
+				add_province_modifier = { name = vanrahar_improved_impressment_1 duration = -1 }
+			}
+			else_if = {
+				limit = { has_building = conscription_center }
+				add_province_modifier = { name = vanrahar_improved_impressment_2 duration = -1 }
+			}
+		}
+	}
+
+	#Black Doctrine T4 
+	if = {
+		limit = { has_building = mage_tower }
+		if = {
+			limit = { owner = { has_reform = new_god_of_halann } }
+			add_province_modifier = {
+				name = gov_mage_tower_mana_capacity
+				duration = -1
+			}
+			owner = {
+				if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_IV
+						mage_tower = 250
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_IV
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_V
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_III
+						mage_tower = 200
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_III
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_IV
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_II
+						mage_tower = 150
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_II
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_III
+						duration = -1
+					}
+				}	
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_I
+						mage_tower = 100
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_I
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_II
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_0
+						mage_tower = 50
+					}
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_I
+						duration = -1
+					}
+				}
+			}
+		}
+		if = {
+			limit = { FROM = { has_reform = new_god_of_halann } }
+			FROM = {
+				if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_V 			
+						NOT = { mage_tower = 250 }
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_V
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_IV
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_IV 			
+						NOT = { mage_tower = 200 }
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_IV
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_III
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_III	
+						NOT = { mage_tower = 150 }
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_III
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_II
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_II 			
+						NOT = { mage_tower = 100 }
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_II
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_I
+						duration = -1
+					}
+				}
+				else_if = {
+					limit = {
+						has_country_modifier = gov_mage_tower_mana_channeling_I 			
+						NOT = { mage_tower = 50 }
+					}
+					remove_country_modifier = gov_mage_tower_mana_channeling_I
+					add_country_modifier = {
+						name = gov_mage_tower_mana_channeling_0
+						duration = -1
+						hidden = yes
+					}
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_building = automatory }
+		if = {
+			limit = { FROM = { has_country_modifier = mechanim_administration NOT = { automatory = 10 } } }
+			remove_automatory_mechanim_effect = yes
+		}
+		if = {
+			limit = { owner = { has_country_modifier = mechanim_administration NOT = { has_country_modifier = mechanim_automatory_modifier_10 } } }
+			automatory_mechanim_effect = yes
+		}
+	}
+
+	#Set Ardimya related flag so that only those have owned ardimya tags take part in check
+	if = {
+		limit = {
+			region = ardimya_region
+			NOT = { has_global_flag = ardimya_founded }
+			owner = {
+				NOT = { has_country_flag = cannorian_ardimya_colonist }
+				capital_scope = {
+					continent = europe 
+				}
+				num_of_colonists = 1
+			}
+		}
+		owner = { set_country_flag = cannorian_ardimya_colonist }
 	}
 }
 
@@ -15840,8 +16192,10 @@ S53_won_battle_against_trolls = {
 }
 
 anb_on_exploit_effect = {
-	if = { limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
+	if = {
+		limit = { owner = { has_country_flag = anb_on_action_tracking_exploit_dev_flag } }
 		set_province_flag = anb_has_been_exploited_flag
+		add_province_modifier = { name = owner_exploited_$dev$ duration = -1 hidden = yes }
 	}
 	if = {
 		limit = { 
@@ -15944,6 +16298,21 @@ anb_on_exploit_effect = {
 			add_province_modifier = {
 				name = S30_local_convert
 				duration = 1825
+			}
+		}
+	}
+	if = {
+		limit = { 
+			owner = { tag = L76 }
+			OR = {
+				trade_goods = copper
+				trade_goods = iron
+			}
+		}
+		owner = {
+			change_variable = {
+				which = gashaExploitedDevelopmentCounter
+				value = 1
 			}
 		}
 	}
@@ -16649,6 +17018,20 @@ on_province_owner_change_monuments = {
 		}
 
 	}
+	if = {
+		limit = { province_id = 2454 }
+		FROM = { overlord = { remove_country_modifier = blue_mountain_overlord } }
+		if = {
+			limit = {
+				has_great_project = {
+					type = blue_mountain
+					tier = 3
+				}
+				owner = { is_subject = yes }
+			}
+			owner = { overlord = { add_country_modifier = { name = blue_mountain_overlord duration = -1 } } }
+		}
+	}
 	##### When you have monument #####
 	if = { #Ascajar
 		limit = {
@@ -17085,4 +17468,115 @@ on_idea_group_finished_effect = { #Taking the final idea in an idea group i.e. t
 
 on_idea_group_unfinished_effect = { #Removing the final idea in a group whereas it had previously been completed
 	decrease_legitimacy_equivalent_absolutism_from_idea_groups_mod = yes
+}
+
+on_consort_death_effects = {
+	country_event = { id = flavour_covenblad.80 } # Covenblad Palatine Arbiter stuff
+	country_event = { id = flavor_averilibet.3 } #averilibet husband harem 
+	country_event = { id = flavor_frozenmaw.14 } #the death of Frida
+	country_event = { id = guwaamud.100 } # Harem lady dead
+	magic_on_consort_death = yes
+	if = {
+		limit = { has_consort_flag = 10_years_anniversary }
+		set_ruler_flag = had_10_years_anniversary
+	}
+	if = {
+		limit = { has_consort_flag = 20_years_anniversary }
+		set_ruler_flag = had_20_years_anniversary
+	}
+	if = {
+		limit = { has_consort_flag = consort_has_affection_of_ruler }
+		set_ruler_flag = consort_had_affection_of_ruler
+	}
+
+	if = {
+		limit = {
+			has_regency = no
+			NOT = { has_ruler_flag = widow_widower }
+		}
+		set_ruler_flag = widow_widower
+	}
+	if = {
+		limit = { has_consort_regency = no }
+		random_owned_province = {
+			limit = { has_province_modifier = domain_of_spouses_family }
+			remove_province_modifier = domain_of_spouses_family
+		}
+	}
+	if = {
+		limit = { has_ruler_flag = accepted_help_from_spouses_family }
+		clr_ruler_flag = accepted_help_from_spouses_family
+	}
+	if = {
+		limit = { has_ruler_flag = helped_spouses_family }
+		clr_ruler_flag = helped_spouses_family
+	}
+	if = {
+		limit = { has_ruler_flag = refused_to_help_spouses_family }
+		clr_ruler_flag = refused_to_help_spouses_family
+	}
+	if = {
+		limit = { has_ruler_flag = has_lowborn_consort }
+		random_owned_province = {
+			limit = { has_province_modifier = home_of_consort }
+			remove_province_modifier = home_of_consort
+		}
+	}
+	if = {
+		limit = { has_ruler_flag = has_lowborn_consort }
+		clr_ruler_flag = has_lowborn_consort
+	}
+	if = {
+		limit = { has_country_modifier = consort_adm_advice }
+		remove_country_modifier = consort_adm_advice
+	}
+	if = {
+		limit = { has_country_modifier = consort_dip_advice }
+		remove_country_modifier = consort_dip_advice
+	}
+	if = {
+		limit = { has_country_modifier = consort_mil_advice }
+		remove_country_modifier = consort_mil_advice
+	}
+	if = {
+		limit = { has_country_modifier = without_spouse_advice }
+		remove_country_modifier = without_spouse_advice
+	}
+	if = {
+		limit = { has_ruler_modifier = affectionate_royal_couple }
+		remove_country_modifier = affectionate_royal_couple
+	}
+
+	#Duwarkani consorts
+	if = {
+		limit = {
+			has_country_modifier = duwarkani_admin_consort
+		}
+		remove_country_modifier = duwarkani_admin_consort
+	}
+	if = {
+		limit = {
+			has_country_modifier = duwarkani_diplo_consort
+		}
+		remove_country_modifier = duwarkani_diplo_consort
+	}
+	if = {
+		limit = {
+			has_country_modifier = duwarkani_mil_consort
+		}
+		remove_country_modifier = duwarkani_mil_consort
+	}
+	
+	clr_ruler_flag = marriage_length
+	
+	if = { #Golden Tremor
+		limit = { has_country_modifier = I57_sweet_riverspeak_mod }
+		remove_country_modifier = I57_sweet_riverspeak_mod
+	}
+	if = { #Harpy Tolerance Event 'Harpy Wife, Happy Life' Cleanup
+		limit = {
+			has_country_flag = harpy_tolerance_harpy_wife_happy_life
+		}
+		clr_country_flag = harpy_tolerance_harpy_wife_happy_life
+	}
 }
