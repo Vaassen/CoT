@@ -200,7 +200,10 @@ province_event = { #Iochander colonies flip culture
 	trigger = {
 		OR = {
 			culture_is_iochandized = yes
-			owner = { is_colonial_nation_of = A80 }
+			owner = {
+				is_colonial_nation = yes
+				overlord = { is_or_was_tag = { tag = A80 } }
+			}
 		}
 	}
 
@@ -459,7 +462,6 @@ country_event = { #Agitate the Small Country
 		hidden_effect = {
 			every_known_country = { #delete truce
 				limit = {
-					small_country_region = { country_or_non_sovereign_subject_holds = PREV }
 					culture_is_halfling = yes
 					NOT = {
 						is_subject_of = ROOT
@@ -471,6 +473,7 @@ country_event = { #Agitate the Small Country
 						alliance_with = A64
 						alliance_with = A65
 					}
+					small_country_region = { country_or_non_sovereign_subject_holds = PREV }
 				}
 				grant_independence = yes
 				break_alliance = A64
@@ -527,9 +530,8 @@ country_event = { #Agitate the Small Country
 							tag = A65
 						}
 					}
-					save_event_target_as = new_owner
+					PREV = { cede_province = PREV }
 				}
-				cede_province = event_target:new_owner
 			}
 			every_known_country = {
 				limit = {
@@ -1065,8 +1067,11 @@ country_event = { #A Change in Management
 				limit = {
 					owner = {
 						OR = {
-							tag = A80
-							is_subject_of = A80
+							is_or_was_tag = { tag = A80 }
+							AND = {
+								is_subject = yes
+								overlord = { is_or_was_tag = { tag = A80 } }
+							}
 						}
 						NOT = { tag = ROOT }
 					}
@@ -1219,15 +1224,24 @@ country_event = { #The Tragedy of Iochand, Act I Scene II
 		}
 		mission_reward_artifice_points_15 = yes
 		if = {
-			limit = { exists = A09 NOT = { is_subject_of = ROOT } }
+			limit = {
+				exists = A09 
+				A09 = { NOT = { is_subject_of = ROOT } }
+			}
 			A09 = { country_event = { id = iochand.16 } }
 		}
 		if = {
-			limit = { exists = A20 NOT = { is_subject_of = ROOT } }
+			limit = {
+				exists = A20 
+				A20 = { NOT = { is_subject_of = ROOT } }
+			}
 			A20 = { country_event = { id = iochand.16 } }
 		}
 		if = {
-			limit = { exists = B78 NOT = { is_subject_of = ROOT } }
+			limit = {
+				exists = B78 
+				B78 = { NOT = { is_subject_of = ROOT } }
+			}
 			B78 = { country_event = { id = iochand.16 } }
 		}
 	}
@@ -1466,6 +1480,7 @@ country_event = { #Pop! Goes the Eagle
 	option = {
 		name = iochand.20.a
 		custom_tooltip = A80_pop_goes_the_eagle_tttt
+		set_global_flag = A80_pop_goes_the_eagle_flag
 		hidden_effect = {
 			every_known_country = {
 				limit = {
@@ -1542,11 +1557,11 @@ country_event = { #C Minus
 
 	option = {
 		name = iochand.22.b
+		hidden_effect = {
+			country_event = { id = iochand.23 days = 1 }
+		}
 		switch_tag = A19
 		custom_tooltip = A80_the_comedy_of_iochand_tt_b
-		hidden_effect = {
-			A80 = { country_event = { id = iochand.23 days = 1 } }
-		}
 	}
 
 	option = {
@@ -1593,7 +1608,7 @@ country_event = { #Explode Iochand
 		name = iochand.23.a
 		every_known_country = {
 			if = {
-				limit = { is_in_war = { participants = A80 } }
+				limit = { is_in_war = { participants = ROOT } }
 				white_peace = PREV
 			}
 		}
@@ -1605,11 +1620,12 @@ country_event = { #Explode Iochand
 		release_all_possible_countries = yes
 		every_owned_province = {
 			if = {
-				limit = {any_core_country = { NOT = { tag = A80 } } }
-				random_core_country = {
-					limit = { NOT = { tag = A80 } }
+				limit = { any_neighbor_province = { owner = { NOT = { tag = ROOT } } } }
+				random_neighbor_province  = {
+					limit = { owner = { NOT = { tag = ROOT } } }
 					save_event_target_as = new_owner
 				}
+				add_core = event_target:new_owner
 				cede_province = event_target:new_owner
 			}
 			else = {
@@ -1646,92 +1662,86 @@ country_event = { #Disaster event chain start
 	option = {
 		name = iochand.30.a
 		ai_chance = { factor = 1000 }
-		trigger = {
-			NOT = { has_country_flag = A80_loyalty_to_the_crown_happened }
-			calc_true_if = {
-				all_known_country = {
-					is_subject_of = A19
-					is_subject_of_type = aelantir_hezoggdoum
-				}
-				amount = 2
-			}
-		}
-		set_country_flag = A80_loyalty_to_the_crown_happened
-		country_event = { id = iochand.31 }
-		set_variable = { which = hezoggoum_loyalty_var value = 2 }
-	}
-	option = {
-		name = iochand.30.b
-		ai_chance = { factor = 1000 }
-		trigger = {
-			NOT = { has_country_flag = A80_the_bloopalaasd_gommo_happened }
-			U31 = {
-				OR = {
-					alliance_with = ROOT
-					is_subject_of = ROOT
-				}
-			}
-		}
-		set_country_flag = A80_the_bloopalaasd_gommo_happened
-		country_event = { id = iochand.32 }
-	}
-	option = {
-		name = iochand.30.c
-		ai_chance = { factor = 1000 }
-		trigger = {
-			has_country_flag = A80_loyalty_to_the_crown_happened
-			NOT = { has_country_flag = A80_kingdoms_of_aelantir_happened }
-			calc_true_if = {
-				all_known_country = {
-					is_subject_of = A19
-					is_subject_of_type = aelantir_hezoggdoum
-					total_development = 100
-				}
-				amount = 3
-			}
-			government_rank = 3
-		}
-		set_country_flag = A80_kingdoms_of_aelantir_happened
-		country_event = { id = iochand.33 }
-	}
-	option = {
-		name = iochand.30.e
-		ai_chance = { factor = 1000 }
-		trigger = {
-			has_country_flag = A80_the_bloopalaasd_gommo_happened
-			NOT = { has_country_flag = A80_lencenor_over_hierarchy_happened }
-			U31 = { is_subject_of = ROOT }
-			all_known_country = {
-				OR = {
-					NOT = { capital_scope = { superregion = western_cannor_superregion } }
-					AND = {
-						NOT = { culture_is_gnomish = yes }
-						NOT = { culture_is_kobold = yes }
+		random_list = {
+			1000 = {
+				trigger = {
+					NOT = { has_country_flag = A80_loyalty_to_the_crown_happened }
+					calc_true_if = {
+						all_known_country = {
+							is_subject_of = A19
+							is_subject_of_type = aelantir_hezoggdoum
+						}
+						amount = 2
 					}
-					tag = A81 #Giberd
-					is_subject_of = ROOT
 				}
+				set_country_flag = A80_loyalty_to_the_crown_happened
+				country_event = { id = iochand.31 }
+				set_variable = { which = hezoggoum_loyalty_var value = 2 }
 			}
-			has_country_flag = A80_high_kingdom_declared
+			1000 = {
+				trigger = {
+					NOT = { has_country_flag = A80_the_bloopalaasd_gommo_happened }
+					U31 = {
+						OR = {
+							alliance_with = ROOT
+							is_subject_of = ROOT
+						}
+					}
+				}
+				set_country_flag = A80_the_bloopalaasd_gommo_happened
+				country_event = { id = iochand.32 }
+			}
+			1000 = {
+				trigger = {
+					has_country_flag = A80_loyalty_to_the_crown_happened
+					NOT = { has_country_flag = A80_kingdoms_of_aelantir_happened }
+					calc_true_if = {
+						A19 = {
+							all_subject_country = {
+								is_subject_of_type = aelantir_hezoggdoum
+								total_development = 100
+							}
+						}
+						amount = 3
+					}
+					government_rank = 3
+				}
+				set_country_flag = A80_kingdoms_of_aelantir_happened
+				country_event = { id = iochand.33 }
+			}
+			1000 = {
+				trigger = {
+					has_country_flag = A80_the_bloopalaasd_gommo_happened
+					NOT = { has_country_flag = A80_lencenor_over_hierarchy_happened }
+					U31 = { is_subject_of = ROOT }
+					all_known_country = {
+						OR = {
+							NOT = { capital_scope = { superregion = western_cannor_superregion } }
+							AND = {
+								NOT = { culture_is_gnomish = yes }
+								NOT = { culture_is_kobold = yes }
+							}
+							tag = A81 #Giberd
+							is_subject_of = ROOT
+						}
+					}
+					has_country_flag = A80_high_kingdom_declared
+				}
+				set_country_flag = A80_lencenor_over_hierarchy_happened
+				country_event = { id = iochand.34 }
+			}
+			1000 = {
+				trigger = {
+					has_country_flag = A80_kingdoms_of_aelantir_happened
+					has_country_flag = A80_lencenor_over_hierarchy_happened
+					NOT = { has_country_flag = A80_the_nimszexael_society_happened }
+					mission_completed = A80_3_10
+				}
+				set_country_flag = A80_the_nimszexael_society_happened
+				country_event = { id = iochand.35 }
+			}
+			1 = {}
 		}
-		set_country_flag = A80_lencenor_over_hierarchy_happened
-		country_event = { id = iochand.34 }
-	}
-	option = {
-		name = iochand.30.f
-		ai_chance = { factor = 1000 }
-		trigger = {
-			has_country_flag = A80_kingdoms_of_aelantir_happened
-			has_country_flag = A80_lencenor_over_hierarchy_happened
-			NOT = { has_country_flag = A80_the_nimszexael_society_happened }
-			mission_completed = A80_3_10
-		}
-		set_country_flag = A80_the_nimszexael_society_happened
-		country_event = { id = iochand.35 }
-	}
-	option = { #If no
-		name = iochand.30.g
-		ai_chance = { factor = 1 }
 	}
 }
 
@@ -2366,19 +2376,17 @@ country_event = { #Gnomed name
 	hidden = yes
 
 	trigger = {
-		exists = A80
-		NOT = { has_country_flag = iochand_gnomed_@ROOT }
 		OR = {
 			AND = {
-				A80 = { mission_completed = A80_3_14 }
+				has_global_flag = A80_the_comedy_of_iochand_flag
 				capital_scope = { continent = europe }
 			}
 			AND = {
-				A80 = { mission_completed = A80_2_13 }
+				has_global_flag = A80_eres_to_the_dame_flag
 				is_part_of_hre = yes
 			}
 			AND = {
-				A80 = { mission_completed = A80_1_13 }
+				has_global_flag = A80_pop_goes_the_eagle_flag
 				capital_scope = {
 					OR = {
 						region = alenic_frontier_region
@@ -2387,10 +2395,11 @@ country_event = { #Gnomed name
 				}
 			}
 			AND = {
-				A80 = { mission_completed = A80_4_13 }
+				has_global_flag = A80_a_gem_fit_for_a_gnome_flag
 				is_aelantiri_spawnable = yes
 			}
 		}
+		NOT = { has_country_flag = iochand_gnomed_@ROOT }
 	}
 
 	option = {
@@ -2623,6 +2632,14 @@ country_event = { #Iochandizing for ai
 			has_reform = iochand_hezoggdoum
 		}
 		ai = yes
+		is_subject = yes
+		OR = {
+			overlord = { ai = no }
+			A19 = {
+				overlord_of = ROOT
+				overlord = { ai = no }
+			}
+		}
 		any_owned_province = {
 			culture_is_iochandized = no
 			is_core = ROOT
@@ -2921,7 +2938,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		trigger = {
 			NOT = {
 				B71 = {
-					is_subject_of = A19
+					is_subject_of = ROOT
 					is_subject_of_type = hezoggdoum
 				}
 				AND = {
@@ -5638,6 +5655,85 @@ country_event = { #Subject fallback
 				subject_type = vassal
 				subject = ROOT
 			}
+		}
+	}
+}
+
+country_event = { #Cede region Daccasded and Triarchy for country
+	id = iochand.103
+	title = iochand.103.t
+	desc = iochand.103.d
+	picture = TRADEGOODS_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+	
+	option = {
+		name = iochand.103.a
+		every_owned_province = {
+			limit = { is_city = yes }
+			if = {
+				limit = {
+					OR = {
+						superregion = ruin_proper_superregion
+						region = soruin_region
+					}
+					NOT = { country_or_non_sovereign_subject_holds = A19 }
+					A19 = {
+						overlord = {
+							is_or_was_tag = { tag = A80 }
+							mission_completed = A80_5_6
+						}
+					}
+				}
+				if = {
+					limit = { is_core = owner }
+					remove_core = owner
+					add_core = A19
+				}
+				cede_province = A19
+			}
+			if = {
+				limit = {
+					superregion = torn_gates_superregion
+					NOT = { country_or_non_sovereign_subject_holds = U31 }
+					U31 = {
+						overlord = {
+							is_or_was_tag = { tag = A80 }
+							mission_completed = A80_4_7
+						}
+					}
+				}
+				if = {
+					limit = { is_core = owner }
+					remove_core = owner
+					add_core = U31
+				}
+				cede_province = U31
+			}
+		}
+	}
+}
+
+country_event = { #Second small war peace
+	id = iochand.104
+	title = iochand.104.t
+	desc = iochand.104.d
+	picture = TRADEGOODS_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		NOT = { is_in_war = { casus_belli = cb_second_small_war } }
+	}
+	
+	option = {
+		name = iochand.104.a
+		remove_country_modifier = A80_diplo_upkeep_mod
+		every_ally = {
+			limit = { has_country_flag = A80_small_war_rebel_side }
+			break_alliance = ROOT
 		}
 	}
 }
