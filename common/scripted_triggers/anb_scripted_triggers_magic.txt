@@ -2049,7 +2049,7 @@ has_mana_to_cast_spell = {
 
 	# Alternatively, we could've put everything into a big OR = { AND = { OR = {} } } custom trigger tooltip
 	# And then that tooltip would have linked to has_mana_to_cast_$id$_spell
-	# And has_mana_to_cast_$id$_spell would look like §MCurrent Mana§! (§Y[Root.currentMana.GetValue]§!) is at least §Y[GetGuidanceDiscount]§!
+	# And has_mana_to_cast_$id$_spell would look like ï¿½MCurrent Manaï¿½! (ï¿½Y[Root.currentMana.GetValue]ï¿½!) is at least ï¿½Y[GetGuidanceDiscount]ï¿½!
 	# The problem, of course, being that we would have to create custom loca for every single spell
 	# It would be slightly more performant but also a lot more work, and either way the AI doesn't check mana costs
 	# So we went with this solution because it was slightly easier
@@ -2239,6 +2239,9 @@ siege_interface_offensive_trigger = { #This is the trigger for offensive siege s
 		limit = { FROM = { ai = yes } }
 		owner = { war_with = FROM }
 	}
+	province_not_immune_to_siege_magic = yes
+}
+province_not_immune_to_siege_magic = { #Cannot use FROM and ROOT here
 	if = {
 		limit = { magical_fortress_proxy_trigger = yes }
 		custom_trigger_tooltip = {
@@ -2258,6 +2261,7 @@ magical_fortress_proxy_trigger = { #If-limits in scripted triggers don't validat
 	owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
 	province_has_magical_ward = yes
 }
+porcelain_shields_proxy_trigger = { owner = { has_estate_privilege = estate_artificers_porcelain_shields } } #If-limits in scripted triggers don't validate their triggers two layers deep. See has_mana_to_cast_spell for more info
 
 siege_interface_defensive_trigger = { #This is the trigger for defensive siege spells in the interface
 	fort_level = 1
@@ -2266,7 +2270,6 @@ siege_interface_defensive_trigger = { #This is the trigger for defensive siege s
 	hidden_trigger = { unit_in_battle = no } #Reported cases of simultaneous sieges and battles
 	has_siege = yes
 }
-porcelain_shields_proxy_trigger = { owner = { has_estate_privilege = estate_artificers_porcelain_shields } } #If-limits in scripted triggers don't validate their triggers two layers deep. See has_mana_to_cast_spell for more info
 
 has_war_wizard = {
 	custom_trigger_tooltip = {
@@ -2307,6 +2310,9 @@ has_cast_war_magic = {
 			#Black Herd
 			has_country_modifier = I55_markhentakruan_1_mod
 			has_country_modifier = I55_markhentakruan_2_mod
+
+			#Gasha
+			has_country_modifier = L76_shock_and_awe
 		}
 	}
 }
@@ -2581,15 +2587,7 @@ province_has_magical_ward = {
 province_has_no_magical_ward = {
 	custom_trigger_tooltip = {
 		tooltip = province_has_no_magical_ward
-		NOT = {
-			has_province_modifier = abjuration_1_ward_mod_0
-			has_province_modifier = abjuration_1_ward_mod_1
-			has_province_modifier = abjuration_1_ward_mod_2
-			has_province_modifier = abjuration_1_ward_mod_3
-			has_province_modifier = Y63_minor_rune_runic_ward_1
-			has_province_modifier = Y63_minor_rune_runic_ward_2
-			has_province_modifier = Y63_minor_rune_runic_ward_3
-		}
+		NOT = { province_has_magical_ward = yes }
 	}
 }
 
@@ -3201,6 +3199,15 @@ evocation_2_meteor_swarm_local_trigger = { #Meteor Swarm local trigger
 		has_terrain = cavern
 		has_terrain = dwarven_road
 		province_group = hold_province
+		custom_trigger_tooltip = {
+			tooltip = kobold_traps_lvl_3_or_4_siege_magic_trigger
+			OR = {
+				has_province_modifier = kobold_traps_lvl_3
+				has_province_modifier = kobold_traps_lvl_4
+				has_province_modifier = modified_kobold_traps_lvl_3
+				has_province_modifier = modified_kobold_traps_lvl_4
+			}
+		}
 	}
 }
 evocation_2_tearfall_trigger = { # Tearfall
@@ -3234,6 +3241,7 @@ has_cast_shock_and_awe = {
 			has_country_modifier = patron_green_shock_and_awe
 			has_country_modifier = patron_ice_shock_and_awe
 			has_country_modifier = patron_diranbe_shock_and_awe
+			has_country_modifier = L76_shock_and_awe
 		}
 	}
 }
@@ -4144,7 +4152,11 @@ is_overall_studying_magic = {
 	[[school]
 		custom_trigger_tooltip = {
 			tooltip = magic_school_$school$
-			has_$type$_flag = $schools$_advancement
+			OR = {
+				has_country_flag = $schools$_advancement
+				has_ruler_flag = $schools$_advancement
+				has_heir_flag = $schools$_advancement
+			}
 		}
 	]
 }
@@ -4161,7 +4173,11 @@ is_overall_not_studying_magic = {
 	[[school]
 		custom_trigger_tooltip = {
 			tooltip = magic_school_$school$
-			NOT = { has_$type$_flag = $schools$_advancement }
+			NOT = {
+				has_country_flag = $schools$_advancement
+				has_ruler_flag = $schools$_advancement
+				has_heir_flag = $schools$_advancement
+			}
 		}
 	]
 }
@@ -4491,6 +4507,7 @@ can_upgrade_to_magical_infrastructure_4 = {
 						sarhal_owner_can_use_eka_idulnazzar = yes
 					}
 				}
+				has_nila_tenvach = { level = 3 }
 			}
 		}
 	}
@@ -4568,6 +4585,7 @@ can_upgrade_to_magical_infrastructure_3 = {
 						sarhal_owner_can_use_eka_idulnazzar = yes
 					}
 				}
+				has_nila_tenvach = { level = 3 }
 			}
 		}
 	}
@@ -4644,6 +4662,7 @@ can_upgrade_to_magical_infrastructure_2 = {
 						sarhal_owner_can_use_eka_idulnazzar = yes
 					}
 				}
+				has_nila_tenvach = { level = 3 }
 			}
 		}
 	}
@@ -4722,6 +4741,7 @@ can_upgrade_to_magical_infrastructure_1 = {
 						sarhal_owner_can_use_eka_idulnazzar = yes
 					}
 				}
+				has_nila_tenvach = { level = 3 }
 			}
 		}
 	}
