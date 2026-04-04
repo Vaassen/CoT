@@ -172,6 +172,7 @@ on_startup = {
 		flavour_star_rider.1 #Star Rider Start
 		flavour_nispac.1 #Nispac Starting Event
 		flavor_beikdugang.17 # Beikdugang intro
+		flavour_gnollakaz.1 #Gnollakaz Starting Event
 
 		#Silver Families
 		silver_families.1		#Silmuna
@@ -7279,6 +7280,11 @@ on_mandate_of_heaven_gained = {
 	set_meritocracy = 50
 	if = {
 		limit = { any_subject_country = { is_subject_of_type = tributary_state_anb } }
+		#Reset the gnoll trib count variable
+        if = {
+            limit = { check_variable = { gnoll_tributary_bonus_count = 1 } }
+            set_variable = { gnoll_tributary_bonus_count = 0 }
+        }
 		every_subject_country = {
 			limit = { is_subject_of_type = tributary_state_anb }
 			country_event = { id = khet_mandate.02 } 
@@ -22092,6 +22098,26 @@ on_dependency_gained = {
 			save_global_event_target_as = oppressor_kimanis
 		}
 	}
+
+	#Gnollakaz
+	if = {
+		limit = { 
+			has_ruler_modifier = U09_conquest_of_gnollkind 
+			FROM = {
+				has_country_modifier = gnollish_administration
+				OR = {
+					is_subject_of_type = tributary_state_anb
+					is_subject_of_type = tributary_state
+				}
+				NOT = { has_country_flag = U09_already_made_tributary }
+			}
+		}
+		add_adm_power = 20
+		add_dip_power = 20
+		add_mil_power = 20
+		change_government_reform_progress = 20
+		FROM = { set_country_flag = U09_already_made_tributary }
+	}
 	
 	#Ardimyan Natives
 
@@ -22448,7 +22474,11 @@ on_dependency_lost = {
 			FROM = { has_country_flag = already_giving_tributary_bonus }
 		}
 		FROM = { clr_country_flag = already_giving_tributary_bonus }
-		subtract_variable = { gnoll_tributary_bonus_count = 1 }
+		#Make sure it doesn't get into the negatives just in case
+		if = {
+			limit = { check_variable = { gnoll_tributary_bonus_count = 1 } }
+			subtract_variable = { gnoll_tributary_bonus_count = 1 }
+		}
 	}
 
 	if = { #istralore subject elector 
@@ -29099,6 +29129,19 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 		country_event = {
 			id = ardimya.10
 		}
+	}
+	#Gnollakaz
+	if = {
+		limit = {
+			has_country_modifier = U09_conquest_of_the_sorrow
+			OR = {
+				FROM = { is_emperor_of_china = yes }
+				ROOT = { is_emperor_of_china = yes }
+				has_global_flag = empire_of_china_dismantled
+				has_global_flag = khet_dead
+			}
+		}
+		remove_country_modifier = U09_conquest_of_the_sorrow
 	}
 }
 
