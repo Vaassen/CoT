@@ -3289,6 +3289,15 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 		limit = { has_province_modifier = U39_protected_religion }
 		remove_province_modifier = U39_protected_religion
 	}
+
+	#Gnollakaz
+	if = {
+		limit = { 
+			has_province_modifier = U09_rule_the_khetists_province
+			NOT = { religion_group = khetist }
+		}
+		remove_province_modifier = U09_rule_the_khetists_province
+	}
 }
 
 on_province_religion_converted_effect = {
@@ -6241,21 +6250,34 @@ on_religion_change_effect = {
 
 	if = { #Oren Nayiru
 		limit = {
-			ai = no
-			religion = oren_nayiru
+			OR = {
+				religion = oren_nayiru
+				religion = oren_nayiru_reformed
+			}
 		}
-		set_global_flag = player_is_oren_nayiru_flag
+		remove_country_modifier = on_persecuting_the_oren_nayiru
+		remove_country_modifier = on_persecuting_the_oren_nayiru_heathen
+		if = {
+			limit = { ai = no }
+			set_global_flag = player_is_oren_nayiru_flag
+		}
 	}
 
 	if = { #Oren Nayiru
 		limit = {
 			has_global_flag = player_is_oren_nayiru_flag
 			ai = no
-			NOT = { religion = oren_nayiru }
+			NOT = {
+				religion = oren_nayiru
+				religion = oren_nayiru_reformed
+			}
 			NOT = {
 				any_country = {
 					ai = no
-					religion = oren_nayiru
+					OR = {
+						religion = oren_nayiru
+						religion = oren_nayiru_reformed
+					}
 				}
 			}
 		}
@@ -6344,6 +6366,19 @@ on_religion_change_effect = {
         }
         else = { change_religion = gods_of_the_taychend_reformed }
     }
+
+	#Gnollakaz
+	if = {
+		limit = { 
+			has_country_modifier = U09_rule_the_khetists
+			NOT = { religion = xhazobkult } 
+		}
+		remove_country_modifier = U09_rule_the_khetists
+		every_owned_province = {
+			limit = { has_province_modifier = U09_rule_the_khetists_province }
+			remove_province_modifier = U09_rule_the_khetists_province
+		}
+	}
 }
 
 
@@ -7401,6 +7436,39 @@ on_war_declaration_effect = {
 				add_country_modifier = {
 					name = U39_hunted_by_the_righteous
 					duration = -1
+				}
+			}
+		}
+	}
+
+	#Gnollakaz
+	if = {
+		limit = {
+			OR = {
+				tag = U09
+				was_tag = U09
+			}
+		}
+		if = {
+			limit = {
+				mission_completed = U09_finish_what_we_started
+				FROM = { is_emperor_of_china = yes }
+			}
+			add_country_modifier = { name = U09_conquest_of_the_sorrow duration = 3650 }
+		}
+		if = {
+			limit = {
+				has_country_modifier = U09_conquest_of_the_sorrow
+				FROM = { NOT = { is_emperor_of_china = yes } }
+			}
+			remove_country_modifier = U09_conquest_of_the_sorrow
+		}
+		if = {
+			limit = { has_country_modifier = U09_rightful_ruler_of_kheterata }
+			FROM = {
+				every_owned_province = {
+					limit = { region = kheterata_region }
+					add_permanent_province_modifier = { name = U09_sanctioned_conquest_of_the_sorrow duration = 3650 }
 				}
 			}
 		}
@@ -9544,6 +9612,42 @@ on_mercenary_recruited_effect = {
 	}
 
 	#Anbennar
+	FROM = { #Conjuration spell mercs
+		country_event = { id = magic_spell.200 } #Summon Animals anti-cheese
+		country_event = { id = magic_spell.201 } #Summon Elementals anti-cheese
+	}
+	if = { #Conjuration project mercs--I feel better about being performant here, less maintenance expected
+		limit = { FROM = { at_least_magic_project_level = { project = summon_extraplanars level = 2 } } }
+		if = {
+			limit = {
+				ROOT = { #No re-hiring level 1 mercs
+					OR = {
+						mercenary_company = merc_angels_base
+						mercenary_company = merc_eldritch_base
+						mercenary_company = merc_devils_base
+					}
+				}
+			}
+			FROM = { country_event = { id = magic_project_summon_extraplanars.70 } }
+		}
+		if = {
+			limit = {
+				FROM = { at_least_magic_project_level = { project = summon_extraplanars level = 3 } }
+				ROOT = { #No re-hiring level 2 mercs
+					OR = {
+						mercenary_company = merc_angels_offense
+						mercenary_company = merc_angels_defense
+						mercenary_company = merc_eldritch_fast
+						mercenary_company = merc_eldritch_mass
+						mercenary_company = merc_devils_frontline
+						mercenary_company = merc_devils_backline
+					}
+				}
+			}
+			FROM = { country_event = { id = magic_project_summon_extraplanars.71 } }
+		}
+	}
+
 	if = {
 		limit = {
 			FROM = {
@@ -9752,7 +9856,14 @@ on_parliament_seat_given_effect = {
 	if = {
 		limit = { owned_by = U39 } #Orenvaylam
 		if = {
-			limit = { owner = { has_country_modifier = U39_kan_oren_dan_manhu_2 } }
+			limit = {
+				owner = {
+					OR = {
+						has_country_modifier = U39_kan_oren_dan_manhu_3
+						has_country_modifier = U39_kan_oren_dan_manhu_2
+					}
+				}
+			}
 			remove_province_modifier = U39_ray_of_dawn_bad
 			add_province_modifier = {
 				name = U39_ray_of_dawn
@@ -10894,6 +11005,13 @@ on_capital_moved_effect = {
 			}
 		}
 	}
+    if = {
+        limit = {
+            FROM = { has_province_modifier = U09_gnollkind_fort }
+            owner = { NOT = { has_country_flag = konolkhatep_can_move_capital } }            
+        }
+        FROM = { remove_province_modifier = U09_gnollkind_fort }
+    }
 }
 
 on_government_change_effect = {
@@ -15876,6 +15994,23 @@ on_province_owner_change_effect = {
 			}
 		}
 		owner = { set_country_flag = cannorian_ardimya_colonist }
+	}
+
+	if = {
+		limit = {
+			religion = oren_nayiru
+			owner = { religion = oren_nayiru_reformed }
+		}
+		change_religion = oren_nayiru_reformed
+	}
+
+	#Gnollakaz
+	if = {
+		limit = { 
+			owner = { has_country_modifier = U09_rule_the_khetists }
+			religion_group = khetist
+		}
+		add_province_modifier = { name = U09_rule_the_khetists_province hidden = yes duration = -1 } 
 	}
 }
 
