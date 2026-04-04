@@ -21,6 +21,7 @@
 @custom_diplomacy_I69_number = 6140
 @custom_diplomacy_Y15_number = 6150
 @custom_diplomacy_U39_number = 6160
+@custom_diplomacy_L80_number = 6170
 
 
 #Place scripted triggers in common\scripted_triggers\anb_scripted_triggers_custom_diplo_ui.txt
@@ -370,6 +371,14 @@ custdip_category_sort_unique = {
 			custdip_unique_U39_trigger = yes
 		}
 		set_variable = { which = show_diplo_container value = @custom_diplomacy_U39_number }
+	}
+	else_if = { #custom_diplomacy_L80 #Zulbur
+		limit = {
+			[[ascending] custdip_sort_ascending = { window_number = @custom_diplomacy_L80_number } ]
+			custdip_unique_L80_trigger = yes
+		}
+		L80_fealty_ai_acceptance_calc_effect = yes
+		set_variable = { which = show_diplo_container value = @custom_diplomacy_L80_number }
 	}
 	else = {
 		[[ascending] #First
@@ -1232,6 +1241,341 @@ Z97_spread_ravelian_estates_ai_acceptance_calc_effect = {
 			#Final calc
 			change_variable = { which = ai_accept_var_button_2 which = ai_accept_var_button_2_pos }
 			change_variable = { which = ai_accept_var_button_2 which = ai_accept_var_button_2_neg }
+		}
+	}
+}
+
+
+
+L80_fealty_ai_acceptance_calc_effect = {
+	hidden_effect = {
+		reset_evaluated_diplomacy_flag = yes
+		FROM = {
+			set_variable = { which = ai_accept_var_button_1 value = 0 }
+			set_variable = { which = ai_accept_var_button_1_pos value = 0 }
+			set_variable = { which = ai_accept_var_button_1_neg value = 0 }
+	
+			export_to_variable = { which = custdip_our_autonomy value = average_autonomy who = FROM }
+			export_to_variable = { which = custdip_their_autonomy value = average_autonomy who = ROOT }
+			export_to_variable = { which = custdip_border_distance value = border_distance who = ROOT with = FROM }
+
+			divide_variable = { which = custdip_our_autonomy value = 100 }
+			divide_variable = { which = custdip_their_autonomy value = 100 }
+			change_variable = { which = custdip_our_autonomy value = -1 }
+			change_variable = { which = custdip_their_autonomy value = -1 }
+			multiply_variable = { which = custdip_our_autonomy value = -1 }
+			multiply_variable = { which = custdip_their_autonomy value = -1 }
+
+			export_to_variable = {
+				which = custdip_relative_economic_base
+				value = total_development
+			}
+
+			export_to_variable = {
+				which = custdip_their_development_zulbur
+				value = total_development
+				who = ROOT
+			}
+
+			#Below calculations are for the relative economic base calculation listed on the vassal page in the wiki. I am ignoring existing vassals because fuck that
+			#Calculate rDev+1 
+			multiply_variable = { which = custdip_relative_economic_base which = custdip_our_autonomy }
+			change_variable = { which = custdip_relative_economic_base value = 10 }
+			divide_variable = { which = custdip_relative_economic_base value = 2 }
+			change_variable = { which = custdip_relative_economic_base value = 1 }
+
+			#Calculate tDev^2/2+1 
+			multiply_variable = { which = custdip_their_development_zulbur which = custdip_their_autonomy }
+			change_variable = { which = custdip_their_development_zulbur value = 10 }
+			divide_variable = { which = custdip_their_development_zulbur value = 2 }
+			multiply_variable = { which = custdip_their_development_zulbur which = custdip_their_development_zulbur }
+			divide_variable = { which = custdip_their_development_zulbur value = 2 }
+			change_variable = { which = custdip_their_development_zulbur value = 1 }
+			
+			#divide r and t dev, multiply by 30, and subtract 90
+			divide_variable = { which = custdip_relative_economic_base which = custdip_their_development_zulbur }
+			multiply_variable = { which = custdip_relative_economic_base value = 30 }
+			change_variable = { which = custdip_relative_economic_base value = -90 }
+
+			#change_variable = { which = ai_accept_var which = custdip_relative_economic_base }
+			round_variable = {
+				which = custdip_relative_economic_base
+				value = 0
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = custdip_relative_economic_base
+						value = 0
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_relative_economic_base }	
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_relative_economic_base }
+			}
+
+			change_variable = { which = ai_accept_var_button_1_pos value = 25 } #Zulbur +25 bonus	
+
+			#Ai acceptance from attitude
+			if = {
+				limit = {
+					OR = {
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_allied } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_friendly } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_threatened } }
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_hostile } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_outraged } }
+						ROOT = { ai_attitude = { who = FROM attitude = attitude_rivalry } }
+					}
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -1000 }
+			}
+			else_if = {
+				limit = {
+					ROOT = { ai_attitude = { who = FROM attitude = attitude_neutral } }
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -20 }
+			}
+
+			#scale based on army strength, wiki doesnt say how military power is calculated so we are going off of vibes
+			if = {
+				limit = {
+					army_strength = { who = ROOT value = 3 }
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 20 }
+			}
+			else_if = {
+				limit = {
+					army_strength = { who = ROOT value = 2 }
+				}
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+			}
+			else_if = {
+				limit = {
+					NOT = { army_strength = { who = ROOT value = 1.5 } }
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -10 }
+			}
+			else_if = {
+				limit = {
+					NOT = { army_strength = { who = ROOT value = 1 } }
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -20 }
+			}
+
+			#trust
+			set_variable = { which = custdip_trust_val value = 0 }
+			if = {
+				limit = { ROOT = { trust = { who = FROM value = 100 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 10 }
+				change_variable = { which = custdip_trust_val value = 10 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 95 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 9 }
+				change_variable = { which = custdip_trust_val value = 9 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 90 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 8 }
+				change_variable = { which = custdip_trust_val value = 8 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 85 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 7 }
+				change_variable = { which = custdip_trust_val value = 7 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 80 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 6 }
+				change_variable = { which = custdip_trust_val value = 6 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 75 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 5 }
+				change_variable = { which = custdip_trust_val value = 5 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 70 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 4 }
+				change_variable = { which = custdip_trust_val value = 4 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 65 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 3 }
+				change_variable = { which = custdip_trust_val value = 3 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 60 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 2 }
+				change_variable = { which = custdip_trust_val value = 2 }
+			}
+			else_if = {
+				limit = { ROOT = { trust = { who = FROM value = 55 } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = 1 }
+				change_variable = { which = custdip_trust_val value = 1 }
+			}
+			else_if = {
+				limit = { NOT = { ROOT = { trust = { who = FROM value = 50 } } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = -40 }
+				change_variable = { which = custdip_trust_val value = -40 }
+			}
+			else_if = {
+				limit = { NOT = { ROOT = { trust = { who = FROM value = 30 } } } }
+				change_variable = { which = ai_accept_var_button_1_pos value = -2000 }
+				change_variable = { which = custdip_trust_val value = -2000 }
+			}
+
+			#royal marriage
+			if = {
+				limit = { ROOT = { marriage_with = FROM } }
+				change_variable = { ai_accept_var_button_1_pos = 10 }
+			}
+
+			#dip rep
+			export_to_variable = {
+				which = custdip_diplo_rep
+				value = modifier:diplomatic_reputation
+			}
+			round_variable = {
+				which = diplomatic_reputation
+				value = 0
+			}
+			multiply_variable = { which = custdip_diplo_rep value = 3 }
+			if = {
+				limit = { diplomatic_reputation = 0 }
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_diplo_rep }
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_diplo_rep }
+			}
+
+			#vassalization reasons
+			export_to_variable = {
+				which = custdip_vassalization_reasons
+				value = modifier:accept_vassalization_reasons
+				who = FROM
+				with = ROOT
+			}
+			if = {
+				limit = { check_variable = { which = custdip_vassalization_reasons value = 1 } }
+				change_variable = { which = ai_accept_var_button_1_pos which = custdip_vassalization_reasons }
+			}
+			else = {
+				change_variable = { which = ai_accept_var_button_1_neg which = custdip_vassalization_reasons }
+			}
+
+			#gov rank
+			set_variable = {
+				which = custdip_gov_rank
+				value = 0
+			}
+			if = {
+				limit = {
+					AND = {
+						FROM = {
+							government_rank = 3
+						}
+						ROOT = {
+							NOT = { government_rank = 2 }
+						}
+					}
+				}
+				change_variable = { which = custdip_gov_rank value = 20 }
+				change_variable = { which = ai_accept_var_button_1_pos value = custdip_gov_rank }
+			}
+			else_if = {
+				limit = {
+					AND = {
+						FROM = {
+							NOT = { government_rank = 2 }
+						}
+						ROOT = {
+							government_rank = 3
+						}
+					}
+				}
+				change_variable = { which = custdip_gov_rank value = -20 }
+				change_variable = { which = ai_accept_var_button_1_neg value = custdip_gov_rank }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						AND = {
+							FROM = {
+								government_rank = 3
+							}
+							ROOT = {
+								government_rank = 2
+								NOT = { government_rank = 3 }
+							}
+						}
+						AND = {
+							FROM = {
+								government_rank = 2
+							}
+							ROOT = {
+								NOT = { government_rank = 2 }
+							}
+						}
+					}
+				}
+				change_variable = { which = custdip_gov_rank value = 10 }
+				change_variable = { which = ai_accept_var_button_1_pos value = custdip_gov_rank }
+			}
+			else_if = {
+				limit = {
+					OR = {
+						AND = {
+							FROM = {
+								government_rank = 2
+								NOT = { government_rank = 3 }
+							}
+							ROOT = {
+								government_rank = 3
+							}
+						}
+						AND = {
+							FROM = {
+								NOT = { government_rank = 2 }
+							}
+							ROOT = {
+								government_rank = 2
+							}
+						}
+					}
+				}
+				change_variable = { which = custdip_gov_rank value = -10 }
+				change_variable = { which = ai_accept_var_button_1_neg value = custdip_gov_rank }
+			}
+			
+			
+
+			#border distance
+			divide_variable = { which = custdip_border_distance value = 2 }
+			round_variable = { which = custdip_border_distance value = 0 }
+			multiply_variable = { which = custdip_border_distance value = -1 }
+			change_variable = { which = ai_accept_var_button_1_neg which = custdip_border_distance }
+
+			#have a core
+			if = {
+				limit = {
+					ROOT = { core_claim = FROM }
+				}
+				change_variable = { which = ai_accept_var_button_1_neg value = -1000 }
+			}
+
+			change_variable = { which = ai_accept_var_button_1 which = ai_accept_var_button_1_pos }
+			change_variable = { which = ai_accept_var_button_1 which = ai_accept_var_button_1_neg }
 		}
 	}
 }
