@@ -602,7 +602,12 @@ ai_magic_siege_pulse = {
 
 # enables counting for a specific school, or overall cast spells with "all"
 start_count_spells_effect = { #school/all
-	set_country_flag = count_$school$_spells
+	[[id] 
+		set_country_flag = count_$school$_$level$_$id$_spell
+	]
+	[[school]
+		set_country_flag = count_$school$_spells
+	]
 }
 # disables counting for a specific school, or overall cast spells with "all"
 stop_count_spells_effect = { #school/all
@@ -726,35 +731,10 @@ abjuration_1_ward_effect = { # Ward
 	}
 }
 abjuration_1_ward_sub_effect = { # Ward sub-effect
-	
-	
 	if = { #Patron buffs
 		limit = { PREV = { OR = { has_ruler_flag = yaksha_patron has_ruler_flag = maiden_patron } } }
 		custom_tooltip = magic_booster_by_patron_tt
 		add_province_modifier = { name = patron_abjuration_ward duration = $duration$ }
-	}
-	if = {
-		limit = { owner = { has_country_flag = V05_upgraded_ward } }
-		add_province_modifier = { name = V05_upgraded_ward_mod duration = 5475 } 
-		custom_tooltip = V05_upgraded_ward_tt
-		owner = {
-			if = {
-				limit = {  at_least_magic_project_level = { project = magical_fortress level = 1 } }
-				every_owned_province = {
-					limit = { 
-						OR = {
-							has_province_modifier = magical_fortress_mod_1
-							has_province_modifier = magical_fortress_mod_2
-							has_province_modifier = magical_fortress_mod_3
-						}
-					}
-					add_province_modifier = {
-						name = V05_magic_fort_upgrade
-						duration = 5475
-					}
-				}
-			}
-		}
 	}
 	else_if = {
 		limit = { owner = { at_least_magic_project_level = { project = magical_fortress level = 3 } } }
@@ -780,8 +760,22 @@ abjuration_1_ward_sub_effect = { # Ward sub-effect
 		custom_tooltip = abjuration_1_ward_upgrade_1
 	}
 	else = {
-			add_province_modifier = { name = abjuration_1_ward_mod_0 duration = $duration$ }
+		add_province_modifier = { name = abjuration_1_ward_mod_0 duration = $duration$ }
 		custom_tooltip = abjuration_1_ward_upgrade_0
+	}
+	if = {
+		limit = { owner = { has_country_flag = V05_upgraded_ward } }
+		owner = {
+			if = {
+				limit = {  at_least_magic_project_level = { project = magical_fortress level = 1 } }
+				capital_scope = {
+					add_province_modifier = {
+						name = V05_magic_fort_upgrade
+						duration = 5475
+					}
+				}
+			}
+		}
 	}
 }
 abjuration_1_protected_journey_effect = { # Protected Journey
@@ -909,7 +903,11 @@ on_conjuration_spell_cast = {
 					duration = -1
 				}
 			}
-			else = {
+			else_if = {
+				limit = {
+					has_country_modifier = V05_stewards_of_past_0
+					NOT = { has_country_modifier = V05_stewards_of_past_5 }
+				}
 				add_country_modifier = {
 					name = V05_stewards_of_past_1
 					duration = -1
@@ -1009,9 +1007,6 @@ conjuration_2_summon_elementals_effect = { # Summon Elementals
 		}
 		custom_tooltip = conjuration_2_summon_spiritfire_elementals_spell_effect_tt
 		add_country_modifier = { name = conjuration_2_summon_spiritfire_elementals_mod duration = 3650 }
-		hidden_effect = {
-			country_event = { id = magic_spell.203 days = 3650 }
-		}
 	}
 	if = { # Summon Greater Elementals
 		limit = {
