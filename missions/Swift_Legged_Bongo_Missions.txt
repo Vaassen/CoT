@@ -185,11 +185,13 @@ S37_2 = {
 		provinces_to_highlight = {  
 			province_id = 5650 #Shalazar
 			NOT = {
-				owned_by = ROOT
-				religion = beast_memory
-				num_of_times_improved_by_owner = 3
-				has_tax_building_trigger = yes
-				province_trade_power = 20
+				AND = {
+					owned_by = ROOT
+					religion = beast_memory
+					num_of_times_improved_by_owner = 3
+					has_tax_building_trigger = yes
+					province_trade_power = 20
+				}
 			}
 		} 
 
@@ -226,6 +228,7 @@ S37_3 = {
 		icon = mission_whisper
 		position = 1
 		provinces_to_highlight = {  
+			is_capital = yes
 			OR = {
 				owner = {
 					tag = L84
@@ -292,21 +295,25 @@ S37_3 = {
 						province_id = 5649 #Godu
 					}
 					NOT = { 
-						owned_by = ROOT 
-						is_core = ROOT
+						AND = {
+							owned_by = ROOT 
+							is_core = ROOT
+						}
 					}
 				}
 				AND = {
 					province_id = 5650 #Shalazar
 					NOT = {
-						num_of_units_in_province = {
-							who = ROOT
-							type = infantry
-							amount = 5
+						AND = {
+							num_of_units_in_province = {
+								who = ROOT
+								type = infantry
+								amount = 5
+							}
+							unrest = 0
+							owned_by = ROOT 
+							is_core = ROOT
 						}
-						unrest = 0
-						owned_by = ROOT 
-						is_core = ROOT
 					}
 				}
 			}
@@ -387,14 +394,7 @@ S37_3 = {
 			OR = {
 				any_known_country = {
 					primary_culture = ashhana_lizardfolk
-					custom_trigger_tooltip = {
-						tooltip = S37_soothing_improve_relations_tt
-						has_opinion_modifier = {
-							who = ROOT
-							modifier = improved_relation
-							value = 80
-						}
-					}
+					has_80_opinion_improved_relation = { target = ROOT }
 					has_country_modifier = S37_bongo_band_mod
 					NOT = {
 						is_vassal = yes
@@ -446,11 +446,7 @@ S37_3 = {
 				limit = {
 					primary_culture = ashhana_lizardfolk
 					has_country_modifier = S37_bongo_band_mod
-					has_opinion_modifier = {
-						who = ROOT
-						modifier = improved_relation
-						value = 60
-					}
+					has_80_opinion_improved_relation = { target = ROOT }
 				}
 				create_alliance = S37
 				add_historical_friend = S37
@@ -488,9 +484,17 @@ S37_3 = {
 		trigger = {  
 			5600 = { #yikikakeli
 				owner = {
-					has_spy_network_from = {
-						who = ROOT
-						value = 30
+					OR = {
+						has_spy_network_from = {
+							who = ROOT
+							value = 30
+						}
+						overlord = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
+							}
+						}
 					}
 				}
 			}
@@ -625,7 +629,6 @@ S37_3 = {
 
 		trigger = {  
 			rindukubunza_area = {
-				type = all
 				OR = {
 					AND = {
 						owned_by = ROOT
@@ -704,7 +707,6 @@ S37_3 = {
 				}
 			}
 			ishyamtumu_region = {
-                type = all
                 NOT = {
 					owner = {
 						culture_group = mengi
@@ -750,9 +752,11 @@ S37_3 = {
 			owner = {
 				is_subject_of = ROOT
 				NOT = {
-					has_country_modifier = S37_bongo_band_mod
-					NOT = {
-						liberty_desire = 35
+					AND = {
+						has_country_modifier = S37_bongo_band_mod
+						NOT = {
+							liberty_desire = 35
+						}
 					}
 				}
 			}
@@ -820,8 +824,8 @@ S37_4 = {
 			owner = {
 				is_subject_of = ROOT
 				NOT = {
-					OR = {
-						num_of_times_improved = 1
+					num_of_times_improved = 1
+					capital_scope = {
 						has_country_modifier = S37_bongo_band_mod
 					}
 				}
@@ -1114,11 +1118,7 @@ S37_4 = {
 				set_variable = { which = totalFomaratiDev value = 0 }
 				every_subject_country = {
 					limit = {
-						5631 = { #cyamutaka
-							owner = { 
-								vassal_of = ROOT
-							}
-						}
+						owns = 5631 # cyamutaka
 						NOT = {
 							OR = {
 								total_development = 100
@@ -1126,20 +1126,17 @@ S37_4 = {
 							}
 						}
 					}
+					ROOT = {
+						export_to_variable = { which = tempVassalDev value = development who = PREV }
+						change_variable = { which = SLBTotalVassalDev which = tempVassalDev }
+					}
 					every_owned_province = {
 						add_core = ROOT
 						cede_province = ROOT
-						ROOT = {
-							export_to_variable = { which = tempVassalDev value = development who = PREV }
-							change_variable = { which = SLBTotalVassalDev which = tempVassalDev }
-						}
 					}
-					
 				}
-				while = { limit = { check_variable = { which = SLBTotalVassalDev value = 1 } }
-					add_dip_power = -2
-					change_variable = { which = SLBTotalVassalDev value = -1 }
-				}
+				multiply_variable = { which = SLBTotalVassalDev value = 2 }
+				var_effect = { effect = add_dip_power var = SLBTotalVassalDev sign = - }
 			}
 			custom_tooltip = S37_ivory_effect_tt
 			hidden_effect = {
@@ -1180,31 +1177,29 @@ S37_4 = {
 			}
 			NOT = {
 				OR = {
-					OR = {
-						owned_by = ROOT
-						owner = {
-							historical_friend_with = ROOT
+					owned_by = ROOT
+					owner = {
+						historical_friend_with = ROOT
+					}
+				}
+				AND = {
+					owned_by = ROOT
+					if = {
+						limit = {
+							NOT = { has_dlc = "Mandate of Heaven" }
+						}
+						5996 = { #zulbur
+							num_of_times_improved_by_owner = 2
 						}
 					}
-					AND = {
-						owned_by = ROOT
-						if = {
-							limit = {
-								NOT = { has_dlc = "Mandate of Heaven" }
-							}
-							5996 = { #zulbur
-								num_of_times_improved_by_owner = 2
-							}
-						}
-						else = {
-							has_state_edict = edict_religious_unity
-						}
-						zulbur_area = {
-							has_tax_building_trigger = yes
-						}
-						kannepa_area = {
-							has_tax_building_trigger = yes
-						}
+					else = {
+						has_state_edict = edict_religious_unity
+					}
+					zulbur_area = {
+						has_tax_building_trigger = yes
+					}
+					kannepa_area = {
+						has_tax_building_trigger = yes
 					}
 				}
 			}
@@ -1287,7 +1282,6 @@ S37_4 = {
 					}
 				}
 				zulbur_area = {
-					type = all
 					limit = {
 						owned_by = ROOT
 					}
@@ -1295,7 +1289,6 @@ S37_4 = {
 					add_nationalism = -20
 				}
 				kannepa_area = {
-					type = all
 					limit = {
 						owned_by = ROOT
 					}
@@ -1327,12 +1320,14 @@ S37_5 = {
 							primary_culture = cyazizeta_lizardfolk
 						}
 						NOT = { 
-							is_subject = yes 
-							OR = {
-								tag = ROOT
-								tag = S83
+							AND = {
+								is_subject = yes 
+								OR = {
+									tag = ROOT
+									tag = S83
+								}
+								has_25_opinion_sent_gift = yes
 							}
-							has_25_opinion_sent_gift = yes
 						}
 					}
 				}
@@ -1717,7 +1712,7 @@ S37_5 = {
 				has_dock_building_trigger = yes
 				OR = {
 					has_province_modifier = merfolk_recently_interacted
-					has_country_flag = merfolk_opinion_allied
+					ROOT = { has_country_flag = merfolk_opinion_allied }
 				}
 				if = {
 					limit = {
@@ -1734,7 +1729,7 @@ S37_5 = {
 					limit = {
 						province_has_center_of_trade_of_level = 3
 					}
-					add_treasury = 500
+					ROOT = { add_treasury = 500 }
 				}
 				else = {
 					add_center_of_trade_level = 1
