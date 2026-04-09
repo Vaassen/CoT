@@ -87,7 +87,7 @@ country_event = { #continued exodus
 			effect = "
 				random_owned_province = {
 					limit = {
-						has_any_goblin_pop_trigger = no
+						NOT = { fast_has_pop_of_race = { race = goblin } }
 					}
 					add_goblin_minority_size_effect = yes
 				}
@@ -712,10 +712,9 @@ country_event = { #violence erupts (in serpentreach)
 				remove_goblin_minority_size_effect = yes
 				remove_goblin_minority_size_effect = yes
 			}
-			else = {
-				set_province_flag = f78_kobolds_are_due
-			}
+			set_province_flag = f78_kobolds_are_due
 		}
+		custom_tooltip = kobolds_take_buradforge_tt
 		serpentreach_region = {
 			if = {
 				limit = { owned_by = ROOT }
@@ -726,38 +725,56 @@ country_event = { #violence erupts (in serpentreach)
 			}
 			set_province_flag = f78_madness_is_due
 		}
+		custom_tooltip = overclan_future_madness_tt
 		unlock_issue = { issue = overclan_inner_holds_representation_act }
 	}
 }
 
-province_event = { #mad dwarovar folk on owner change
+country_event = { #Golden Highway Constructed
 	id = flavour_overclan.22
 	title = flavour_overclan.22
 	desc = flavour_overclan.22
 	picture = COURT_eventPicture
 
-	trigger = {
-		owner = { tag = F78 }
-		region = serpentreach_region
-		has_province_flag = f78_madness_is_due
-	}
-	hidden = yes
 	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			golden_highway_aqatbar = {
+				remove_province_modifier = golden_highway_under_construction
+				golden_highway_complete_construction = yes
+			}
+		}
+	}
 
 	option = {
 		name = flavour_overclan.22.a
-		add_province_modifier = {
-			name = F78_mad_dwarovar_folk
-			duration = -1
+		add_prestige_excess_to_splendour_effect = { VAL = 50 }
+	}
+}
+
+
+
+country_event = { #Golden Highway Constructed
+	id = flavour_overclan.26
+	title = flavour_overclan.26
+	desc = flavour_overclan.26
+	picture = COURT_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			golden_highway_bahar = {
+				remove_province_modifier = golden_highway_under_construction
+				golden_highway_complete_construction = yes
+			}
 		}
-		if = { limit = { has_province_flag = f78_kobolds_are_due }
-			change_religion = nimrithan
-			change_culture = darkscale_kobold
-			remove_dwarven_minority_size_effect = yes
-			remove_dwarven_minority_size_effect = yes
-			remove_goblin_minority_size_effect = yes
-			remove_goblin_minority_size_effect = yes
-		}
+	}
+
+	option = {
+		name = flavour_overclan.26.a
+		add_prestige_excess_to_splendour_effect = { VAL = 50 }
 	}
 }
 
@@ -779,7 +796,7 @@ country_event = { #advisor tax growth
 		voltoj_city_province = {
 			limit = {
 				has_chief_advisor_present = yes
-				NOT = { province_group = voltoj_hold_city_province }
+				NOT = { province_group = hold_province }
 				OR = {
 					AND = { NOT = { development = 60 } has_large_voltoj_academy = yes }
 					AND = { NOT = { development = 50 } has_major_voltoj_academy = yes }
@@ -818,7 +835,7 @@ country_event = { #advisor tax growth (holds)
 		voltoj_city_province = {
 			limit = {
 				has_chief_advisor_present = yes
-				province_group = voltoj_hold_city_province
+				province_group = hold_province
 				OR = {
 					NOT = { development = 60 }
 					AND = {
@@ -867,11 +884,17 @@ province_event = { #dwarven claim due
 		owner = { tag = F78 }
 		OR = {
 			AND = {
-				owner = { has_country_flag = f78_dwarven_claim_due }
 				region = serpentreach_region
 				OR = {
-					province_group = dwarovrod_group
-					province_group = hold_province
+					AND = {
+						OR = {
+							province_group = dwarovrod_group
+							province_group = hold_province
+						}
+						owner = { has_country_flag = f78_dwarven_claim_due }
+					}
+					has_province_flag = f78_madness_is_due
+					has_province_flag = f78_kobolds_are_due
 				}
 			}
 			AND = {
@@ -891,9 +914,42 @@ province_event = { #dwarven claim due
 		name = flavour_overclan.25.a
 		if = {
 			limit = { region = serpentreach_region }
-			change_culture = marble_dwarf
+			if = {
+				limit = {
+					OR = {
+						province_group = hold_province
+						has_terrain = dwarven_road
+					}
+					owner = { has_country_flag = f78_dwarven_claim_due } #just in case
+				}
+				change_religion = ancestor_worship
+				change_culture = marble_dwarf
+			}
+			if = { limit = { has_province_flag = f78_madness_is_due }
+				add_province_modifier = {
+					name = F78_mad_dwarovar_folk
+					duration = -1
+				}
+			}
+			if = { limit = { area = buradforge_area has_province_flag = f78_kobolds_are_due }
+				change_religion = nimrithan
+				change_culture = darkscale_kobold
+				remove_dwarven_minority_size_effect = yes
+				remove_dwarven_minority_size_effect = yes
+				remove_goblin_minority_size_effect = yes
+				remove_goblin_minority_size_effect = yes
+			}
 		}
-		else = {
+		if = {
+			limit = {
+				OR = {
+					region = middle_dwarovar_region
+					province_id = 2915 #hero's vale
+				}
+				NOT = { culture_group = dwarven }
+				owner = { has_country_flag = f78_dwarf_recruits_due } #just in case
+			}
+			change_religion = ancestor_worship
 			random_list = {
 				10 = { change_culture = gold_dwarf }
 				10 = { change_culture = titanium_dwarf }
@@ -902,44 +958,7 @@ province_event = { #dwarven claim due
 				10 = { change_culture = citrine_dwarf }
 			}
 		}
-		change_religion = ancestor_worship
-	}
-}
-
-province_event = { #populate the holds due
-	id = flavour_overclan.26
-	title = flavour_overclan.26
-	desc = flavour_overclan.26
-	picture = COURT_eventPicture
-
-	trigger = {
-		owner = {
-			tag = F78
-			OR = {
-				has_enacted_parliament_action = { parliament_action = overclan_goblins_orcs_holds_act }
-				has_enacted_parliament_action = { parliament_action = overclan_dwarven_tax_and_trade_rights }
-			}
-		}
-		province_group = hold_province
 		
-	}
-	hidden = yes
-	is_triggered_only = yes
-
-	option = {
-		name = flavour_overclan.26.a
-		if = {
-			limit = { owner = { has_enacted_parliament_action = { parliament_action = overclan_goblins_orcs_holds_act } } }
-			add_goblin_minority_size_effect = yes
-			add_orcish_minority_size_effect = yes
-		}
-		if = {
-			limit = { owner = { has_enacted_parliament_action = { parliament_action = overclan_dwarven_tax_and_trade_rights } } }
-			add_province_modifier = {
-				name = F78_dwarven_autonomy_mod
-				duration = -1
-			}
-		}
 	}
 }
 
@@ -1473,7 +1492,7 @@ country_event = { #the caverns people (goblins orcs holds act)
 					random_owned_province = {
 						limit = {
 							superregion = bulwar_superregion
-							has_any_goblin_pop_trigger = no
+							NOT = { fast_has_pop_of_race = { race = goblin } }
 						}
 						add_goblin_minority_size_effect = yes
 					}
@@ -1486,7 +1505,7 @@ country_event = { #the caverns people (goblins orcs holds act)
 						limit = {
 							superregion = bulwar_superregion
 							NOT = { development = 10 }
-							has_any_orcish_pop_trigger = no
+							NOT = { fast_has_pop_of_race = { race = orcish } }
 						}
 						add_orcish_minority_size_effect = yes
 					}
@@ -1629,7 +1648,7 @@ country_event = { #overboss election
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = overboss_elected
 		OR = {
-			NOT = { voltoj_city_province = { has_province_modifier = F78_ca_overboss } }
+			had_country_flag = { flag = overboss_elected days = 3648 }
 			has_country_flag = emergency_overboss_election
 		}
 	}
@@ -1991,7 +2010,7 @@ country_event = { #hills (the base group)
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = hills_elected
 		OR = {
-			NOT = { voltoj_city_hills_province = { has_province_modifier = F78_ca_hills } }
+			had_country_flag = { flag = hills_elected days = 3648 }
 			has_country_flag = emergency_hills_election
 		}
 	}
@@ -2162,7 +2181,7 @@ country_event = { #upper river
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = upper_river_elected
 		OR = {
-			NOT = { voltoj_city_lower_river_province = { has_province_modifier = F78_ca_upper_river } }
+			had_country_flag = { flag = upper_river_elected days = 3648 }
 			has_country_flag = emergency_upper_river_election
 		}
 	}
@@ -2292,7 +2311,7 @@ country_event = { #lower river
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = lower_river_elected
 		OR = {
-			NOT = { voltoj_city_lower_river_province = { has_province_modifier = F78_ca_lower_river } }
+			had_country_flag = { flag = lower_river_elected days = 3648 }
 			has_country_flag = emergency_lower_river_election
 		}
 	}
@@ -2432,7 +2451,7 @@ country_event = { #serpentreach holds
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = serpent_elected
 		OR = {
-			NOT = { voltoj_city_serpent_province = { has_province_modifier = F78_ca_serpent } }
+			had_country_flag = { flag = serpent_elected days = 3648 }
 			has_country_flag = emergency_serpent_election
 		}
 	}
@@ -2527,7 +2546,7 @@ country_event = { #segband holds
 		has_government_attribute = voltoj_advisors_enabled
 		has_country_flag = segband_elected
 		OR = {
-			NOT = { voltoj_city_segband_province = { has_province_modifier = F78_ca_segband } }
+			had_country_flag = { flag = segband_elected days = 3648 }
 			has_country_flag = emergency_segband_election
 		}
 	}
@@ -2805,7 +2824,7 @@ province_event = { #Hills academy expansion menu
 		else_if = {
 			limit = { voltoj_can_afford_upgrade_to_large = no }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_60_dev_tt
 			}
 			else = {
@@ -2829,7 +2848,7 @@ province_event = { #Hills academy expansion menu
 		else_if = {
 			limit = { voltoj_can_afford_upgrade_to_medium = no }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_50_dev_tt
 			}
 			else = {
@@ -2887,7 +2906,7 @@ province_event = { #Hills academy expansion menu
 		else_if = {
 			limit = { NOT = { voltoj_can_afford_upgrade_unique = yes } }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_70_dev_tt
 			}
 			else = {
@@ -3293,7 +3312,7 @@ province_event = { #overboss academy expansion menu
 		else_if = {
 			limit = { voltoj_can_afford_upgrade_to_large = no }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_60_dev_tt
 			}
 			else = {
@@ -3329,7 +3348,7 @@ province_event = { #overboss academy expansion menu
 		else_if = {
 			limit = { voltoj_can_afford_upgrade_to_medium = no }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_50_dev_tt
 			}
 			else = {
@@ -3377,7 +3396,7 @@ province_event = { #overboss academy expansion menu
 		else_if = {
 			limit = { NOT = { voltoj_can_afford_upgrade_unique = yes } }
 			if = {
-				limit = { province_group = voltoj_hold_city_province }
+				limit = { province_group = voltoj_city_province province_group = hold_province }
 				custom_tooltip = overclan_requires_70_dev_tt
 			}
 			else = {
