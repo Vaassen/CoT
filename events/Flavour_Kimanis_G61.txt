@@ -10,6 +10,16 @@ country_event = { # something ferments in kimanis
 	picture = TODO
 	is_triggered_only = yes
 
+	trigger = {
+		religion = kheionism
+		capital_scope = {
+			region = alecand_region
+		}
+		owns = 2732
+		is_year = 1460
+		NOT = { tag = G61 }
+	}
+
 	option = { # increase the garrisons!
 		name = flavour_kimanis.1.a
 		ai_chance = {
@@ -75,8 +85,14 @@ country_event = { # all's well that ends well
 			set_ruler = G61_heroic_ruler
 		}
 		
+		if = {
+			limit = { mil = 6 }
+			add_mil_power = 100
+		}
+		else = {
+			change_mil = 1
+		}
 		
-		change_mil = 1
 		if = {
 			limit = { has_country_flag = G61_highest_indep_rewards }
 			add_prestige = 75
@@ -194,6 +210,7 @@ country_event = { # over a cup of wine
 			limit = {
 				ai = no
 			}
+			custom_tooltip = G61_cooperation_with_winecults_tt
 			set_country_flag = G61_cooperation_with_winecults # enable coopertion with winecults
 		}
 		add_country_modifier = {
@@ -270,7 +287,7 @@ country_event = { # ...and paying it's price
 		ai_chance = { factor = 50 }
 
 		add_army_professionalism = -0.05
-		add_loot_from_province_effect = yes
+		add_loot_from_province_effect_twice = yes
 		2731 = { # oktikheion
 			add_devastation = 75
 		}
@@ -384,7 +401,7 @@ country_event = { # Hear me, Hounds of Askóvoinos!
 						}
 						
 					}
-					G61 = {
+					owner = {
 						add_manpower = 1
 					}
 					2732 = {
@@ -428,19 +445,21 @@ province_event = { # planting the vines
 	is_triggered_only = yes
 
 	immediate = {
-		hidden_effect = {
-			change_variable = {
-				which = vinecount_G61
-				value = 1
-			}
-			if = {
-				limit = {
-					check_variable = {
-    					which = vinecount_G61
-    					value = 10
-					}
+		hidden_effect  = {
+			owner = {
+				change_variable = {
+					which = vinecount_G61
+					value = 1
 				}
-				owner = { clr_country_flag = G61_vine_planting }
+				if = {
+					limit = {
+						check_variable = {
+							which = vinecount_G61
+							value = 10
+						}
+					}
+					clr_country_flag = G61_vine_planting
+				}
 			}
 		}
 	}
@@ -464,20 +483,6 @@ province_event = { # planting the vines
 			name = G61_kimabhen_dyes_expertise
 			duration = -1
 		}
-	}
-}
-country_event = { # event for fear and loathing spell effect override
-	id = flavour_kimanis.16
-	title = flavour_kimanis.16.t
-	desc = flavour_kimanis.16.d
-	picture = PANIC_eventPicture
-	is_triggered_only = yes
-
-	option = {
-		name = flavour_kimanis.16.a
-		ai_chance = { factor = 1 }
-		
-		tooltip = { capital_scope = { kimanis_wine_cultists = 1 } }
 	}
 }
 
@@ -533,6 +538,9 @@ country_event = { # winecultists spread - on biyearly pulse
 						}
 					}
 					NOT = { has_province_modifier = G61_wine_cult_cooldown }
+					owner = {
+						NOT = { has_country_modifier = G61_wine_cult_cooldown_country }
+					}
 				}
 			}
 			random_neighbor_province = {
@@ -544,6 +552,9 @@ country_event = { # winecultists spread - on biyearly pulse
 						}
 					}
 					NOT = { has_province_modifier = G61_wine_cult_cooldown }
+					owner = {
+						NOT = { has_country_modifier = G61_wine_cult_cooldown_country }
+					}
 				}
 				G61_add_wine_cults = yes
 			}
@@ -560,6 +571,9 @@ country_event = { # winecultists spread - on biyearly pulse
 						}
 					}
 					NOT = { has_province_modifier = G61_wine_cult_cooldown }
+					owner = {
+						NOT = { has_country_modifier = G61_wine_cult_cooldown_country }
+					}
 				}
 			}
 
@@ -572,6 +586,9 @@ country_event = { # winecultists spread - on biyearly pulse
 						}
 					}
 					NOT = { has_province_modifier = G61_wine_cult_cooldown }
+					owner = {
+						NOT = { has_country_modifier = G61_wine_cult_cooldown_country }
+					}
 				}
 				G61_add_wine_cults = yes
 			}
@@ -604,6 +621,7 @@ country_event = { # show the effect of starting the war
 		
 		if = {
 			limit = { has_global_flag = G61_independence_buff }
+			custom_tooltip = G61_for_kimanis_tt_1
 			add_country_modifier = {
 				name = G61_hidden_weapon_caches
 				duration = 1825 # 5y
@@ -612,9 +630,12 @@ country_event = { # show the effect of starting the war
 		}
 		if = {
 			limit = { has_country_flag = G61_stab_refund }
+			custom_tooltip = G61_for_kimanis_tt_2
 			add_stability = 3
 		}
+		custom_tooltip = G61_for_kimanis_tt_3
 		hidden_effect = {
+			add_manpower = 10
 			event_target:oppressor_kimanis = {
 				trigger_switch = { # is it kinda unecessary? yeah, but it's fancy
 					on_trigger = total_development
@@ -626,6 +647,35 @@ country_event = { # show the effect of starting the war
 					}
 					1 = {
 						G61 = { set_country_flag = G61_normal_indep_rewards }
+					}
+				}
+				declare_war_with_cb = {
+					who = G61
+					casus_belli = cb_core
+					war_goal_province = 2732
+				}
+				if = { # if player is a rival of kimanis revolt tag, they can 100% intervene
+					limit = {
+						any_enemy_country = {
+							capital_scope = { superregion = kheionai_superregion }
+							ai = no
+						}
+					}
+					random_enemy_country = {
+						limit = {
+							capital_scope = { superregion = kheionai_superregion }
+							ai = no
+						}
+						country_event = { id = kheionai_flavour.2 } # intervene in kimanis
+					}
+				}
+				else = { # no player is a rival of kimanis, so a random rival intervenes
+					random_enemy_country = {
+						limit = {
+							capital_scope = { superregion = kheionai_superregion }
+							is_at_war = NO
+						}
+						country_event = { id = kheionai_flavour.2 } # intervene in kimanis
 					}
 				}
 			}
