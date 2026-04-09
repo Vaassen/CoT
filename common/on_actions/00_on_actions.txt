@@ -178,6 +178,7 @@ on_startup = {
 		flavour_nispac.1 #Nispac Starting Event
 		flavor_beikdugang.17 # Beikdugang intro
 		flavour_gnollakaz.1 #Gnollakaz Starting Event
+		iochand.0 #Portnamm and Southroy Starting Event
 
 		#Silver Families
 		silver_families.1		#Silmuna
@@ -1266,8 +1267,10 @@ on_peace_actor = {
 			target = ROOT
 		}
 	}
-
-	
+	if = { #Iochand
+		limit = { has_country_modifier = A80_diplo_upkeep_mod }
+		country_event = { id = iochand.104 days = 1 }
+	}
 }
 
 # country
@@ -5088,6 +5091,8 @@ on_new_monarch = {
 		planetouched.106 # Ardimya auto-create planetouched ruler
 		planetouched.1 #New Planetouched ruler
 		orenvalyam_events.101 #Orenvalyam turn heir mods into ruler mods
+
+		iochand.4 #Non gnomish ruler as Gnomish Monarchy
 	}
 
 	random_events = {
@@ -11513,6 +11518,7 @@ on_thri_yearly_pulse = {
 		goblinic_shamanism_flavor.0 #Goblinic shamanism spread from owned prov
 		infinite_self.4 #Infinite Self Colonizer Check
 		tsukqiao.200 #Tsukqiao High Philosophy Opinion
+		iochand.30 #Iochand Free Paradise event handler
 	}
 }
 
@@ -11927,6 +11933,9 @@ on_thri_yearly_pulse_3 = {
 		75 = tributary_events.26
 		75 = tributary_events.25
 		75 = tributary_events.27
+
+		#Iochand, feuding hezoggdoums
+		150 = iochand.51
 
 		1000 = 0
 	}
@@ -12825,6 +12834,8 @@ on_four_year_pulse_2 = {
 		empire_333.249 #333 ai event
 
 		flavour_gor_vazumbrog.791
+		
+		iochand.52 #Iochandizing for ai
 	}
 }
 
@@ -14006,6 +14017,7 @@ on_five_year_pulse = {
 		flavour_flying_hound.300 #Emulant Event
 		ardimya.1 #Ardimya Event Chain Start
 		mechanim.1000 #Mechanim Age Decay Event
+		iochand.50 #Gnomed
 	}
 	ai_magic_xp_pulse = yes
 	mechanim_automatory_cooldown_effect = yes
@@ -22364,6 +22376,42 @@ on_dependency_gained = {
 			id = lupulan_events.1020
 		}
 	}
+
+	#Iochand
+	if = {
+		limit = {
+			OR = {
+				is_or_was_tag = { tag = A80 }
+				AND = {
+					tag = A19
+					has_country_flag = daccasded_not_portnamm
+				}
+			}
+		}
+		iochand_on_dependency_gained = yes
+	}
+
+	#PUT NEW EFFECT ABOVE THIS
+	FROM = { #Disable election for republic pu
+		if = { 
+			limit = {
+				government = republic
+				OR = {
+					is_subject_of_type = personal_union
+					is_subject_of_type = twin_empire
+				}
+			}
+			set_country_flag = no_elections
+			if = {
+				limit = { is_subject_of_type = personal_union }
+				set_country_flag = was_republic_personal_union
+			}
+			else_if = {
+				limit = { is_subject_of_type = twin_empire }
+				set_country_flag = was_republic_twin_empire
+			}
+		}
+	}
 }
 # ROOT = Overlord, FROM = Minor
 on_dependency_lost = {
@@ -22886,6 +22934,49 @@ on_dependency_lost = {
 		}
 		country_event = {
 			id = lupulan_events.1020
+		}
+	}
+
+	#Iochand
+	if = {
+		limit = {
+			OR = {
+				is_or_was_tag = { tag = A80 }
+				AND = {
+					tag = A19
+					has_country_flag = daccasded_not_portnamm
+				}
+			}
+		}
+		iochand_on_dependency_lost = yes
+	}
+	if = {
+		limit = {
+			FROM = {
+				OR = {
+					is_subject_of_type = hezoggdoum
+					is_subject_of_type = aelantir_hezoggdoum
+					is_subject_of_type = daccasded
+				}
+			}
+			NOT = { has_reform = iochand_gnomish_monarchy }
+		}
+		FROM = { country_event = { id = iochand.102 } } #changes to vassal
+	}
+
+	#PUT NEW EFFECT ABOVE THIS
+	FROM = { #Reenable election for former republic pu
+		if = { 
+			limit = {
+				has_country_flag = no_elections
+				OR = {
+					has_country_flag = was_republic_personal_union
+					has_country_flag = was_republic_twin_empire
+				}
+			}
+			clr_country_flag = no_elections
+			clr_country_flag = was_republic_personal_union
+			clr_country_flag = was_republic_twin_empire
 		}
 	}
 }
@@ -24890,6 +24981,87 @@ on_trade_good_changed = {
 			}
 		}
 		else = { remove_province_modifier = U39_relic_trade_outlawed }
+	}
+	#Iochand invention effect for subject, this one need priv check because of daccasded
+	if = {
+		limit = {
+			FROM = {
+				overlord = {
+					OR = {
+						is_or_was_tag = { tag = A80 }
+						AND = {
+							tag = A19
+							has_country_flag = daccasded_not_portnamm
+						}
+					}
+				}
+			}
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_estate_privilege = artifice_invention_rapid_fermentation
+						has_country_modifier = A80_rapid_fermentation
+					}
+				}
+				OR = {
+					trade_goods = wine
+					trade_goods = grain
+				}
+			}
+			add_province_modifier = {
+				name = A80_rapid_fermentation_prov
+				duration = -1
+			}
+		}
+		else = {
+			remove_province_modifier = A80_rapid_fermentation_prov
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_estate_privilege = artifice_invention_plant_grown_animals
+						has_country_modifier = A80_plant_grown_animals
+					}
+				}
+				OR = {
+					trade_goods = wool
+					trade_goods = livestock
+					trade_goods = fish
+				}
+			}
+			add_province_modifier = {
+				name = A80_plant_grown_animals_prov
+				duration = -1
+			}
+		}
+		else = {
+			remove_province_modifier = A80_plant_grown_animals_prov
+		}
+		if = {
+			limit = {
+				FROM = {
+					OR = {
+						has_estate_privilege = artifice_invention_ravenous_fertilizer
+						has_country_modifier = A80_ravenous_fertilizer
+					}
+				}
+				OR = {
+					trade_goods = grain
+					trade_goods = fungi
+					trade_goods = tobacco
+				}
+			}
+			add_province_modifier = {
+				name = A80_ravenous_fertilizer_prov
+				duration = -1
+			}
+		}
+		else = {
+			remove_province_modifier = A80_ravenous_fertilizer_prov
+		}
 	}
 }
 
@@ -28103,29 +28275,45 @@ on_colony_finished = { #ROOT - Province
 	}
 
 	#Iochand
-	if = {
+	if = { #flip culture
 		limit = {
 			owner = {
 				OR = {
-					tag = A80
+					is_or_was_tag = { tag = A80 }
 					AND = {
 						tag = A19
 						has_country_flag = daccasded_not_portnamm
 					}
+					is_subject_of_type = hezoggdoum
+					is_subject_of_type = aelantir_hezoggdoum
 				}
 			}
 		}
 		if = {
 			limit = {
-				owner = {
-					has_country_flag = hide_iochand_colony_shift 
-				}
+				owner = { has_country_flag = hide_iochand_colony_shift }
 			}
 			province_event = { id = iochand.3 }
 		}
 		else = {
 			province_event = { id = iochand.2 }
 		}
+	}
+	if = {
+		limit = {
+			OR = {
+				superregion = ruin_proper_superregion
+				region = soruin_region
+				superregion = torn_gates_superregion
+			}
+			owner = {
+				OR = {
+					is_or_was_tag = { tag = A80 }
+					overlord = { is_or_was_tag = { tag = A80 } }
+				}
+			}
+		}
+		province_event = { id = iochand.101 }
 	}
 
 	#Ovdal-az-An
