@@ -2434,7 +2434,9 @@ kobold_export_build_cost_and_time = { #Stolen from Holds
 		which = localTime
 		which = globalTime
 	}
-
+}
+kobold_create_tooltip_for_building = { #Cool effect put base_cost and base_time get kobold_cost and kobold_time digested by province build cost and time :O
+	kobold_export_build_cost_and_time = yes #Yes I suck at making comments
 	##these are just for the tooltips
 	#cap time to -85
 	if = {
@@ -2446,9 +2448,7 @@ kobold_export_build_cost_and_time = { #Stolen from Holds
 		limit = { NOT = { check_variable = { localCost = -0.910 } } }
 		set_variable = { localCost = -0.900 }
 	}
-}
-kobold_create_tooltip_for_building = { #Cool effect put base_cost and base_time get kobold_cost and kobold_time digested by province build cost and time :O
-	kobold_export_build_cost_and_time = yes
+	#
 	set_variable = {
 		which = kobold_time
 		value = 1
@@ -2641,6 +2641,36 @@ kobold_citadel_start_expanding = {
 	}
 }
 kobold_citadel_add_construction = {
+	#Okay so we need to make sure that its acctually capped at -85% time and -90% cost
+	kobold_export_build_cost_and_time = yes
+	if = {
+		limit = { NOT = { check_variable = { localTime = 0.01 } } }
+		multiply_variable = { which = localTime value = -1 }
+	}
+	add_modifier_to_cap_building_speed = { variable = localTime }
+	if = {
+		limit = {
+			NOT = { check_variable = { local_build_cost = -0.9 } } #If you have more than 90% reduction of cost just eat 10% 
+		}
+		set_variable = {
+			cappedcost = $cost$
+		}
+		multiply_variable = { which = cappedcost value = 0.1 }
+		while = {
+			limit = {
+				check_variable = {
+					which = cappedcost
+					value = 1
+				}
+			}
+			subtract_variable = {
+				which = cappedcost
+				value = 1
+			}
+			add_treasury = -1
+		}
+	}
+	#
 	cancel_construction = yes
 	add_building_construction = { building = kobold_citadel_expansion speed = $speed$ cost = $cost$ }
 }
