@@ -454,10 +454,12 @@ generic_cast_spell = { #Duplicate relevant changes in 'magical_tradition_cast_sp
 	]
 
 	hidden_effect = {
-		count_spells_effect = { school = $school$ }
+		count_spells_effect = { school = $school$ level = $level$ id = $id$ }
 	}
 	
 	on_$school$_spell_cast = yes
+
+	on_level_$level$_spell_cast = yes
 
 	$school$_$level$_$id$_effect = yes
 }
@@ -505,10 +507,12 @@ magical_tradition_cast_spell = { #Duplicate relevant changes in 'generic_cast_sp
 	]
 
 	hidden_effect = {
-		count_spells_effect = { school = $school$ }
+		count_spells_effect = { school = $school$ level = $level$ id = $id$ }
 	}
 	
 	on_$school$_spell_cast = yes
+	
+	on_level_$level$_spell_cast = yes
 	
 	$school$_$level$_$id$_effect = yes
 }
@@ -567,6 +571,10 @@ clear_active_war_magic = {
 
 	#Gasha
 	remove_country_modifier = L76_shock_and_awe
+
+	#Cangji 
+	remove_country_modifier = V05_elemental_fury_upgrade
+	remove_country_modifier = V05_shock_and_awe
 }
 
 remove_harmful_siege_magic = { #Remove siege magic that's bad after you siege down a province
@@ -597,15 +605,20 @@ ai_magic_siege_pulse = {
 start_count_spells_effect = { #school/all
 	set_country_flag = count_$school$_spells
 }
+start_count_specific_spell_effect = { #specific spell: school, level, id
+	set_country_flag = count_$school$_$level$_$id$_spell
+}
 # disables counting for a specific school, or overall cast spells with "all"
 stop_count_spells_effect = { #school/all
 	clr_country_flag = count_$school$_spells
+}
+stop_count_specific_spell_effect = { #specific spell: school, level, id
+	clr_country_flag = count_$school$_$level$_$id$_spell
 }
 start_count_mana_spent_on_spells = { #school/all
     set_country_flag = count_$school$_spell_mana
     set_variable = { which = count_$school$_spell_mana value = 0 }
 }
-
 
 count_spells_effect = { #school/all, internal use
     if = {
@@ -616,6 +629,10 @@ count_spells_effect = { #school/all, internal use
         limit = { has_country_flag = count_all_spells }
         change_variable = { which = all_spell_count value = 1 }
     }
+	if = {
+		limit = { has_country_flag = count_$school$_$level$_$id$_spell }
+		change_variable = { which = $school$_$level$_$id$_spell_count value = 1 }
+	}
 }
 
 count_mana_spent_on_spells = { #school/all, internal use
@@ -630,13 +647,62 @@ count_mana_spent_on_spells = { #school/all, internal use
 		}
 	}
 }
+on_level_0_spell_cast = {
+	if = {
+		limit = { has_country_flag = power_points_on_spell_cast }
+		add_adm_power = 10
+		add_dip_power = 10
+		add_mil_power = 10
+		custom_tooltip = power_points_on_spell_cast_tt
+	}
+}
+on_level_1_spell_cast = {
+	if = {
+		limit = { has_country_flag = power_points_on_spell_cast }
+		add_adm_power = 20
+		add_dip_power = 20
+		add_mil_power = 20
+		custom_tooltip = power_points_on_spell_cast_tt
+	}
+}
+on_level_2_spell_cast = {
+	if = {
+		limit = { has_country_flag = power_points_on_spell_cast }
+		add_adm_power = 30
+		add_dip_power = 30
+		add_mil_power = 30
+		custom_tooltip = power_points_on_spell_cast_tt
+	}
+}
+on_level_3_spell_cast = {
+	if = {
+		limit = { has_country_flag = power_points_on_spell_cast	}
+		add_adm_power = 40
+		add_dip_power = 40
+		add_mil_power = 40
+		custom_tooltip = power_points_on_spell_cast_tt
+	}
+}
+
+
 
 ##################
 ### ABJURATION ###
 ##################
 
 on_abjuration_spell_cast = {
-
+	    if = {
+        limit = {
+            check_variable = { which = V05_bazuneizar_abjuration_dev_var value = 1 }
+        }
+        5200 = {
+            add_base_production = 1
+        }
+        subtract_variable = {
+            which = V05_bazuneizar_abjuration_dev_var
+            value = 1
+        }
+    }
 }
 
 abjuration_0_combat_ward_effect = { # Combat Ward
@@ -655,7 +721,6 @@ abjuration_1_ward_sub_effect = { # Ward sub-effect
 		custom_tooltip = magic_booster_by_patron_tt
 		add_province_modifier = { name = patron_abjuration_ward duration = $duration$ }
 	}
-
 	if = {
 		limit = { PREV = { at_least_magic_project_level = { project = magical_fortress level = 3 } } }
 		add_province_modifier = { name = abjuration_1_ward_mod_3 duration = $duration$ }
@@ -682,6 +747,29 @@ abjuration_1_ward_sub_effect = { # Ward sub-effect
 	else = {
 		add_province_modifier = { name = abjuration_1_ward_mod_0 duration = $duration$ }
 		custom_tooltip = abjuration_1_ward_upgrade_0
+	}
+	if = {
+		limit = { owner = { has_country_flag = V05_upgraded_ward } }
+		custom_tooltip = V05_upgraded_ward_tt
+		add_province_modifier = { name = V05_devastation_ward duration = $duration$ }
+		every_neighbor_province = {
+			limit = { owned_by = V05 }
+			add_province_modifier = { name = V05_devastation_ward duration = $duration$ }
+		}
+		owner = {
+			if = {
+				limit = { at_least_magic_project_level = { project = magical_fortress level = 3 } }
+				capital_scope = { add_province_modifier = { name = V05_magic_fort_upgrade_3 duration = $duration$ } }
+			}
+			else_if = {
+				limit = { at_least_magic_project_level = { project = magical_fortress level = 2 } }
+				capital_scope = { add_province_modifier = { name = V05_magic_fort_upgrade_2 duration = $duration$ } }
+			}
+			else_if = {
+				limit = { at_least_magic_project_level = { project = magical_fortress level = 1 } }
+				capital_scope = { add_province_modifier = { name = V05_magic_fort_upgrade_1 duration = $duration$ } }
+			}
+		}
 	}
 }
 abjuration_1_protected_journey_effect = { # Protected Journey
@@ -713,7 +801,7 @@ abjuration_3_field_of_forbiddance_effect = { # Field of Forbiddance
 	if = {
 		limit = {
 			6729 = { #Have Azmera's Wezinmesig
-				owned_by = ROOT
+				owned_by = PREV
 				has_great_project = { 
 					type = azmeras_wezinmesig
 					tier = 3
@@ -760,7 +848,60 @@ abjuration_3_field_of_forbiddance_sub_effect = {
 ###################
 
 on_conjuration_spell_cast = {
-	
+	if = {
+		limit = { 
+			has_country_flag = V05_stewards_of_past_flag 
+			NOT = { has_country_modifier = V05_stewards_of_past_5 }
+			check_variable = {
+				which = count_conjuration_spell_mana
+				value = 500
+			}
+		}
+		change_variable = {
+			which = count_conjuration_spell_mana
+			value = -500
+		}
+		if = {
+			limit = { has_country_modifier = V05_stewards_of_past_4 }
+			remove_country_modifier = V05_stewards_of_past_4
+			add_country_modifier = {
+				name = V05_stewards_of_past_5
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = V05_stewards_of_past_3 }
+			remove_country_modifier = V05_stewards_of_past_3
+			add_country_modifier = {
+				name = V05_stewards_of_past_4
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = V05_stewards_of_past_2 }
+			remove_country_modifier = V05_stewards_of_past_2
+			add_country_modifier = {
+				name = V05_stewards_of_past_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = V05_stewards_of_past_1 }
+			remove_country_modifier = V05_stewards_of_past_1
+			add_country_modifier = {
+				name = V05_stewards_of_past_2
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = V05_stewards_of_past_0 }
+			add_country_modifier = {
+				name = V05_stewards_of_past_1
+				duration = -1
+			}
+			remove_country_modifier = V05_stewards_of_past_0
+		}
+	}
 }
 
 conjuration_0_summon_familiars_effect = { # Summon Familiars
@@ -792,18 +933,30 @@ conjuration_0_summon_familiars_effect = { # Summon Familiars
 	}
 }
 conjuration_1_summon_animals_effect = { # Summon Animals
-	custom_tooltip = conjuration_1_summon_animals_spell_effect_tt
-	add_country_modifier = { name = conjuration_1_summon_animals_mod duration = 1825 }
+	if = {
+		limit = { has_country_flag = V05_shock_and_awe_upgrade_flag }
+		custom_tooltip = conjuration_1_summon_elemental_animals_spell_effect_tt
+		add_country_modifier = { name = conjuration_1_summon_elemental_animals_mod duration = 1825 }
+	}
+	else = {
+		custom_tooltip = conjuration_1_summon_animals_spell_effect_tt
+		add_country_modifier = { name = conjuration_1_summon_animals_mod duration = 1825 }
+	}
 	hidden_effect = { country_event = { id = magic_spell.202 days = 1826 } }
 }
 conjuration_1_conjure_supplies_effect = { # Conjure Supplies
 	add_country_modifier = { name = conjuration_1_conjure_supplies_mod duration = 3650 }
 }
 conjuration_2_summon_elementals_effect = { # Summon Elementals
-	if = { # Summon Greater Elementals
+	if = {
+		limit = { has_country_flag = V05_upgraded_elementals_flag }
+		custom_tooltip = conjuration_2_summon_spiritfire_elementals_spell_effect_tt
+		add_country_modifier = { name = conjuration_2_summon_spiritfire_elementals_mod duration = 3650 }
+	}
+	else_if = { # Summon Greater Elementals
 		limit = {
 			609 = {
-				owned_by = ROOT
+				owned_by = PREV
 				has_great_project = {
 					type = eka_idulnazzar
 					tier = 1
@@ -1622,6 +1775,13 @@ evocation_1_shock_and_awe_effect = { # Shock and Awe
 			clr_country_flag = L76_rip_and_tear_mana_refund
 		}
 	}
+	else_if = {
+		limit = { 
+			has_country_flag = V05_shock_and_awe_upgrade_flag
+		}
+		add_country_modifier = { name = V05_shock_and_awe duration = 1825 }
+		custom_tooltip = V05_shock_and_awe_upgrade_tt
+	}
 	else = { add_country_modifier = { name = evocation_1_shock_and_awe_mod duration = 1825 } }
 	if = {
 		limit = { has_country_flag = I80_storm_wake_flag }
@@ -1772,6 +1932,7 @@ evocation_2_tearfall_effect = { # Tearfall
 	if = { limit = { NOT = { is_month = 1 } }
 		evocation_2_tearfall_sub_effect = { days = 273 days_2 = 271 }
 	}
+	
 	custom_tooltip = EVENT_INSIGHT_INTRO
 	if = {
 		limit = { has_country_modifier = witch_king_skill_modifier }
@@ -1814,6 +1975,13 @@ evocation_3_elemental_fury_effect = { # Elemental Fury
 		}
 		add_country_modifier = { name = patron_ice_elemental_fury duration = 3650 }
 		custom_tooltip = magic_booster_by_patron_tt
+	}
+	else_if = {
+		limit = {
+			has_country_flag = V05_elemental_fury_flag
+		}
+		add_country_modifier = { name = V05_elemental_fury_upgrade duration = 3650 }
+		custom_tooltip = V05_elemental_fury_upgrade_tt
 	}
 	else = { add_country_modifier = { name = evocation_3_elemental_fury_mod duration = 3650 } }
 	custom_tooltip = evocation_fireball_on_barrage_tt
@@ -1875,8 +2043,8 @@ illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 	tooltip = { add_country_modifier = { name = illusion_1_fear_and_loathing_sabotage_mod duration = 3650 } }
 
 	hidden_effect = {
-		set_variable = { war_enemy_dev = 100 } #Always spawn at least one revolt
-		set_variable = { num_revolts_left = 10 } #Don't spawn more than 10 revolts
+		set_variable = { war_enemy_dev = 150 } #Always spawn at least one revolt
+		set_variable = { num_revolts_left = 8 } #Don't spawn more than 8 revolts
 		every_war_enemy_country = {
 			limit = { capital_scope = { controlled_by = PREV has_siege = no } } #No gimping self
 
@@ -1888,12 +2056,12 @@ illusion_1_fear_and_loathing_effect = { #Fear and Loathing
 			while = {
 				limit = {
 					PREV = {
-						check_variable = { war_enemy_dev = 100 }
+						check_variable = { war_enemy_dev = 150 }
 						check_variable = { num_revolts_left = 1 }
 					}
 				}
 				PREV = {
-					subtract_variable = { war_enemy_dev = 100 }
+					subtract_variable = { war_enemy_dev = 150 }
 					subtract_variable = { num_revolts_left = 1 }
 				}
 				
@@ -2240,21 +2408,21 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 		custom_tooltip = magic_booster_by_witch_king_tt
 	}
 	else = {
-		if = { #100 years
+		if = { #50 years
 			limit = {
 				OR = {
 					fast_ruler_is_mechanim = yes
 					ruler_is_homunculus = yes
 				}
 			}
-			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 36500 }
+			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 18250 }
 		}
-		else_if = { #40 years
+		else_if = { #30 years
 			limit = {
 				fast_ruler_is_elven = yes
 				NOT = { ruler_culture = wood_elf }
 			}
-			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 14600 }
+			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 10950 }
 		}
 		else_if = { #20 years
 			limit = {
@@ -2283,7 +2451,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { adm = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { adm = 6 }
 							}
 						}
@@ -2295,7 +2463,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { dip = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { dip = 6 }
 							}
 						}
@@ -2310,7 +2478,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { adm = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { adm = 6 }
 							}
 						}
@@ -2322,7 +2490,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { mil = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { mil = 6 }
 							}
 						}
@@ -2337,7 +2505,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { dip = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { dip = 6 }
 							}
 						}
@@ -2349,7 +2517,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { mil = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { mil = 6 }
 							}
 						}
@@ -2364,7 +2532,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { dip = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { dip = 6 }
 							}
 						}
@@ -2376,7 +2544,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { adm = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { adm = 6 }
 							}
 						}
@@ -2391,7 +2559,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { mil = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { mil = 6 }
 							}
 						}
@@ -2403,7 +2571,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { adm = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { adm = 6 }
 							}
 						}
@@ -2418,7 +2586,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { mil = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { mil = 6 }
 							}
 						}
@@ -2430,7 +2598,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 						OR = {
 							NOT = { dip = 5 }
 							AND = {
-								ruler_is_lich = yes
+								ruler_is_immortal = yes
 								NOT = { dip = 6 }
 							}
 						}
@@ -2519,9 +2687,9 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 		limit = { has_ruler_modifier = witch_king_thorns_modifier }
 		custom_tooltip = transmutation_1_plant_growth_wk_spell_effect
 		hidden_effect = {
-			every_ally = { add_opinion = { who = ROOT modifier = cast_plant_growth } }
-			every_subject_country = { add_opinion = { who = ROOT modifier = cast_plant_growth } }
-			overlord = { add_opinion = { who = ROOT modifier = cast_plant_growth } }
+			every_ally = { add_opinion = { who = PREV modifier = cast_plant_growth } }
+			every_subject_country = { add_opinion = { who = PREV modifier = cast_plant_growth } }
+			overlord = { add_opinion = { who = PREV modifier = cast_plant_growth } }
 		}
 	}
 

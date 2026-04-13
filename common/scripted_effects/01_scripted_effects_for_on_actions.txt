@@ -4295,10 +4295,13 @@ on_battle_won_country_effect = {
 		ogre_battle_count_win = yes
 		vf_battle_count_win = yes
 
+		B54_se_on_battle_won = yes
+
 		if = {
 			limit = {
 				has_country_modifier = undead_military
 				exactly_magic_project_level = { project = army_of_the_dead level = 3 }
+				NOT = { has_country_flag = disable_default_undead_manpower_gain }
 			}
 			set_variable = {
 				which = raise_undead
@@ -9291,6 +9294,14 @@ on_dip_development_effect = {
 
 	#mangrove republic
 	mangrove_on_dip_dev_effect = yes
+	#Cangji
+	if = { 
+		limit = { 
+			owned_by = V05 
+			NOT = {	owner = { mission_completed = V05_cultivate_desert } }
+		} 
+		change_variable = { cangji_production_dev = 1 }
+    }
 }
 on_mil_development_effect = {
 	if = {
@@ -9734,6 +9745,38 @@ on_development_effect = {
 				ashhana_blood_curse_add_control_by_source = {
 					canvas_strength = 0.375
 				}
+			}
+		}
+	}
+	# Esthil
+	if = {
+		limit = { 
+			owner = { is_or_was_tag = { tag = B54 } } 
+			OR = {
+				has_province_modifier = B54_pmod_necronomics_aid_development_3
+				has_province_modifier = B54_pmod_necronomics_aid_development_2
+				has_province_modifier = B54_pmod_necronomics_aid_development_1
+			}
+		}
+		B54_se_subtract_development_cost_effect = yes
+	}
+	if = {
+		limit = { #Karach
+			FROM = {
+				has_country_flag = karach_Expand_Infrastructure_Canvas
+			}
+			development = 16
+			NOT = { has_province_modifier = karach_expand_infra }
+			NOT = { has_dlc = "Leviathan" }
+		}
+		add_province_modifier = {
+			name = karach_expand_infra
+			duration = -1
+		}
+		karach_Workshops = yes
+		FROM = {
+			ashhana_blood_curse_add_control_by_source = {
+				canvas_strength = 2
 			}
 		}
 	}
@@ -11179,6 +11222,15 @@ on_built_tax_building_effect = {
 		add_province_modifier = {
 			name = A80_expand_the_theatre_temples
 			duration = -1
+		}
+	}
+	if = {
+		limit = {
+			owner = { has_country_modifier = V05_ashen_preparation }
+		}
+		add_province_modifier = {
+			name = V05_ashen_preparations_province
+			duration = 3650
 		}
 	}
 }
@@ -14628,7 +14680,10 @@ on_province_owner_change_effect = {
 			if = {
 				limit = {
 					has_province_modifier = lel_shrine_province
-					owner = { has_personal_deity = lel }
+					OR = { 
+						owner = { has_personal_deity = lel }
+						owner = { has_personal_deity = lel_ascendant }					
+					}
 				}
 				owner = { add_ruler_modifier = { name = lel_shrine } }
 				nakavy_avo_shrines_activate_specific_deity_province_effect = { deity = lel }
@@ -16044,6 +16099,35 @@ on_province_owner_change_effect = {
 		}
 	}
 
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					AND = { 
+						is_or_was_tag = { tag = L36 }
+						has_country_flag = L36_blessed_rains
+					}
+					overlord = {
+						is_or_was_tag = { tag = L36 }
+						has_country_flag = L36_blessed_rains
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_monsoon = mild_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_mild duration = -1 }
+		}
+		else_if = {
+			limit = { has_monsoon = normal_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_normal duration = -1 }
+		}
+		else_if = {
+			limit = { has_monsoon = severe_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_severe duration = -1 }
+		}
+	}
+
 	#Endhuvi
 	if = {
 		limit = { owner = { is_or_was_tag = { tag = R36 } } }
@@ -16617,6 +16701,21 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
+
+	#Colony Ardimya
+	if = {
+		limit = {
+			region = ardimya_region
+			S91 = { exists = yes }
+			is_city = yes
+			owner = {
+				S91 = { 
+					is_colonial_nation_of = PREV
+				}
+			}
+		}
+		cede_province = S91
+	}
 }
 
 on_primary_culture_changed_effect = {
@@ -17090,6 +17189,33 @@ anb_on_exploit_effect = {
 			change_variable = {
 				which = gashaExploitedDevelopmentCounter
 				value = 1
+			}
+		}
+	}
+	if = {
+		limit = {
+			owner = {
+				owns = 1016
+				can_use_sacred_grove_generic_country_reqs_trigger = yes
+				NOT = {
+					has_country_flag = blood_contract_2
+					has_country_flag = sacred_grove_exploit_dev_3
+				}
+			}
+		}
+		owner = {
+			if = {
+				limit = { has_country_flag = sacred_grove_exploit_dev_2 }
+				set_country_flag = sacred_grove_exploit_dev_3
+				clr_country_flag = sacred_grove_exploit_dev_2
+			}
+			else_if = {
+				limit = { has_country_flag = sacred_grove_exploit_dev_1 }
+				set_country_flag = sacred_grove_exploit_dev_2
+				clr_country_flag = sacred_grove_exploit_dev_1
+			}
+			else = {
+				set_country_flag = sacred_grove_exploit_dev_1
 			}
 		}
 	}
@@ -17809,6 +17935,52 @@ on_province_owner_change_monuments = {
 			owner = { overlord = { add_country_modifier = { name = blue_mountain_overlord duration = -1 } } }
 		}
 	}
+	#Old Soara
+	if = {
+		limit = {
+			province_id = 945
+		}
+		FROM = {
+			overlord = {
+				remove_country_modifier = abandoned_city_overlord_1
+				remove_country_modifier = abandoned_city_overlord_2
+				remove_country_modifier = abandoned_city_overlord_3
+			}
+		}
+		if = {
+			limit = {
+				can_owner_use_colonial_monuments = yes
+				owner = { is_subject = yes }
+			}
+			if = {
+				limit = { has_great_project = { type = old_soara tier = 3 } }
+				overlord = {
+					add_country_modifier = {
+						name = abandoned_city_overlord_3
+						duration = -1
+					}
+				}
+			}
+			else_if = {
+				limit = { has_great_project = { type = old_soara tier = 2 } }
+				overlord = {
+					add_country_modifier = {
+						name = abandoned_city_overlord_2
+						duration = -1
+					}
+				}
+			}
+			else_if = {
+				limit = { has_great_project = { type = old_soara tier = 1 } }
+				overlord = {
+					add_country_modifier = {
+						name = abandoned_city_overlord_1
+						duration = -1
+					}
+				}
+			}
+		}
+	}
 	##### When you have monument #####
 	if = { #Ascajar
 		limit = {
@@ -18302,6 +18474,7 @@ on_consort_death_effects = {
 	country_event = { id = flavor_averilibet.3 } #averilibet husband harem 
 	country_event = { id = flavor_frozenmaw.14 } #the death of Frida
 	country_event = { id = guwaamud.100 } # Harem lady dead
+	country_event = { id = flavour_lelanan.81 } #Death of Leli and Felana
 	magic_on_consort_death = yes
 	if = {
 		limit = { has_consort_flag = 10_years_anniversary }
