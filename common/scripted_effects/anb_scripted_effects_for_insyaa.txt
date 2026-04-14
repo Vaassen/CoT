@@ -1833,6 +1833,9 @@ gene_pillars_clear_all_class_flags = {
 
 gene_pillar_abandon_expedition_effect = {
 	gene_pillar_injure_party_members_effect = yes
+	owner = {
+		remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
+	}
 	hidden_effect = {
 		# Reset progress to 0
 		event_target:gene_pillar_exploration_province = {
@@ -1859,6 +1862,11 @@ gene_pillar_abandon_expedition_effect = {
 
 gene_pillar_successful_end_expedition_effect = {
 	gene_pillar_injure_party_members_effect = yes
+	owner = {
+		remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
+		clr_country_flag = gene_pillars_visited_nexus_of_realities # Only clear once you beat the pillar
+	}
+	province_event = { id = gene_pillars.30 }
 	if = {
 		limit = { has_country_flag = gene_pillar_is_exploring_level_1_pillar }
 		gene_pillars_add_xp_effect = { amount = 5 }
@@ -2637,6 +2645,23 @@ gene_pillars_get_loot_event = {
 			}
 		}
 	}
+	# Extra reward from gene_pillars.1005
+	if = {
+		limit = {
+			has_province_flag = gene_pillars_generic_extra_reward_at_end
+		}
+		owner = {
+			add_adm_power = 50
+			add_dip_power = 50
+			add_mil_power = 50
+			if = {
+				limit = { monthly_income = 208.33 }
+				add_treasury = 2500
+			}
+			else = { add_years_of_income = 0.5 }
+		}
+		clr_province_flag = gene_pillars_generic_extra_reward_at_end
+	}
 }
 
 gene_pillars_add_hp_effect = {
@@ -3201,5 +3226,46 @@ gene_pillars_select_class = {
 			}
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 5 }
+	}
+}
+
+gene_pillars_generic_loot_or_trap_repeat = {
+	random_list = {
+		$success_factor$ = {
+			gene_pillars_add_loot_effect = { amount = $party_loot$ }
+			gene_pillars_add_xp_effect = { amount = $party_xp$ }
+			change_variable = {
+				which = gene_pillars_generic_traps_and_treasure_loot_gained
+				value = $party_loot$
+			}
+			change_variable = {
+				which = gene_pillars_generic_traps_and_treasure_xp_gained
+				value = $party_xp$
+			}
+			change_variable = {
+				which = gene_pillars_generic_traps_and_treasure_count
+				value = 1
+			}
+			if = {
+				limit = {
+					NOT = {
+						check_variable = {
+							which = gene_pillars_generic_traps_and_treasure_count
+							value = 5
+						}
+					}
+				}
+				country_event = {
+					id = gene_pillars.1005 # get this event again
+					days = 1 # can't trigger itself without a delay
+				}
+			}
+			
+		}
+		$fail_factor$ = {
+			country_event = {
+				id = gene_pillars.1006 # Trap sprung
+			}
+		}
 	}
 }
