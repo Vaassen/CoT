@@ -2106,7 +2106,13 @@ gene_pillar_clear_all_class_country_flags = {
 
 gene_pillar_generic_then_specific_event = {
 	hidden_effect = {
-		if = {
+		# Rather than having a huge number of "if" branches, I've arbitrarily decided on a priority to
+		# determine the timing of the next event, based on a default of 1 specific and 1 generic per year:
+		# 1. Double speed flag
+		# 2. Temporary delay flags
+		# 3. Fast exploration privilege
+		# We need to be careful though, since we can't fire an event from an else or else_if
+		if = { # Double speed
 			limit = {
 				has_country_flag = gene_pillars_exploration_events_double_speed
 			}
@@ -2117,16 +2123,42 @@ gene_pillar_generic_then_specific_event = {
 			limit = {
 				NOT = { has_country_flag = gene_pillars_exploration_events_double_speed }
 			}
-			if = {
-				limit = { always = no } #Replace with has_estate_privilege = gene_pillar_fast exploration
-				country_event = { id = gene_pillars.1000 days = 135 } #Generic event handler
-				country_event = { id = gene_pillars.$specific_event$ days = 270 } #Next event in chain
+			if = { # 90-180 day delay
+				limit = {
+					has_country_flag = gene_pillars_exploration_next_event_medium_delay
+				}
+				country_event = { id = gene_pillars.1000 days = 272 random = 90 } #Generic event handler
+				country_event = { id = gene_pillars.$specific_event$ days = 455 random = 90 } #Next event in chain
 			}
 			if = {
-				limit = { always = yes } #Replace with NOT = { has_estate_privilege = gene_pillar_fast exploration }
-				country_event = { id = gene_pillars.1000 days = 182 } #Generic event handler
-				country_event = { id = gene_pillars.$specific_event$ days = 365 } #Next event in chain
+				limit = {
+					NOT = { has_country_flag = gene_pillars_exploration_next_event_medium_delay }
+				}
+				if = { # 180-270 day delay
+					limit = {
+						has_country_flag = gene_pillars_exploration_next_event_big_delay
+					}
+					country_event = { id = gene_pillars.1000 days = 362 random = 90 } #Generic event handler
+					country_event = { id = gene_pillars.$specific_event$ days = 545 random = 90 } #Next event in chain
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = gene_pillars_exploration_next_event_big_delay }
+					}
+					if = { # Increased speed privilege
+						limit = { always = no } #Replace with has_estate_privilege = gene_pillar_fast exploration
+						country_event = { id = gene_pillars.1000 days = 135 } #Generic event handler
+						country_event = { id = gene_pillars.$specific_event$ days = 270 } #Next event in chain
+					}
+					if = {
+						limit = { always = yes } #Replace with NOT = { has_estate_privilege = gene_pillar_fast exploration }
+						country_event = { id = gene_pillars.1000 days = 182 } #Generic event handler
+						country_event = { id = gene_pillars.$specific_event$ days = 365 } #Next event in chain
+					}
+				}
+				clr_country_flag = gene_pillars_exploration_next_event_big_delay
 			}
+			clr_country_flag = gene_pillars_exploration_next_event_small_delay
 		}
 		gene_pillars_advance_progress_bar = yes
 	}
