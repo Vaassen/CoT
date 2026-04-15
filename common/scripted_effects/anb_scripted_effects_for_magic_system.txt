@@ -195,7 +195,7 @@ study_experience_preview_effect = { #study needs a separate set of variables
 }
 
 update_spell_tooltips = {
-	if = { #development
+	if = { #development - max 600 dev goes into these mercs
 		limit = { total_development = 600 }
 		set_variable = { feral_animals_reg = 600 }
 	}
@@ -218,14 +218,10 @@ update_spell_tooltips = {
 	set_variable = { which = feral_animals_inf which = feral_animals_reg }
 	subtract_variable = { which = feral_animals_inf which = feral_animals_cav } #infantry
 
-	multiply_variable = { leashed_elementals_reg = 0.1 } #Reg per dev
+	multiply_variable = { leashed_elementals_reg = 0.05 } #Reg per dev
 	if = {
-		limit = { NOT = { check_variable = { leashed_elementals_reg = 4 } } }
-		set_variable = { leashed_elementals_reg = 4 } #Minimum of 4 regiments
-	}
-	else_if = {
-		limit = { check_variable = { leashed_elementals_reg = 10 } }
-		set_variable = { leashed_elementals_reg = 10 } #Maximum of 10 regiments
+		limit = { NOT = { check_variable = { leashed_elementals_reg = 10 } } }
+		set_variable = { leashed_elementals_reg = 10 } #Minimum of 10 regiments
 	}
 	else = { round_variable = { which = leashed_elementals_reg value = -1 } }
 	set_variable = { which = leashed_elementals_cav which = leashed_elementals_reg }
@@ -507,6 +503,13 @@ magic_advancement_abort_all_effect = { #Indiscriminate. Assumes nothing about yo
 		remove_country_modifier = I80_increasing_demands
 		clr_country_flag = I80_mage_movement
 		clr_country_flag = great_storm_project_1_project
+
+		### Lelanan
+		remove_country_modifier = L36_traveling_abroad
+		remove_country_modifier = L36_diplomat_to_the_lizardfolk
+		remove_country_modifier = L36_hiring_half_folk_help
+		remove_country_modifier = L36_diplomat_to_haless
+		clr_country_flag = lelanan_project_1_project
 
 		#Unique Projects
 		#Umbral Covenant
@@ -2377,6 +2380,12 @@ create_war_wizard = { #the more general war-wizard function
 ### Since this is so used, I aliased it into versions that have the size in the name, so that predictive text works right
 ### You can use a more specific effect if you want a consistent tooltip/effect
 
+# This effect is expected to potentially run multiple times on the same ruler
+# As well, it is expected to fire for respawning rulers who need to regain their modifiers
+# Known edge cases:
+### has country witch-king flag but not the ruler modifier (respawning ruler)
+### has a ruler that becomes a witch-king first and then a lich (which fires this effect again)
+
 become_a_witch_king_effect = {
 	hidden_effect = {
 		remove_country_modifier = infamy_denounced_modifier
@@ -2386,7 +2395,10 @@ become_a_witch_king_effect = {
 			limit = { NOT = { check_variable = { which = ruler_witch_king_points value = 16 } } }
 			change_variable = { ruler_witch_king_points = 16 } #in case they weren't there already
 		}
-		change_variable = { mana_regen_ruler = 0.3 } #All witch-king modifiers give 0.3
+		if = { #running this effect multiple times on the same ruler could bug mana regen var
+			limit = { ruler_is_not_witch_king = yes }
+			change_variable = { mana_regen_ruler = 0.3 } #All witch-king modifiers give 0.3
+		}
 	}
 	set_country_flag = ruled_by_witch_king
 
