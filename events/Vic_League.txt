@@ -11,13 +11,8 @@ country_event = {
 	
 	option = {
 		name = flavour_vic_league.0.a
-		if = {
-			limit = { is_subject = yes }
-			custom_tooltip = vic_league_system_explanation_member_tt
-		}
-		else = {
-			custom_tooltip = vic_league_system_explanation_leader_tt
-		}
+		trigger = { hidden_trigger = { is_subject = no } }
+		custom_tooltip = vic_league_system_explanation_leader_tt
 		if = {
 			limit = { #Tags that have a MT and have custom gov reforms
 				tag = Z22
@@ -27,6 +22,13 @@ country_event = {
 		else = {
 			custom_tooltip = vic_league_system_explanation_generic_upgrade_tt
 		}
+	}
+	option = {
+		name = flavour_vic_league.0.b
+		trigger = { hidden_trigger = { is_subject = yes } }
+		custom_tooltip = vic_league_system_explanation_member_tt
+		#Tags that have a MT and have custom gov reforms should display vic_league_system_explanation_mission_upgrade_tt instead
+		custom_tooltip = vic_league_system_explanation_generic_upgrade_tt
 	}
 }
 
@@ -52,24 +54,60 @@ country_event = { #Calculation for Expand the League
 								modifier = sent_gift
 							}
 						}
+						AND = {
+							is_subject_of_type_with_overlord = { who = ROOT type = vassal }
+							has_opinion_modifier = {
+								who = ROOT
+								modifier = sent_gift
+							}
+							has_opinion = {
+								who = ROOT
+								value = 200
+							}
+						}
 					}
 					OR = {
 						AND = {
 							ROOT = { has_government_attribute = expand_the_league_3_attribute }
-							NOT = { total_development = 200 }
+							OR = {
+								NOT = { total_development = 200 }
+								AND = {
+									ROOT = { is_or_was_tag = { tag = Z22 } }
+									NOT = { total_development = 400 }
+									is_in_z22_sphere_of_influence = yes
+								}
+							}
 						}
 						AND = {
 							ROOT = { has_government_attribute = expand_the_league_2_attribute }
-							capital_scope = { superregion = gerudia_superregion }
-							NOT = { total_development = 150 }
+							OR = {
+								AND = {
+									capital_scope = { superregion = gerudia_superregion }
+									NOT = { total_development = 150 }
+								}
+								AND = {
+									ROOT = { is_or_was_tag = { tag = Z22 } }
+									NOT = { total_development = 300 }
+									is_in_z22_sphere_of_influence = yes
+								}
+							}
 						}
 						AND = {
 							ROOT = { has_government_attribute = expand_the_league_1_attribute }
-							nation_considered_blue_reachman = yes
-							NOT = { total_development = 100 }
+							OR = {
+								AND = {
+									nation_considered_blue_reachman = yes
+									NOT = { total_development = 100 }
+								}
+								AND = {
+									ROOT = { is_or_was_tag = { tag = Z22 } }
+									NOT = { total_development = 200 }
+									is_in_z22_sphere_of_influence = yes
+								}
+							}
 						}
 					}
-					reverse_has_opinion = {
+					has_opinion = {
 						who = ROOT
 						value = 0
 					}
@@ -157,6 +195,61 @@ country_event = { #Calculation for Expand the League
 				which = VicTotal
 				which = VicLeagueSize
 			}
+			if = {
+				limit = {
+					is_or_was_tag = { tag = Z22 }
+					has_global_flag = z22_can_have_giesadh
+				}
+				set_variable = {
+					which = VicGiesadh
+					which = GiesadhNum
+				}
+				if = {
+					limit = { has_global_flag = z22_giseadh_modifiers_tier_2 }
+					multiply_variable = {
+						which = VicGiesadh
+						value = 10
+					}
+				}
+				else = {
+					multiply_variable = {
+						which = VicGiesadh
+						value = 5
+					}
+				}
+				change_variable = {
+					which = VicTotal
+					which = VicGiesadh
+				}
+			}
+			
+			#If other bonuses from MTs are added, they should all be listed in the vic_league_has_bonus_for_expand_the_league_trigger scripted trigger
+			#If you give bonuses, you should use custom tooltips in your missions/events to tell the player: vic_league_gain_perm/temp_5/10_bonus_to_expand_league_tt
+			#(if you give other amounts, you should make these tooltips generic for them to be reusable)
+			if = {
+				limit = { vic_league_has_bonus_for_expand_the_league_trigger = yes }
+				set_variable = { VicMission = 0 }
+				if = {
+					limit = { has_government_attribute = expand_the_league_bonus_10_attribute }
+					change_variable = { VicMission = 10 }
+				}
+				if = {
+					limit = { mission_completed = z22_new_directions }
+					change_variable = { VicMission = 5 }
+				}
+				if = {
+					limit = { has_country_modifier = z22_toward_unification }
+					change_variable = { VicMission = 10 }
+				}
+				if = {
+					limit = { mission_completed = z22_council_trade }
+					change_variable = { VicMission = 10 }
+				}
+				change_variable = {
+					which = VicTotal
+					which = VicMission
+				}
+			}
 		}
 	}
 
@@ -164,6 +257,11 @@ country_event = { #Calculation for Expand the League
 		name = flavour_vic_league.1.a
 		
 		if = {
+			limit = { event_target:expand_the_league_target = { is_subject_of_type_with_overlord = { who = ROOT type = vassal } } }
+			hidden_effect = { country_event = { id = flavour_vic_league.3 } }
+			custom_tooltip = vic_league_auto_success_tt
+		}
+		else_if = {
 			limit = { event_target:expand_the_league_target = { ai = no } }
 			event_target:expand_the_league_target = {
 				country_event = { id = flavour_vic_league.2 }
@@ -231,25 +329,7 @@ country_event = { #Expand the League - Success
 	
 	option = {
 		name = flavour_vic_league.3.a
-		create_subject = {
-			subject_type = vic_league_member
-			subject = event_target:expand_the_league_target
-		}
-		custom_tooltip = vic_league_result_success_tt
-		if = {
-			limit = { has_government_attribute = expand_the_league_2_attribute }
-			event_target:expand_the_league_target = {
-				capital_scope = {
-					add_trade_modifier = {
-						who = ROOT
-						duration = -1
-						power = 25
-						key = vic_commonwealth_trade_bonus
-					}
-				}
-			}
-			custom_tooltip = vic_league_expand_the_league_upgrade_tt
-		}
+		create_vic_league_member = { overlord = ROOT subject = event_target:expand_the_league_target }
 	}
 }
 
@@ -264,7 +344,10 @@ country_event = { #Expand the League - Failure
 	option = {
 		name = flavour_vic_league.4.a
 		custom_tooltip = vic_league_result_failure_tt
-		remove_guarantee = event_target:expand_the_league_target
+		if = { #Check for guarantee because the tooltip for its removal is displayed even if there's no guarantee
+			limit = { event_target:expand_the_league_target = { guaranteed_by = ROOT } }
+			remove_guarantee = event_target:expand_the_league_target
+		}
 		add_government_power = {
 			mechanic_type = vic_league_mechanic
 			power_type = vic_league_dip_power

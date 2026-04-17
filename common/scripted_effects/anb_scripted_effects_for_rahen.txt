@@ -3022,7 +3022,9 @@ command_siege_won_effect = {
 	}
 	if = {
 		limit = { FROM = { owned_by = V98 province_group = temple_province_group } }
+		FROM = { save_event_target_as = temple_area_reconquest_shaman_revolt }
 		R62 = { country_event = { id = the_command.83 } }
+		
 	}
 }
 command_spawn_troops_for_shamans_effect = {
@@ -3040,7 +3042,7 @@ command_spawn_troops_for_shamans_effect = {
 		who = R62
 	}
 	if = {
-		limit = { V98 = { has_cast_undead_army = yes } }
+		limit = { V98 = { has_country_modifier = undead_military } }
 		divide_variable = {
 			which = troop_amount
 			value = 400
@@ -3343,12 +3345,6 @@ rahen_raj_calc_cohesion = {	# Note: Use only inside Raja country scope!
 		divide_variable = 		{ which = raj_var_cohesion_impact_prestige value = 10 }
 		change_variable = 		{ which = raj_var_cohesion which = raj_var_cohesion_impact_prestige }
 		round_variable = 		{ which = raj_var_cohesion_impact_prestige value = 0 }
-
-		# Cohesion - War Exhaustion
-		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_war_exhaustion value = trigger_value:war_exhaustion who = PREV }
-		multiply_variable = 	{ which = raj_var_cohesion_impact_war_exhaustion value = 1.8 }
-		subtract_variable = 	{ which = raj_var_cohesion which = raj_var_cohesion_impact_war_exhaustion }
-		round_variable = 		{ which = raj_var_cohesion_impact_war_exhaustion value = 0 }
 
 		# Cohesion - Stability
 		export_to_variable = 	{ variable_name = raj_var_cohesion_impact_stability value = trigger_value:stability who = PREV }
@@ -3716,8 +3712,10 @@ rahen_raj_variables_startup = {
 			set_variable = { which = vizier_scholars_invited value = 0 }
 		}
 	}
-	save_global_event_target_as = raj_raja_global_target
-	R52 = { save_global_event_target_as = raj_vizier_global_target }
+	# There was an issue with a top row mission trying to access the raj target before it was saved
+	# These have been moved to history/countries/R51 - Dhenijanraj.txt and history/countries/R52 - Rabhidaraj.txt
+	# save_global_event_target_as = raj_raja_global_target 
+	# R52 = { save_global_event_target_as = raj_vizier_global_target }
 	4411 = { set_variable = { which = raj_var_cohesion_impact_bonus value = 0 } }
 	rahen_raj_calc_cohesion = yes
 	check_if_at_senaptia_cap_pick_best_if_not = yes
@@ -3856,8 +3854,48 @@ rahen_raj_mandate_raja_declaration_of_harmony = {
 	}
 }
 
-rahen_raj_mandate_raja_land_redistribution = {
-	# TODO LATER RAJ, this will be replaced with something else, because fuck coding the originally intended mandate. (+1)
+rahen_raj_mandate_raja_introspection = {
+	custom_tooltip = rahen_raj_mandate_raja_introspection_tt
+	tooltip = {
+		add_country_modifier = {
+			name = rahen_raj_mandate_raja_4_raja_mod
+			duration = 1825
+		}
+	}
+	hidden_effect = {
+		add_country_modifier = {
+			name = rahen_raj_mandate_raja_4_raja_cd_mod
+			duration = 9125
+			hidden = yes
+		}
+		every_subject_country = {
+			limit = {
+				ai = yes
+				is_in_war = { casus_belli = cb_raj_wars }
+				NOT = {
+					any_war_enemy_country = { ai = no is_in_war = { casus_belli = cb_raj_wars participants = PREV } }
+					any_ally = { ai = no is_in_war = { casus_belli = cb_raj_wars participants = PREV } }
+				}
+			}
+			every_war_enemy_country = {
+				limit = { is_in_war = { casus_belli = cb_raj_wars participants = PREV } }
+				white_peace = PREV
+			}
+		}
+		every_subject_country = {
+			limit = { ai = no }
+			country_event = {
+				id = rahenraj.5011
+			}
+		}
+		every_subject_country = {
+			limit = { ai = yes NOT = { liberty_desire = 50 } }
+			add_country_modifier = {
+				name = rahen_raj_mandate_raja_4_raja_mod
+				duration = 1825
+			}
+		}		
+	}
 }
 
 rahen_raj_vizier_scholar_count_effect = {
@@ -3889,6 +3927,7 @@ rahen_raj_remove_mandates = {
 	remove_country_modifier = rahen_raj_mandate_raja_3_vizier_peace_mod
 	remove_country_modifier = rahen_raj_mandate_raja_3_senaptia_peace_mod
 	remove_country_modifier = rahen_raj_mandate_raja_3_prabhia_peace_mod
+	remove_country_modifier = rahen_raj_mandate_raja_4_raja_mod
 }
 
 check_if_at_senaptia_cap_pick_best_if_not = {
@@ -3965,12 +4004,12 @@ check_if_at_senaptia_cap_pick_best_if_not = {
 				raj_below_allowed_senaptia = yes
 				owner = {
 					ai = yes
-					any_subject_country = { is_subject_of_type = daimyo_vassal }
+					any_subject_country = { is_subject_of_type = daimyo_vassal ai = yes }
 				}
 			}
 			owner = {
 				every_subject_country = {
-					limit = { is_subject_of_type = daimyo_vassal }
+					limit = { is_subject_of_type = daimyo_vassal ai = yes }
 					if = {
 						limit = {
 							OR = {
@@ -4043,7 +4082,7 @@ raj_become_vizier = {
 			limit = {
 				event_target:raj_vizier_global_target = {
 					exists = yes
-					is_subject = yes
+					is_subject_of = event_target:raj_raja_global_target
 				}
 			}
 			event_target:raj_vizier_global_target = { raj_become_senapti = yes }
@@ -4076,7 +4115,13 @@ allowed_to_restore_raj = {
 
 raja_completed_ministries_agenda = {
 	if = {
-		limit = { has_government_attribute = is_raja }
+		limit = {
+			ai = no
+			OR = {
+				has_government_attribute = is_raja
+				is_subject_of_the_raja = yes
+			}
+		}
 		hidden_effect = { 
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion
@@ -4092,7 +4137,13 @@ raja_completed_ministries_agenda = {
 
 raja_failed_ministries_agenda = {
 	if = {
-		limit = { has_government_attribute = is_raja }
+		limit = {
+			ai = no
+			OR = {
+				has_government_attribute = is_raja
+				is_subject_of_the_raja = yes
+			}
+		}
 		hidden_effect = {
 			add_or_extend_country_modifier = {
 				name = raj_agenda_cohesion_bad
@@ -4130,7 +4181,20 @@ raj_dismantling_effect = {
 			}
 			#Grant freedom from old raja
 			[[releaseSubjects]
-				hidden_effect = { PREV = { create_subject = { subject_type = daimyo_vassal subject = PREV } }	} #prevent insta-annexation, pdx bug
+				hidden_effect = {
+					if = { #avoid alliance breaking
+						limit = {
+							OR = {
+								is_subject_of_type = vizier_vassal
+								is_subject_of_type = great_daimyo_vassal
+							}
+						}
+						PREV = { create_subject = { subject_type = great_daimyo_vassal subject = PREV } } #prevent insta-annexation, pdx bug
+					}
+					else = {
+						PREV = { create_subject = { subject_type = daimyo_vassal subject = PREV } } #prevent insta-annexation, pdx bug
+					}
+				}
 				grant_independence = yes
 				if = {
 					limit = { has_government_attribute = is_raja_subject }
@@ -4189,5 +4253,60 @@ ruby_gardens_wedding_effect = {
 				}
 			}
 		}
+	}
+}
+
+raj_grant_independence = {
+	if = {
+		limit = { overlord = { is_the_raja = yes } }
+		hidden_effect = {
+			overlord = {
+				country_event = { id = rahenraj.1104 }
+			}
+			if = {
+				limit = { has_government_attribute = is_raja_subject }
+				if = { #avoid alliance breaking
+					limit = {
+						OR = {
+							is_subject_of_type = vizier_vassal
+							is_subject_of_type = great_daimyo_vassal
+						}
+					}
+					4411 = { change_variable = { rajNbSenapti = -1 } }
+					clr_country_flag = senapti_flag
+					overlord = {
+						create_subject = { #prevent insta-annexation, pdx bug
+							subject_type = great_daimyo_vassal
+							subject = PREV
+						}
+					}
+				}
+				else = {
+					overlord = {
+						create_subject = { #prevent insta-annexation, pdx bug
+							subject_type = daimyo_vassal
+							subject = PREV
+						}
+					}
+				}
+				rahen_raj_remove_mandates = yes
+			}
+			every_owned_province = {
+				rahen_clear_court_disaster_province_modifiers = yes
+			}
+			if = {
+				limit = { 
+					tag = event_target:raj_vizier_global_target
+					NOT = { overlord = { has_disaster = rahen_dissolution_of_the_raj } }
+				}
+				overlord = { country_event = { id = rahenraj.2100 days = 1 } }
+			}
+		}
+		grant_independence = yes
+		if = {
+			limit = { has_government_attribute = is_raja_subject }
+			add_government_reform = indep_prabhi_reform
+		}
+		custom_tooltip = " "
 	}
 }

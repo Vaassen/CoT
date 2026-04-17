@@ -180,6 +180,7 @@ interaction = { # Sale of Titles
 				NOT = { has_country_modifier = JY_LF_recent_trade }
 			}
 		}
+		NOT = { has_government_attribute = cannot_sell_land }
     }
     effect = {
 		if = {
@@ -354,16 +355,29 @@ interaction = { # Summon Diet
 		NOT = { has_government_attribute = blocked_call_diet }
     }
 	#This is is used in `illusion_1_bread_and_circuses_effect`. Any changes to this should be made to both
+	# with the exception that the spell does not include the 'EST_VAL_DIET_SUMMONED' influence modifier
     effect = {
         custom_tooltip = ESTATES_SUMMON_THE_DIET_DESC
         hidden_effect = {
 	        if = {
-				limit = { NOT = { has_anzalkatsa_naga = yes } }
+				limit = { NOT = { has_anzalkatsa_naga = yes } NOT = { has_country_flag = anb_has_special_agendas} }
 				country_event = { id = estate_privileges_and_agendas_events.3 }
 			}
-			else = {
+			else_if = {
+				limit = {
+					has_anzalkatsa_naga = yes
+				}
 				clr_country_flag = Invalidate_NagaAgenda
 				country_event = { id = estate_privileges_and_agendas_events.14 }
+			}
+			else_if = {
+				limit = {
+					has_country_flag = anb_has_special_agendas
+					has_country_flag = I26_disabled_call_the_diet
+				}
+				country_event = { 
+					id = flavor_salla_elyn.300
+				}
 			}
 			if = {
 				limit = {
@@ -446,6 +460,17 @@ interaction = { # Summon Diet
 						1 = { define_random_dip_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
 						1 = { define_random_mil_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
 					}
+				}
+			}
+			if = {
+				limit = {
+					has_estate_privilege = artifice_invention_litoral_reclamation
+					has_estate = estate_mages
+				}
+				clr_auto_complete_flag = { estate = estate_mages }
+				random = {
+					chance = 30
+					auto_complete_estate_agenda = { estate = estate_mages }
 				}
 			}
 		}
@@ -591,6 +616,12 @@ interaction = { # Seize Land
 					loyalty = 1
 					short = yes
 				}
+			}
+			else_if = {
+				limit = {
+					has_country_flag = S90_always_watching
+				}
+				custom_tooltip = S90_always_watching_effect_tt
 			}
 			else_if = {
 				limit = {
@@ -1057,13 +1088,25 @@ interaction = { # Research Artificery
 
     trigger = {
 		hidden_trigger = {
+			has_country_flag = artificery_unlocked
 			OR = {
 				has_country_flag = magic_artificery_mixed
 				has_country_flag = magic_artificery_artificery_only
 			}
 			has_artificers_organization_privilege = yes
 		}
-		is_not_researching_invention = yes
+		is_not_researching_or_blocked_from_researching_invention = yes
+		if = {
+			limit = {            
+				artifice_invention_researched_all = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = artifice_research.3.x
+				always = no
+			}
+			# this is the tooltip from inside artifice_invention_researched_all
+			# (so that we don't re-check the whole giant trigger when we already know we have failed)
+		}
     }
     effect = {
 		custom_tooltip = start_artificery_research_tt

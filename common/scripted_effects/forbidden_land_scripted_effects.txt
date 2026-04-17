@@ -254,6 +254,7 @@ clear_federation_global_flag = {
 	clr_global_flag = lake_cohesion_4
 	clr_global_flag = lake_cohesion_5
 	clr_global_flag = federation_crisis
+	clr_country_flag = federation_leader
 	clr_country_flag = federation_mil_article_1
 	clr_country_flag = federation_industry_article_1
 	clr_country_flag = federation_trade_article_1
@@ -1771,6 +1772,7 @@ sedentarization_on_yearly_pulse = {
 				save_event_target_as = sed_ai_new_outpost_province
 				random_area_province = {
 					limit = {
+						sedentarization_province_can_recieve_outpost = yes
 						OR = {
 							has_terrain = farmlands
 							has_terrain = grasslands
@@ -1781,6 +1783,7 @@ sedentarization_on_yearly_pulse = {
 				}
 				random_area_province = {
 					limit = {
+						sedentarization_province_can_recieve_outpost = yes
 						OR = {
 							province_has_center_of_trade_of_level = 1
 							has_river_estuary_trigger = yes
@@ -1836,6 +1839,15 @@ sedentarization_calculate_outpost_cap = {
 		which = sed_outpost_cap
 		value = trigger_value:government_rank
 	}
+	if = {
+		limit = {
+			has_country_modifier = sed_easier_sedentarization
+		}
+		change_variable = {
+			which = sed_outpost_cap
+			value = 2
+		}
+	}
 	export_to_variable = {
 		which = sed_num_of_colonists
 		value = trigger_value:num_of_colonists
@@ -1847,7 +1859,15 @@ sedentarization_calculate_outpost_cap = {
 }
 
 sedentarization_deduct_outpost_cost_from_country = {
-	add_treasury = -50
+	if = {
+		limit = {
+			has_country_modifier = sed_easier_sedentarization
+		}
+		add_treasury = -25
+	}
+	else = {
+		add_treasury = -50
+	}
 	hidden_effect = {
 		change_variable = {
 			which = sed_outpost_cap_usage
@@ -2224,6 +2244,10 @@ sedentarization_on_province_owner_change = {
 				name = sed_entrenched_centaur_nomadism
 				duration = -1
 			}
+		}
+		else = {
+			# non-centaurs get free territorial cores so they don't have to both core and sedentarize
+			add_territorial_core = owner
 		}
 		# Housekeeping for province flags and modifiers and country variables
 		owner = { save_event_target_as = sed_outpost_owner }
@@ -2854,6 +2878,21 @@ form_lejdazamh_effects = {
 	country_event = { id = ideagroups.1 } #Swap Ideas
 }
 
+update_nomadism_capital_move_cost = {
+	export_to_variable = {
+		which = nzoc_cost
+		value = modifier:move_capital_cost_modifier
+	}
+	change_variable = {
+		which = nzoc_cost
+		value = 1
+	}
+	multiply_variable = {
+		which = nzoc_cost
+		value = 100
+	}
+}
+
 I57_potential_aureate_effects = { #Golden Tremor
 	change_trade_goods = gold
 	add_province_modifier = {
@@ -2866,4 +2905,67 @@ I57_potential_aureate_effects = { #Golden Tremor
 		duration = -1
 	}
 	set_province_flag = cen_double_nzoc_effects_flag
+}
+
+#Yudunyovi
+unlock_yudunyovi_deity = {
+	custom_tooltip = linebreak_tt
+	set_country_flag = yudunyovi_$deity$_unlocked_flag
+	custom_tooltip = yudunyovi_unlock_deity_$deity$_tt
+	[[change_deity] change_personal_deity = $deity$ ]
+	custom_tooltip = yudunyovi_deity_effect_tt
+	custom_tooltip = yudunyovi_$deity$_effects_tt
+
+	if = {
+		limit = {
+			calc_true_if = {
+				amount = 8
+				has_country_flag = yudunyovi_taqoshur_unlocked_flag
+				has_country_flag = yudunyovi_soiti_unlocked_flag
+				has_country_flag = yudunyovi_yukel_unlocked_flag
+				has_country_flag = yudunyovi_kalyin_unlocked_flag
+				has_country_flag = yudunyovi_shirdos_unlocked_flag
+				has_country_flag = yudunyovi_yerush_unlocked_flag
+				has_country_flag = yudunyovi_ekchorvu_unlocked_flag
+				has_country_flag = yudunyovi_tayoghur_unlocked_flag
+				has_country_flag = yudunyovi_asimlik_unlocked_flag
+			}
+		}
+		custom_tooltip = yudunyovi_enable_final_quest_tt
+	}
+}
+
+yudunyovi_get_req_tooltips = {
+	if = {
+		limit = {
+			$req$
+		}
+		custom_tooltip = yudunyovi_$deity$_req_$num$_yes_tt
+	}
+	else = { custom_tooltip = yudunyovi_$deity$_req_$num$_no_tt }
+}
+
+lake_federation_mission_completed_count = {
+	if = {
+		limit = {
+			4000 = {
+				check_variable = {
+					which = $mission$_completed_var
+					value = 1
+				}
+			}
+		}
+		custom_tooltip = $mission$_count_tt
+	}
+	else = {
+		custom_tooltip = lake_mission_count_zero_tt
+	}
+	hidden_effect = {
+		4000 = {
+			change_variable = {
+				which = $mission$_completed_var
+				value = 1
+			}
+		}
+	}
 }

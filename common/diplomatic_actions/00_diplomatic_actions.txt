@@ -177,25 +177,6 @@ transfer_trade_power = {
 				FROM = { set_country_flag = transfers_trade_to_feiten }
 			}
 		}
-		if = {
-			limit = {
-				has_global_flag = z22_can_have_giesadh
-			}
-			if = {
-				limit = {
-					FROM = { is_or_was_tag = { tag = Z22 } }
-					alliance_with = FROM
-				}
-				z22_giesadh_check_effect = yes
-			}
-			else_if = {
-				limit = {
-					is_or_was_tag = { tag = Z22 }
-					FROM = { alliance_with = ROOT }
-				}
-				FROM = { z22_giesadh_check_effect = yes }
-			}
-		}
 	}
 }
 
@@ -663,6 +644,35 @@ declarewar = {
 			always = no
 		}
 	}
+	
+	condition = {
+		tooltip = NO_VIC_AGAINST_LEADER_ALLY
+		potential = { 
+			is_subject_of_type = vic_league_member
+			overlord = {
+				OR = {
+					alliance_with = FROM
+					has_guaranteed = FROM
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
+
+	condition = {
+		tooltip = CROVIS_NO_OTHER_WARS
+		potential = {
+			has_country_flag = crovis_no_war_flag
+			FROM = {
+				has_country_flag = crovis_no_war_flag
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
 
 	pre_effect = {
 		if = { #Caergaraen
@@ -675,7 +685,86 @@ declarewar = {
 			}
 		}
 	}
-	
+
+	condition = {
+		tooltip = I78_centaur_hre
+		potential = { 
+			has_country_modifier = centaur_administration
+			FROM = { has_country_modifier = centaur_administration }
+		}
+		allow = {
+			NOT = {
+				AND = {
+					has_global_flag = I78_caehns_authority_no_war
+					FROM = { capital_scope = { superregion = forbidden_lands_superregion } }
+				}
+			}
+		}
+	}
+
+	condition = {
+		tooltip = I78_centaur_hre_2_locking_in_time
+		potential = { 
+			FROM = { has_country_modifier = centaur_administration }
+		}
+		allow = {
+			NOT = {
+				AND = {
+					has_global_flag = I78_caehns_authority_double_no_war
+					FROM = { capital_scope = { superregion = forbidden_lands_superregion } }
+				}
+			}
+		}
+	}
+
+	condition = {
+		tooltip = TSUKQIAO_JUNGLE_WAR.TT
+		potential = {
+			has_country_flag = tsukqiao_lupulan_war_flag
+		}
+		allow = {
+			always = no
+		}
+	}
+
+	condition = {
+		tooltip = YRW_reform_2_no_subject_war
+		potential = {
+			is_subject_of_type = ynnic_iosahar
+			overlord = {
+				OR = {
+					tag = U69
+					tag = U70
+					tag = U71
+				}
+				has_country_modifier = yrw_2b
+				FROM = {
+					is_subject_of = PREV
+				}
+			}
+		}
+		allow = {
+			liberty_desire = 50
+		}
+	}
+
+	condition = { #If mission is done, prevent war between tributaries
+		tooltip = I69_reversing_negeal_war_tt
+		potential = { 
+			is_subject_of_type_with_overlord = {
+				who = I69 #Star Rider
+				type = tributary_state_anb
+			}
+		}
+		allow = { 
+			NOT = {
+				overlord = {
+					mission_completed = I69_reversing_negeal
+				}
+			}
+		}
+	}
+
 	effect = {
 		on_war_declaration_effect = yes #1.35
 
@@ -702,29 +791,28 @@ declarewar = {
 		}
 
 		if = {
+			limit = {
+				has_global_flag = war_of_salt_and_silence
+				has_saved_global_event_target = salt_and_silence_emperor
+			}
+			if = {
+				limit = {
+					tag = event_target:salt_and_silence_emperor
+					FROM = { tag = event_target:salt_and_silence_giant }
+				}
+				event_target:salt_and_silence_emperor = {
+					set_country_flag = currently_in_salt_silence_war
+					country_event = { id = flavor_salt_silence_incident.11 days = 1825 }
+				}
+			}
+		}
+
+		if = {
 			limit = { 
 				has_country_modifier = federation_war_mandat
 				FROM = { has_country_modifier = lake_federation_member }
 			}
 			remove_country_modifier = federation_war_mandat
-		}
-		
-		if = {
-			limit = { 
-				OR = {
-					tag = G93
-					FROM = { tag = G93 }
-				}
-				G93 = {
-					has_country_flag = mykx_hellfire_cannons_unlocked
-				}
-				NOT = { 
-					G93 = {
-						has_country_flag = mykx_hellfire_cannons_flag
-					}
-				}
-			}
-			G93 = { country_event = { id = mykx.33 } }
 		}
 		
 		if = {
@@ -1481,18 +1569,18 @@ declarewar = {
 		}
 		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
 
-		#Accretive Path - Rusted Blades
+		#Accretive Path - Rusted Blades. Remove modifiers if at war.
 		if = {
 			limit = {
 				has_country_flag = ap_rustedblades_happened
 			}
 			remove_country_modifier = ap_rustedblades_quietmarch
+			remove_country_modifier = ap_rustedblades_productivemarch 
+			remove_country_modifier = ap_rustedblades_recruitmentmarch 
+			remove_country_modifier = ap_rustedblades_caravanmarch 
+			remove_country_modifier = ap_rustedblades_religiousmarch 
+			remove_country_modifier = ap_rustedblades_surveillancemarch 
 			remove_country_modifier = ap_rustedblades_sharpenedchi
-			remove_country_modifier = ap_rustedblades_productivemarch
-			remove_country_modifier = ap_rustedblades_recruitmentmarch
-			remove_country_modifier = ap_rustedblades_caravanmarch
-			remove_country_modifier = ap_rustedblades_religiousmarch
-			remove_country_modifier = ap_rustedblades_surveillancemarch
 			clr_country_flag = ap_rustedblades_happened
 		}
 		FROM = {
@@ -1501,13 +1589,60 @@ declarewar = {
 					has_country_flag = ap_rustedblades_happened
 				}
 				remove_country_modifier = ap_rustedblades_quietmarch
+				remove_country_modifier = ap_rustedblades_productivemarch 
+				remove_country_modifier = ap_rustedblades_recruitmentmarch 
+				remove_country_modifier = ap_rustedblades_caravanmarch 
+				remove_country_modifier = ap_rustedblades_religiousmarch 
+				remove_country_modifier = ap_rustedblades_surveillancemarch 
 				remove_country_modifier = ap_rustedblades_sharpenedchi
-				remove_country_modifier = ap_rustedblades_productivemarch
-				remove_country_modifier = ap_rustedblades_recruitmentmarch
-				remove_country_modifier = ap_rustedblades_caravanmarch
-				remove_country_modifier = ap_rustedblades_religiousmarch
-				remove_country_modifier = ap_rustedblades_surveillancemarch
 				clr_country_flag = ap_rustedblades_happened
+			}
+		}
+		if = {
+			limit = {
+				tag = S90
+			}
+			if = {
+				limit = {
+					has_country_flag = S90_communion_flag
+					NOT = {
+						has_country_modifier = S90_communion_cd
+					}
+				}
+				add_country_modifier = {
+					name = S90_communion
+					duration = 1825
+				}
+				add_country_modifier = {
+					name = S90_communion_cd
+					duration = 3650
+					hidden = yes
+				}
+			}
+			if = {
+				limit = {
+					has_country_flag = S90_incensed_to_rage
+					NOT = {
+						has_country_modifier = S90_incensed_to_rage_cd
+					}
+				}
+				add_stability = 1
+				add_country_modifier = {
+					name = S90_incensed_to_rage_cd
+					duration = 3650
+				}
+			}
+		}
+
+		#Kimanis Indepence War
+		if = {
+			limit = { 
+				tag = G61
+				NOT = { has_country_flag = G61_independence_war_over }
+				FROM = { tag = event_target:oppressor_kimanis }
+			}
+			country_event = {
+				id = flavour_kimanis.20
 			}
 		}
 		
@@ -1552,6 +1687,174 @@ declarewar = {
 				chance = 10
 				set_country_flag = yingzhen_assassinated_once
 				country_event = { id = haless.742 days = 1 random = 364 }
+			}
+		}
+
+		if = { #Ashhana Lizardfolk gain Control
+			limit = {
+				has_government_mechanic = ashhana_blood_curse_mechanic
+			}
+			#Upon declaring war, gain Control and Claw Strength
+			#When you have the War as Art reform, gain double the Control and Claw Strength
+			if = {
+				limit = {
+					has_government_attribute = war_as_art_ability
+				}
+				ashhana_blood_curse_add_control_by_source = {
+					claw_strength = 2
+				}
+			}
+			else = {
+				ashhana_blood_curse_add_control_by_source = {
+					claw_strength = 1
+				}
+			}
+		}
+
+		if = { #umbral covenant CONSEQUENCES
+			limit = {
+				tag = S90
+				FROM = {
+					tag = S70
+				}
+			}
+			S90 = {
+				country_event = {
+					id = flavor_umbral_covenant.250
+				}
+			}
+		}
+		#Zena War Boost Against Kheteratan Nations 
+		if = {
+			limit = {
+				mission_completed = L06_end_of_the_medasi_system
+				FROM = {
+					culture_group = kheteratan
+				}
+			}
+			add_country_modifier = {
+				name = zena_tears_drown_sorrow
+				duration = -1
+			}
+		}
+
+		# Stop Taga'ala republics from using any land-taking cbs
+		if = {
+			limit = {
+				ai = no
+				has_country_modifier = mangrove_peace
+				has_government_attribute = mangrove_republic
+				NOT = {
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_unification
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_humiliate_rotw
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war_triggered
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict_triggered
+					}
+				}
+			}
+			white_peace = FROM	# Immediate white peace
+			country_event = { id = mangrove.2 }
+		}
+
+		#Tsukqiao
+		if = {
+			limit = { is_or_was_tag = { tag = Z60 } }
+			if = {
+				limit = {
+					ROOT = { has_country_flag = tsukqiao_jinqiu_war_flag }
+					FROM = { tag = Y02 }
+				}
+				Y02 = {
+					country_event = { id = tsukqiao.41 days = 10 }
+				}
+			}
+			if = { #Azjakuma War
+				limit = {
+					ROOT = { has_country_flag = tsukqiao_azjakuma_flag }
+					FROM = { tag = Y01 } #Azjakuma
+				}
+				clr_country_flag = tsukqiao_azjakuma_flag
+					4828 = { #Kabiourgarko
+						if = {
+							limit = { owned_by = Y01 }
+							infantry = ROOT
+							infantry = ROOT
+							infantry = ROOT
+							infantry = ROOT
+							infantry = ROOT
+							infantry = ROOT
+						}
+					}
+				if = {
+					limit = {
+						Y01 = { is_subject_of_type = slave_state } #Azjakuma
+					}
+					Y01 = { grant_independence = yes }
+					white_peace = R62 #The Command
+				}
+			}
+			if = { #Doctrine of Might
+				limit = {
+					has_doctrine_of_might_aspect = yes
+					church_power = 100
+				}
+				add_church_power = -100
+				tsukqiao_mask_of_might_effect_calc = yes
+				if = {
+					limit = {
+						has_estate_privilege = estate_nobles_doctrines_of_war_privilege
+						NOT = { has_country_modifier = tsukqiao_doctrine_of_war_cooldown }
+					}
+					country_event = { id = tsukqiao.300 }
+				}
+			}
+			if = { #Sri Baginda Call
+				limit = {
+					has_ruler_modifier = tsukqiao_sri_baginda_title
+				}
+				every_subject_country = {
+					limit = { is_subject_of_type = jungle_march }
+					join_all_offensive_wars_of = ROOT
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				B43 = { has_country_flag = B43_defend_grasshopper }
+				FROM = { tag = B46 } #Grasshopper Muncher
+				ROOT = { NOT = { tag = B43 } } #Flying Hound
+			}
+			B43 = { #Flying Hound
+				join_all_defensive_wars_of = B46 #Grasshopper Muncher
+				if = {
+					limit = { has_country_flag = B43_defended_hopper_once }
+					set_country_flag = B43_defended_grasshopper_twice
+				}
+				else = { set_country_flag = B43_defended_hopper_once }
 			}
 		}
 	}
@@ -2777,7 +3080,11 @@ annexationaction = {
 					vassal_of = ROOT
 					AND = {
 						is_subject_of = ROOT
-						is_subject_of_type = medasi_subject
+						OR = {
+							is_subject_of_type = medasi_subject
+							is_subject_of_type = great_daimyo_vassal
+							is_subject_of_type = vizier_vassal
+						}
 					}
 				}				
 			}
@@ -2801,7 +3108,7 @@ annexationaction = {
 			4411 = {
 				check_variable = {
 					which = raj_var_cohesion
-					value = 75
+					value = 70
 				}
 			}
 		}
@@ -3079,13 +3386,24 @@ annexationaction = {
     }	
 	
 	condition = {
-		tooltip = vic_league_annex_conditions
+		tooltip = vic_league_annex_conditions_year
 		potential = {
 			FROM = { is_subject_of_type = vic_league_member }
 		}
 		allow = {
 			FROM = {
 				had_country_flag = { flag = vic_league_duration_tracker days = 9125 }
+			}
+		}
+	}
+	
+	condition = {
+		tooltip = vic_league_annex_conditions_other
+		potential = {
+			FROM = { is_subject_of_type = vic_league_member }
+		}
+		allow = {
+			FROM = {
 				NOT = { liberty_desire = 10 }
 				has_opinion = {
 					who = ROOT
@@ -3093,6 +3411,52 @@ annexationaction = {
 				}
 			}
 		}
+	}
+	
+	condition = {
+		tooltip = z22_no_annex_aelantiri_vic_league_members_tt
+		potential = {
+			mission_completed = z22_emancipate_aelantir
+			FROM = {
+				is_subject_of_type = vic_league_member
+				capital_scope = {
+					OR = {
+						continent = north_america
+						continent = south_america
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
+
+	condition = {
+		tooltip = z18_no_early_annex_white_reachman
+		potential = {
+			tag = Z18
+			FROM = {
+				OR = {
+					tag = Z23
+					tag = Z27
+					tag = Z48
+					tag = Z49
+				}
+			}
+		}
+		allow = {
+			is_year = 1460
+		}
+	}
+
+	condition = {
+		tooltip = N89_no_annexing_N79.tt
+		potential = { 
+			tag = N89
+			FROM = { tag = N79 }
+		}
+		allow = { always = no }
 	}
 }
 
@@ -3171,6 +3535,17 @@ vassalaction = {
 				country_event = {
 					id = diggy.122
 				}
+			}
+		}
+		#Molten Eternity
+		if = {
+			limit = {
+				religion = molten_eternity
+				has_personal_deity = infinite_self_generosity
+			}
+			change_variable = {
+				which = moltenEternityObligationVar
+				value = 500
 			}
 		}
 	}
@@ -3422,7 +3797,7 @@ callaction = {
 				NOT = { truce_with = FROM }  #(important when you want subject to fight their previous overlord)
 			}
 			OR = {
-				has_country_flag = allow_to_join_war_nonetheless #Use this flag on countries you want to join fight
+				FROM = { has_country_flag = allow_to_join_war_nonetheless } #Use this flag on countries you want to join fight
 				AND = {
 					ROOT = { has_country_flag = allow_subjects_war } #Flag for allowing subjects/overlords to join
 					OR = {
@@ -3529,6 +3904,24 @@ callaction = {
 			NOT = {
 				event_target:raj_raja_global_target = {	war_with = ROOT }
 			}
+		}
+	}
+	
+	condition = { #Vic League
+		tooltip = NO_VIC_AGAINST_FELLOW_VIC_MEMBER
+		potential = {
+			FROM = {
+				is_subject_of_type = vic_league_member
+				overlord = {
+					OR = {
+						war_with = ROOT
+						any_subject_country = { war_with = ROOT }
+					}
+				}
+			}
+		}
+		allow = {
+			always = no
 		}
 	}
 
@@ -3665,6 +4058,51 @@ callaction = {
 			accretive_path_gain_chi = { aspect = fill_the_begging_bowls category = dip amount = 20 }
 		}
 	}
+
+	effect = {
+		if = { #Orenvalyam
+			limit = { has_country_flag = U39_hunted_by_the_righteous_flag }
+			every_war_enemy_country = {
+				add_country_modifier = {
+					name = U39_hunted_by_the_righteous
+					duration = -1
+				}
+			}
+		}
+
+		if = { #Orenvalyam
+			limit = { FROM = { has_country_flag = U39_hunted_by_the_righteous_flag } }
+			FROM = {
+				every_war_enemy_country = {
+					add_country_modifier = {
+						name = U39_hunted_by_the_righteous
+						duration = -1
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = { #Sacred Grove Monument
+			limit = {
+				FROM = {
+					owns = 1016
+					can_use_sacred_grove_generic_country_reqs_trigger = yes
+					NOT = {
+						has_country_flag = blood_contract_1
+						check_variable = { which = sacred_grove_call_to_arms value = 2 }
+					}
+				}
+			}
+			FROM = {
+				change_variable = {
+					which = sacred_grove_call_to_arms
+					value = 1
+				}
+			}
+		}
+	}
 }
 
 designate_march = {
@@ -3685,6 +4123,14 @@ designate_march = {
 		}
 		allow = { always = no }
 	}
+	condition = {
+		tooltip = N89_no_march_N79.tt
+		potential = { 
+			tag = N89
+			FROM = { tag = N79 }
+		}
+		allow = { always = no }
+	}
 }
 
 ask_for_march = {
@@ -3700,6 +4146,14 @@ ask_for_march = {
 				tag = H79
 				tag = I18
 			}
+		}
+		allow = { always = no }
+	}
+	condition = {
+		tooltip = N79_no_march.tt
+		potential = { 
+			tag = N79
+			is_subject_of = N89
 		}
 		allow = { always = no }
 	}
@@ -3801,7 +4255,7 @@ insultaction = {
 		}
 		if = {
 			limit = {
-				has_reform = elaborate_court_ceremonies
+				has_reform = elaborate_court_ceremonies_gov
 				FROM = { is_rival = ROOT }
 				NOT = {
 					has_country_modifier = elaborate_court_ceremonies_insult_mod
@@ -3815,6 +4269,90 @@ insultaction = {
 					hidden = yes
 				}
 			}
+		}
+		if = {
+			limit = {
+				OR = {
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+				is_subject_of_type = vic_league_member
+				FROM = {
+					has_opinion_modifier = { who = ROOT modifier = scornfully_insulted }
+					OR = {
+						overlord_of = ROOT
+						any_ally = { overlord_of = ROOT }
+					}
+				}
+			}
+			add_government_power = {
+				mechanic_type = vic_league_mechanic
+				power_type = vic_league_mil_power
+				value = 2
+			}
+		}
+		if = {
+			limit = {
+				has_country_flag = S90_incorporeal_accompaniment_active
+				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } NOT = { has_country_modifier = S90_insult_cd } }
+			}
+			FROM = {
+				add_country_modifier = {
+					name = S90_incorporeal_accompaniment
+					duration = 1825
+				}
+				add_country_modifier = {
+					name = S90_insult_cd 
+					duration = 3650
+				}
+			}
+		}
+		if = {
+			limit = { 
+				is_or_was_tag = { tag = G61 }
+				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } }
+			}
+			change_variable = {
+				which = scornful_insult_counter_G61
+				value = 1
+			}
+			if = {
+				limit = { 
+					has_spy_network_in = {
+						who = FROM
+						value = 30
+					}
+					FROM = {
+						culture_is_ruinborn = yes
+						capital_scope = {
+							continent = south_america # south aelantir
+							NOT = { has_province_modifier = G61_wine_cult_cooldown }
+							owner = {
+									NOT = { has_country_modifier = G61_wine_cult_cooldown_country }
+							}
+							NOT = { has_province_modifier = G61_wine_cult }
+						}
+					}
+				}
+				FROM = {
+					capital_scope = {
+						G61_add_wine_cults = yes
+					}
+				}
+			}
+		}
+		#Gnollakaz
+		if = {
+			limit = {
+				has_country_modifier = U09_master_of_gremrabo
+				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } }
+			}
+			if = {
+				limit = { has_country_modifier = U09_art_of_the_gremrabo }
+				remove_country_modifier = U09_art_of_the_gremrabo
+			}
+			add_country_modifier = { name = U09_art_of_the_gremrabo duration = 1825 }
 		}
 	}
 }
@@ -4098,34 +4636,72 @@ requestpeace = {
 			}
 		}
 	}
+	
+	condition = { #Ashhana blood curse revolt requires 100% warscore to finish
+		tooltip = ASHHANA_DISASTER_CANT_PEACE_tt
+		potential = {
+			is_in_war = { casus_belli = cb_ashhana_freedom_of_expression }
+			FROM = { is_in_war = { casus_belli = cb_ashhana_freedom_of_expression } }
+		}
+		allow = {
+			always = no
+		}
+	}
+	condition = { #umbral covenant
+		tooltip = S90_soul_of_the_world_no_peace_tt
+		potential = {
+			tag = S90
+			has_country_flag = S90_soul_of_the_world
+		}
+		allow = {
+			always = no
+        }
+	}
+	condition = { #Tsukqiao Independence War
+		tooltip = TSUKQIAO_WAR_STOP.TT
+		potential = {
+			tag = Z60
+			has_country_flag = tsukqiao_jinqiu_war_flag
+		}
+		allow = {
+			always = no
+		}
+	}
+	condition = {
+		tooltip = TSUKQIAO_JUNGLE_WAR.TT
+		potential = {
+			is_or_was_tag = { tag = Z60 }
+			has_country_flag = tsukqiao_lupulan_war_flag
+		}
+		allow = {
+			always = no
+		}
+	}
+	condition = { #Iochand
+		tooltip = A80_the_war_of_masks_ttt
+		potential = {
+			is_in_war = { casus_belli = cb_war_of_masks }
+			FROM = { is_in_war = { casus_belli = cb_war_of_masks } }
+		}
+		allow = {
+			always = no
+		}
+	}
 }
 
 support_heir = {
-    condition = {
-        tooltip = cannot_support_heir_TT
-        potential = {
-            NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+	condition = {
+		tooltip = cannot_support_heir_TT
+		potential = {
+			NOT = { has_estate_privilege = estate_mages_organization_magisterium }
+		}
+		allow = {
+			always = no
         }
-        allow = {
-            always = no
-        }
-    }
+	}
 }
 
 break_alliance = {
-	condition = {
-		tooltip = z22_new_world_giesadh_TT
-		potential = {
-			has_country_flag = z22_is_permanent_giesadh
-		}
-		allow = {
-			NOT = {
-				FROM = {
-					is_or_was_tag = { tag = Z22 }
-				}
-			}
-		}
-	}
 	effect = {
 		on_alliance_broken_effect = yes
 	}
@@ -4225,6 +4801,18 @@ knowledge_sharing = {
 			limit = { has_estate_privilege = estate_church_vir_honesty }
 			set_country_flag = vir_honest_sharing
 		}
+		if = { 
+			limit = { 
+				tag = I27 
+				mission_completed = I27_new_thoughts 
+				FROM = { 
+					primary_culture = wood_elf 
+					capital_scope = { superregion = deepwoods_superregion } 
+				} 
+			}
+			add_favors = { who = FROM amount = 25 }
+			FROM = { add_country_modifier = { name = I27_faster_embracement_mod duration = 1825 } }
+		}
 	}
 }
 
@@ -4252,6 +4840,45 @@ giftaction = {
 			add_country_modifier = {
 				name = RS_sent_gift_investment
 				duration = 365 #1 years
+			}
+		}
+		#Molten Eternity
+		if = {
+			limit = {
+				religion = molten_eternity
+				has_personal_deity = infinite_self_generosity
+			}
+			change_variable = {
+				which = moltenEternityObligationVar
+				value = 10
+			}
+		}
+		#Ashhana tribes with the Spread the Cure reform gain Control and Canvas Strength when sending a gfit
+		#worth 10 opinion, but only once every 5 years per nation
+		if = {
+			limit = {
+				has_government_attribute = spread_the_cure_ability
+				FROM = {
+					primary_culture = ashhana_lizardfolk
+					has_10_opinion_sent_gift = {
+						target = ROOT
+					}
+					NOT = {
+						has_opinion_modifier = {
+							who = ROOT
+							modifier = opinion_ashhana_spread_the_cure
+						}
+					}
+				}
+			}
+			FROM = {
+				add_opinion = {
+					who = root
+					modifier = opinion_ashhana_spread_the_cure
+				}
+			}
+			ashhana_blood_curse_add_control_by_source = {
+				canvas_strength = 0.75
 			}
 		}
 	}
@@ -4290,6 +4917,14 @@ trade_favors_for_men = {
 			}
 			dt_change_aspire_compassion_modifier = yes
 		}
+
+		if = {
+			limit = {
+				has_country_flag = S50_enhanced_favors
+			}
+			set_country_flag = S50_traded_favors_for_manpower
+			add_army_tradition = 5
+		}
 	}
 }
 
@@ -4301,6 +4936,14 @@ trade_favors_for_gold = {
 				has_church_aspect = aspire_compassion_aspect_mil
 			}
 			dt_change_aspire_compassion_modifier = yes
+		}
+
+		if = {
+			limit = {
+				has_country_flag = S50_enhanced_favors
+			}
+			set_country_flag = S50_traded_favors_for_crowns
+			add_mil_power = 50
 		}
 	}
 }
@@ -4318,12 +4961,48 @@ trade_favors_for_sailors = {
 }
 
 support_independence_action = {
+	#This action works for both Ask to Support Independence (ROOT is a subject, FROM is independent) and Support Independence (FROM is a subject, ROOT is independent).
+	#Make sure to write your conditions in both directions if you want to actually block independence support from being established
 	condition = {
-		tooltip = vic_league_no_external_support
+		tooltip = vic_league_no_external_support_1
 		potential = {
-			FROM = { is_subject_of_type = vic_league_member }
+			FROM = { #External country (ROOT) can't offer independence support to subject (FROM)
+				is_subject_of_type = vic_league_member
+				OR = { #Vic League members without these mechanic can have independence supported
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+			}
 		}
 		allow = { always = no }
+	}
+	condition = {
+		tooltip = vic_league_no_external_support_2
+		potential = {
+			ROOT = { #Subject (ROOT) can't ask another country (FROM) for indep support
+				is_subject_of_type = vic_league_member
+				OR = { #Vic League members without these mechanic can have independence supported
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+			}
+		}
+		allow = { always = no }
+	}
+
+	condition = { #AI shouldn't interfere in this system. MP players, make your own choices
+		tooltip = crovis_no_outside_support
+		potential = { 
+			NOT = { is_year = 1460 }
+			ai = yes
+			OR = { 
+				is_subject_of = Z18
+				FROM = { is_subject_of = Z18 }
+			}
+		}
+		allow = { is_year = 1460 }
 	}
 }
 grant_electorate = {
