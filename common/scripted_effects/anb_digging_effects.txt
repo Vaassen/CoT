@@ -3015,24 +3015,11 @@ generate_party_stats = {
 		}
 		owner = {
 			if = {
-				limit = { 
-					OR = { 
-						has_country_flag = dwarven_pantheon_expedition_thyrfen
-						has_country_flag = dwarven_pantheon_expedition_werdun
-						has_country_flag = gronstunad_supplied_expedition
-						has_country_flag = gor_vazumbrog_powerful_monster_hunters
-					}
-				}
+				limit = { has_free_expedition_supply = yes }
 				ROOT = { set_variable = { partySupplies = 100 } }
 			}
 			if = {
-				limit = {
-					OR = {
-						has_country_flag = dwarven_pantheon_expedition_lorgram
-						has_country_flag = dwarven_pantheon_expedition_grobilazk
-						has_country_flag = gor_vazumbrog_powerful_monster_hunters
-					}
-				}
+				limit = { has_free_expedition_manpower = yes }
 				ROOT = { set_variable = { partyManpower = 10000 } }
 			}
 		}
@@ -3656,7 +3643,8 @@ refund_party_preparation = {
 	hidden_effect = {
 		[[manpower]
 			if = {
-				limit = { NOT = { owner = { has_country_flag = gor_vazumbrog_powerful_monster_hunters } } } # GV got free expedition manpower - don't pay back with free infantry
+				limit = { NOT = { owner = { has_free_expedition_manpower = yes } } }
+				# only refund if it wasn't free in the first place
 				while = {
 					limit = {
 						check_variable = { partyManpower = 1000 }
@@ -3664,19 +3652,7 @@ refund_party_preparation = {
 					subtract_variable = { partyManpower = 1000 }
 					infantry = owner
 				}
-			}
-			set_variable = { partyManpower = 0 }
-			if = {
-				limit = {
-					owner = {
-						OR = {
-							has_country_flag = dwarven_pantheon_expedition_lorgram
-							has_country_flag = dwarven_pantheon_expedition_grobilazk
-							has_country_flag = gor_vazumbrog_powerful_monster_hunters
-						}
-					}
-				}
-				set_variable = { partyManpower = 10000 }
+				set_variable = { partyManpower = 0 }
 			}
 		]
 		[[morale]
@@ -3766,16 +3742,7 @@ refund_party_preparation = {
 			currency_effect_expedition = { currency = treasury supplies = Cash addTo = owner }
 			set_variable = { partySupplies = 0 }
 			if = {
-				limit = {
-					owner = {
-						OR = {
-							has_country_flag = dwarven_pantheon_expedition_thyrfen
-							has_country_flag = dwarven_pantheon_expedition_werdun
-							has_country_flag = gronstunad_supplied_expedition
-							has_country_flag = gor_vazumbrog_powerful_monster_hunters
-						}
-					}
-				}
+				limit = { owner = { has_free_expedition_supply = yes } }
 				set_variable = { partySupplies = 100 }
 			}
 		]
@@ -5126,7 +5093,7 @@ expedition_dead_effect = {
 	
 	if = {
 		limit = { is_city = yes }
-		add_permanent_province_modifier = { name = expedition_death_timer duration = 365 }
+		add_province_modifier = { name = expedition_death_timer duration = 365 }
 	}
 	
 	clr_province_flag = sent_expedition_@owner
@@ -8761,5 +8728,17 @@ construct_every_adjacent_rail_road = { #Used in building scope
 			speed = $speed$
 			cost = $cost$
 		}
+	}
+}
+
+obsidian_invasion_over_effect = { # disaster end effect
+	hidden_effect = {
+		serpentspine = {
+			clr_province_flag = fallen_portal
+			remove_province_modifier = strange_rumors
+			remove_province_modifier = fallen_portal
+			remove_province_modifier = fallen_great_excavation
+		}
+		set_global_flag = fallen_dwarf_end
 	}
 }
