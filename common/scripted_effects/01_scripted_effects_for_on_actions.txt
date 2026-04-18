@@ -6405,6 +6405,29 @@ on_religion_change_effect = {
 	clr_country_flag = noukahi_pantheon_pilgrimage_main_open
 	clr_country_flag = noukahi_pantheon_pilgrimage_khet_open
 	clr_country_flag = noukahi_pantheon_pilgrimage_unique_open
+
+	#Infernal Court - early cleanup if you skip the normal coverison chain as eg Cael'Deinn
+	if = {
+		limit = {
+			religion = infernal_court
+		}
+		every_owned_province = {
+			limit = {
+				has_province_modifier = infernal_cult_hub
+			}
+			remove_province_modifier = infernal_cult_hub
+			change_religion = infernal_court
+		}
+	}
+
+	if = {
+		limit = { religion = speaking_memory }
+		set_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 55
+		}
+		set_country_flag = speaking_memory_initialized
+	}
 }
 
 
@@ -9645,6 +9668,25 @@ on_development_effect = {
 			province_group = spirit_forts_province_group
 		}
 		spirit_fort_awakening_effect = yes
+	}
+
+	if = {
+		limit = { 
+			province_id = 2745
+			can_use_degalistea = yes
+		}
+		if = {
+			limit = { has_great_project = { type = degalistea tier = 3 } }
+			add_next_institution_embracement_scaled = 9
+		}
+		else_if = {
+			limit = { has_great_project = { type = degalistea tier = 2 } }
+			add_next_institution_embracement_scaled = 6
+		}
+		else_if = {
+			limit = { has_great_project = { type = degalistea tier = 1 } }
+			add_next_institution_embracement_scaled = 3
+		}
 	}
 }
 
@@ -14313,7 +14355,10 @@ on_province_owner_change_effect = {
 			if = {
 				limit = {
 					has_province_modifier = lel_shrine_province
-					owner = { has_personal_deity = lel }
+					OR = { 
+						owner = { has_personal_deity = lel }
+						owner = { has_personal_deity = lel_ascendant }					
+					}
 				}
 				owner = { add_ruler_modifier = { name = lel_shrine } }
 				nakavy_avo_shrines_activate_specific_deity_province_effect = { deity = lel }
@@ -15729,6 +15774,35 @@ on_province_owner_change_effect = {
 		}
 	}
 
+	if = {
+		limit = {
+			owner = {
+				OR = {
+					AND = { 
+						is_or_was_tag = { tag = L36 }
+						has_country_flag = L36_blessed_rains
+					}
+					overlord = {
+						is_or_was_tag = { tag = L36 }
+						has_country_flag = L36_blessed_rains
+					}
+				}
+			}
+		}
+		if = {
+			limit = { has_monsoon = mild_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_mild duration = -1 }
+		}
+		else_if = {
+			limit = { has_monsoon = normal_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_normal duration = -1 }
+		}
+		else_if = {
+			limit = { has_monsoon = severe_monsoon }
+			add_province_modifier = { name = L36_blessed_rains_severe duration = -1 }
+		}
+	}
+
 	#Endhuvi
 	if = {
 		limit = { owner = { is_or_was_tag = { tag = R36 } } }
@@ -16324,13 +16398,29 @@ on_primary_culture_changed_effect = {
 	if = { #Mechanim that hasn't yet unlocked artificery: you get mechanim setup
 		limit = {
 			culture_is_mechanim = yes
-			NOT = { has_institution = manufactories }
 		}
-		set_country_flag = artificery_unlocked #Need this first so the scripted event doesn't try to let you choose your org
-		artifice_magic_switch_to_artificery_only_mode = yes
-		country_event = {
-			id = insyaa_flavour.51
-			days = 1
+		if = {
+			limit = { NOT = { has_institution = manufactories } }
+			set_country_flag = artificery_unlocked #Need this first so the scripted event doesn't try to let you choose your org
+			artifice_magic_switch_to_artificery_only_mode = yes
+			country_event = {
+				id = insyaa_flavour.51
+				days = 1
+			}
+		}
+		else = {
+			set_country_flag = mechanim_automatory_building_allowed
+			set_country_flag = mechanim_automatory_building_allowed_not_from_privilage
+		}
+	}
+	else = {
+		if = {
+			limit = {
+				has_country_flag = mechanim_automatory_building_allowed
+				has_country_flag = mechanim_automatory_building_allowed_not_from_privilage
+			}
+			clr_country_flag = mechanim_automatory_building_allowed
+			clr_country_flag = mechanim_automatory_building_allowed_not_from_privilage
 		}
 	}
 	if = {
@@ -17273,7 +17363,7 @@ on_province_owner_change_monuments = {
 	##Temple of Ruby and Bronze
 	if = {
 		limit = {
-			province_id = 3208
+			province_id = 5774
 			has_great_project = {
 				type = temple_ruby_bronze
 				tier = 1
@@ -17858,9 +17948,9 @@ on_province_owner_change_monuments = {
 	if = {
 		limit = {
 			owner = {
-				owns = 3208
+				owns = 5774
 			}
-			3208 = {
+			5774 = {
 				has_great_project = {
 					type = temple_ruby_bronze
 					tier = 2
@@ -17874,7 +17964,7 @@ on_province_owner_change_monuments = {
 		}
 		if = {
 			limit = {
-				3208 = {
+				5774 = {
 					has_great_project = {
 						type = temple_ruby_bronze
 						tier = 3
@@ -18056,6 +18146,7 @@ on_consort_death_effects = {
 	country_event = { id = flavor_averilibet.3 } #averilibet husband harem 
 	country_event = { id = flavor_frozenmaw.14 } #the death of Frida
 	country_event = { id = guwaamud.100 } # Harem lady dead
+	country_event = { id = flavour_lelanan.81 } #Death of Leli and Felana
 	magic_on_consort_death = yes
 	if = {
 		limit = { has_consort_flag = 10_years_anniversary }
