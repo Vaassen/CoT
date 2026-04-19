@@ -3162,6 +3162,24 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 			add_base_manpower = 1
 		}
 	}
+	# Nansalen
+	if = { 
+		limit = { 
+			culture_group = harpy
+			religion = bulwari_sun_cult
+			owner = { is_or_was_tag = { tag = F80 } } 
+		}
+		if = { limit = { owner = { mission_completed = F80_mission_our_duty } }
+			add_province_modifier = { name = F80_pmod_more_control duration = 3650 }
+		}
+		if = {
+			limit = { 
+				owner = { mission_completed = F80_mission_divine_duties_fulfilled } 
+				NOT = { culture = firanyan_harpy } 
+			}
+			add_province_modifier = { name = F80_pmod_harpy_culture_conversion duration = -1 }
+		}
+	}
 	if = {
 		limit = { religion = foundationism owner = { religion = foundationism } is_city = yes }
 		if = {
@@ -6419,6 +6437,15 @@ on_religion_change_effect = {
 			change_religion = infernal_court
 		}
 	}
+
+	if = {
+		limit = { religion = speaking_memory }
+		set_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 55
+		}
+		set_country_flag = speaking_memory_initialized
+	}
 }
 
 
@@ -7353,6 +7380,56 @@ on_war_declaration_effect = {
 		}
 		add_stability = -2
 	}
+
+	# Nansalen stuff
+	if = { limit = { tag = F80 }
+		# Ayarallen stuff.
+		if = { limit = { FROM = { tag = F27 } } # Ayarallen
+			hidden_effect = {
+				if = { limit = { F27 = { has_country_flag = F80_firanyalen_uprising_effect } }
+					F27 = { clr_country_flag = F80_firanyalen_uprising_effect }
+					# Doing this first to make sure the capital is in the right place.
+					# Not using release, since that would give them a truce with Ayarallen.
+					676 = { cede_province = F82 }
+					firanyalen_area = { limit = { owned_by = F27 }
+						cede_province = F82
+					}
+					harpy_hills_region = { discover_country = F82 }
+					F82 = { join_all_offensive_wars_of = ROOT }
+				}
+				if = { limit = { mission_completed = F80_mission_our_southern_cousins }
+					F33 = { join_all_offensive_wars_of = ROOT }
+				}
+				if = { limit = { mission_completed = F80_mission_right_words_right_ears }
+					F42 = { join_all_offensive_wars_of = ROOT }
+				}
+				complete_mission = F80_mission_firanyalen_uprising
+				complete_mission = F80_mission_playing_on_rivalries
+				complete_mission = F80_mission_our_southern_cousins
+				complete_mission = F80_mission_right_words_right_ears
+			}
+		}
+		# Varamhar declaration.
+		if = {
+			limit = {
+				is_in_war = {
+					attacker_leader = ROOT
+					casus_belli = cb_F80_enthroning_aras
+				}
+				F33 = { ai = yes }
+				FROM = { tag = F42 }
+			}
+			if = { limit = { NOT = { exists = F33 } }
+				north_naza_area = { cede_province = F33 }
+			}
+			create_subject = {
+				subject_type = vassal
+				subject = F33
+			}
+			F80 = { set_country_flag = F80_cflag_varamhar_pu_war }
+		}
+	}
+
 	if = {
 		limit = { has_country_modifier = hyti_harpy_harmy FROM = { capital_scope = { continent = serpentspine } } }
 		remove_country_modifier = hyti_harpy_harmy
@@ -7553,6 +7630,10 @@ remove_all_age_of_discovery_modifiers = {
 			has_country_modifier = gor_vazumbrog_fighting_back
 		}
 		remove_country_modifier = gor_vazumbrog_fighting_back
+	}
+
+	if = { limit = { is_or_was_tag = { tag = F80 } } # Nansalen
+		remove_country_modifier = F80_cmod_royals_reform_progress
 	}
 }
 remove_all_age_of_reformation_modifiers = {
@@ -8375,6 +8456,40 @@ on_province_culture_change_effect = {
 				add_base_tax = -1
 				add_base_production = -1
 				add_base_manpower = -1
+			}
+		}
+	}
+	# Nansalen
+	if = { 
+		limit = { 
+			culture = firanyan_harpy
+			owner = { 
+				is_or_was_tag = { tag = F80 } 
+				mission_completed = F80_mission_back_into_the_flock
+			}
+		}
+		trigger_switch = {
+			on_trigger = has_province_flag
+			F80_pflag_back_into_the_flock_2904 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2904
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = army_reformer skill = 3 cost_multiplier = 0.25 }
+				}			
+			}
+			F80_pflag_back_into_the_flock_2908 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2908
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = inquisitor skill = 3 cost_multiplier = 0.25 }
+				}			
+			}
+			F80_pflag_back_into_the_flock_2921 = {
+				clr_province_flag = F80_pflag_back_into_the_flock_2921
+				owner = { 
+					harpy_roost_se_allow_construction_of_extra_roost = yes 
+					define_advisor = { type = trader skill = 3 cost_multiplier = 0.25 }
+				}			
 			}
 		}
 	}
@@ -11084,6 +11199,18 @@ on_built_production_building_effect = {
 
 	#Drozma Tur
 	dt_community_recognition_mil_effect = yes
+
+	# Nansalen
+	if = { 
+		limit = { 
+			owner = {
+				is_or_was_tag = { tag = F80 } 
+				mission_completed = F80_mission_invite_dwarven_migrants
+			}
+			NOT = { fast_has_pop_of_race = { race = dwarven } }
+		}
+		add_dwarven_minority_size_effect = yes
+	}
 
 }
 
@@ -15989,6 +16116,45 @@ on_province_owner_change_effect = {
 			}
 		}
 	}
+
+	# Effects from the Nansalen MT. Will generally only apply in Bulwar, so check whether province is there prior to tag checks.
+	if = { limit = { superregion = bulwar_superregion }
+		# Check whether province was 623. If so, Nansalen loses a modifier that requires Akalses to own it.
+		if = { limit = { province_id = 623 FROM = { is_or_was_tag = { tag = F33 } } }
+			random_country = { limit = { is_or_was_tag = { tag = F80 } }
+				remove_country_modifier = F80_cmod_gold_mine_shared
+			}
+		}
+		if = { limit = { F80_st_owner_is_or_was_nansalen_or_akalses_or_their_subject = yes }
+			# Akalses effect from Our Kin in Akalses.
+			if = { 
+				limit = { 
+					owned_by = F33
+					F80 = {
+						mission_completed = F80_mission_our_kin_in_akalses
+						all_owned_province = { OR = { region = harpy_hills_region NOT = { superregion = bulwar_superregion } } } 
+					}
+				}
+				F80 = {
+					if = { limit = { has_country_modifier = monstrous_nation }
+						decrease_monstrous_1 = yes
+					}
+					else = {
+						change_government_reform_progress = 1
+					}
+				}
+			}
+
+			# Trade good effects from The Gate of Bulwar.
+			if = {
+				limit = {
+					has_global_flag = F80_gate_of_bulwar_active
+					OR = { trade_goods = gold trade_goods = sugar trade_goods = silk trade_goods = spices trade_goods = coffee }
+				}
+				add_province_modifier = { name = F80_pmod_gate_of_bulwar duration = -1 }
+			}
+		}
+	}
 	if = {
 		limit = { owner = { religion = foundationism } }
 		remove_province_modifier = religious_zeal_at_conv
@@ -16911,6 +17077,14 @@ on_province_owner_change_monuments = {
 				remove_province_modifier = golden_highway_v2
 			}
 		}
+		# Take away shared bonuses from any country that is or was Nansaslen.
+		if = { limit = { FROM = { is_or_was_tag = { tag = F33 } } }
+			random_country = { limit = { is_or_was_tag = { tag = F80 } }
+				remove_country_modifier = F80_cmod_monument_copy_ash_palace_1
+				remove_country_modifier = F80_cmod_monument_copy_ash_palace_2
+				remove_country_modifier = F80_cmod_monument_copy_ash_palace_3
+			}
+		}
 	}
 	if = { #Library of Aqatbar
 		limit = { province_id = 536 }
@@ -17350,6 +17524,15 @@ on_province_owner_change_monuments = {
 				disband_mercenary_company = THIS
 			}
 		}
+		# Take away shared bonuses from any country that is or was Nansaslen.
+		if = { limit = { FROM = { is_or_was_tag = { tag = F33 } } }
+			random_country = { limit = { is_or_was_tag = { tag = F80 } }
+				remove_country_modifier = F80_cmod_monument_copy_eka_idulnazzar_1
+				remove_country_modifier = F80_cmod_monument_copy_eka_idulnazzar_2
+				remove_country_modifier = F80_cmod_monument_copy_eka_idulnazzar_3
+
+			}
+		}
 	}
 	##Temple of Ruby and Bronze
 	if = {
@@ -17663,6 +17846,28 @@ on_province_owner_change_monuments = {
 			}
 		}
 	}
+
+	# Warmrock Bazar	
+	if = { limit = { province_id = 5101 }
+		if = { 
+			limit = { 
+				FROM = { F80_st_is_or_was_nansalen_or_akalses_or_their_subject = yes }
+				owner = {
+					OR = {
+						is_or_was_tag = { tag = F80 }
+						NOT = { F80_st_is_or_was_nansalen_or_akalses_or_their_subject = yes }
+					}
+				}
+			}
+
+			random_country = { limit = { is_or_was_tag = { tag = F80 } }
+				remove_country_modifier = F80_cmod_monument_copy_warmrock_bazar_3
+				remove_country_modifier = F80_cmod_monument_copy_warmrock_bazar_2
+				remove_country_modifier = F80_cmod_monument_copy_warmrock_bazar_1
+			}
+		}
+	}
+
 	##### When you have monument #####
 	if = { #Ascajar
 		limit = {
