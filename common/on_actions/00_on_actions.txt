@@ -3126,7 +3126,6 @@ on_war_lost = {
 	}
 	clr_country_flag = I78_released_provinces
 	
-
 	update_artifice_points = yes #needs to be last
 }
 
@@ -4941,6 +4940,38 @@ on_siege_lost_province =  {
 	}
 	else = {
 		remove_province_modifier = I80_storm_wake
+	}
+	
+	# Province control changes from Varamhar -> Nansalen, when Nansalen attacks Ayarallen.
+	if = { 
+		limit = { 
+			owner = { 
+				tag = F27
+				is_in_war = { attacker_leader = F80 defender_leader = F27 }
+			}
+			region = harpy_hills_region
+			controller = {
+				is_in_war = { attacker_leader = F80 defender_leader = F27 }
+			}
+			F80 = { ai = no }
+		}
+		if = {
+			limit = {
+				controller = {
+					OR = {
+						has_country_flag = F80_cflag_will_aid_nansalen
+						AND = {
+							is_subject = yes
+							overlord = { has_country_flag = F80_cflag_will_aid_nansalen }
+						}
+					}
+				}
+			}
+			change_controller = F80
+		}
+		else = { # Other war participants may hand province occupations over to Varamhar, if so, hand them over.
+			province_event = { id = flavor_nansalen.101 days = 30 }
+		}
 	}
 
 	if = {
@@ -23631,6 +23662,22 @@ on_holy_order_established = {
 			}
 		}
 	}
+	ROOT = {
+		if = { limit = { is_or_was_tag = { tag = F80 } religion = bulwari_sun_cult mission_completed = F80_mission_our_duty }
+			FROM = {
+				area = { limit = { culture_group = harpy }
+					owner = {
+						if = { limit = { has_country_modifier = monstrous_nation }
+							decrease_monstrous_1 = yes
+						}
+						else = {
+							change_government_reform_progress = 1
+						}
+					}
+				}
+			}
+		}
+	}
 }
 
 # When a minority is expelled to a colony
@@ -29485,6 +29532,13 @@ on_adm_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 		}
 		insyaa_charkuchin_kobold_citadel_supplies_tech = yes
 	}
+	if = {
+		limit = {
+			tag = F80
+			adm_tech = 7
+		}
+		clr_country_flag = no_demonsterization_events_till_tech_7
+	}
 }
 
 on_dip_tech_taken = { #ROOT - Country, executed after on_tech_taken!
@@ -29712,6 +29766,24 @@ on_war_ended = { #ROOT - Winer FROM - Loser
 			country_event = { id = ashtreepact.2 }
 		}
 	}
+
+	# Nansalen war with Varamhar, fire failure event, will trigger if war was not won.
+	if = { 
+		limit = { 
+			OR = {
+				AND = {
+					ROOT = { tag = F80 } 
+					FROM = { tag = F42 } 
+				}
+				AND = {
+					FROM = { tag = F80 } 
+					ROOT = { tag = F42 } 
+				}
+			}
+		}
+		F80 = { country_event = { id = flavor_nansalen.22 } }
+	}
+
 
 	#Khao Elnak War Counter - remove the control flag
 	if = {
