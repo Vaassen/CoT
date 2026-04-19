@@ -1144,6 +1144,30 @@ divination_0_guidance_effect = {  # Guidance
 	F80_se_apply_divined_defenses = { duration = 365 }
 	F80_se_divination_discover_forbidden_plains = { scope = province power = 25 }
 }
+on_pre_divination_1_deposit_divination_effect = {
+	# Nansalen effect. Could be moved to a separate scripted effect if a lot of stuff is added here.
+	if = { limit = { is_or_was_tag = { tag = F80 } mission_completed = F80_mission_what_the_hills_hold }
+		custom_tooltip = F80_tt_what_the_hills_hold_effect
+		hidden_effect = {
+			F80_se_what_the_hills_hold_sub_effect = yes
+			if = { limit = { at_least_magical_infrastructure_level_1 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_2 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_3 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_4 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			harpy_hills_region = {
+				clr_province_flag = F80_pflag_what_the_hills_hold_applied
+			}
+		}
+	}
+}
 divination_1_deposit_divination_effect = {  # Deposit Divination
 	on_pre_divination_1_deposit_divination_effect = yes
 	 
@@ -1197,6 +1221,20 @@ divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
 			}
 		}
 	}
+	else_if = {
+		limit = {
+			has_country_flag = H83_upgrade_deposit_divination
+		}
+		add_country_modifier = { name = divination_1_deposit_divination_mod duration = $days$ }
+		custom_tooltip = divination_1_deposit_divination_spell_effect
+		tooltip = { 5690 = { add_province_modifier = { name = divination_1_deposit_divination_local_mod_H83_upgrade duration = $days$ } } }
+		hidden_effect = {
+			every_owned_province = {
+				limit = { OR = { province_with_mineable_goods = yes trade_goods = damestear } }
+				add_province_modifier = { name = divination_1_deposit_divination_local_mod_H83_upgrade duration = $days$ }
+			}
+		}
+	}
 	else = {
 		add_country_modifier = { name = divination_1_deposit_divination_mod duration = $days$ }
 		custom_tooltip = divination_1_deposit_divination_spell_effect
@@ -1208,10 +1246,6 @@ divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
 			}
 		}
 	}
-}
-on_pre_divination_1_deposit_divination_effect = {
-	# Nansalen effect.
-	F80_se_what_the_hills_hold = yes
 }
 divination_1_eye_for_talent_effect = {  # Eye for Talent
 	custom_tooltip = divination_1_eye_for_talent_spell_effect_tt
@@ -1383,6 +1417,20 @@ divination_2_scry_sub_effect = { #Scry sub-effect
 		}
 		add_rebel_progress = {
 			value = -50
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = H83_upgraded_scry
+		}
+		custom_tooltip = H83_casting_upgraded_scry_tt
+		hidden_effect = {
+			every_owned_province = {
+				add_province_modifier = {
+					name = H83_scrying_traps
+					duration = $days$
+				}
+			}
 		}
 	}
 }
@@ -2712,9 +2760,38 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 	}
 }
 transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
+	# currently offers 3 tiers
+	# basic, which you normally get: transmutation_1_plant_growth_local_mod
+	# upgraded, which is given by T2 grave_forest_of_ilvandet and court_of_everlasting_blossoms: transmutation_1_plant_growth_local_mod_upgraded
+	# more upgraded, which is given by T3 grave_forest_of_ilvandet and court_of_everlasting_blossoms: transmutation_1_plant_growth_local_mod_upgraded_more
+	# if adding new sources of modifier upgrades to this spell, please consider choosing one of these tiers and adding your source to the OR marked with #add sources here
 	tooltip = {
 		5690 = {
-			add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ }
+			if = {
+				limit = {
+					PREV = {
+						OR = { #add sources here
+							AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 3 } } }
+							AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 3 } } }
+						}
+					}
+				}
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded_more duration = $days$ }
+			}
+			else_if = {
+				limit = { 
+					PREV = {
+						OR = { #add sources here
+							AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 2 } } }
+							AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 2 } } }
+						}
+					}
+				}
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded duration = $days$ }
+			}
+			else = {
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ }
+			}
 
 			if = {
 				limit = { PREV = { has_country_flag = S50_improved_plant_growth } }
@@ -2726,13 +2803,21 @@ transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 	hidden_effect = {
 		if = {
 			limit = {
-				31 = { #Ilvandet
-					owned_by = PREV
-					has_great_project = {
-						type = grave_forest_of_ilvandet
-						tier = 2
-					}
-					grave_forest_of_ilvandet_is_active = yes
+				OR = { #add sources here
+					AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 3 } } }
+					AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 3 } } }
+				}
+			}
+			every_owned_province = {
+				limit = { province_with_arable_goods = yes }
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded_more duration = $days$ }
+			}
+		}
+		else_if = {
+			limit = {
+				OR = { #add sources here
+					AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 2 } } }
+					AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 2 } } }
 				}
 			}
 			every_owned_province = {
