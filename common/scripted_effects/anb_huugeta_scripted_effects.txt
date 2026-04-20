@@ -195,7 +195,37 @@ S45_upgrade_mercenary_excellence = {
     }
 }
 
-S45_change_momentum = {
+S45_subtract_momentum = {
+    custom_tooltip = S45_current_momentum_tt
+    change_variable = {
+        which = mercenaryMomentum
+        value = $value$
+    }
+    hidden_effect = {
+        # Increase score tracking for this action type
+        change_variable = {
+            which = mercActionValue_$action$
+            value = $value$
+        }
+
+        if = {
+            limit = {
+                NOT = {
+                    check_variable = {
+                        which = mercenaryMomentum
+                        value = 0
+                    }
+                }
+            }
+            set_variable = {
+                which = mercenaryMomentum
+                value = 0
+            }
+        }
+    }
+}
+
+S45_add_momentum = {
     custom_tooltip = S45_current_momentum_tt
     change_variable = {
         which = mercenaryMomentum
@@ -218,20 +248,6 @@ S45_change_momentum = {
             set_variable = {
                 which = mercenaryMomentum
                 value = 100
-            }
-        }
-        else_if = {
-            limit = {
-                NOT = {
-                    check_variable = {
-                        which = mercenaryMomentum
-                        value = 0
-                    }
-                }
-            }
-            set_variable = {
-                which = mercenaryMomentum
-                value = 0
             }
         }
     }
@@ -301,4 +317,223 @@ S45_reset_mercenary_enterprise_cycle = {
         which = mercenaryMomentum
         which = baseMercenaryMomentum
     }
+}
+
+S45_victory_effect = {
+	if = {
+		limit = { 
+			has_global_flag = S45_mercenary_enterprise_expensive_mechanics 
+			5598 = {
+				owner = {
+					has_country_flag = S45_mercenary_enterprise
+				}
+			}
+		}
+
+		5598 = {
+			owner = { 
+				save_event_target_as = huugeta_target
+			}
+		}
+
+		# Check for Huugetan Condottieri
+		if = {
+			limit = {
+				is_hiring_condottiere_from = event_target:huugeta_target
+			}
+
+			event_target:huugeta_target = {
+				S45_add_momentum = { value = 10 action = condottieri_victory }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						ROOT = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+						FROM = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+					}
+				}
+
+				event_target:huugeta_target = {
+					change_variable = {
+						which = telekenidWars
+						value = 1
+					}
+				}
+			}
+		}
+
+		# Check for Huugetan Mercenaries
+		if = {
+			limit = {
+				any_hired_mercenary_company = {
+					home_province = {
+						owned_by = event_target:huugeta_target
+					}
+				}
+			}
+
+			event_target:huugeta_target = {
+				S45_add_momentum = { value = 10 action = mercenary_victory }
+			}
+
+			if = {
+				limit = {
+					OR = {
+						ROOT = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+						FROM = {
+							any_owned_province = {
+								region = telekenid_region
+							}
+						}
+					}
+				}
+
+				event_target:huugeta_target = {
+					change_variable = {
+						which = telekenidWars
+						value = 1
+					}
+				}
+			}
+		}
+	}
+}
+
+S45_battle_effect = {
+    if = {
+		limit = { 
+			has_global_flag = S45_mercenary_enterprise_expensive_mechanics 
+			5598 = {
+				owner = {
+					has_country_flag = S45_mercenary_enterprise
+				}
+			}
+		}
+
+		5598 = {
+			owner = { 
+				save_event_target_as = huugeta_target
+			}
+		}
+
+		if = {
+			limit = {
+				FROM = {
+					any_war_enemy_country = {
+						is_hiring_condottiere_from = event_target:huugeta_target
+					}
+				}
+				ROOT = {
+					num_of_units_in_province = {
+						who = event_target:huugeta_target
+						amount = 1
+					}
+				}
+			}
+			event_target:huugeta_target = {
+				if = {
+					limit = { NOT = { check_variable = { which = mercActionValue_condottieri_battle value = 20} } }
+					S45_add_momentum = { value = 1 action = condottieri_battle }
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				FROM = {
+					any_war_enemy_country = {
+						# Check if any enemy is hiring mercs from Huugetan lands
+						any_hired_mercenary_company = {
+							home_province = {
+								owned_by = event_target:huugeta_target
+							}
+							# Check if they were present at this battle
+							location = { province_id = ROOT }
+						}
+					}
+				}
+			}
+			event_target:huugeta_target = {
+				if = {
+					limit = { NOT = { check_variable = { which = mercActionValue_mercenary_battle value = 20} } }
+					S45_add_momentum = { value = 1 action = mercenary_battle }
+				}
+			}
+		}
+	}
+}
+
+S45_siege_effect = {
+    if = {
+		limit = { 
+			has_global_flag = S45_mercenary_enterprise_expensive_mechanics 
+			5598 = {
+				owner = {
+					has_country_flag = S45_mercenary_enterprise
+				}
+			}
+		}
+
+		5598 = {
+			owner = { 
+				save_event_target_as = huugeta_target
+			}
+		}
+
+		if = {
+			limit = {
+				FROM = {
+					any_war_enemy_country = {
+						is_hiring_condottiere_from = event_target:huugeta_target
+					}
+				}
+				ROOT = {
+					num_of_units_in_province = {
+						who = event_target:huugeta_target
+						amount = 1
+					}
+				}
+			}
+			event_target:huugeta_target = {
+				if = {
+					limit = { NOT = { check_variable = { which = mercActionValue_condottieri_siege value = 20} } }
+					S45_add_momentum = { value = 2 action = condottieri_siege }
+				}
+			}
+		}
+
+		if = {
+			limit = {
+				FROM = {
+					any_war_enemy_country = {
+						any_hired_mercenary_company = {
+							home_province = {
+								owned_by = event_target:huugeta_target
+							}
+							location = { province_id = ROOT }
+						}
+					}
+				}
+			}
+			event_target:huugeta_target = {
+				if = {
+					limit = { has_country_flag = S45_mercenary_enterprise NOT = { check_variable = { which = mercActionValue_mercenary_siege value = 20} } }
+					S45_add_momentum = { value = 2 action = mercenary_siege }
+				}
+			}
+		}
+	}
 }
