@@ -25,8 +25,7 @@ has_magic_estate_or_equiv = { #Do I have a mage estate? More to the point, do I 
 		tooltip = has_magic_estate_or_equiv_tt
 		OR = {
 			has_estate = estate_mages
-			tag = Y01	#azjakuma
-			has_estate_privilege = artifice_invention_korashi_tuners #Command
+			has_country_flag = has_mages_estate_equiv #Azjakuma/Command etc.
 		}		
 	}
 }
@@ -37,7 +36,6 @@ has_banned_magic = { #Shared restrictions between mage personality and mage esta
 		OR = {
 			has_country_flag = banned_magic
 			has_country_flag = LF_mages_banned # LF has to go through its crisis first
-			has_country_flag = h35_debarment_moment #Temporary magic ban from Corinsfield
 			culture_is_mechanim = yes
 		}
 	}
@@ -47,8 +45,8 @@ has_banned_magic_artificery = { #Like above, but has the artificery flag too
 	custom_trigger_tooltip = {
 		tooltip = has_banned_magic_artificery
 		OR = {
-			has_country_flag = magic_artificery_artificery_only
 			has_banned_magic = yes
+			has_country_flag = magic_artificery_artificery_only
 		}
 	}
 }
@@ -59,7 +57,6 @@ has_not_banned_magic = { #Can I have the mage estate and roll powerful mage rule
 		NOT = {
 			has_country_flag = banned_magic
 			has_country_flag = LF_mages_banned # LF has to go through its crisis first
-			has_country_flag = h35_debarment_moment #Temporary magic ban from Corinsfield
 			culture_is_mechanim = yes
 		}
 	}
@@ -2338,25 +2335,18 @@ has_not_cast_war_magic = {
 # checks if at least "count" spells of "school" have been cast
 # also accepts all for an overall count
 # requires prior use of start_count_spells_effect
-# NOTE: not every count/school combination already has a tt, add as needed
-# see has_cast_spell_count_trigger_all_1_tt in anb_magic_spells_l_english.yml
-has_cast_spell_count_trigger = { # school/all, count
-	custom_trigger_tooltip = {
-		tooltip = has_cast_spell_count_trigger_$school$_$count$_tt
-		check_variable = {
-			which = $school$_spell_count
-			value = $count$
-		}
+# Every base spell is localised, but to track a magical tradition spell you just have to name the variable somewhere
+has_cast_amount_spell = { # school/all, count
+	check_variable = {
+		which = $school$_[[id]$level$_$id$_]spell_count
+		value = $amount$
 	}
 }
 
-has_spent_amount_mana_on_spells = { # school/all, amount
-	custom_trigger_tooltip = {
-		tooltip = has_spent_amount_mana_on_spells_$school$_$amount$_tt
-		check_variable = {
-			which = count_$school$_spell_mana
-			value = $amount$
-		}
+has_spent_amount_mana_on_spells = { # school/all, amount. Only accepts school argument, why use this instead of the above if you're checking a particular spell?
+	check_variable = {
+		which = count_$school$_spell_mana
+		value = $amount$
 	}
 }
 
@@ -2721,15 +2711,18 @@ has_cast_summon_animals = {
 		OR = {
 			has_country_modifier = conjuration_1_summon_animals_mod
 			has_country_modifier = conjuration_1_summon_animals_xhazobkult_mod
+			has_country_modifier = conjuration_1_summon_elemental_animals_mod
 		}
 	}
 }
+
 has_not_cast_summon_animals = {
 	custom_trigger_tooltip = {
 		tooltip = has_not_cast_summon_animals
 		NOT = { has_cast_summon_animals = yes }
 	}
 }
+
 has_cast_conjure_supplies = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_conjure_supplies
@@ -2749,6 +2742,7 @@ has_cast_summon_elementals = {
 			has_country_modifier = conjuration_2_summon_elementals_mod
 			has_country_modifier = conjuration_2_greater_summon_elementals_mod
 			has_country_modifier = conjuration_2_summon_elementals_xhazobkult_mod
+			has_country_modifier = conjuration_2_summon_spiritfire_elementals_mod
 		}
 	}
 }
@@ -2908,26 +2902,6 @@ divination_3_foresight_trigger = { # Foresight
 	else = { is_overall_divination_level_3 = yes }
 	[[player] has_mana_to_cast_spell = { school = divination level = 3 id = foresight } ]
 	has_not_cast_foresight = yes
-}
-
-has_cast_guidance_amount = { #Currently has tooltips for 1, 3, 5, 10, & 20
-	custom_trigger_tooltip = {
-		tooltip = has_cast_guidance_$amount$_times
-		check_variable = {
-			which = magic_guidance_cast_count
-			value = $amount$
-		}
-	}
-}
-
-has_cast_eye_for_talent_amount = { #Currently has tooltips for 1
-	custom_trigger_tooltip = {
-		tooltip = has_cast_eye_for_talent_$amount$_times
-		check_variable = {
-			which = magic_eye_for_talent_cast_count
-			value = $amount$
-		}
-	}
 }
 
 has_cast_deposit_divination = {
@@ -3295,6 +3269,7 @@ has_cast_shock_and_awe = {
 			has_country_modifier = patron_ice_shock_and_awe
 			has_country_modifier = patron_diranbe_shock_and_awe
 			has_country_modifier = L76_shock_and_awe
+			has_country_modifier = V05_shock_and_awe
 		}
 	}
 }
@@ -3334,6 +3309,7 @@ has_cast_elemental_fury = {
 			has_country_modifier = U39_weak_wild_fury
 			has_country_modifier = U39_uncontrollable_wild_fury
 			has_country_modifier = U39_targeted_wild_fury
+			has_country_modifier = V05_elemental_fury_upgrade
 		}
 	}
 }
@@ -3445,7 +3421,6 @@ illusion_3_lead_the_crowds_trigger = { # Lead the Crowds
 	is_overall_illusion_level_3 = yes
 	[[player] has_mana_to_cast_spell = { school = illusion level = 3 id = lead_the_crowds } ]
 	overextension_percentage = 0.9
-	is_at_war = no
 	has_not_cast_lead_the_crowds = yes
 }
 
@@ -3738,6 +3713,7 @@ transmutation_1_plant_growth_trigger = { # Plant Growth
 	custom_trigger_tooltip = {
 		tooltip = transmutation_1_plant_growth_trigger
 		OR = {
+			fungi = 1
 			serpentbloom = 1
 			grain = 1
 			wine = 1
@@ -3750,6 +3726,7 @@ transmutation_1_plant_growth_trigger = { # Plant Growth
 			tobacco = 1
 			cloves = 1
 			incense = 1
+			naval_supplies = 1
 			tropical_wood = 1
 		}
 	}
@@ -3767,9 +3744,12 @@ transmutation_2_transmute_to_gold_trigger = { # Transmute to Gold
 	[[player] has_mana_to_cast_spell = { school = transmutation level = 2 id = transmute_to_gold } ]
 	if = {
 		limit = { has_country_modifier = JY_LF_recent_trade }
-		custom_trigger_tooltip = {
-			tooltip = JY_LF_not_trading
-			NOT = { has_country_modifier = JY_LF_recent_trade }
+		OR = {
+			monthly_income = 500 #We are large enough to mostly ignore the effects of the treasure fleet
+			custom_trigger_tooltip = {
+				tooltip = JY_LF_not_trading
+				always = no
+			}
 		}
 	}
 }
@@ -3964,6 +3944,12 @@ type_is_advancing_school = {
 		has_$type$_flag = $school$_advancement
 	}
 }
+type_is_not_advancing_school = {
+	custom_trigger_tooltip = {
+		tooltip = $type$_not_advancing_$school$_tt
+		NOT = { has_$type$_flag = $school$_advancement }
+	}
+}
 
 type_is_advancing_magic = {
 	custom_trigger_tooltip = {
@@ -4038,6 +4024,33 @@ estate_is_advancing_illusion = { type_is_advancing_school = { type = country sch
 estate_is_advancing_enchantment = { type_is_advancing_school = { type = country school = enchantment } }
 estate_is_advancing_necromancy = { type_is_advancing_school = { type = country school = necromancy } }
 estate_is_advancing_divination = { type_is_advancing_school = { type = country school = divination } }
+
+ruler_is_not_advancing_abjuration = { type_is_not_advancing_school = { type = ruler school = abjuration } }
+ruler_is_not_advancing_conjuration = { type_is_not_advancing_school = { type = ruler school = conjuration } }
+ruler_is_not_advancing_divination = { type_is_not_advancing_school = { type = ruler school = divination } }
+ruler_is_not_advancing_enchantment = { type_is_not_advancing_school = { type = ruler school = enchantment } }
+ruler_is_not_advancing_evocation = { type_is_not_advancing_school = { type = ruler school = evocation } }
+ruler_is_not_advancing_illusion = { type_is_not_advancing_school = { type = ruler school = illusion } }
+ruler_is_not_advancing_necromancy = { type_is_not_advancing_school = { type = ruler school = necromancy } }
+ruler_is_not_advancing_transmutation = { type_is_not_advancing_school = { type = ruler school = transmutation } }
+
+heir_is_not_advancing_abjuration = { type_is_not_advancing_school = { type = heir school = abjuration } }
+heir_is_not_advancing_conjuration = { type_is_not_advancing_school = { type = heir school = conjuration } }
+heir_is_not_advancing_divination = { type_is_not_advancing_school = { type = heir school = divination } }
+heir_is_not_advancing_enchantment = { type_is_not_advancing_school = { type = heir school = enchantment } }
+heir_is_not_advancing_evocation = { type_is_not_advancing_school = { type = heir school = evocation } }
+heir_is_not_advancing_illusion = { type_is_not_advancing_school = { type = heir school = illusion } }
+heir_is_not_advancing_necromancy = { type_is_not_advancing_school = { type = heir school = necromancy } }
+heir_is_not_advancing_transmutation = { type_is_not_advancing_school = { type = heir school = transmutation } }
+
+country_is_not_advancing_abjuration = { type_is_not_advancing_school = { type = country school = abjuration } }
+country_is_not_advancing_conjuration = { type_is_not_advancing_school = { type = country school = conjuration } }
+country_is_not_advancing_divination = { type_is_not_advancing_school = { type = country school = divination } }
+country_is_not_advancing_enchantment = { type_is_not_advancing_school = { type = country school = enchantment } }
+country_is_not_advancing_evocation = { type_is_not_advancing_school = { type = country school = evocation } }
+country_is_not_advancing_illusion = { type_is_not_advancing_school = { type = country school = illusion } }
+country_is_not_advancing_necromancy = { type_is_not_advancing_school = { type = country school = necromancy } }
+country_is_not_advancing_transmutation = { type_is_not_advancing_school = { type = country school = transmutation } }
 
 has_flag_based_on_advancement = {
 	OR = {
@@ -4401,6 +4414,20 @@ ruler_is_not_homunculus = {
 	custom_trigger_tooltip = {
 		tooltip = ruler_is_not_homunculus
 		NOT = { has_ruler_flag = is_a_homunculus }
+	}
+}
+
+heir_is_homunculus = {
+	custom_trigger_tooltip = {
+		tooltip = heir_is_homunculus
+		has_heir_flag = is_a_homunculus
+	}
+}
+
+heir_is_not_homunculus = {
+	custom_trigger_tooltip = {
+		tooltip = heir_is_not_homunculus
+		NOT = { has_heir_flag = is_a_homunculus }
 	}
 }
 
@@ -5042,6 +5069,13 @@ enchantment_3_harpy_default_4_trigger = {
 	government_rank = 3
 	fast_owns_num_pops_of_race = { race = harpy amount = 50 }
 	NOT = { has_country_modifier = enchantment_3_harpy_mod }
+}
+
+has_cast_firanyas_call = {
+	custom_trigger_tooltip = {
+		tooltip = has_cast_firanyas_call
+		has_country_modifier = enchantment_0_harpy_mod
+	}
 }
 
 #Black Herd
