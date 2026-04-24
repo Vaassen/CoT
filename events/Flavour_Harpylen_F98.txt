@@ -815,11 +815,11 @@ country_event = {
 	title = flavour_harpylen.150.t
 	desc = {
 		desc = flavour_harpylen.150.d3
-		trigger = { at_least_magic_project_level = { project = harpylen_project level = 2 } }
+		trigger = { exactly_magic_project_level = { project = harpylen_project level = 2 } }
 	}
 	desc = {
 		desc = flavour_harpylen.150.d2
-		trigger = { at_least_magic_project_level = { project = harpylen_project level = 1 } }
+		trigger = { exactly_magic_project_level = { project = harpylen_project level = 1 } }
 	}
 	desc = {
 		desc = flavour_harpylen.150.d1
@@ -827,9 +827,26 @@ country_event = {
 	}
 	picture = ANGRY_MOB_eventPicture
 	is_triggered_only = yes
-	
+
 	option = {
-		name = flavour_harpylen.150.a		
+		trigger = { NOT = { at_least_magic_project_level = { project = harpylen_project level = 1 } } }
+		name = flavour_harpylen.150.a1
+
+		country_event = {
+			id = flavour_harpylen.161
+			days = 30
+		}
+		}
+	}
+
+	option = {
+		trigger = { exactly_magic_project_level = { project = harpylen_project level = 1 } }
+		name = flavour_harpylen.150.a2
+	}
+
+	option = {
+		trigger = { exactly_magic_project_level = { project = harpylen_project level = 2 } }
+		name = flavour_harpylen.150.a3	
 	}
 }
 
@@ -981,6 +998,13 @@ country_event = { #the first gift
 	
 	immediate = {
 		hidden_effect = {
+			# The idea is that you gain less magical experience the further away from the target value of harpylen_project_var you are
+			# Level 1 target: 5
+			# Level 2 target: 12
+			# Level 3 target: 9
+			# If you hit the target, you gain 200 xp. You gain 25 fewer xp for each point away from the target value you are
+			# With 5 events each giving +1, +2, or +3 to harpylen_project_var, the range is 5-15
+			# So, final xp = 200 - 25 * abs(target - harpylen_project_var)
 			set_country_flag = in_magic_progress_event
 			if = {
 				limit = { at_least_magic_project_level = { project = harpylen_project level = 2 } }
@@ -991,23 +1015,69 @@ country_event = { #the first gift
 				change_variable = { harpylen_project_var = -12 }
 			}
 			else = { change_variable = { harpylen_project_var = -5 } }
+
+			set_variable = {
+				which = harpylen_project_var_distance_from_target
+				which = harpylen_project_var
+			}
+
 			if = {
 				limit = { check_variable = { harpylen_project_var = 0 } }
-				multiply_variable = { harpylen_project_var = -25 }
+				multiply_variable = { harpylen_project_var = -1 }
 			}
-			else = { multiply_variable = { harpylen_project_var = 25 } }
+
+			multiply_variable = { harpylen_project_var = 25 }
 			change_variable = { harpylen_project_var = 200 }
 		}
 	}
 	after = { clr_country_flag = in_magic_progress_event }
 
+	# Then give some different loc depending on how close you were
 	option = {
 		name = flavour_harpylen.156.a
+		trigger = {
+			NOT = {
+				check_variable = {
+					which = harpylen_project_var_distance_from_target
+					value = -1
+				}
+			}
+		}
+		custom_tooltip = jimi_harpy_experience
+		hidden_effect = { increase_magic_experience = { unmodified_var_amount = harpylen_project_var } }
+	}
+
+	option = {
+		name = flavour_harpylen.156.b
+		trigger = {
+			check_variable = {
+				which = harpylen_project_var_distance_from_target
+				value = -1
+			}
+			NOT = {
+				check_variable = {
+					which = harpylen_project_var_distance_from_target
+					value = 2
+				}
+			}
+		}
+		custom_tooltip = jimi_harpy_experience
+		hidden_effect = { increase_magic_experience = { unmodified_var_amount = harpylen_project_var } }
+	}
+
+	option = {
+		name = flavour_harpylen.156.c
+		trigger = {
+			check_variable = {
+				which = harpylen_project_var_distance_from_target
+				value = 2
+			}
+		}
 		custom_tooltip = jimi_harpy_experience
 		hidden_effect = { increase_magic_experience = { unmodified_var_amount = harpylen_project_var } }
 	}
 }
-country_event = {
+country_event = { # Hidden handler event to fire after project completes at all 3 levels
 	id = flavour_harpylen.157
 	title = none
 	desc = none
@@ -1069,5 +1139,31 @@ country_event = { #the first gift
 		name = flavour_harpylen.160.a
 		custom_tooltip = harpylen_project_3_done_tt
 		set_country_flag = harpylen_project_3_done
+		country_event = {
+			id = flavour_harpylen.162
+			days = 30
+		}
+	}
+}
+country_event = { #To Touch the World’s Memory
+	id = flavour_harpylen.161
+	title = flavour_harpylen.161.t
+	desc = flavour_harpylen.161.d
+	picture = ANGRY_MOB_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_harpylen.161.a
+	}
+}
+country_event = { #The Songs that Changed the World Forever
+	id = flavour_harpylen.162
+	title = flavour_harpylen.162.t
+	desc = flavour_harpylen.162.d
+	picture = ANGRY_MOB_eventPicture
+	is_triggered_only = yes
+	
+	option = {
+		name = flavour_harpylen.162.a
 	}
 }
