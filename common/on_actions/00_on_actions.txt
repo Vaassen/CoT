@@ -2826,8 +2826,6 @@ on_war_won = {
 
 	#Artificery
 	update_artifice_points = yes #needs to be last
-
-	
 }
 
 # country
@@ -2872,6 +2870,19 @@ on_main_war_won = {
 			}
 		}
 	}
+
+	if = {
+		limit = {
+			has_country_flag = track_wars_won_against_primary_enemy_of_different_religion
+			FROM = { NOT = { has_matching_religion = ROOT } }
+		}
+		change_variable = {
+			which = religiousVictories
+			value = 1
+		}
+	}
+
+	S45_victory_effect = yes
 }
 
 # country
@@ -3217,7 +3228,6 @@ on_battle_lost_country = {
 			which = land_units_lost
 		}
 	}
-	
 }
 
 # province
@@ -3265,6 +3275,8 @@ on_battle_won_province = {
 			}
 		}
 	}
+
+	S45_battle_effect = yes
 
 	random_events = {
 		900 = 0
@@ -4730,6 +4742,8 @@ on_siege_won_province = {
 		}
 		remove_province_modifier = artifice_seed_siege_modifier
 	}
+
+	S45_siege_effect = yes
 }
 
 # province
@@ -6605,6 +6619,7 @@ on_heir_needed_theocracy = {
 		flavour_irkorzik.8 #Irkorzik heirs
 		yemotaferi.2 #		# Yemotaferi, Council of Wardens heirs
 		orenvalyam_events.100 #Orenvalyam Heir Event
+		orenvalyam_events.104 #Respawn Velara if she dies before she's killed
 		shadowdreamer.10
 	}
 	roll_theocracy_heir_planetouched_effect = yes # If triggers are fulfilled, fires an event in 4 months to determine whether the new heir is planetouched.
@@ -7718,6 +7733,48 @@ on_mil_development = {
 			}
 		}
 	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = S45_mercenary_enterprise
+			}
+		}
+		owner = {
+			change_variable = {
+				which = S45_mil_dev_counter
+				value = 1
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = S45_mil_dev_counter
+						value = 5
+					}
+				}
+				set_variable = {
+					which = S45_mil_dev_counter
+					value = 0
+				}
+				S45_add_momentum = { value = 1 action = dev }
+			}
+		}
+
+		# Huugeta Mercenary Chapter
+		if = {
+			limit = {
+				owner = { has_country_flag = S45_mercenary_chapters }
+				S45_mercenary_chapter_requirements = yes
+			}
+			add_province_modifier = {
+				name = S45_mercenary_chapter
+				duration = -1
+			}
+		}
+	}
+	
 	if = {
 		limit = {
 			owner = { has_estate = estate_planetouched ai = no }
@@ -15317,6 +15374,12 @@ on_five_year_pulse_3 = {
 			country_event = { id = insyaa_flavour.37 }
 		}
 	}
+
+	# Huugeta
+	if = {
+		limit = { has_country_flag = S45_mercenary_enterprise }
+		country_event = { id = huugeta.100 }
+	}
 }
 
 on_five_year_pulse_4 = {
@@ -17287,6 +17350,18 @@ on_province_owner_change = {
 		}
 	}
 	
+	
+	# Huugeta Mercenary Chapter
+	if = {
+        limit = {
+            owner = { has_country_flag = S45_mercenary_chapters }
+            S45_mercenary_chapter_requirements = yes
+        }
+        add_province_modifier = {
+            name = S45_mercenary_chapter
+            duration = -1
+        }
+    }
 	
 	###############################################################
 	# EFFECTS BELOW HERE DO NOT WORK PROPERLY IN SCRIPTED EFFECTS #
@@ -29261,6 +29336,16 @@ on_mil_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
 			hidden = yes
 		}
 	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			has_country_flag = S45_mercenary_enterprise
+			NOT = { has_country_flag = S45_cycle_mil_advisor_hired }
+		}
+		set_country_flag = S45_cycle_mil_advisor_hired
+		S45_add_momentum = { value = 5 action = advisor }
+	}
 }
 
 on_core = { #ROOT - Province, #FROM - Country that gets the core
@@ -29606,6 +29691,16 @@ on_mil_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 			mil_tech = 6 
 		}
 		remove_country_modifier = shifter_make_state_button_work_without_cav
+	}
+	
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			has_country_flag = S45_mercenary_enterprise
+			is_ahead_of_time_in_technology = { tech = mil }
+		}
+
+		S45_add_momentum = { value = 10 action = tech }
 	}
 }
 
