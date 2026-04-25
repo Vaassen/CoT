@@ -33,9 +33,7 @@ groundhawk_1 = {
 				alliance_with = B02 
 			}
 			OR = {
-				any_owned_province = {
-					has_building = native_sweat_lodge
-				}
+				native_sweat_lodge = 1
 				is_tribal = no
 			}
 		}
@@ -74,20 +72,9 @@ groundhawk_1 = {
 					exists = B31
 					B31 = { was_tag = B02 }
 				}
-				variable_arithmetic_trigger = {
-					custom_tooltip = B42_three_times_development_of_castellyr
-					export_to_variable = {
-						which = our_total_development
-						value = trigger_value:total_development
-					}
-					export_to_variable = {
-						which = corintar_total_development
-						value = trigger_value:total_development
-						who = B31 #Castellyr
-					}
-					multiply_variable = { which = corintar_total_development value = 3 }
-					
-					check_variable = { which = our_total_development which = corintar_total_development }
+				army_strength = {
+					who = B31
+					value = 3.00
 				}
 				alliance_with = B31
 				B31 = {
@@ -111,20 +98,9 @@ groundhawk_1 = {
 					exists = B33
 					B33 = { was_tag = B02 }
 				}
-				variable_arithmetic_trigger = {
-					custom_tooltip = B42_three_times_development_of_blademarches
-					export_to_variable = {
-						which = our_total_development
-						value = trigger_value:total_development
-					}
-					export_to_variable = {
-						which = corintar_total_development
-						value = trigger_value:total_development
-						who = B33 #Blademarches
-					}
-					multiply_variable = { which = corintar_total_development value = 3 }
-					
-					check_variable = { which = our_total_development which = corintar_total_development }
+				army_strength = {
+					who = B33
+					value = 3.00
 				}
 				alliance_with = B33
 				B33 = {
@@ -144,20 +120,9 @@ groundhawk_1 = {
 				}
 			}
 			else = {
-				variable_arithmetic_trigger = {
-					custom_tooltip = B42_three_times_development_of_corintar
-					export_to_variable = {
-						which = our_total_development
-						value = trigger_value:total_development
-					}
-					export_to_variable = {
-						which = corintar_total_development
-						value = trigger_value:total_development
-						who = B02 #Corintar
-					}
-					multiply_variable = { which = corintar_total_development value = 3 }
-					
-					check_variable = { which = our_total_development which = corintar_total_development }
+				army_strength = {
+					who = B02
+					value = 3.00
 				}
 				alliance_with = B02 
 				B02 = {
@@ -407,14 +372,21 @@ groundhawk_2 = {
 						tag = B36
 					}
 					
-					NOT = {tag = B02 }
+					NOT = { tag = B02 }
+					NOT = {
+						AND = {
+							OR = {
+								tag = B31
+								tag = B33
+							}
+							was_tag = B02
+						}
+					}					
 				}
 				amount = 3
 			}
 			OR = {
-				any_owned_province = {
-					has_building = native_sweat_lodge
-				}
+				native_sweat_lodge = 1
 				is_tribal = no
 			}
 		}
@@ -615,6 +587,28 @@ groundhawk_3 = {
 			B42_strike_back_at_the_orcs
 		}
 		
+		provinces_to_highlight = {
+			NOT = { owned_by = B42 }
+			has_discovered = B42
+			OR = {
+				AND = { trade_goods = fur  B42 = { NOT = { fur = 1 } } }
+				AND = { trade_goods = livestock  B42 = { NOT = { livestock = 1 } } }
+				AND = { trade_goods = naval_supplies  B42 = { NOT = { naval_supplies = 1 } } }
+				AND = { trade_goods = iron  B42 = { NOT = { iron = 1 } } }
+				AND = { trade_goods = grain  B42 = { NOT = { grain = 1 } } }
+				AND = { 
+					province_has_center_of_trade_of_level = 1
+					B42 = {
+						num_of_owned_provinces_with = {
+							province_has_center_of_trade_of_level = 1
+							value = 3
+						}						
+					}
+				}
+			}
+
+		}
+		
 		trigger = {
 			fur = 1
 			livestock = 1
@@ -669,9 +663,7 @@ groundhawk_3 = {
 						has_reform = embrace_new_thoughts_reform
 						has_reform = forced_evolution_reform				
 					}
-					any_owned_province = {
-						has_building = native_ceremonial_fire_pit
-					}
+					native_ceremonial_fire_pit = 1
 				}
 			}
 		}
@@ -709,13 +701,11 @@ groundhawk_3 = {
 		trigger = {
 			OR = {
 				is_tribal = no
-				any_owned_province = {
-					OR = {
-						has_building = native_storehouse
-						has_building = native_three_sisters_field
-						has_building = native_irrigation
-					}
-				}				
+				OR = {
+					native_storehouse = 1
+					native_three_sisters_field = 1
+					native_irrigation = 1
+				}		
 			}
 			num_of_owned_provinces_with = {
 				value = 10
@@ -723,14 +713,17 @@ groundhawk_3 = {
 				NOT = {
 					culture_is_goblin = yes
 				}
-				custom_trigger_tooltip = {
-					tooltip = B42_has_not_accepted_majority_with_large_goblin_minority_tt
-					NOT = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = B42_has_not_accepted_majority_tt
 						AND = {
-							OR = {
-								has_any_integrated_majority_trigger = yes
-								has_any_coexisting_majority_trigger = yes	
-							}
+							NOT = { has_any_integrated_majority_trigger = yes }
+							NOT = { has_any_coexisting_majority_trigger = yes }
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = B42_has_not_goblin_minority_tt
+						NOT = {
 							has_large_goblin_minority_trigger = yes
 						}
 					}
@@ -839,31 +832,32 @@ groundhawk_4 = {
 		required_missions = {
 			B42_strike_back_at_the_orcs
 		}
-		
+		provinces_to_highlight = {
+			OR = {
+				NOT = { owned_by = ROOT }
+				NOT = { is_core = ROOT }
+			}
+			OR = {
+				has_terrain = grasslands
+				has_terrain	= farmlands					
+			}
+		}
 		trigger = {
 			OR = {
-				is_tribal = NO
-				AND = {
-					any_owned_province = {
-						OR = {
-							has_building = native_earthwork
-							has_building = native_palisade
-							has_building = native_fortified_house
-							has_building = native_great_trail
-						}
-					}
-				}
+				is_tribal = no
+				native_earthwork = 1
+				native_palisade = 1
+				native_fortified_house = 1
+				native_great_trail = 1
 			}
 			land_forcelimit = 14
-			calc_true_if = {
-				all_owned_province = {
-					is_core = ROOT
-					OR = {
-						has_terrain = grasslands
-						has_terrain	= farmlands			
-					}
-				}
-				amount = 5
+			num_of_owned_provinces_with = {
+				value = 5
+				is_core = ROOT
+				OR = {
+					has_terrain = grasslands
+					has_terrain	= farmlands			
+				}				
 			}
 		}
 		
@@ -886,9 +880,7 @@ groundhawk_4 = {
 		
 		trigger = {
 			accepted_culture = common_goblin
-			any_owned_province = {
-				has_building = native_sweat_lodge
-			}
+			native_sweat_lodge = 1
 		}
 		
 		effect = {
@@ -1084,7 +1076,7 @@ groundhawk_1b = {
 				tooltip = B42_not_monstrous_or_semi_monsterous_tt
 				OR = {
 					is_semi_monstrous = yes
-					NOT = { has_country_modifier = monstrous_nation }
+					has_country_flag = no_longer_monstrous
 				}
 			}
 
@@ -1167,12 +1159,7 @@ groundhawk_1b = {
 							value = 50
 						}
 					}
-					any_owned_province = {
-						OR = {
-							has_large_goblin_minority_trigger = yes
-							has_goblin_minority_trigger = yes
-						}
-					}
+					fast_owns_num_pops_of_race = { race = goblin amount = 1 }
 				}
 			}
 		}
@@ -1239,26 +1226,26 @@ groundhawk_1b = {
 								region = west_dwarovar_region			
 								superregion = deepwoods_superregion
 							}
-							if = {
-								limit = {
-									ROOT = { spymaster = 1 }
-								}
-								has_spy_network_from = {
-									who = ROOT
-									value = 30
-								}
+						}
+						if = {
+							limit = {
+								ROOT = { spymaster = 1 }
 							}
-							else = {
-								has_spy_network_from = {
-									who = ROOT
-									value = 50
-								}
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
 							}
-							any_owned_province = {
-								OR = {
-									has_large_goblin_minority_trigger = yes
-									has_goblin_minority_trigger = yes
-								}
+						}
+						else = {
+							has_spy_network_from = {
+								who = ROOT
+								value = 50
+							}
+						}
+						any_owned_province = {
+							OR = {
+								has_large_goblin_minority_trigger = yes
+								has_goblin_minority_trigger = yes
 							}
 						}
 					}
@@ -1282,6 +1269,10 @@ groundhawk_1b = {
 			B42_goblins_in_need
 		}
 		
+		provinces_to_highlight = {
+			province_id = 4097
+		}
+		
 		trigger = {
 			culture_is_goblin = yes
 			4097 = {
@@ -1297,27 +1288,41 @@ groundhawk_1b = {
 		}
 		
 		effect = {
+			country_event = {
+				id = flavour_groundhawk.10
+			}
+			4097 = { change_religion = ROOT }
 			if = {
 				limit = {
 					capital_scope = {
 						province_id = 4097
 					}				
 				}
+				custom_tooltip = B42_marrhold_is_capital_yes_tt
 				4097 = { 
 					change_culture = ROOT
+				}
+				custom_tooltip = B42_marrhold_is_capital_otherwise_tt
+				tooltip = {
+					4097 = { 
+						change_culture = common_goblin
+					}					
 				}
 				
 			}
 			else = {
+				custom_tooltip = B42_marrhold_is_capital_no_tt
+				tooltip = {
+					4097 = { 
+						change_culture = ROOT
+					}				
+				}
+
+				custom_tooltip = B42_marrhold_is_capital_otherwise_tt
 				4097 = { 
 					change_culture = common_goblin
-				}
-			}
-			4097 = { change_religion = ROOT }
-			country_event = {
-				id = flavour_groundhawk.10
-			}
-			
+				}					
+			}			
 		}
 	}
 	B42_root_out_the_fey = {
@@ -1658,6 +1663,9 @@ groundhawk_2b = {
 				
 				ruler_total_stats = { stats = 12 }
 			}
+			num_of_owned_provinces_with = {
+				
+			}
 			temple = 5
 		}
 		
@@ -1805,7 +1813,7 @@ groundhawk_2b = {
 		position = 9
 		icon =  mission_misty_forest
 		
-		#TODO: highlight 
+		
 		
 		required_missions = {
 			B42_goblins_in_need
@@ -1819,7 +1827,7 @@ groundhawk_2b = {
 					NOT = { province_has_current_tech_fort_trigger = yes }
 					any_neighbor_province = {
 						owned_by = ROOT
-						province_has_current_tech_fort_trigger = yes
+						NOT = {province_has_current_tech_fort_trigger = yes }
 					}				
 				}
 				AND = {
@@ -1827,8 +1835,17 @@ groundhawk_2b = {
 					NOT = { province_has_current_tech_fort_trigger = yes }
 					any_neighbor_province = {
 						owned_by = ROOT
-						province_has_current_tech_fort_trigger = yes
-					}				
+						NOT = { province_has_current_tech_fort_trigger = yes }
+					}
+				}
+				AND = {
+					owned_by = ROOT
+					any_neighbor_province = {
+						OR = {
+							province_id = 813
+							province_id = 889 
+						}
+					}
 				}
 				AND = {
 					province_group = deepwoods_border_provinces
@@ -1837,11 +1854,12 @@ groundhawk_2b = {
 							base_manpower = 4
 						}
 						AND = {
-							NOT = { 
-								if = {
-									limit = {
-										has_country_flag = magic_artificery_artificery_only
-									}
+							if = {
+								limit = {
+									has_country_flag = magic_artificery_artificery_only
+								}
+								
+								NOT = {
 									calc_true_if = {
 										amount = 5
 										deepwoods_border_provinces = {
@@ -1850,17 +1868,19 @@ groundhawk_2b = {
 										}
 									}
 								}
-								else = {
+							}
+							else = {
+								NOT = { has_building = ramparts }
+								NOT = {
 									calc_true_if = {
 										amount = 5
 										deepwoods_border_provinces = {
 											has_building = mage_tower
-											type = all`
+											type = all
 										}
-									}				
+									}	
 								}
 							}
-							NOT = { has_building = mage_tower }
 						}						
 					}
 
@@ -2415,7 +2435,6 @@ groundhawk_4b = {
 				}
 
 			}
-			#TODO: custom_tooltip here
 			has_global_flag = green_slave_demand
 			home_trade_node = {
 				trade_share = {
@@ -2554,6 +2573,10 @@ groundhawk_4b = {
 					OR = {
 						NOT = { owned_by = ROOT }
 						AND = {
+							OR = {
+								NOT = { development = 6 }
+								NOT = { has_building = marketplace }							
+							}
 							NOT = {
 								calc_true_if = {
 									amount = 4
@@ -2564,11 +2587,6 @@ groundhawk_4b = {
 									}
 								}							
 							}
-							OR = {
-								NOT = { development = 6 }
-								NOT = { has_building = marketplace }							
-							}
-
 						}
 					}
 				}
@@ -2785,12 +2803,12 @@ groundhawk_5b = {
 			
 		}
 		trigger = {
-			NOT = {
-				any_country = {
-					capital_scope = { superregion = escann_superregion }
-					religion = great_dookan
-				}
-			}
+            all_known_country = {
+                OR = {
+                    NOT = { religion = great_dookan }
+                    NOT = { capital_scope = { superregion = escann_superregion } }
+                }
+            }
 			NOT = {
 				any_owned_province = {
 					religion = great_dookan
