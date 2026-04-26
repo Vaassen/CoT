@@ -2826,8 +2826,6 @@ on_war_won = {
 
 	#Artificery
 	update_artifice_points = yes #needs to be last
-
-	
 }
 
 # country
@@ -2872,6 +2870,19 @@ on_main_war_won = {
 			}
 		}
 	}
+
+	if = {
+		limit = {
+			has_country_flag = track_wars_won_against_primary_enemy_of_different_religion
+			FROM = { NOT = { has_matching_religion = ROOT } }
+		}
+		change_variable = {
+			which = religiousVictories
+			value = 1
+		}
+	}
+
+	S45_victory_effect = yes
 }
 
 # country
@@ -3217,7 +3228,6 @@ on_battle_lost_country = {
 			which = land_units_lost
 		}
 	}
-	
 }
 
 # province
@@ -3265,6 +3275,8 @@ on_battle_won_province = {
 			}
 		}
 	}
+
+	S45_battle_effect = yes
 
 	random_events = {
 		900 = 0
@@ -4400,8 +4412,7 @@ on_siege_won_country = {
 	if = { #Tsukqiao Independence War
 		limit = {
 			FROM = { province_id = 4843 }
-			Z60 = { 
-				has_country_flag = tsukqiao_jinqiu_war_flag 
+			Z60 = {
 				has_country_flag = tsukqioa_brothers_in_xiongxiap_flag
 			}
 			ROOT = {
@@ -4730,6 +4741,8 @@ on_siege_won_province = {
 		}
 		remove_province_modifier = artifice_seed_siege_modifier
 	}
+
+	S45_siege_effect = yes
 }
 
 # province
@@ -7719,6 +7732,48 @@ on_mil_development = {
 			}
 		}
 	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			owner = {
+				has_country_flag = S45_mercenary_enterprise
+			}
+		}
+		owner = {
+			change_variable = {
+				which = S45_mil_dev_counter
+				value = 1
+			}
+
+			if = {
+				limit = {
+					check_variable = {
+						which = S45_mil_dev_counter
+						value = 5
+					}
+				}
+				set_variable = {
+					which = S45_mil_dev_counter
+					value = 0
+				}
+				S45_add_momentum = { value = 1 action = dev }
+			}
+		}
+
+		# Huugeta Mercenary Chapter
+		if = {
+			limit = {
+				owner = { has_country_flag = S45_mercenary_chapters }
+				S45_mercenary_chapter_requirements = yes
+			}
+			add_province_modifier = {
+				name = S45_mercenary_chapter
+				duration = -1
+			}
+		}
+	}
+	
 	if = {
 		limit = {
 			owner = { has_estate = estate_planetouched ai = no }
@@ -9448,7 +9503,6 @@ on_yearly_pulse = {
 			}
 		}
 	}
-	if = { limit = { is_year = 1650 NOT = { has_global_flag = rending_active } } random_country = { country_event = { id = spirits.700 } } }
 	if = { 
 		limit = { tag = I16 } 
 		country_event = { id = flavour_gor_burad.60 }
@@ -14582,6 +14636,8 @@ on_five_year_pulse = {
 			id = flavour_karach.11
 		}
 	}
+	if = { limit = { is_year = 1650 NOT = { has_global_flag = rending_active } } 4871 = { owner = { country_event = { id = spirits.700 } } } }
+
 }
 
 # Estates pulse
@@ -15317,6 +15373,12 @@ on_five_year_pulse_3 = {
 			limit = { has_country_flag = pachpalka_philosopher_hired }
 			country_event = { id = insyaa_flavour.37 }
 		}
+	}
+
+	# Huugeta
+	if = {
+		limit = { has_country_flag = S45_mercenary_enterprise }
+		country_event = { id = huugeta.100 }
 	}
 }
 
@@ -17288,6 +17350,18 @@ on_province_owner_change = {
 		}
 	}
 	
+	
+	# Huugeta Mercenary Chapter
+	if = {
+        limit = {
+            owner = { has_country_flag = S45_mercenary_chapters }
+            S45_mercenary_chapter_requirements = yes
+        }
+        add_province_modifier = {
+            name = S45_mercenary_chapter
+            duration = -1
+        }
+    }
 	
 	###############################################################
 	# EFFECTS BELOW HERE DO NOT WORK PROPERLY IN SCRIPTED EFFECTS #
@@ -23143,7 +23217,6 @@ on_dependency_lost = {
 				remove_province_modifier = konol_integration_mod
 				remove_province_modifier = konol_service_mod
 			}
-			remove_country_modifier = medasi_enlightening_halann_reform_modifier
 			clr_country_flag = konol_appeasement_target
 		}
 		if = {
@@ -26708,6 +26781,27 @@ on_estate_removed = {
 ##scope = colony province, FROM = owner country or province if there's a minority expulsion source, fires when the colony is created 1.35
 on_colony_established = {
 	if = {
+		# Helper events since on_explore_coast and on_conquistador_empty don't fire without El Dorado
+		limit = {
+			NOT = { has_dlc = "El Dorado" }
+			owner = { capital_scope = { continent = europe } }
+			OR = {
+				continent = north_america
+				continent = south_america
+			}
+			OR = {
+				NOT = { has_global_flag = new_world_discovered }
+				NOT = { has_global_flag = castellar_mural_discovered }
+			}
+		}
+		save_event_target_as = unraveling_colony
+		owner = {
+			country_event = { id = unraveling.90 }
+			country_event = { id = unraveling.91 }
+		}
+	}
+
+	if = {
 		limit = {
 			owner = { has_country_modifier = obrtrol_colonial_enthusiasm }
 			OR = {
@@ -29241,6 +29335,16 @@ on_mil_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
 			hidden = yes
 		}
 	}
+
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			has_country_flag = S45_mercenary_enterprise
+			NOT = { has_country_flag = S45_cycle_mil_advisor_hired }
+		}
+		set_country_flag = S45_cycle_mil_advisor_hired
+		S45_add_momentum = { value = 5 action = advisor }
+	}
 }
 
 on_core = { #ROOT - Province, #FROM - Country that gets the core
@@ -29586,6 +29690,16 @@ on_mil_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 			mil_tech = 6 
 		}
 		remove_country_modifier = shifter_make_state_button_work_without_cav
+	}
+	
+	# Huugeta Mercenary Enterprise
+	if = {
+		limit = {
+			has_country_flag = S45_mercenary_enterprise
+			is_ahead_of_time_in_technology = { tech = mil }
+		}
+
+		S45_add_momentum = { value = 10 action = tech }
 	}
 }
 
