@@ -154,19 +154,19 @@ rezankand_1_1_missions = {
 		}
 
 		trigger = {
-			OR = {
-				custom_trigger_tooltip = {
-					tooltip = rezankand_first_clash_tooltip
-					check_variable = {
-						which = RezankandFirstClash
-						value = 5
+			if = {
+				limit = {
+					J99 = { #Validaunea
+						exists = yes
+						was_tag = G52 #Ameion
 					}
 				}
-				if = {
-					limit = {
-						J99 = { #Validaunea
-							exists = yes
-							was_tag = G52 #Ameion
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = rezankand_first_clash_tooltip
+						check_variable = {
+							which = RezankandFirstClash
+							value = 5
 						}
 					}
 					taychend_superregion = {
@@ -175,16 +175,25 @@ rezankand_1_1_missions = {
 							owned_by = J99 #Validaunea
 						} 
 					}
-					J99 = { exists = no } 
-				}
-				else = {
+					J99 = { exists = no }
+				} 
+			}
+			else = {
+				OR = {
+					custom_trigger_tooltip = {
+						tooltip = rezankand_first_clash_tooltip
+						check_variable = {
+							which = RezankandFirstClash
+							value = 5
+						}
+					}
 					taychend_superregion = {
 						type = all
 						NOT = { 
 							owned_by = G52 #Ameion
 						} 
 					}
-					G52 = { exists = no } 
+					G52 = { exists = no }
 				}
 			}
 		}
@@ -464,6 +473,25 @@ rezankand_2_1_missions = {
 							}
 							cede_province = previous_owner
 						}
+
+						# sometimes we may fail to cede provines as ROOT may be the previous owner
+						random_neighbor_country = { 
+							limit = {
+								NOT = { 
+									tag = ROOT
+									capital_scope = { superregion = taychend_superregion }
+								}
+							}
+							# we therefore designate a random taychendi neighbour as the target
+							save_event_target_as = ceder_of_last_resort
+						}
+						every_owned_province = {
+							limit = {
+								NOT = { has_province_flag = rezankand_first_clash_flag } 
+								NOT = { area = katelperai_area }
+							}
+							cede_province = event_target:ceder_of_last_resort
+						}
 					}
 				}
 				every_subject_country = {
@@ -670,7 +698,7 @@ rezankand_4_1_missions = {
 			2302 = {
 				add_or_upgrade_tax_building = yes
 				add_or_upgrade_trade_building = yes
-				add_center_of_trade_level = 1
+				add_or_upgrade_center_of_trade = yes
 			}
 		}
 	}
@@ -1568,18 +1596,7 @@ rezankand_2_4_missions = {
 		} 
 
 		effect = {  
-			custom_tooltip = supporting_artificers_tt
-			hidden_effect = {
-				if = {
-					limit = {
-						NOT = { has_country_flag = artificery_unlocked }
-					}
-					country_event = {
-						id = magic_artificery_setup.1
-						days = 1
-					}
-				}
-			}
+			unlock_artificery = yes
 			add_country_modifier = {
 				name = rezankand_architects_of_the_future_mod
 				duration = 7300 #20 years
@@ -1893,7 +1910,7 @@ rezankand_2_5_missions = {
 				estate = estate_artificers
 				loyalty = 60
 			}
-			is_not_researching_invention = yes
+			is_not_researching_or_blocked_from_researching_invention = yes
 			has_ruinborn_advisor_of_skill_category = { category = ADM skill = 3 }
 			has_ruinborn_advisor_of_skill_category = { category = DIP skill = 3 }
 			has_ruinborn_advisor_of_skill_category = { category = MIL skill = 3 }
@@ -1933,15 +1950,20 @@ rezankand_2_5_missions = {
 			}
 		} 
 
-		trigger = {  
-			effelai_ongoing_blooming = yes
-			custom_trigger_tooltip = {
-				tooltip = rezankand_hubs_burned_tt
-				check_variable = {
-					which = RezankandHubsBurned
-					value = 3
+		trigger = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = effelai_blooming_over }
 				}
-			}
+				effelai_ongoing_blooming = yes
+				custom_trigger_tooltip = {
+					tooltip = rezankand_hubs_burned_tt
+					check_variable = {
+						which = RezankandHubsBurned
+						value = 3
+					}
+				}
+			}  
 			army_size_percentage = 0.9
 			any_owned_province = {
 				is_effelai_network_hub = yes
@@ -2056,7 +2078,7 @@ rezankand_3_2_missions = {
 		position = 13
 		required_missions = { rezankand_the_tower } 
 		provinces_to_highlight = {  
-			superregion = amadia_region
+			region = amadia_region
 			OR = {
 				trade_goods = precursor_relics
 				trade_goods = damestear
@@ -2115,6 +2137,8 @@ rezankand_3_2_missions = {
 				NOT = { owned_by = ROOT }
 				NOT = { religion = ROOT }
 			}
+			NOT = { is_sea = yes }
+			NOT = { is_wasteland = yes }
 		} 
 
 		trigger = {
@@ -2153,7 +2177,7 @@ rezankand_3_2_missions = {
 		} 
 
 		effect = {  
-			override_country_name = "AELREZAN"
+			override_country_name = "ELREZAN"
 			anb_aelantir_cultural_union = {
 				north = yes
 				south = yes
@@ -2235,6 +2259,8 @@ rezankand_3_3_missions = {
 				AND = {
 					continent = south_america
 					NOT = { owned_by = ROOT }
+					is_sea = no
+					is_wasteland = no
 				}
 			}
 		} 
@@ -2344,7 +2370,7 @@ rezankand_3_4_missions = {
 			OR = {
 				OR = {
 					court_mage = 3
-					ruler_has_mage_personality = yes
+					ruler_is_powerful_mage = yes
 				}
 				estate_loyalty = {
 					estate = estate_artificers
