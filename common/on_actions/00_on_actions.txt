@@ -148,6 +148,7 @@ on_startup = {
 		flavour_rayafo.001 #Sponsored Adventurer setup
 		AnzalkatsaSchoolFightEvents.1 #Setting up Initialy Anzalkatsa Imperial Cities + Variable
 		chaqway.1
+		flavour_samsumbat.0 #Samsumbat (F60) intro
 		flavour_grasshopper_muncher.1 #Grasshopper Muncher Starting Event
 		flavour_flying_hound.1 #Flying Hound Starting Event
 		drozma_tur_events.5 #Varlengeilt setup event
@@ -14550,27 +14551,69 @@ on_five_year_pulse = {
 	}
 
 	# Charkuchin Kobold supplies for AI
+	# Check if they can build a supply facility, and also give them a small boost
+	# since they can't upgrade citadels and do other things the player can
+	# We're aiming for the AI to have enough supply gain that they can "finish" the
+	# system by having +527 supplies by around 1600
 	if = {
 		limit = {
 			has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
 			ai = yes
-			treasury = 50
-			NOT = {
-				check_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-					value = 10
+		}
+		if = {
+			limit = {
+				treasury = 50
+				NOT = {
+					check_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+						value = 10
+					}
+				}
+				any_owned_province = {
+					superregion = charkuchar_superregion # Only give them freebies in the mountain range
+					is_city = yes
+					NOT = {
+						has_province_modifier = charkuchin_kobold_supply_facility
+						has_charkuchin_kobold_citadel = yes
+					}
 				}
 			}
-			any_owned_province = {
-				superregion = charkuchar_superregion # Only give them freebies in the mountain range
-				is_city = yes
-				NOT = {
-					has_province_modifier = charkuchin_kobold_supply_facility
-					has_charkuchin_kobold_citadel = yes
-				}
+			insyaa_charkuchin_kobolds_ai_supply_centre = yes
+		}
+		# Every 50 years, give the AI +150 monthly supplies 
+		# Since this is inside a five year pulse, I need to make sure the window is five years
+		# So, we start at 1444, next one is 1494-1498, then 1544-1548, then 1594-1598. They end up
+		# with +450 monthly supplies which is what's needed to colonise the whole range
+		if = {
+			limit = {
+				is_year = 1494
+				NOT = { is_year = 1499 }
+			}
+			change_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+				value = 150
 			}
 		}
-		insyaa_charkuchin_kobolds_ai_supply_centre = yes
+		else_if = {
+			limit = {
+				is_year = 1544
+				NOT = { is_year = 1549 }
+			}
+			change_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+				value = 150
+			}
+		}
+		else_if = {
+			limit = {
+				is_year = 1594
+				NOT = { is_year = 1599 }
+			}
+			change_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+				value = 150
+			}
+		}
 	}
 
 	#Endhuvi Sarisung Rebels
@@ -15497,6 +15540,19 @@ on_five_year_pulse_4 = {
 		800 = racial_pop_events_mechanim.0
 
 		800 = 0
+	}
+
+	# Samsumbat
+	if = {
+		limit = {
+			is_or_was_tag = { tag = F60 }
+			owns = 475 # Kheterat
+		}
+		475 = {
+			province_event = { # Fires once
+				id = flavour_samsumbat.24
+			}
+		}
 	}
 
 	# Zokka
@@ -24287,7 +24343,7 @@ on_flagship_destroyed = {
 	}
 }
 
-# this = Released country, FROM = Releasing country
+# this = Released country, FROM = country sending the peace offer to force release
 #NOTE: as of 1.36, only fires when releasing a nation via peace treaty and not via "release = <tag>" effect
 on_country_released = {
 	#Anbennar
@@ -24529,6 +24585,18 @@ on_country_released = {
 		limit = { religion = kheionism }
 		initialize_kheionism_variables = yes
 		country_event = { id = kheionism.3 } #Set your deity
+	}
+
+	# Samsumbat
+	# If the country was released from the target of our special liberation CB, give them the special gov reform
+	if = {
+		limit = {
+			FROM = {
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_custom_liberation_cb_target_country # This flag is set in the requestpeace pre_effect
+			}
+		}
+		add_government_reform = republic_of_free_peoples
 	}
 
 	if = { #Shuvuush/Kuuldaar tags become horde and gets the privilege
