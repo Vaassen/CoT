@@ -541,9 +541,12 @@ clear_active_war_magic = {
 		remove_country_modifier = enchantment_1_heartstring_mod
 		remove_country_modifier = enchantment_2_thoughtweave_mod
 	}
-	remove_country_modifier = evocation_1_shock_and_awe_mod 
-	remove_country_modifier = evocation_1_flaming_munitions_mod 
-	remove_country_modifier = evocation_3_elemental_fury_mod 
+	if = {
+		limit = { NOT = { has_ruler_modifier = avatar_of_the_nightmarish_end } }
+		remove_country_modifier = evocation_1_shock_and_awe_mod 
+		remove_country_modifier = evocation_1_flaming_munitions_mod 
+		remove_country_modifier = evocation_3_elemental_fury_mod 
+	}
 
 	remove_country_modifier = evocation_2_harpy_mod
 
@@ -682,9 +685,11 @@ on_level_3_spell_cast = {
 		add_mil_power = 40
 		custom_tooltip = power_points_on_spell_cast_tt
 	}
+	if = {
+		limit = { has_country_flag = legendary_spells_grant_inno_flag }
+		change_innovativeness = 1
+	}
 }
-
-
 
 ##################
 ### ABJURATION ###
@@ -934,6 +939,11 @@ conjuration_1_summon_animals_effect = { # Summon Animals
 		custom_tooltip = conjuration_1_summon_elemental_animals_spell_effect_tt
 		add_country_modifier = { name = conjuration_1_summon_elemental_animals_mod duration = 1825 }
 	}
+	else_if = {
+		limit = { has_ruler_modifier = avatar_of_the_nightmarish_end }
+		custom_tooltip = conjuration_1_summon_animals_spell_effect_tt
+		add_country_modifier = { name = conjuration_1_summon_animals_xhazobkult_mod duration = 1825 }
+	}
 	else = {
 		custom_tooltip = conjuration_1_summon_animals_spell_effect_tt
 		add_country_modifier = { name = conjuration_1_summon_animals_mod duration = 1825 }
@@ -965,7 +975,11 @@ conjuration_2_summon_elementals_effect = { # Summon Elementals
 	}
 	else = {
 		custom_tooltip = conjuration_2_summon_elementals_spell_effect_tt
-		add_country_modifier = { name = conjuration_2_summon_elementals_mod duration = 3650 }
+		if = {
+			limit = { has_ruler_modifier = avatar_of_the_nightmarish_end } 
+			add_country_modifier = { name = conjuration_2_summon_elementals_xhazobkult_mod duration = 3650 }
+		}
+		else = { add_country_modifier = { name = conjuration_2_summon_elementals_mod duration = 3650 } }
 	}
 	hidden_effect = { country_event = { id = magic_spell.203 days = 3651 } } #Summoned elementals vanishing - we handle everything in one event because events don't like firing inside else-ifs
 }
@@ -1139,8 +1153,37 @@ divination_0_guidance_effect = {  # Guidance
 			change_variable = { orb_of_omniscience_progress_tracker = 25 }
 		}
 	}
+
+	F80_se_apply_divined_defenses = { duration = 365 }
+	F80_se_divination_discover_forbidden_plains = { scope = province power = 25 }
+}
+on_pre_divination_1_deposit_divination_effect = {
+	# Nansalen effect. Could be moved to a separate scripted effect if a lot of stuff is added here.
+	if = { limit = { is_or_was_tag = { tag = F80 } mission_completed = F80_mission_what_the_hills_hold }
+		custom_tooltip = F80_tt_what_the_hills_hold_effect
+		hidden_effect = {
+			F80_se_what_the_hills_hold_sub_effect = yes
+			if = { limit = { at_least_magical_infrastructure_level_1 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_2 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_3 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			if = { limit = { at_least_magical_infrastructure_level_4 = yes }
+				F80_se_what_the_hills_hold_sub_effect = yes
+			}
+			harpy_hills_region = {
+				clr_province_flag = F80_pflag_what_the_hills_hold_applied
+			}
+		}
+	}
 }
 divination_1_deposit_divination_effect = {  # Deposit Divination
+	on_pre_divination_1_deposit_divination_effect = yes
+	 
 	if = {
 		limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 1 } }
 		if = {
@@ -1175,6 +1218,8 @@ divination_1_deposit_divination_effect = {  # Deposit Divination
 			change_variable = { orb_of_omniscience_progress_tracker = 50 }
 		}
 	}
+
+	F80_se_apply_divined_defenses = { duration = 730 }
 }
 divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
 	if = {
@@ -1186,6 +1231,20 @@ divination_1_deposit_divination_sub_effect = { #Deposit Divination sub-effect
 			every_owned_province = {
 				limit = { OR = { province_with_mineable_goods = yes trade_goods = damestear } }
 				add_province_modifier = { name = divination_1_deposit_divination_local_mod_S61_upgrade duration = $days$ }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			has_country_flag = H83_upgrade_deposit_divination
+		}
+		add_country_modifier = { name = divination_1_deposit_divination_mod duration = $days$ }
+		custom_tooltip = divination_1_deposit_divination_spell_effect
+		tooltip = { 5690 = { add_province_modifier = { name = divination_1_deposit_divination_local_mod_H83_upgrade duration = $days$ } } }
+		hidden_effect = {
+			every_owned_province = {
+				limit = { OR = { province_with_mineable_goods = yes trade_goods = damestear } }
+				add_province_modifier = { name = divination_1_deposit_divination_local_mod_H83_upgrade duration = $days$ }
 			}
 		}
 	}
@@ -1216,6 +1275,8 @@ divination_1_eye_for_talent_effect = {  # Eye for Talent
 			change_variable = { orb_of_omniscience_progress_tracker = 50 }
 		}
 	}
+	F80_se_apply_divined_defenses = { duration = 730 }
+	F80_se_divination_discover_forbidden_plains = { scope = area power = 50 }
 }
 divination_1_eye_for_talent_hire_sub_effect = { # Eye for Talent sub-effect
 	if = {
@@ -1327,6 +1388,8 @@ divination_2_scry_effect = {  # Scry #VERY FINICKY ABOUT ROOT SCOPE DUE TO FOW E
 			change_variable = { orb_of_omniscience_progress_tracker = 100 }
 		}
 	}
+	F80_se_apply_divined_defenses = { duration = 1460 }
+	F80_se_divination_discover_forbidden_plains = { scope = region power = 100 }
 }
 divination_2_scry_sub_effect = { #Scry sub-effect
 	if = {
@@ -1369,6 +1432,20 @@ divination_2_scry_sub_effect = { #Scry sub-effect
 			value = -50
 		}
 	}
+	if = {
+		limit = {
+			has_country_flag = H83_upgraded_scry
+		}
+		custom_tooltip = H83_casting_upgraded_scry_tt
+		hidden_effect = {
+			every_owned_province = {
+				add_province_modifier = {
+					name = H83_scrying_traps
+					duration = $days$
+				}
+			}
+		}
+	}
 }
 divination_2_manipulated_fortune_effect = {  # Manipulated Fortune
 	if = {
@@ -1387,6 +1464,7 @@ divination_2_manipulated_fortune_effect = {  # Manipulated Fortune
 			change_variable = { orb_of_omniscience_progress_tracker = 100 }
 		}
 	}
+	F80_se_apply_divined_defenses = { duration = 1460 }
 }
 divination_2_manipulated_fortune_sub_effect = { #Manipulated Fortune sub-effect
 	if = {
@@ -1450,6 +1528,7 @@ divination_3_foresight_effect = {  # Foresight
 			change_variable = { orb_of_omniscience_progress_tracker = 200 }
 		}
 	}
+	F80_se_apply_divined_defenses = { duration = 2920 }
 }
 divination_3_foresight_sub_effect = { #Foresight sub-effect
 	if = {
@@ -1468,7 +1547,10 @@ divination_3_foresight_sub_effect = { #Foresight sub-effect
 ###################
 
 on_enchantment_spell_cast = {
-	
+	if = {
+		limit = { has_country_flag = enchantment_spells_give_splendor_flag }
+		add_splendor = 25
+	}
 }
 
 enchantment_0_enchanting_envoy_effect = { # Enchanting Envoy
@@ -1553,12 +1635,25 @@ enchantment_1_command_animals_sub_effect = { # Command Animals sub-effect
 	add_country_modifier = { name = enchantment_1_command_animals_mod duration = $days$ }
 	custom_tooltip = enchantment_1_command_animals_spell_effect_tt
 	tooltip = {
-		5690 = { add_province_modifier = { name = enchantment_1_command_animals_local_mod duration = $days$ } }
+		if = {
+			limit = { has_country_flag = command_animals_grants_sailors_flag }
+			5690 = { add_province_modifier = { name = enchantment_1_command_animals_local_mod_sailors duration = $days$ } }
+		}
+		else = { 5690 = { add_province_modifier = { name = enchantment_1_command_animals_local_mod duration = $days$ } } }
 	}
 	hidden_effect = {
-		every_owned_province = {
-			limit = { province_with_animal_goods = yes }
-			add_province_modifier = { name = enchantment_1_command_animals_local_mod duration = $days$ }
+		if = {
+			limit = { has_country_flag = command_animals_grants_sailors_flag }
+			every_owned_province = {
+				limit = { province_with_animal_goods = yes }
+				add_province_modifier = { name = enchantment_1_command_animals_local_mod_sailors duration = $days$ }
+			}
+		}
+		else = {
+			every_owned_province = {
+				limit = { province_with_animal_goods = yes }
+				add_province_modifier = { name = enchantment_1_command_animals_local_mod duration = $days$ }
+			}
 		}
 	}
 }
@@ -1688,14 +1783,18 @@ evocation_0_fireball_effect = { # Fireball
 		limit = { 
 			NOT = { 
 				has_estate_privilege = estate_mages_organization_onyxguard 
-				has_country_flag = U39_disable_fireball_infamy_flag #Orenvalyam
+				has_country_flag = disable_fireball_infamy_flag #Orenvalyam, Orda Aldresia
 			} 
 		}
 		increase_witch_king_points_small = yes
 	}
 	else_if = { 
 		limit = { has_estate_privilege = estate_mages_organization_onyxguard  }
-		custom_tooltip = onyxguard_no_infamy_siege 
+		custom_tooltip = onyxguard_no_infamy_siege
+	}
+	else_if = {
+		limit = { has_country_flag = disable_fireball_infamy_flag }
+		custom_tooltip = disable_fireball_infamy_tt
 	}
 	PREV = {
 		add_devastation = 20
@@ -2694,9 +2793,38 @@ transmutation_1_plant_growth_effect = { # Plant Growth
 	}
 }
 transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
+	# currently offers 3 tiers
+	# basic, which you normally get: transmutation_1_plant_growth_local_mod
+	# upgraded, which is given by T2 grave_forest_of_ilvandet and court_of_everlasting_blossoms: transmutation_1_plant_growth_local_mod_upgraded
+	# more upgraded, which is given by T3 grave_forest_of_ilvandet and court_of_everlasting_blossoms: transmutation_1_plant_growth_local_mod_upgraded_more
+	# if adding new sources of modifier upgrades to this spell, please consider choosing one of these tiers and adding your source to the OR marked with #add sources here
 	tooltip = {
 		5690 = {
-			add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ }
+			if = {
+				limit = {
+					PREV = {
+						OR = { #add sources here
+							AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 3 } } }
+							AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 3 } } }
+						}
+					}
+				}
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded_more duration = $days$ }
+			}
+			else_if = {
+				limit = { 
+					PREV = {
+						OR = { #add sources here
+							AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 2 } } }
+							AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 2 } } }
+						}
+					}
+				}
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded duration = $days$ }
+			}
+			else = {
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod duration = $days$ }
+			}
 
 			if = {
 				limit = { PREV = { has_country_flag = S50_improved_plant_growth } }
@@ -2708,13 +2836,21 @@ transmutation_1_plant_growth_sub_effect = { #Plant Growth - sub-effect
 	hidden_effect = {
 		if = {
 			limit = {
-				31 = { #Ilvandet
-					owned_by = PREV
-					has_great_project = {
-						type = grave_forest_of_ilvandet
-						tier = 2
-					}
-					grave_forest_of_ilvandet_is_active = yes
+				OR = { #add sources here
+					AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 3 } } }
+					AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 3 } } }
+				}
+			}
+			every_owned_province = {
+				limit = { province_with_arable_goods = yes }
+				add_province_modifier = { name = transmutation_1_plant_growth_local_mod_upgraded_more duration = $days$ }
+			}
+		}
+		else_if = {
+			limit = {
+				OR = { #add sources here
+					AND = { has_grave_forest_of_ilvandet_spell_active = yes 31 = { has_great_project = { type = grave_forest_of_ilvandet tier = 2 } } }
+					AND = { has_court_of_everlasting_blossoms_spell_active = yes  2007 = { has_great_project = { type = court_of_everlasting_blossoms tier = 2 } } }
 				}
 			}
 			every_owned_province = {
@@ -2951,6 +3087,7 @@ clr_all_custom_spell_groups = {
 		clr_template_spell_lists = yes
 		clr_harpy_spell_lists = yes
 		clr_bulwar_spell_lists = yes
+		clr_xhazobkult_spell_lists = yes
 		hidden_effect = { #Keep this here - simplifies this effect
 			clr_country_flag = magic_list_any
 			clr_country_flag = show_custom_spell_list #just in case
@@ -2999,6 +3136,13 @@ clr_bulwar_spell_lists = {
 		#Put any sublists here
 	}
 }
+clr_xhazobkult_spell_lists = {
+	if = { #Fast check of group flag
+		limit = { has_any_custom_spell_list_in_group = { group = xhazobkult } }
+		clr_custom_spell_list = { group = xhazobkult subgroup = default }
+		#Put any sublists here
+	}
+}
 
 clr_centaur_spell_lists = {
 	if = {
@@ -3014,6 +3158,7 @@ magical_tradition_on_template_spell_cast_effect = {}
 magical_tradition_on_harpy_spell_cast_effect = {}
 magical_tradition_on_centaur_spell_cast_effect = {}
 magical_tradition_on_bulwar_spell_cast_effect = {}
+magical_tradition_on_xhazobkult_spell_cast_effect = {}
 
 
 
@@ -3064,6 +3209,14 @@ enchantment_0_harpy_default_1_effect = {
 			name = enchantment_0_harpy_mod_myna
 			duration = 1825
 		}
+	}
+	if = { 
+		limit = { 
+			is_or_was_tag = { tag = F80 } 
+			mission_completed = F80_mission_our_song 
+			NOT = { has_country_modifier = F80_cmod_our_song_instant_effect }
+		}
+		add_country_modifier = { name = F80_cmod_our_song_spell_effect duration = 1825 }
 	}
 }
 evocation_2_harpy_default_2_effect = {
@@ -3528,5 +3681,226 @@ evocation_2_centaur_black_herd_5_sub_sub_effect = {
 			}
 			change_siege = 4
 		}
+	}
+}
+
+#Xhazobkult_spells
+evocation_2_xhazobkult_default_1_effect = {
+	if = {
+		limit = { NOT = { has_ruler_modifier = avatar_of_the_nightmarish_end } }
+		add_patriarch_authority = -0.1
+	}
+	custom_tooltip = xhazobkult_spell_generate_general
+	hidden_effect = {
+		export_to_variable = {
+			which = currentAT
+			value = army_tradition
+			who = ROOT
+		}
+		if = {
+			limit = { is_or_has_invited_demonic_scholar = yes }
+			change_variable = { currentAT = 10 }
+		}
+		set_saved_name = {
+			key = root_name_male
+			type = advisor
+			scope = ROOT
+		}
+		if = {
+			limit = { ruler_has_personality = xhazobs_chosen_personality }
+			if = {
+				limit = { check_variable = { currentAT = 100 } }
+				define_general = { fire = 4 shock = 6 manuever = 5 siege = 3 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 80 } NOT = { check_variable = { currentAT = 100 } } }
+				define_general = { fire = 4 shock = 5 manuever = 4 siege = 2 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 60 } NOT = { check_variable = { currentAT = 80 } } }
+				define_general = { fire = 3 shock = 5 manuever = 4 siege = 1 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 40 } NOT = { check_variable = { currentAT = 60 } } }
+				define_general = { fire = 2 shock = 5 manuever = 3 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 20 } NOT = { check_variable = { currentAT = 40 } } }
+				define_general = { fire = 2 shock = 4 manuever = 2 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 0 } NOT = { check_variable = { currentAT = 20 } } }
+				define_general = { fire = 1 shock = 3 manuever = 2 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+		}
+		if = {
+			limit = { NOT = { ruler_has_personality = xhazobs_chosen_personality } }
+			if = {
+				limit = { check_variable = { currentAT = 100 } }
+				define_general = { fire = 4 shock = 5 manuever = 5 siege = 3 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 80 } NOT = { check_variable = { currentAT = 100 } } }
+				define_general = { fire = 4 shock = 4 manuever = 4 siege = 2 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 60 } NOT = { check_variable = { currentAT = 80 } } }
+				define_general = { fire = 3 shock = 4 manuever = 4 siege = 1 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 40 } NOT = { check_variable = { currentAT = 60 } } }
+				define_general = { fire = 2 shock = 4 manuever = 3 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 20 } NOT = { check_variable = { currentAT = 40 } } }
+				define_general = { fire = 2 shock = 3 manuever = 2 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+			if = {
+				limit = { check_variable = { currentAT = 0 } NOT = { check_variable = { currentAT = 20 } } }
+				define_general = { fire = 1 shock = 2 manuever = 2 siege = 0 trait = demonic_commander name = root_name_male }
+			}
+		}
+	}
+	custom_tooltip = " "
+	complex_dynamic_effect = {
+		first_custom_tooltip = is_or_has_invited_demonic_scholar_tt
+		first_limit = "
+			is_or_has_invited_demonic_scholar = yes
+		"
+		first_effect = "
+			custom_tooltip = xhazobkul_spell_1_extra_effect_1_tt
+		"
+	}
+	custom_tooltip = " "
+	complex_dynamic_effect = {
+		first_custom_tooltip = is_xhazobine_tt
+		first_limit = "
+			ruler_has_personality = xhazobs_chosen_personality
+		"
+		first_effect = "
+			custom_tooltip = xhazobkul_spell_1_extra_effect_2_tt
+		"
+	}
+}
+conjuration_2_xhazobkult_default_2_effect = {
+	if = {
+		limit = { NOT = { has_ruler_modifier = avatar_of_the_nightmarish_end } }
+		add_patriarch_authority = -0.1
+	}
+	custom_tooltip = xhazobkult_summon_demon_horde_effect
+	tooltip = {
+		add_devastation = 25
+		add_province_modifier = { name = conjuration_2_xhazobkult_modifier duration = 3650 }
+	}
+	hidden_effect = {
+		every_war_enemy_country = {
+			if = {
+				limit = { ROOT = { is_or_has_invited_demonic_scholar = yes } }
+				capital_scope = { set_province_flag = xhazobkult_spell_2_target }
+			}
+			select_highest_dev_province_with_limit = {
+				index = 1
+				limit = "
+					NOT = { has_province_flag = xhazobkult_spell_2_target }
+					NOT = { controlled_by = ROOT }
+				"
+				effect = "set_province_flag = xhazobkult_spell_2_target"
+			}
+			select_highest_dev_province_with_limit = {
+				index = 2
+				limit = "
+					NOT = { has_province_flag = xhazobkult_spell_2_target }
+					NOT = { controlled_by = ROOT }
+				"
+				effect = "set_province_flag = xhazobkult_spell_2_target"
+			}
+			select_highest_dev_province_with_limit = {
+				index = 3
+				limit = "
+					NOT = { has_province_flag = xhazobkult_spell_2_target }
+					NOT = { controlled_by = ROOT }
+				"
+				effect = "set_province_flag = xhazobkult_spell_2_target"
+			}
+			select_highest_dev_province_with_limit = {
+				index = 4
+				limit = "
+					NOT = { has_province_flag = xhazobkult_spell_2_target }
+					NOT = { controlled_by = ROOT }
+				"
+				effect = "set_province_flag = xhazobkult_spell_2_target"
+			}
+			every_owned_province = {
+				limit = { has_province_flag = xhazobkult_spell_2_target }
+				if = {
+					limit = { ROOT = { ruler_has_personality = xhazobs_chosen_personality } }
+					spawn_rebels = {
+						size = 4
+						type = demons_rebels_spell
+					}
+				}
+				else = {
+					spawn_rebels = {
+						size = 3
+						type = demons_rebels_spell
+					}
+				}
+				clr_province_flag = xhazobkult_spell_2_target
+			}
+		}
+	}
+	complex_dynamic_effect = {
+		first_custom_tooltip = is_or_has_invited_demonic_scholar_tt
+		first_limit = "
+			is_or_has_invited_demonic_scholar = yes
+		"
+		first_effect = "
+			custom_tooltip = xhazobkul_spell_2_extra_effect_1_tt
+		"
+	}
+	custom_tooltip = " "
+	complex_dynamic_effect = {
+		first_custom_tooltip = is_xhazobine_tt
+		first_limit = "
+			ruler_has_personality = xhazobs_chosen_personality
+		"
+		first_effect = "
+			custom_tooltip = xhazobkul_spell_2_extra_effect_2_tt
+		"
+	}
+}
+evocation_3_xhazobkult_default_3_effect = {
+	custom_tooltip = xhazobkult_spell_3_dpTOmana_tt
+	hidden_effect = {
+		export_to_variable = {
+			which = currentDP
+			value = patriarch_authority
+			who = ROOT
+		}
+		multiply_variable = { currentDP = 100 }
+		if = {
+			limit = { check_variable = { currentDP = 50 } }
+			set_variable = { currentDP = 50 }
+		}
+		set_variable = {
+			which = manaToGive
+			which = currentDP
+		}
+		multiply_variable = { manaToGive = 2 }
+		change_mana = { var_amount = manaToGive }
+		var_effect = { effect = add_patriarch_authority var = currentDP sign = - }
+	}
+	add_ruler_modifier = { name = avatar_of_the_nightmarish_end duration = 3650 }
+	if = {
+		limit = { NOT = { has_ruler_modifier = avatar_of_the_nightmarish_end } }
+		custom_tooltip = avatar_of_the_nightmarish_end_effect_tt
+	}
+	custom_tooltip = " "
+	custom_tooltip = avatar_of_the_nightmarish_end_aftermath_tt
+	custom_tooltip = add_fire_that_burn_the_body_and_soul_tt
+	hidden_effect = {
+		add_ruler_modifier = { name = evocation_spell_half duration = 3650 hidden = yes }
+		add_ruler_modifier = { name = conjuration_spell_half duration = 3650 hidden = yes }
+		country_event = { id = magic_spell.807 days = 3650 }
 	}
 }
