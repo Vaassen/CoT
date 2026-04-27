@@ -139,9 +139,16 @@ B54_se_monthly_effect = {
 		B54_se_disable_all_deadmines_reapfields = { type = reapfields }
 		country_event = { id = flavor_esthil.101 }
 	}
-	set_variable = { which = var_B54_total_gov_power_thousands which = var_B54_total_gov_power }
-	divide_variable = { which = var_B54_total_gov_power_thousands value = 1000 }
-	round_variable = { which = var_B54_total_gov_power_thousands value = -1 }
+	B54_se_calc_thousands = yes
+}
+
+# Country effect
+B54_se_calc_thousands = {
+	hidden_effect = {
+		set_variable = { which = var_B54_total_gov_power_thousands which = var_B54_total_gov_power }
+		divide_variable = { which = var_B54_total_gov_power_thousands value = 1000 }
+		round_variable = { which = var_B54_total_gov_power_thousands value = -1 }		
+	}
 }
 
 # Country scope
@@ -376,14 +383,19 @@ B54_se_subtract_construction_cost = {
 # Yes, it needs to be if if-NOT rather than if else, otherwise the building is not cancelled, even after doing it via an event. Idk man.
 B54_se_subtract_construction_cost_effect = {
 	if = { limit = { FROM = { NOT = { check_variable = { which = var_B54_total_gov_power value = $gov_power_cost$ } } } }
-		custom_tooltip = B54_tt_cost_unaffordable
+		custom_tooltip = B54_tt_cost_unaffordable_$gov_power_cost$
 		tooltip = { cancel_construction = yes } # Does not actually work, hence the hidden event, but is here for tooltip purposes.
 		hidden_effect = { province_event = { id = flavor_esthil.104 } }
 		FROM = { B54_se_disable_aid_construction = yes country_event = { id = flavor_esthil.103 } }
 	}
 	if = { limit = { FROM = { check_variable = { which = var_B54_total_gov_power value = $gov_power_cost$ } } }
 		custom_tooltip = B54_tt_aid_construction_cost_$gov_power_cost$
-		hidden_effect = { FROM = { change_variable = { which = var_B54_total_gov_power value = -$gov_power_cost$ } } }
+		hidden_effect = { 
+			FROM = { 
+				change_variable = { which = var_B54_total_gov_power value = -$gov_power_cost$ }
+				B54_se_calc_thousands = yes
+			}
+		}
 	}
 }
 
@@ -520,7 +532,8 @@ B54_se_purge_effect = {
 	if = {  limit = { is_or_was_tag = { tag = B54 } }
 		custom_tooltip = B54_tt_purge_effect_$gov_power_gained$
 		hidden_effect = {
-			change_variable = { which = var_B54_total_gov_power value = $gov_power_gained$ }			
+			change_variable = { which = var_B54_total_gov_power value = $gov_power_gained$ }	
+			B54_se_calc_thousands = yes		
 		}
 	}
 }
@@ -639,7 +652,11 @@ B54_se_apply_lich_queen_modifiers = {
 		remove_country_modifier = B54_rmod_lichqueen_of_escann_7
 		remove_country_modifier = B54_rmod_lichqueen_of_escann_8
 	}
-	if = { limit = { has_country_flag = esthil_varina_lich }
+	if = { 
+		limit = { 
+			has_country_flag = esthil_varina_lich
+			mission_completed = B54_mission_black_empire_rising
+		}
 		if = { limit = { is_ruler_all_schools_level_3 = yes }
 			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_8 duration = -1 }
 		}
@@ -791,6 +808,7 @@ B54_se_on_battle_won = {
 			# Multiply by fraction assigned to raising undead.
 			multiply_variable = { which = var_B54_raise_gov_power which = var_B54_raise_fraction_gov_power }
 			change_variable = { which = var_B54_total_gov_power which = var_B54_raise_gov_power }
+			B54_se_calc_thousands = yes
 
 			multiply_variable = { which = raise_undead which = var_B54_raise_fraction_manpower }
 			
@@ -837,6 +855,7 @@ B54_se_on_battle_won = {
 			}
 
 			change_variable = { which = var_B54_total_gov_power which = var_B54_raise_gov_power }
+			B54_se_calc_thousands = yes
 		}
 	}
 }
