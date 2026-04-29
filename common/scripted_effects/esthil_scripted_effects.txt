@@ -1,0 +1,950 @@
+## Esthil
+# Constants
+# Change the loc if these are changed.
+@necronomics_level_1_cost = 10
+@necronomics_level_2_cost = 30
+@necronomics_level_3_cost = 50
+
+# Country scope
+B54_se_increase_food_scarcity = {
+	if = { limit = { has_country_modifier = B54_cmod_food_scarcity_2 }
+		remove_country_modifier = B54_cmod_food_scarcity_2
+		add_country_modifier = { name = B54_cmod_food_scarcity_3 duration = -1 }
+	}
+	else_if = { limit = { has_country_modifier = B54_cmod_food_scarcity_1 }
+		remove_country_modifier = B54_cmod_food_scarcity_1
+		add_country_modifier = { name = B54_cmod_food_scarcity_2 duration = -1 }
+	}
+	else = {
+		add_country_modifier = { name = B54_cmod_food_scarcity_1 duration = -1 }
+	}
+}
+
+# Country scope
+B54_se_decrease_food_scarcity = {
+	if = { limit = { has_country_modifier = B54_cmod_food_scarcity_3 }
+		remove_country_modifier = B54_cmod_food_scarcity_3
+		add_country_modifier = { name = B54_cmod_food_scarcity_2 duration = -1 }
+	}
+	else_if = { limit = { has_country_modifier = B54_cmod_food_scarcity_2 }
+		remove_country_modifier = B54_cmod_food_scarcity_2
+		add_country_modifier = { name = B54_cmod_food_scarcity_1 duration = -1 }
+	}
+	else_if = { limit = { has_country_modifier = B54_cmod_food_scarcity_1 }
+		remove_country_modifier = B54_cmod_food_scarcity_1
+	}
+}
+
+# Country scope
+B54_on_estate_study_effect = {
+	if = { limit = { is_or_was_tag = { tag = B54 } }
+		if = { 
+			limit = { 
+				has_country_flag = B54_cflag_deadmines_upgrade_pending 
+				has_country_flag = divination_advancement
+			}
+			hidden_effect = { clr_country_flag = B54_cflag_deadmines_upgrade_pending }
+			B54_se_upgrade_deadmines_reapfields = { type = deadmines }
+		}
+		if = {
+			limit = {
+				has_country_flag = B54_cflag_reapfields_upgrade_pending 
+				has_country_flag = transmutation_advancement
+			}
+			hidden_effect = { clr_country_flag = B54_cflag_reapfields_upgrade_pending }
+			B54_se_upgrade_deadmines_reapfields = { type = reapfields }
+		}
+		hidden_effect = {
+			if = { limit = { has_country_flag = necromancy_advancement is_estate_necromancy_level_2 = yes }
+				change_variable = { which = var_B54_raise_fraction_gov_power 	value = 10 }
+			}
+		}
+	}
+}
+
+# Country scope
+B54_se_enable_aid_construction = {
+	add_country_modifier = { name = B54_cmod_necronomics_aid_construction duration = -1 }
+}
+
+# Country scope
+B54_se_disable_aid_construction = {
+	remove_country_modifier = B54_cmod_necronomics_aid_construction
+}
+
+# Country scope
+B54_se_enable_aid_development = {
+	if = { limit = { check_variable = { which = var_B54_total_gov_power value = 2500 } }
+		if = { limit = { exactly_magic_project_level = { project = esthil_necronomics level = 3 } }
+			custom_tooltip = B54_tt_enable_aid_development_all_provinces_tt
+			tooltip = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_3 duration = -1 } }
+			hidden_effect = { every_owned_province = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_3 duration = -1 } } }
+		}
+		else_if = { limit = { exactly_magic_project_level = { project = esthil_necronomics level = 2 } }
+			custom_tooltip = B54_tt_enable_aid_development_all_provinces_tt
+			tooltip = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_2 duration = -1 } }
+			hidden_effect = { every_owned_province = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_2 duration = -1 } } }
+		}
+		else = {
+			custom_tooltip = B54_tt_enable_aid_development_all_provinces_tt
+			tooltip = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_1 duration = -1 } }
+			hidden_effect = { every_owned_province = { add_province_modifier = { name = B54_pmod_necronomics_aid_development_1 duration = -1 } } }
+		}
+		hidden_effect = { set_country_flag = B54_cflag_necronomics_aid_development_enabled }
+	}
+	else = {
+		custom_tooltip = B54_tt_not_enough_gov_power_for_aid_development
+	}
+}
+
+# Country scope
+B54_se_disable_aid_development = {
+	custom_tooltip = B54_tt_disable_aid_development_all_provinces_tt
+	tooltip = {
+		remove_province_modifier = B54_pmod_necronomics_aid_development_1
+		remove_province_modifier = B54_pmod_necronomics_aid_development_2
+		remove_province_modifier = B54_pmod_necronomics_aid_development_3
+	}
+	hidden_effect = { 
+		clr_country_flag = B54_cflag_necronomics_aid_development_enabled
+		every_owned_province = {
+			remove_province_modifier = B54_pmod_necronomics_aid_development_1
+			remove_province_modifier = B54_pmod_necronomics_aid_development_2
+			remove_province_modifier = B54_pmod_necronomics_aid_development_3
+		}
+	}
+}
+
+# Country scope
+B54_se_initialize_necronomics_vars = {
+	set_variable = { which = var_B54_total_gov_power 			value = 0 }
+	set_variable = { which = var_B54_gov_power_monthly_change 	value = 0 }
+	set_variable = { which = var_B54_deadmines_upkeep 			value = 0 }
+	set_variable = { which = var_B54_deadmines_num 				value = 0 }
+	set_variable = { which = var_B54_deadmines_cost 			value = @necronomics_level_1_cost }
+	set_variable = { which = var_B54_reapfields_upkeep 			value = 0 }
+	set_variable = { which = var_B54_reapfields_num 			value = 0 }
+	set_variable = { which = var_B54_reapfields_cost 			value = @necronomics_level_1_cost }
+	set_variable = { which = var_B54_dev 						value = 0 }	
+	set_variable = { which = var_B54_raise_fraction_gov_power 	value = 15 }
+	set_variable = { which = var_B54_raise_fraction_manpower 	value = 25 } # Start at 25% manpower.
+}
+
+# Country scope
+B54_se_monthly_effect = {
+	B54_se_calc_monthly_change = yes
+	change_variable = { which = var_B54_total_gov_power which = var_B54_gov_power_monthly_change }
+	if = { limit = { NOT = { check_variable = { which = var_B54_total_gov_power value = 0 } } }
+		B54_se_disable_all_deadmines_reapfields = { type = deadmines }
+		B54_se_disable_all_deadmines_reapfields = { type = reapfields }
+		country_event = { id = flavor_esthil.101 }
+	}
+	B54_se_calc_thousands = yes
+}
+
+# Country effect
+B54_se_calc_thousands = {
+	hidden_effect = {
+		set_variable = { which = var_B54_total_gov_power_thousands which = var_B54_total_gov_power }
+		divide_variable = { which = var_B54_total_gov_power_thousands value = 1000 }
+		round_variable = { which = var_B54_total_gov_power_thousands value = -1 }		
+	}
+}
+
+# Country scope
+B54_se_calc_monthly_change = {
+	set_variable = { which = var_B54_gov_power_monthly_change value = 0 }
+	if = { limit = { has_country_flag = B54_cflag_esthil_necronomics_death_tax_upgrade }
+		export_to_variable = { which = var_B54_dev value = trigger_value:total_development }
+		change_variable = { which = var_B54_gov_power_monthly_change which = var_B54_dev }
+	}
+	if = { limit = { NOT = { has_country_flag = B54_cflag_deadmines_disabled } }
+		subtract_variable = { which = var_B54_gov_power_monthly_change which = var_B54_deadmines_upkeep }
+	}
+	if = { limit = { NOT = { has_country_flag = B54_cflag_reapfields_disabled } }
+		subtract_variable = { which = var_B54_gov_power_monthly_change which = var_B54_reapfields_upkeep }
+	}
+}
+
+# Country scope
+# Not used in the MT, but was useful for diagnostics.
+# B54_se_recalculate_necronomics_vars = {
+# 	# Total gov power should not be recalculated.
+# 	set_variable = { which = var_B54_deadmines_upkeep 			value = 0 }
+# 	set_variable = { which = var_B54_deadmines_num 				value = 0 }
+# 	set_variable = { which = var_B54_reapfields_upkeep 			value = 0 }
+# 	set_variable = { which = var_B54_reapfields_num 			value = 0 }
+# 	set_variable = { which = var_B54_dev 						value = 0 }	
+# 
+# 	every_owned_province = {
+# 		if = { limit = { has_province_flag = B54_pflag_deadmines_province }
+# 			owner = { B54_se_increment_deadmines_reapfields = { type = deadmines } }
+# 		}
+# 		if = { limit = { has_province_flag = B54_pflag_reapfields_province }
+# 			owner = { B54_se_increment_deadmines_reapfields = { type = reapfields } }
+# 		}
+# 	}
+# 
+# 	set_variable = { which = var_B54_deadmines_upkeep which = var_B54_deadmines_num }
+# 	multiply_variable = { which = var_B54_deadmines_upkeep which = var_B54_deadmines_cost }
+# 	set_variable = { which = var_B54_reapfields_upkeep which = var_B54_reapfields_num }
+# 	multiply_variable = { which = var_B54_reapfields_upkeep which = var_B54_reapfields_cost }
+# 
+# 	B54_se_calc_monthly_change = yes
+# }
+
+# Country scope
+B54_se_upgrade_deadmines_reapfields = {
+	custom_tooltip = B54_tt_necronomics_upgrade_$type$
+	hidden_effect = {
+		if = { limit = { has_country_flag = B54_cflag_$type$_level_2 }
+			set_country_flag = B54_cflag_$type$_level_3
+			clr_country_flag = B54_cflag_$type$_level_2
+			set_variable = { which = var_B54_$type$_cost value = @necronomics_level_3_cost }
+
+			if = { limit = { has_country_flag = B54_cflag_$type$_disabled }
+				every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_inactive_2 }
+					remove_province_modifier = B54_pmod_$type$_inactive_2
+					add_province_modifier = { name = B54_pmod_$type$_inactive_3 duration = -1 }
+				}
+			}
+			else = {
+				every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_active_2 }
+					remove_province_modifier = B54_pmod_$type$_active_2
+					add_province_modifier = { name = B54_pmod_$type$_active_3 duration = -1 }
+				}
+			}
+		}
+		else_if = { limit = { has_country_flag = B54_cflag_$type$_level_1 }
+			set_country_flag = B54_cflag_$type$_level_2
+			clr_country_flag = B54_cflag_$type$_level_1
+			set_variable = { which = var_B54_$type$_cost value = @necronomics_level_2_cost }
+
+			if = { limit = { has_country_flag = B54_cflag_$type$_disabled }
+				every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_inactive_1 }
+					remove_province_modifier = B54_pmod_$type$_inactive_1
+					add_province_modifier = { name = B54_pmod_$type$_inactive_2 duration = -1 }
+				}
+			}
+			else = {
+				every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_active_1 }
+					remove_province_modifier = B54_pmod_$type$_active_1
+					add_province_modifier = { name = B54_pmod_$type$_active_2 duration = -1 }
+				}
+			}
+		}
+		else = {
+			set_country_flag = B54_cflag_$type$_level_1
+			set_variable = { which = var_B54_$type$_cost value = @necronomics_level_1_cost }
+		}
+
+		set_variable = { which = var_B54_$type$_upkeep which = var_B54_$type$_num }
+		multiply_variable = { which = var_B54_$type$_upkeep which = var_B54_$type$_cost }
+	}
+}
+
+# Province scope
+B54_se_apply_current_deadmines_reapfields = {
+	if = { limit = { NOT = { has_province_flag = B54_pflag_$type$_province } }
+		if = { limit = { owner = { has_country_flag = B54_cflag_$type$_disabled } }
+			if = { limit = { owner = { has_country_flag = B54_cflag_$type$_level_3 } }
+				add_province_modifier = { name = B54_pmod_$type$_inactive_3 duration = -1 }
+			}
+			else_if = { limit = { owner = { has_country_flag = B54_cflag_$type$_level_2 } }
+				add_province_modifier = { name = B54_pmod_$type$_inactive_2 duration = -1 }
+			}
+			else = {
+				add_province_modifier = { name = B54_pmod_$type$_inactive_1 duration = -1 }
+			}
+		}
+		else = {
+			if = { limit = { owner = { has_country_flag = B54_cflag_$type$_level_3 } }
+				add_province_modifier = { name = B54_pmod_$type$_active_3 duration = -1 }
+			}
+			else_if = { limit = { owner = { has_country_flag = B54_cflag_$type$_level_2 } }
+				add_province_modifier = { name = B54_pmod_$type$_active_2 duration = -1 }
+			}
+			else = {
+				add_province_modifier = { name = B54_pmod_$type$_active_1 duration = -1 }
+			}
+		}
+		hidden_effect = {
+			set_province_flag = B54_pflag_$type$_province 
+			owner = { 
+				B54_se_increment_deadmines_reapfields = { type = $type$ }
+			}
+		}
+	}
+}
+
+# Country scope
+B54_se_enable_all_deadmines_reapfields = {
+	hidden_effect = { clr_country_flag = B54_cflag_$type$_disabled }
+
+	if = { limit = { has_country_flag = B54_cflag_$type$_level_3 }
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_inactive_3 } 
+				remove_province_modifier = B54_pmod_$type$_inactive_3
+				add_province_modifier = { name = B54_pmod_$type$_active_3 duration = -1 }
+			}
+		}	
+	}
+	else_if = { limit = { has_country_flag = B54_cflag_$type$_level_2 }
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_inactive_2 } 
+				remove_province_modifier = B54_pmod_$type$_inactive_2
+				add_province_modifier = { name = B54_pmod_$type$_active_2 duration = -1 }
+			}
+		}	
+	}
+	else = {
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_inactive_1 } 
+				remove_province_modifier = B54_pmod_$type$_inactive_1
+				add_province_modifier = { name = B54_pmod_$type$_active_1 duration = -1 }
+			}
+		}		
+	}
+
+	custom_tooltip = B54_tt_enable_$type$
+
+	hidden_effect = { B54_se_calc_monthly_change = yes }
+}
+
+# Country scope
+B54_se_disable_all_deadmines_reapfields = {
+	hidden_effect = { set_country_flag = B54_cflag_$type$_disabled }
+
+	if = { limit = { has_country_flag = B54_cflag_$type$_level_3 }
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_active_3 } 
+				remove_province_modifier = B54_pmod_$type$_active_3
+				add_province_modifier = { name = B54_pmod_$type$_inactive_3 duration = -1 }
+			}
+		}
+	}
+	else_if = { limit = { has_country_flag = B54_cflag_$type$_level_2 }
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_active_2 } 
+				remove_province_modifier = B54_pmod_$type$_active_2
+				add_province_modifier = { name = B54_pmod_$type$_inactive_2 duration = -1 }
+			}
+		}
+	}
+	else = {
+		hidden_effect = {
+			every_owned_province = { limit = { has_province_modifier = B54_pmod_$type$_active_1 } 
+				remove_province_modifier = B54_pmod_$type$_active_1
+				add_province_modifier = { name = B54_pmod_$type$_inactive_1 duration = -1 }
+			}
+		}
+	}
+
+	custom_tooltip = B54_tt_disable_$type$
+
+	hidden_effect = { B54_se_calc_monthly_change = yes }
+}
+
+# Country scope
+B54_se_increment_deadmines_reapfields = {
+	change_variable = { which = var_B54_$type$_num value = 1 } 
+	change_variable = { which = var_B54_$type$_upkeep which = var_B54_$type$_cost }
+	subtract_variable = { which = var_B54_gov_power_monthly_change which = var_B54_$type$_cost }
+}
+
+# Country scope
+B54_se_decrement_deadmines_reapfields = {
+	change_variable = { which = var_B54_$type$_num value = -1 } 
+	subtract_variable = { which = var_B54_$type$_upkeep which = var_B54_$type$_cost }
+	change_variable = { which = var_B54_gov_power_monthly_change which = var_B54_$type$_cost }
+}
+
+# Province scope
+B54_se_subtract_construction_cost = {
+	if = { 
+		limit = { 
+			FROM = { 
+				is_or_was_tag = { tag = B54 } 
+				has_government_attribute = B54_custom_attribute_esthil_necronomics
+				has_country_modifier = B54_cmod_necronomics_aid_construction
+			} 
+		}
+		[[cost_100] B54_se_subtract_construction_cost_effect = { gov_power_cost = 2500 } ]
+		[[cost_200] B54_se_subtract_construction_cost_effect = { gov_power_cost = 5000 } ]
+		[[cost_300] B54_se_subtract_construction_cost_effect = { gov_power_cost = 7500 } ]
+		[[cost_400] B54_se_subtract_construction_cost_effect = { gov_power_cost = 10000 } ]
+		[[cost_500] B54_se_subtract_construction_cost_effect = { gov_power_cost = 12500 } ]
+		[[cost_600] B54_se_subtract_construction_cost_effect = { gov_power_cost = 15000 } ]
+		[[cost_800] B54_se_subtract_construction_cost_effect = { gov_power_cost = 20000 } ]
+	}
+}
+
+# Province scope
+# Yes, it needs to be if if-NOT rather than if else, otherwise the building is not cancelled, even after doing it via an event. Idk man.
+B54_se_subtract_construction_cost_effect = {
+	if = { limit = { FROM = { NOT = { check_variable = { which = var_B54_total_gov_power value = $gov_power_cost$ } } } }
+		custom_tooltip = B54_tt_cost_unaffordable_$gov_power_cost$
+		tooltip = { cancel_construction = yes } # Does not actually work, hence the hidden event, but is here for tooltip purposes.
+		hidden_effect = { province_event = { id = flavor_esthil.104 } }
+		FROM = { B54_se_disable_aid_construction = yes country_event = { id = flavor_esthil.103 } }
+	}
+	if = { limit = { FROM = { check_variable = { which = var_B54_total_gov_power value = $gov_power_cost$ } } }
+		custom_tooltip = B54_tt_aid_construction_cost_$gov_power_cost$
+		hidden_effect = { 
+			FROM = { 
+				change_variable = { which = var_B54_total_gov_power value = -$gov_power_cost$ }
+				B54_se_calc_thousands = yes
+			}
+		}
+	}
+}
+
+B54_se_subtract_development_cost_effect = {
+	hidden_effect = {
+		# Determine whether other sources of dev cost reductions are enough to reach the floor dev cost value, if so, scale the gov power cost accordingly.
+		owner = {
+			export_to_variable = {
+				which = var_B54_local_dev_cost
+				value = modifier:local_development_cost
+				who = PREV
+			}
+			# These calculations happen after local dev has been increased, meaning that local cost is slightly higher than it "should" be, which must be offset.
+			PREV = {
+				if = { limit = { development = 150 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.45 } }
+				}
+				else_if = { limit = { development = 140 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.42 } }
+				}
+				else_if = { limit = { development = 130 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.39 } }
+				}
+				else_if = { limit = { development = 120 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.36 } }
+				}
+				else_if = { limit = { development = 110 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.33 } }
+				}
+				else_if = { limit = { development = 100 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.30 } }
+				}
+				else_if = { limit = { development = 90 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.27 } }
+				}
+				else_if = { limit = { development = 80 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.24 } }
+				}
+				else_if = { limit = { development = 70 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.21 } }
+				}
+				else_if = { limit = { development = 60 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.18 } }
+				}
+				else_if = { limit = { development = 50 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.15 } }
+				}
+				else_if = { limit = { development = 40 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.12 } }
+				}
+				else_if = { limit = { development = 30 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.09 } }
+				}
+				else_if = { limit = { development = 20 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.06 } }
+				}
+				else_if = { limit = { development = 10 }
+					owner = { subtract_variable = { which = var_B54_local_dev_cost value = 0.03 } }
+				}
+			}
+			export_to_variable = {
+				which = var_B54_country_dev_cost
+				value = modifier:development_cost
+			}
+			export_to_variable = {
+				which = var_B54_country_apc_reduction
+				value = modifier:all_power_cost
+			}
+			set_variable = { which = var_B54_cumulative_dev_discount value = 0 }
+			change_variable = { which = var_B54_cumulative_dev_discount which = var_B54_local_dev_cost }
+			change_variable = { which = var_B54_cumulative_dev_discount which = var_B54_country_dev_cost }
+			change_variable = { which = var_B54_cumulative_dev_discount which = var_B54_country_apc_reduction }
+
+			# Special case: capital gets up to -50% dev cost discount based on total development, which is not counted as local dev cost for some reason.
+			if = { limit = { PREV = { is_capital = yes } }
+				# It did not work until I did it like this.
+				if = { limit = { total_development = 1000 } # Max discount.
+					set_variable = { which = var_B54_capital_total_dev_discount value = 0.5 }
+				}
+				if = { limit = { NOT = { total_development = 1000 } }
+					export_to_variable = { which = var_B54_capital_total_dev_discount value = total_development }
+					divide_variable = { which = var_B54_capital_total_dev_discount value = 2000 }
+				}
+				subtract_variable = { which = var_B54_cumulative_dev_discount which = var_B54_capital_total_dev_discount }
+			}
+
+			# Add 0.9 and flip sign of var_B54_cumulative_dev_discount to get the amount of "wasted" dev cost reduction
+			set_variable = { which = var_B54_dev_discount_wasted which = var_B54_cumulative_dev_discount }
+			change_variable = { which = var_B54_dev_discount_wasted value = 0.9 }
+			multiply_variable = { which = var_B54_dev_discount_wasted value = -100 } # Go from 0.0X to X, makes it work better.
+			if = { limit = { check_variable = { which = var_B54_dev_discount_wasted value = 0 } }
+				# There is wasted dev cost reduction.
+				# Figure out how much dev cost reduction if from the gov mechanic.
+				if = { limit = { PREV = { has_province_modifier = B54_pmod_necronomics_aid_development_3 } }
+					set_variable = { which = var_B54_gov_power_dev_discount value = 20 }
+				}
+				if = { limit = { PREV = { has_province_modifier = B54_pmod_necronomics_aid_development_2 } }
+					set_variable = { which = var_B54_gov_power_dev_discount value = 15 }
+				}
+				if = { limit = { PREV = { has_province_modifier = B54_pmod_necronomics_aid_development_1 } }
+					set_variable = { which = var_B54_gov_power_dev_discount value = 10 }
+				}
+
+				if = { limit = { check_variable = { which = var_B54_dev_discount_wasted which = var_B54_gov_power_dev_discount } }
+					# Gov power cost reduction was superfluous, no cost.
+					set_variable = { which = var_B54_gov_power_cost value = 0 }
+				}
+				if = { limit = { NOT = { check_variable = { which = var_B54_dev_discount_wasted which = var_B54_gov_power_dev_discount } } }
+					# Between 0% and 100% of the gov power discount actually made a difference.
+					# Also 100x'ing some variables here, otherwise it seems to round down.
+					set_variable = { which = var_B54_gov_power_share_wasted which = var_B54_dev_discount_wasted }
+					divide_variable = { which = var_B54_gov_power_share_wasted which = var_B54_gov_power_dev_discount }
+					multiply_variable = { which = var_B54_gov_power_share_wasted value = 100 }
+					set_variable = { which = var_B54_gov_power_cost value = 100 }
+					subtract_variable = { which = var_B54_gov_power_cost which = var_B54_gov_power_share_wasted }
+					multiply_variable = { which = var_B54_gov_power_cost value = 25 }
+				}
+			}
+			if = { limit = { NOT = { check_variable = { which = var_B54_dev_discount_wasted value = 0 } } }
+				# No wasted dev cost reduction, full cost.
+				set_variable = { which = var_B54_gov_power_cost value = 2500 }
+			}
+			subtract_variable = { which = var_B54_total_gov_power which = var_B54_gov_power_cost }
+			custom_tooltip = B54_tt_aid_development_cost
+			if = { limit = { NOT = { check_variable = { which = var_B54_total_gov_power value = 2500 } } }
+				B54_se_disable_aid_development = yes
+				country_event = { id = flavor_esthil.106 }
+			}
+		}	
+	}
+}
+
+B54_se_purge_effect = {
+	if = {  limit = { is_or_was_tag = { tag = B54 } }
+		custom_tooltip = B54_tt_purge_effect_$gov_power_gained$
+		hidden_effect = {
+			change_variable = { which = var_B54_total_gov_power value = $gov_power_gained$ }	
+			B54_se_calc_thousands = yes		
+		}
+	}
+}
+
+# Province scope
+B54_se_add_manufactory_province_modifiers = {
+	hidden_effect = {
+		if = { limit = { owner = { is_or_was_tag = { tag = B54 } } }
+			if = { limit = { owner = { has_government_attribute = B54_custom_attribute_esthil_necronomics } }
+				if = { limit = { has_building = weapons owner = { mission_completed = B54_mission_from_souls_to_steel } }
+					if = { limit = { has_building = mage_tower }
+						B54_se_apply_current_deadmines_reapfields = { type = deadmines }
+					}
+					add_province_modifier = { name = B54_pmod_esthil_manufactory_bonus duration = -1 }
+				}
+				if = { limit = { has_building = farm_estate owner = { mission_completed = B54_mission_reapfields } }
+					if = { limit = { has_building = mage_tower }
+						B54_se_apply_current_deadmines_reapfields = { type = reapfields }
+					}
+					add_province_modifier = { name = B54_pmod_esthil_manufactory_bonus duration = -1 }
+				}
+			}
+			if = { limit = { has_building = mage_tower owner = { has_estate_privilege = estate_mages_B54_necrocratic_administration } }
+				add_province_modifier = { name = B54_pmod_necrocratic_administration duration = -1 }
+				add_province_modifier = { name = B54_pmod_esthil_manufactory_bonus duration = -1 }
+			}		
+		}
+	}
+}
+
+B54_se_remove_manufactory_province_modifiers = {
+	hidden_effect = {
+		if = { limit = { owner = { is_or_was_tag = { tag = B54 } } } 
+			[[weapons]
+				remove_province_modifier = B54_pmod_deadmines_active_1
+				remove_province_modifier = B54_pmod_deadmines_active_2
+				remove_province_modifier = B54_pmod_deadmines_active_3
+				remove_province_modifier = B54_pmod_deadmines_inactive_1
+				remove_province_modifier = B54_pmod_deadmines_inactive_2
+				remove_province_modifier = B54_pmod_deadmines_inactive_3
+
+				if = { limit = { has_province_flag = B54_pflag_deadmines_province }
+					clr_province_flag = B54_pflag_deadmines_province
+					owner = { B54_se_decrement_deadmines_reapfields = { type = deadmines } }
+				}
+			]
+			[[farm_estate]
+				remove_province_modifier = B54_pmod_reapfields_active_1
+				remove_province_modifier = B54_pmod_reapfields_active_2
+				remove_province_modifier = B54_pmod_reapfields_active_3
+				remove_province_modifier = B54_pmod_reapfields_inactive_1
+				remove_province_modifier = B54_pmod_reapfields_inactive_2
+				remove_province_modifier = B54_pmod_reapfields_inactive_3
+
+				if = { limit = { has_province_flag = B54_pflag_reapfields_province }
+					clr_province_flag = B54_pflag_reapfields_province
+					owner = { B54_se_decrement_deadmines_reapfields = { type = reapfields } }
+				}
+			]
+			[[mage_tower]
+				remove_province_modifier = B54_pmod_deadmines_active_1
+				remove_province_modifier = B54_pmod_deadmines_active_2
+				remove_province_modifier = B54_pmod_deadmines_active_3
+				remove_province_modifier = B54_pmod_deadmines_inactive_1
+				remove_province_modifier = B54_pmod_deadmines_inactive_2
+				remove_province_modifier = B54_pmod_deadmines_inactive_3
+
+				if = { limit = { has_province_flag = B54_pflag_deadmines_province }
+					clr_province_flag = B54_pflag_deadmines_province
+					owner = { B54_se_decrement_deadmines_reapfields = { type = deadmines } }
+				}
+
+				remove_province_modifier = B54_pmod_reapfields_active_1
+				remove_province_modifier = B54_pmod_reapfields_active_2
+				remove_province_modifier = B54_pmod_reapfields_active_3
+				remove_province_modifier = B54_pmod_reapfields_inactive_1
+				remove_province_modifier = B54_pmod_reapfields_inactive_2
+				remove_province_modifier = B54_pmod_reapfields_inactive_3
+
+				if = { limit = { has_province_flag = B54_pflag_reapfields_province }
+					clr_province_flag = B54_pflag_reapfields_province
+					owner = { B54_se_decrement_deadmines_reapfields = { type = reapfields } }
+				}
+
+				remove_province_modifier = B54_pmod_necrocratic_administration
+			]
+				
+			# Simplest to just always remove the manufactory bonus and then reapply if valid.
+			remove_province_modifier = B54_pmod_esthil_manufactory_bonus
+			if = { 
+				limit = { 
+					OR = { 
+						has_building = weapons 
+						has_building = farm_estate 
+						AND = {
+							has_building = mage_tower 
+							owner = { has_estate_privilege = estate_mages_B54_necrocratic_administration }
+						}
+					} 
+				}
+				add_province_modifier = { name = B54_pmod_esthil_manufactory_bonus duration = -1 }
+			}
+		}
+	}
+}
+
+# Country scope
+B54_se_apply_lich_queen_modifiers = {
+	hidden_effect = {
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_1
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_2
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_3
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_4
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_5
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_6
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_7
+		remove_country_modifier = B54_rmod_lichqueen_of_escann_8
+	}
+	if = { 
+		limit = { 
+			has_country_flag = esthil_varina_lich
+			mission_completed = B54_mission_black_empire_rising
+		}
+		if = { limit = { is_ruler_all_schools_level_3 = yes }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_8 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 7 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_7 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 6 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_6 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 5 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_5 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 4 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_4 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 3 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_3 duration = -1 }
+		}
+		else_if = { limit = { is_ruler_num_school_level_3 = { amount = 2 } }
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_2 duration = -1 }
+		}
+		else = {
+			add_ruler_modifier = { name = B54_rmod_lichqueen_of_escann_1 duration = -1 }
+		}
+	}
+}
+
+# Province scope, FROM is country
+B54_se_move_morgurax_to_province = {
+	# Subtract mana cost. Cannot use variables since province_distance is not a simple trigger.
+	# Could be optimized, but will be called rarely enough that I'm not going to bother. :P
+	custom_tooltip = B54_tt_morgurax_relocation_cost
+	if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 25 } } }
+		FROM = { change_mana = { amount = -5 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 50 } } }
+		FROM = { change_mana = { amount = -10 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 75 } } }
+		FROM = { change_mana = { amount = -15 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 100 } } }
+		FROM = { change_mana = { amount = -20 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 125 } } }
+		FROM = { change_mana = { amount = -25 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 150 } } }
+		FROM = { change_mana = { amount = -30 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 175 } } }
+		FROM = { change_mana = { amount = -35 } }
+	}
+	else_if = { limit = { NOT = { province_distance = { who = event_target:B54_global_et_morgurax_location distance = 200 } } }
+		FROM = { change_mana = { amount = -40 } }
+	}
+
+	# Cooldown modifier.
+	FROM = { add_country_modifier = { name = B54_cdummymod_morgurax_relocation_cooldown duration = 365 } }
+
+	hidden_effect = {
+		event_target:B54_global_et_morgurax_location = {
+			# Clean up existing Morgurax modifiers
+			every_neighbor_province = {
+				remove_province_modifier = B54_pmod_morgurax_dread
+				clr_province_flag = B54_pflag_in_morgurax_range
+				every_neighbor_province = {
+					remove_province_modifier = B54_pmod_morgurax_dread
+					clr_province_flag = B54_pflag_in_morgurax_range
+					every_neighbor_province = {
+						remove_province_modifier = B54_pmod_morgurax_dread
+						clr_province_flag = B54_pflag_in_morgurax_range
+					}
+				}
+			}
+		}
+	}
+
+	move_great_project = {
+		type = the_north_citadel_morgurax_monument
+		province = THIS
+		instant = yes
+	}
+
+	# Apply new Morgurax modifiers
+	hidden_effect = {
+		save_global_event_target_as = B54_global_et_morgurax_location
+	}
+	B54_se_apply_morgurax_modifiers = yes
+	if = { limit = { event_target:B54_global_et_morgurax_location = { has_great_project = { type = the_north_citadel_morgurax_monument tier = 3 } } }
+		custom_tooltip = B54_tt_morgurax_range_3
+	}
+	else_if = { limit = { event_target:B54_global_et_morgurax_location = { has_great_project = { type = the_north_citadel_morgurax_monument tier = 2 } } }
+		custom_tooltip = B54_tt_morgurax_range_2
+	}
+	else = {
+		custom_tooltip = B54_tt_morgurax_range_1
+	}
+}
+
+# Province scope
+B54_se_apply_morgurax_modifiers = {
+	hidden_effect = {
+		every_neighbor_province = { limit = { is_wasteland = no }
+			if = { limit = { owner = { is_or_was_tag = { tag = B54 } } }
+				add_province_modifier = { name = B54_pmod_morgurax_dread duration = -1 }
+			}
+			else = {
+				set_province_flag = B54_pflag_in_morgurax_range
+			}
+			if = { limit = { event_target:B54_global_et_morgurax_location = { has_great_project = { type = the_north_citadel_morgurax_monument tier = 2 } } }
+				every_neighbor_province = { limit = { is_wasteland = no }
+					if = { limit = { owner = { is_or_was_tag = { tag = B54 } } }
+						add_province_modifier = { name = B54_pmod_morgurax_dread duration = -1 }
+					}
+					else = {
+						set_province_flag = B54_pflag_in_morgurax_range
+					}
+					if = { limit = { event_target:B54_global_et_morgurax_location = { has_great_project = { type = the_north_citadel_morgurax_monument tier = 3 } } }
+						every_neighbor_province = { limit = { is_wasteland = no }
+							if = { limit = { owner = { is_or_was_tag = { tag = B54 } } }
+								add_province_modifier = { name = B54_pmod_morgurax_dread duration = -1 }
+							}
+							else = {
+								set_province_flag = B54_pflag_in_morgurax_range
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	tooltip = { add_province_modifier = { name = B54_pmod_morgurax_dread duration = -1 } }
+}
+
+# Country scope
+B54_se_on_battle_won = {
+	if = { limit = { is_or_was_tag = { tag = B54 } }
+		set_variable = { which = raise_undead which = land_units_killed }
+		change_variable = { which = raise_undead which = land_units_lost }
+
+		divide_variable = { raise_undead = 100 } # 1% of the dead
+		round_variable = { which = raise_undead value = -1 } #truncate decimal portion
+
+		set_variable = { which = var_B54_raise_gov_power which = raise_undead }
+
+		# Check whether player has Undead Mil.
+		if = { limit = { has_country_modifier = undead_military }
+			# Multiply by fraction assigned to raising undead.
+			multiply_variable = { which = var_B54_raise_gov_power which = var_B54_raise_fraction_gov_power }
+			change_variable = { which = var_B54_total_gov_power which = var_B54_raise_gov_power }
+			B54_se_calc_thousands = yes
+
+			multiply_variable = { which = raise_undead which = var_B54_raise_fraction_manpower }
+			
+			if = { limit = { NOT = { has_country_flag = hide_necromancy_on_battle } }
+				country_event = { id = magic_project_army_of_the_dead.21 }
+			}
+			else = {
+				divide_variable = { raise_undead = 1000 }
+				var_effect_granular = { effect = add_manpower var = raise_undead sign = + }				
+			}
+		}
+		else_if = { 
+			limit = {
+				OR = {
+					has_country_flag = B54_cflag_unrestricted_toiling_souls
+					all_war_enemy_countries = { 
+						OR = { 
+							has_country_modifier = orcish_administration 
+							has_country_modifier = goblin_administration 
+							AND = {
+								is_subject = yes
+								overlord = {
+									OR = { 
+										has_country_modifier = orcish_administration 
+										has_country_modifier = goblin_administration
+									}
+								}
+							}
+						} 
+					} 
+				}
+			}
+			if = { limit = { is_estate_necromancy_level_3 = yes } 
+				multiply_variable = { which = var_B54_raise_gov_power value = 50 }
+			} 
+			else_if = { limit = { is_estate_necromancy_level_2 = yes } 
+				multiply_variable = { which = var_B54_raise_gov_power value = 40 }
+			}
+			else_if = { limit = { is_estate_necromancy_level_1 = yes }
+				multiply_variable = { which = var_B54_raise_gov_power value = 30 }
+			}
+			else = {
+				multiply_variable = { which = var_B54_raise_gov_power value = 20 }
+			}
+
+			change_variable = { which = var_B54_total_gov_power which = var_B54_raise_gov_power }
+			B54_se_calc_thousands = yes
+		}
+	}
+}
+
+# Country scope, brick the MT
+B54_se_brick_MT = {
+	hidden_effect = {
+		# Let player go AotD if they want.
+		set_country_flag = B54_cflag_varina_died
+		swap_non_generic_missions = yes
+		clr_country_flag = B54_cflag_no_undead_army
+	}
+	country_event = {
+		id = flavor_esthil.51
+	}
+}
+
+B54_se_remove_necronomics_mods = {
+	if = { limit = { NOT = { has_government_attribute = B54_custom_attribute_esthil_necronomics } }
+		hidden_effect = {
+			remove_country_modifier = B54_cmod_necronomics_aid_construction
+			every_owned_province = {
+				remove_province_modifier = B54_pmod_necronomics_aid_development_1
+				remove_province_modifier = B54_pmod_necronomics_aid_development_2
+				remove_province_modifier = B54_pmod_necronomics_aid_development_3
+				remove_province_modifier = B54_pmod_deadmines_active_1
+				remove_province_modifier = B54_pmod_reapfields_active_1
+				remove_province_modifier = B54_pmod_deadmines_active_2
+				remove_province_modifier = B54_pmod_reapfields_active_2
+				remove_province_modifier = B54_pmod_deadmines_active_3
+				remove_province_modifier = B54_pmod_reapfields_active_3
+				remove_province_modifier = B54_pmod_deadmines_inactive_1
+				remove_province_modifier = B54_pmod_reapfields_inactive_1
+				remove_province_modifier = B54_pmod_deadmines_inactive_2
+				remove_province_modifier = B54_pmod_reapfields_inactive_2
+				remove_province_modifier = B54_pmod_deadmines_inactive_3
+				remove_province_modifier = B54_pmod_reapfields_inactive_3
+			}
+		}
+	}
+}
+
+# Yes, it needs to be done this way, otherwise the trait won't be assigned.
+define_varina_to_war_wizard_esthil_effect = {
+	if = { limit = { at_least_magic_project_level = { project = battlemage_academy level = 3 } }
+		if = { limit = { ruler_has_stat = { mil = 6 } }
+			define_ruler_to_general = { fire = 4 shock = 10 manuever = 7 siege = 5 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 5 } NOT = { ruler_has_stat = { mil = 6 } } }
+			define_ruler_to_general = { fire = 3 shock = 10 manuever = 6 siege = 5 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 4 } NOT = { ruler_has_stat = { mil = 5 } } }
+			define_ruler_to_general = { fire = 3 shock = 10 manuever = 5 siege = 4 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 3 } NOT = { ruler_has_stat = { mil = 4 } } }
+			define_ruler_to_general = { fire = 3 shock = 10 manuever = 4 siege = 3 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 2 } NOT = { ruler_has_stat = { mil = 3 } } }
+			define_ruler_to_general = { fire = 2 shock = 9 manuever = 3 siege = 3 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 1 } NOT = { ruler_has_stat = { mil = 2 } } }
+			define_ruler_to_general = { fire = 1 shock = 9 manuever = 3 siege = 2 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { NOT = { ruler_has_stat = { mil = 1 } } }
+			define_ruler_to_general = { fire = 0 shock = 9 manuever = 2 siege = 1 trait = B54_rider_of_zaamalot female = yes }
+		}
+		custom_tooltip = war_wizard_max_academy_tt
+	}
+	if = { limit = { NOT = { at_least_magic_project_level = { project = battlemage_academy level = 3 } } }
+		if = { limit = { ruler_has_stat = { mil = 6 } }
+			define_ruler_to_general = { fire = 4 shock = 9 manuever = 7 siege = 5 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 5 } NOT = { ruler_has_stat = { mil = 6 } } }
+			define_ruler_to_general = { fire = 3 shock = 9 manuever = 6 siege = 5 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 4 } NOT = { ruler_has_stat = { mil = 5 } } }
+			define_ruler_to_general = { fire = 3 shock = 9 manuever = 5 siege = 4 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 3 } NOT = { ruler_has_stat = { mil = 4 } } }
+			define_ruler_to_general = { fire = 3 shock = 9 manuever = 4 siege = 3 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 2 } NOT = { ruler_has_stat = { mil = 3 } } }
+			define_ruler_to_general = { fire = 2 shock = 8 manuever = 3 siege = 3 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { ruler_has_stat = { mil = 1 } NOT = { ruler_has_stat = { mil = 2 } } }
+			define_ruler_to_general = { fire = 1 shock = 8 manuever = 3 siege = 2 trait = B54_rider_of_zaamalot female = yes }
+		}
+		if = { limit = { NOT = { ruler_has_stat = { mil = 1 } } }
+			define_ruler_to_general = { fire = 0 shock = 8 manuever = 2 siege = 1 trait = B54_rider_of_zaamalot female = yes }
+		}
+	}
+}
