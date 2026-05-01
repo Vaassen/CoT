@@ -519,6 +519,89 @@ yezel_mora_misery_monthly_gain = {
 	}
 }
 
+
+lelanan_love_monthly_gain = {
+
+	# Love gain from Prosperous and Expanded Infra
+	set_variable = {
+		which = lelanan_love_gain
+		value = 0
+	}
+	# Love loss from Devastation
+	set_variable = {
+		which = lelanan_love_gain_prov
+		value = 0
+	}
+	every_owned_province = {
+		limit = { devastation = 1 }
+		ROOT = {
+			export_to_variable = {
+				which = lelanan_love_gain_prov
+				value = trigger_value:devastation
+				who = PREV
+			}
+			multiply_variable = {
+				which = lelanan_love_gain_prov
+				value = 0.002
+			}
+			subtract_variable = {
+				which = lelanan_love_gain
+				which = lelanan_love_gain_prov
+			}
+		}
+	}
+	# +0.02 love per prosperous province
+	every_owned_province = {
+		limit = {
+			is_prosperous = yes
+		}
+		ROOT = {
+			change_variable = {
+				which = lelanan_love_gain
+				value = 0.02
+			}
+		}
+	}
+
+	every_owned_province = {
+		trigger_switch = {
+			on_trigger = num_of_times_expanded_infrastructure
+			5 = { ROOT = { change_variable = { which = lelanan_love_gain value = 0.10 } } }
+			4 = { ROOT = { change_variable = { which = lelanan_love_gain value = 0.08 } } }
+			3 = { ROOT = { change_variable = { which = lelanan_love_gain value = 0.06 } } }
+			2 = { ROOT = { change_variable = { which = lelanan_love_gain value = 0.04 } } }
+			1 = { ROOT = { change_variable = { which = lelanan_love_gain value = 0.02 } } }
+		}
+	}
+
+
+	set_variable = { which = lelanan_love_gain_tt which = lelanan_love_gain }
+
+    if = {
+		limit = { 
+			NOT = { check_variable = { which = lelanan_love_gain value = 0 } }
+		}
+		multiply_variable = {
+			which = lelanan_love_gain
+			value = -1
+		}
+		gov_power_var_effect_granular = {
+			mechanic = lelanan_love_mechanic
+			power = lelanan_love_power
+			var = lelanan_love_gain
+			sign = -
+		}
+	}
+	else = {
+		gov_power_var_effect_granular = {
+			mechanic = lelanan_love_mechanic
+			power = lelanan_love_power
+			var = lelanan_love_gain
+			sign = +
+		}
+	}	
+}
+
 mother_akasik_province = {
 	if = {
 		limit = {
@@ -1462,70 +1545,19 @@ set_ruler_random_planetouched_effect = {
 # Used in on_actions under on_heir_needed_theocracy.
 roll_theocracy_heir_planetouched_effect = { 
 	if = { limit = { heir_can_be_planetouched_theocracy = yes }
-		if = { limit = { has_ruler_flag = heir_ruler_planetouched_personality }
-			random = { 
-                chance = 1 
-                country_event = { id = planetouched.102 days = 120 }
-            }
-		}
-		if = { limit = { NOT = { has_ruler_flag = heir_ruler_planetouched_personality } }
-			random = {
-                chance = 10
-                country_event = { id = planetouched.102 days = 120 }
-            }
-		}
-	}
-}
-
-#currently broken, doesn't give trait when in scripted_effect
-create_planetouched_general_effect = {
-	if = {
-		limit = { army_tradition = 80 }
-		define_general = {
-			fire = 5
-			shock = 5
-			manuever = 5
-			siege = 3
-			trait = planetouched_commander_personality
-		}
-	}
-	else_if = {
-		limit = { army_tradition = 60 }
-		define_general = {
-			fire = 4
-			shock = 5
-			manuever = 5
-			siege = 2
-			trait = planetouched_commander_personality
-		}
-	}
-	else_if = {
-		limit = { army_tradition = 40 }
-		define_general = {
-			fire = 3
-			shock = 5
-			manuever = 4
-			siege = 1
-			trait = planetouched_commander_personality
-		}
-	}
-	else_if = {
-		limit = { army_tradition = 20 }
-		define_general = {
-			fire = 3
-			shock = 4
-			manuever = 3
-			siege = 1
-			trait = planetouched_commander_personality
-		}
-	}
-	else = {
-		define_general = {
-			fire = 2
-			shock = 3
-			manuever = 3
-			siege = 1
-			trait = planetouched_commander_personality
+		random_list = {
+			10 = {
+				modifier = {
+					factor = 11 #10x more likely
+					NOT = { has_ruler_flag = heir_ruler_planetouched_personality }
+				}
+				modifier = {
+					factor = 1.66 #25% more likely
+					has_estate_privilege = estate_planetouched_scattered_inheritance
+				}
+				country_event = { id = planetouched.102 days = 120 }
+			}
+			990 = {}
 		}
 	}
 }
@@ -1567,6 +1599,44 @@ genie_cult_cooldown = {
 			hidden = yes
 		}
 	}
+}
+
+total_genie_cult_usage_counter = {
+	hidden_effect = {
+		change_variable = {
+			which = GenieCultUsageCounter
+			value = 1
+		}
+	}
+}
+
+genie_cult_usage_counter_3_plus = {
+	hidden_effect = {
+		change_variable = {
+			which = GenieCultUsageCounter3plus
+			value = 1
+		}
+	}
+}
+genie_cult_add_mana_1 = { change_mana = { amount = 10 } }
+genie_cult_add_mana_2 = { change_mana = { amount = 20 } }
+genie_cult_add_mana_3 = { change_mana = { amount = 30 } }
+genie_cult_add_mana_4 = { change_mana = { amount = 30 } }
+genie_cult_extra_effect_shows = {
+	genie_cult_power_loss = { value = $level$ } #already hidden
+	genie_cult_cooldown = yes #already hidden
+	total_genie_cult_usage_counter = yes #already hidden
+	if = {
+		limit = {
+			has_country_flag = genie_cult_mana_gain
+		}
+		genie_cult_add_mana_$level$ = yes
+	}
+	if = { 
+		limit = { has_country_flag = S87_gain_manpower_from_incations }
+		add_manpower = $level$
+	}
+	hidden_effect = { remove_country_modifier = AYN_no_migration_genie_cult_usage }
 }
 
 #Shelokmengi breadbasket reform scripted effect
@@ -1760,10 +1830,7 @@ form_vyoronsi_nation_effect = {
 	primary_and_ruler_culture_change = { race = halfling new_culture = vyoronsi }
 	hidden_effect = { restore_country_name = yes }
 	#swap_non_generic_missions = yes #so people won't thing you get more missions and it might fix some issues related to mt and pirate missions getting messed up
-	if = {
-		limit = { NOT = { government_rank = 2 } }
-		set_government_rank = 2
-	}
+	increase_government_rank_scripted_effect = { rank = 2 }
 	dao_nako_region = {
 		limit = { NOT = { owned_by = ROOT } }
 		add_permanent_claim = S72
@@ -2524,68 +2591,72 @@ remove_zaradyrra_festival_buff = {
 
 # This way you only need to worry about giving a value to 1 input parameter, either claw_strength or canvas_strength
 ashhana_blood_curse_add_control_by_source = {
-[[claw_strength]
-	add_government_power = {
-		mechanic_type = ashhana_blood_curse_mechanic
-		power_type = ashhana_blood_curse_control
-		value = $claw_strength$
-	}
-	ashhana_blood_curse_add_faction_strength = {
-		claw_strength = $claw_strength$
-	}
+	[[claw_strength]
+		add_government_power = {
+			mechanic_type = ashhana_blood_curse_mechanic
+			power_type = ashhana_blood_curse_control
+			value = $claw_strength$
+		}
+		ashhana_blood_curse_add_faction_strength = {
+			claw_strength = $claw_strength$
+		}
 	]
-[[canvas_strength]
-	add_government_power = {
-		mechanic_type = ashhana_blood_curse_mechanic
-		power_type = ashhana_blood_curse_control
-		value = $canvas_strength$
-	}
-	ashhana_blood_curse_add_faction_strength = {
-		canvas_strength = $canvas_strength$
-	}
+	[[canvas_strength]
+		add_government_power = {
+			mechanic_type = ashhana_blood_curse_mechanic
+			power_type = ashhana_blood_curse_control
+			value = $canvas_strength$
+		}
+		ashhana_blood_curse_add_faction_strength = {
+			canvas_strength = $canvas_strength$
+		}
 	]
 }
 
 # This is a separate effect so we can use canvas_minus_claw to track the difference for the custom GUI
 ashhana_blood_curse_add_faction_strength = {
-[[claw_strength]
-	change_variable = {
-		which = claw_strength
-		value = $claw_strength$
-	}
-	hidden_effect = {
-		subtract_variable = {
-			which = canvas_minus_claw
+	[[claw_strength]
+		change_variable = {
+			which = claw_strength
 			value = $claw_strength$
 		}
-	}
-	]
-[[canvas_strength]
-	change_variable = {
-		which = canvas_strength
-		value = $canvas_strength$
-	}
-	hidden_effect = {
+		hidden_effect = {
+			subtract_variable = {
+				which = canvas_minus_claw
+				value = $claw_strength$
+			}
+		}
+		]
+	[[canvas_strength]
 		change_variable = {
-			which = canvas_minus_claw
+			which = canvas_strength
 			value = $canvas_strength$
 		}
-	}
-	]
+		hidden_effect = {
+			change_variable = {
+				which = canvas_minus_claw
+				value = $canvas_strength$
+			}
+		}
+		]
 }
 
 ashhana_blood_curse_control_from_performance = {
+	hidden_effect = { set_country_flag = had_zaradyrra_festival }
 	if = {
-		limit = {
-			has_government_attribute = festivals_of_blood_ability
+		limit = { has_government_mechanic = ashhana_blood_curse_mechanic }
+		if = {
+			limit = {
+				has_government_attribute = festivals_of_blood_ability
+			}
+			ashhana_blood_curse_add_control_by_source = {
+				claw_strength = 3.75
+			}
 		}
-		ashhana_blood_curse_add_control_by_source = {
-			claw_strength = 3.75
-		}
-	}
-	else = {
-		ashhana_blood_curse_add_control_by_source = {
-			canvas_strength = 3.75
+		else = {
+			ashhana_blood_curse_add_control_by_source = {
+				canvas_strength = 3.75
+			}
 		}
 	}
 }
@@ -2599,7 +2670,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_faction_strength = {
-			canvas_strength = 0.04
+			canvas_strength = 0.03
 		}
 	}
 	if = {
@@ -2609,7 +2680,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_faction_strength = {
-			canvas_strength = 0.04
+			canvas_strength = 0.03
 		}
 	}
 	if = {
@@ -2619,7 +2690,7 @@ ashhana_blood_curse_monthly_control = {
 			}
 		}
 		ashhana_blood_curse_add_faction_strength = {
-			canvas_strength = 0.04
+			canvas_strength = 0.03
 		}
 	}
 	if = { #Give the AI some help
@@ -2811,6 +2882,7 @@ ashhana_agony_of_expression_disaster_revolt_spawn = {
 	random_owned_province = {
 		limit = {
 			is_capital = no #don't cede the capital
+			NOT = { has_province_modifier = karach_expand_infra } #Karach Workshop is here so won't side with Claw
 			OR = {
 				is_in_capital_area = yes #connected to the capital by land to avoid choosing islands
 				ROOT = {
@@ -3647,6 +3719,10 @@ anb_sarhal_cultural_union = { #Might need an update if there's new cultures in t
 				culture = binwarji
 				free = yes
 			}
+			anb_add_accepted_culture_or_dip_power = {
+				culture = kaino
+				free = yes
+			}
 		}
 	]
 	[[gnollish]
@@ -3772,10 +3848,109 @@ anb_sarhal_cultural_union = { #Might need an update if there's new cultures in t
 	]
 }
 
+samsumbat_slave_agitators_effect = { # Used in the rebel enforce effect for a new slave type, mostly so that Samsumbat
+# can form Prakheta, keeping all their MT content, and still have the rebels work
+	if = {
+		limit = {
+			is_emperor_of_china = yes
+		}
+		custom_tooltip = F60_agitator_rebel_effect_satrapy_tt
+		create_subject = {
+			subject_type = tributary_state
+			subject = PREV
+		}
+	}
+	else = {
+		custom_tooltip = F60_agitator_rebel_effect_tributary_tt
+		create_subject = {
+			subject_type = tributary_state_anb
+			subject = PREV
+		}
+		reverse_add_opinion = {
+			who = overlord
+			modifier = F60_slave_agitator_vassal
+		}
+		PREV = { # Mostly to help with those subjects at the very start
+			add_liberty_desire = -20
+			add_trust = { # To overcome the loss of trust from DoW a little
+				who = PREV # PREV again which should go back to Samsumbat
+				value = 10
+			}
+		}
+	}
+	# Give relations and liberty desire bonus
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = declared_war_on_us
+	}
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = declared_war_on_neighbor
+	}
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = aggressive_expansion
+	}
+}
+
+# Takes $extra_limit$ and $custom_tooltip$ as arguments
+samsumbat_rebel_agitate_other_countries_effect = { # Used for an event and a mission
+	custom_tooltip = F60_support_rebels_improved_tt
+	add_country_modifier = {
+		name = F60_$rebel_type$_uprising
+		duration = 3650 # 10 years
+	}
+	custom_tooltip = $custom_tooltip$
+	hidden_effect = {
+		every_known_country = {
+			limit = {
+				[[extra_limit] $extra_limit$]
+				has_spy_network_from = {
+					who = ROOT
+					value = 30
+				}
+			}
+			capital_scope = {
+				add_province_modifier = {
+					name = F60_$rebel_type$_agitators_capital
+					duration = 3650
+				}
+			}
+		}
+	}
+}
+
 form_adzalan_effect = {
+	hidden_effect = {
+		if = {
+			limit = { has_ruler_flag = L80_sabre_heir_flag }
+			exile_heir_as = L80_heir_exile
+		}
+	}
 	change_tag = L87 #Adzalan
-	change_government = theocracy
-	add_government_reform = ashhana_realm_of_art
+	if = {
+		limit = { has_country_flag = karach_republic_adzalan }
+		change_government = republic
+		add_government_reform = karach_ashhana_realm_of_art
+		hidden_effect = {
+			remove_country_modifier = Bardic_Axta_Strength
+			remove_country_modifier = Painter_Axta_Strength
+			remove_country_modifier = Chemist_Axta_Strength
+			remove_country_modifier = Sailor_Axta_Strength
+			remove_country_modifier = Merchant_Axta_Strength
+			remove_country_modifier = Artisan_Axta_Strength
+			remove_country_modifier = Miner_Axta_Strength
+			remove_country_modifier = Lumberer_Axta_Strength
+			remove_country_modifier = Farmer_Axta_Strength
+		}
+		country_event = {
+			id = flavour_karach.14
+		}
+	}
+	else = {
+		change_government = theocracy
+		add_government_reform = ashhana_realm_of_art
+	}
 	hidden_effect = { restore_country_name = yes }
 	increase_government_rank_scripted_effect = { rank = 2 }
 	if = {
@@ -3787,6 +3962,10 @@ form_adzalan_effect = {
 		duration = 7300
 	}
 	hidden_effect = {
+		if = {
+			limit = { has_ruler_flag = L80_sabre_heir_flag }
+			set_heir = L80_heir_exile
+		}
 		set_country_flag = adzalan_formed
 		clr_country_flag = ashhana_disaster_supporting_canvas
 		remove_country_modifier = ashhana_control_adm_advisor
@@ -3946,5 +4125,650 @@ form_umbral_covenant = {
 		set_country_flag = umbral_covenant_formed
 		set_global_flag = umbral_covenant_formed
 		add_government_reform = the_vile_one_reform_initial
+	}
+}
+#Karach only for Workshop events basically
+
+karach_Workshops = {
+    if = {
+        limit = {
+            OR = {
+                trade_goods = fish
+                trade_goods = naval_supplies
+            }
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.20
+            }
+        }
+    }
+    if = {
+        limit = {
+            OR = {
+                trade_goods = livestock
+                trade_goods = wool
+            }
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.21
+            }
+        }
+    }
+    if = {
+        limit = { 
+            trade_goods = gold
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.22
+            }
+        }
+    }
+    if = {
+        limit = { 
+            OR = {
+                trade_goods = spices
+                trade_goods = grain
+            }
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.23
+            }
+        }
+    }
+    if = {
+        limit = { 
+            OR = {
+                trade_goods = incense
+                trade_goods = dyes
+            }
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.24
+            }
+        }
+    }
+    if = {
+        limit = { 
+            OR = {
+                trade_goods = iron
+                trade_goods = copper
+            }
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.25
+            }
+        }
+    }
+    if = {
+        limit = { 
+            trade_goods = tropical_wood
+        }
+        owner = {
+            country_event = {
+                id = flavour_karach.26
+            }
+        }
+    }
+}
+
+#Ardimyan Minors
+
+# Tribal Development
+
+add_tribal_development_scaling = {
+	if = {
+		limit = { tribal_development = 18 }
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 180 }
+	}
+	else_if = {
+		limit = { tribal_development = 15 }
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 150 }
+	}
+	else_if = {
+		limit = { tribal_development = 12 }
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 120 }
+	}
+	else_if = {
+		limit = { tribal_development = 9 }
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 90 }
+	}
+	else_if = {
+		limit = { tribal_development = 6 }
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 60 }
+	}
+	else = {
+		add_country_modifier = { name = anb_add_tribal_dev_$key$ duration = 30 }
+	}
+}
+
+#Qeyikul
+
+spawn_qeyikul_warband_rebels = {
+	set_province_flag = current_qeyikul_warband_uprising
+	if = {
+		limit = { has_province_modifier = small_qeyikul_warband }
+		custom_tooltip = AYN_small_qeyikul_tt
+		custom_tooltip = AYN_qeyikul_warband_small_rewards_tt
+		spawn_rebels = {
+			size = 1
+			type = qeyikul
+		}
+		if = { 
+			limit = { owner = { NOT = { num_of_cities = 2 } } }
+			random_list = {
+				45 = {
+					add_province_modifier = {
+						name = qeyikul_3_easer_attack
+						duration = -1
+					}
+				}
+				45 = {
+					add_province_modifier = {
+						name = qeyikul_2_easer_attack
+						duration = -1
+					}
+				}
+				10 = {
+					add_province_modifier = {
+						name = qeyikul_1_easer_attack
+						duration = -1
+					}
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { has_province_modifier = medium_qeyikul_warband }
+		custom_tooltip = AYN_medium_qeyikul_tt
+		custom_tooltip = AYN_qeyikul_warband_medium_rewards_tt
+		spawn_rebels = {
+			size = 2
+			type = qeyikul
+		}
+	}
+	else_if = {
+		limit = { has_province_modifier = large_qeyikul_warband }
+		custom_tooltip = AYN_large_qeyikul_tt
+		custom_tooltip = AYN_qeyikul_warband_large_rewards_tt
+		if = { 
+			limit = { owner = { NOT = { num_of_cities = 2 } } }
+			spawn_rebels = {
+				size = 1
+				type = qeyikul
+			}
+			spawn_rebels = {
+				size = 1
+				type = qeyikul
+			}
+			spawn_rebels = {
+				size = 1
+				type = qeyikul
+			}
+		}
+		else = {
+			spawn_rebels = {
+				size = 5
+				type = qeyikul
+			}
+		}
+	}
+}
+
+increase_qeyikul_reputation = {
+	change_variable = { #so you can scope to no. of fights
+		which = qeyikul_fight_count_variable
+		value = 1
+	}
+	if = {
+		limit = {
+			NOT = {
+				check_variable = {
+					which = qeyikul_reputation_variable
+					value = 10
+				}
+			}
+		}
+		change_variable = {#so you can scope to reputation
+			which = qeyikul_reputation_variable
+			value = 1
+		}
+	}
+
+	add_country_modifier = { name = defeated_qeyikul_warband duration = 1825 }
+	if = { 
+		limit = { has_country_modifier = qeyikul_rep_10 }
+		random_list = {
+			33 = { add_mil_power = 50 }
+			33 = { add_dip_power = 50 }
+			33 = { add_adm_power = 50 }
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_9 }
+		remove_country_modifier = qeyikul_rep_9
+		add_country_modifier = {
+			name = qeyikul_rep_10
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_8 }
+		remove_country_modifier = qeyikul_rep_8
+		add_country_modifier = {
+			name = qeyikul_rep_9
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_7 }
+		remove_country_modifier = qeyikul_rep_7
+		add_country_modifier = {
+			name = qeyikul_rep_8
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_6 }
+		remove_country_modifier = qeyikul_rep_6
+		add_country_modifier = {
+			name = qeyikul_rep_7
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_5 }
+		remove_country_modifier = qeyikul_rep_5
+		add_country_modifier = {
+			name = qeyikul_rep_6
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_4 }
+		remove_country_modifier = qeyikul_rep_4
+		add_country_modifier = {
+			name = qeyikul_rep_5
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_3 }
+		remove_country_modifier = qeyikul_rep_3
+		add_country_modifier = {
+			name = qeyikul_rep_4
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_2 }
+		remove_country_modifier = qeyikul_rep_2
+		add_country_modifier = {
+			name = qeyikul_rep_3
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_1 }
+		remove_country_modifier = qeyikul_rep_1
+		add_country_modifier = {
+			name = qeyikul_rep_2
+			duration = -1
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = qeyikul_rep_1
+			duration = -1
+		}
+	}
+}
+
+decrease_qeyikul_reputation = {
+	change_variable = {
+		which = qeyikul_fight_count_variable
+		value = 1
+	}
+	if = {
+		limit = { check_variable = { which = qeyikul_reputation_variable value = 1 } }
+		change_variable = {#so you can scope to reputation
+			which = qeyikul_reputation_variable
+			value = -1
+		}
+	}
+	if = {
+		limit = { has_country_modifier = qeyikul_rep_1 }
+		remove_country_modifier = qeyikul_rep_1
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_2 }
+		remove_country_modifier = qeyikul_rep_2
+		add_country_modifier = {
+			name = qeyikul_rep_1
+			duration = -1
+		}
+	}
+	else_if = { 
+		limit = { has_country_modifier = qeyikul_rep_3 }
+		remove_country_modifier = qeyikul_rep_3
+		add_country_modifier = {
+			name = qeyikul_rep_2
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_4 }
+		remove_country_modifier = qeyikul_rep_4
+		add_country_modifier = {
+			name = qeyikul_rep_3
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_5 }
+		remove_country_modifier = qeyikul_rep_5
+		add_country_modifier = {
+			name = qeyikul_rep_4
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_6 }
+		remove_country_modifier = qeyikul_rep_6
+		add_country_modifier = {
+			name = qeyikul_rep_5
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_7 }
+		remove_country_modifier = qeyikul_rep_7
+		add_country_modifier = {
+			name = qeyikul_rep_6
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_8 }
+		remove_country_modifier = qeyikul_rep_8
+		add_country_modifier = {
+			name = qeyikul_rep_7
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_9 }
+		remove_country_modifier = qeyikul_rep_9
+		add_country_modifier = {
+			name = qeyikul_rep_8
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = qeyikul_rep_10 }
+		remove_country_modifier = qeyikul_rep_10
+		add_country_modifier = {
+			name = qeyikul_rep_9
+			duration = -1
+		}
+	}
+}
+
+planetouched_land_share_equalizer_effect = {
+	if = {
+		limit = { has_estate = estate_planetouched }
+		if = {
+			limit = {
+				has_estate_privilege = estate_planetouched_organization_scattered
+				OR = {
+					AND = {
+						NOT = { has_estate_privilege = estate_planetouched_scattered_property }
+						estate_territory = {
+							estate = estate_planetouched
+							territory = 5
+						}
+					}
+					AND = {
+						has_estate_privilege = estate_planetouched_scattered_property
+						NOT = { has_country_flag = planetouched_right_to_property_reaffirmed }
+						estate_territory = {
+							estate = estate_planetouched
+							territory = 10
+						}
+					}
+					AND = {
+						has_country_flag = planetouched_right_to_property_reaffirmed
+						estate_territory = {
+							estate = estate_planetouched
+							territory = 15
+						}
+					}
+				}
+			}
+			change_estate_land_share = {
+				estate = estate_planetouched
+				share = -5
+			}
+		}
+#		if = {
+#			limit = {
+#				OR = {
+#					AND = {
+#						has_estate_privilege = estate_planetouched_scattered_property
+#						NOT = {
+#							has_country_flag = planetouched_right_to_property_reaffirmed
+#							estate_territory = {
+#								estate = estate_planetouched
+#								territory = 5
+#							}
+#						}
+#					}
+#					AND = {
+#						has_country_flag = planetouched_right_to_property_reaffirmed
+#						NOT = {
+#							estate_territory = {
+#								estate = estate_planetouched
+#								territory = 10
+#							}
+#						}
+#					}
+#				}
+#			}
+#			change_estate_land_share = {
+#				estate = estate_planetouched
+#				share = 5
+#			}
+#		}
+	}
+}
+
+define_planetouched_general = {
+	define_general = {
+		[[name] name = "$name$"]
+		[[fire] fire = $fire$]
+		[[shock] shock = $shock$]
+		[[manuever] manuever = $manuever$]
+		[[siege] siege = $siege$]
+		trait = planetouched_commander_personality
+		[[female] female = $female$]
+	}
+	set_country_flag = have_had_planetouched_general
+}
+
+define_planetouched_admiral = {
+	define_admiral = {
+		[[name] name = "$name$"]
+		[[fire] fire = $fire$]
+		[[shock] shock = $shock$]
+		[[manuever] manuever = $manuever$]
+		[[siege] siege = $siege$]
+		trait = planetouched_commander_personality
+		[[female] female = $female$]
+	}
+}
+
+define_planetouched_ruler_to_general = {
+	define_ruler_to_general = {
+		[[fire] fire = $fire$]
+		[[shock] shock = $shock$]
+		[[manuever] manuever = $manuever$]
+		[[siege] siege = $siege$]
+		trait = planetouched_commander_personality
+	}
+	set_country_flag = have_had_planetouched_general
+}
+
+on_sarhal_monument_upgraded = {
+	if = {
+		limit = {
+			owner = { has_estate_privilege = estate_planetouched_state_authority }
+			has_great_project = {
+				type = any
+				tier = 3
+			}
+		}
+		owner = { add_absolutism = 5 }
+	}
+}
+
+#Form Konolkhatep
+form_konolkhatep_effect = {
+	hidden_effect = {
+		export_to_variable = {
+			value = trigger_value:meritocracy
+			which = konol_meritocracy
+		}
+		change_variable = { konol_meritocracy = -50	}
+	}
+	change_tag = F66
+	hidden_effect = { restore_country_name = yes }
+	add_prestige = 50
+	if = {
+		limit = { has_custom_ideas = no }
+		country_event = { id = ideagroups.1 } #Swap Ideas
+	}
+	if = {
+		limit = { is_tribal = yes }
+		change_government = monarchy
+	}
+	add_country_modifier = {
+		name = "centralization_modifier"
+		duration = 7300
+	}
+	set_country_flag = formed_konolkhatep_flag
+	swap_non_generic_missions = yes
+	hidden_effect = {
+		add_government_reform = gnoll_gnollish_monarchy
+		add_government_reform = appease_khet
+	}
+	country_event = { id = flavor_konolkhatep.8 }
+	if = {
+		limit = {
+			has_estate = estate_artificers
+			NOT = { has_country_flag = magic_artificery_mixed }
+		}
+		artifice_magic_switch_to_mixed_mode = yes
+	}
+	hidden_effect = {
+		if = {
+			limit = {
+				check_variable = {
+					which = konol_meritocracy
+					value = 0
+				}
+			}
+			var_effect = {
+				var = konol_meritocracy
+				effect = add_meritocracy
+				sign = +
+			}
+		}
+		else = {
+			multiply_variable = {
+				which = konol_meritocracy
+				value = -1
+			}
+			var_effect = {
+				var = konol_meritocracy
+				effect = add_meritocracy
+				sign = -
+			}
+		}
+		save_global_event_target_as = EmperorOfChina
+	}
+}
+spread_capital_minorities = {
+	if = {
+		limit = {
+			capital_scope = {
+				fast_has_pop_of_race = { race = $race$ }
+			}
+		}
+		random_owned_province = {
+			limit = {
+				has_$race$_majority_trigger = no
+				has_large_$race$_minority_trigger = no
+			}
+			add_$race$_minority_size_effect = yes
+		}
+	}
+}
+
+spread_tolerated_minorities = {
+	if = {
+		limit = {
+			owner = { high_tolerance_$race$_race_trigger = yes  }
+		}
+		add_$race$_minority_size_effect = yes
+	}
+}
+
+# Ardimyan Minors
+AYN_reform_from_tribe_custom_effect = {
+	custom_tooltip = AYN_change_qeyikul_rep_into_leg_rep
+	remove_country_modifier = qeyikul_rep_1
+	remove_country_modifier = qeyikul_rep_2
+	remove_country_modifier = qeyikul_rep_3
+	remove_country_modifier = qeyikul_rep_4
+	remove_country_modifier = qeyikul_rep_5
+	remove_country_modifier = qeyikul_rep_6
+	remove_country_modifier = qeyikul_rep_7
+	remove_country_modifier = qeyikul_rep_8
+	remove_country_modifier = qeyikul_rep_9
+	remove_country_modifier = qeyikul_rep_10
+	if = {
+		limit = {
+			check_variable = {
+				which = qeyikul_reputation_variable
+				value = 8
+			}
+		}
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_3
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = qeyikul_reputation_variable
+				value = 4
+			}
+		}
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_2
+			duration = -1
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_1
+			duration = -1
+		}
 	}
 }

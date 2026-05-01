@@ -661,6 +661,19 @@ declarewar = {
 		}
 	}
 
+	condition = {
+		tooltip = CROVIS_NO_OTHER_WARS
+		potential = {
+			has_country_flag = crovis_no_war_flag
+			FROM = {
+				has_country_flag = crovis_no_war_flag
+			}
+		}
+		allow = {
+			always = no
+		}
+	}
+
 	pre_effect = {
 		if = { #Caergaraen
 			limit = {
@@ -670,6 +683,10 @@ declarewar = {
 			country_event = {
 				id = caergaraen.2 #Judging The Guilty
 			}
+		}
+		if = {
+			limit = { truce_with = FROM FROM = { religion_group = fey_religion } }
+			clr_country_flag = need_to_break_truce_fey
 		}
 	}
 
@@ -713,7 +730,45 @@ declarewar = {
 			always = no
 		}
 	}
-	
+
+	condition = {
+		tooltip = YRW_reform_2_no_subject_war
+		potential = {
+			is_subject_of_type = ynnic_iosahar
+			overlord = {
+				OR = {
+					tag = U69
+					tag = U70
+					tag = U71
+				}
+				has_country_modifier = yrw_2b
+				FROM = {
+					is_subject_of = PREV
+				}
+			}
+		}
+		allow = {
+			liberty_desire = 50
+		}
+	}
+
+	condition = { #If mission is done, prevent war between tributaries
+		tooltip = I69_reversing_negeal_war_tt
+		potential = { 
+			is_subject_of_type_with_overlord = {
+				who = I69 #Star Rider
+				type = tributary_state_anb
+			}
+		}
+		allow = { 
+			NOT = {
+				overlord = {
+					mission_completed = I69_reversing_negeal
+				}
+			}
+		}
+	}
+
 	effect = {
 		on_war_declaration_effect = yes #1.35
 
@@ -737,6 +792,23 @@ declarewar = {
 				B28 = { ai = yes }
 			}
 			country_event = { id = flavor_clouded_eye.20 }
+		}
+
+		if = {
+			limit = {
+				has_global_flag = war_of_salt_and_silence
+				has_saved_global_event_target = salt_and_silence_emperor
+			}
+			if = {
+				limit = {
+					tag = event_target:salt_and_silence_emperor
+					FROM = { tag = event_target:salt_and_silence_giant }
+				}
+				event_target:salt_and_silence_emperor = {
+					set_country_flag = currently_in_salt_silence_war
+					country_event = { id = flavor_salt_silence_incident.11 days = 1825 }
+				}
+			}
 		}
 
 		if = {
@@ -1501,6 +1573,36 @@ declarewar = {
 		}
 		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
 
+		#Samsumbat
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_unite_the_sorrow_rebels
+				FROM = {
+					any_owned_province = {
+						province_group = mothers_sorrow_group
+					}
+				}
+			}
+			clr_country_flag = F60_unite_the_sorrow_rebels
+			FROM = {
+				random_owned_province = {
+					limit = {
+						OR = {
+							province_group = mothers_sorrow_group
+							trade_goods = slaves
+						}
+					}
+					spawn_rebels = {
+						type = samsumbat_slave_agitators
+						size = 2
+						friend = ROOT # This makes them not fight me
+						separatists_target = ROOT # This makes them blue
+					}
+				}
+			}
+		}
+
 		#Accretive Path - Rusted Blades. Remove modifiers if at war.
 		if = {
 			limit = {
@@ -1633,12 +1735,12 @@ declarewar = {
 					has_government_attribute = war_as_art_ability
 				}
 				ashhana_blood_curse_add_control_by_source = {
-					claw_strength = 3
+					claw_strength = 2
 				}
 			}
 			else = {
 				ashhana_blood_curse_add_control_by_source = {
-					claw_strength = 1.5
+					claw_strength = 1
 				}
 			}
 		}
@@ -1656,14 +1758,68 @@ declarewar = {
 				}
 			}
 		}
+		#Zena War Boost Against Kheteratan Nations 
+		if = {
+			limit = {
+				mission_completed = L06_end_of_the_medasi_system
+				FROM = {
+					culture_group = kheteratan
+				}
+			}
+			add_country_modifier = {
+				name = zena_tears_drown_sorrow
+				duration = -1
+			}
+		}
+
+		# Stop Taga'ala republics from using any land-taking cbs
+		if = {
+			limit = {
+				ai = no
+				has_country_modifier = mangrove_peace
+				has_government_attribute = mangrove_republic
+				NOT = {
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_mangrove_unification
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_humiliate_rotw
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_war_triggered
+					}
+					is_in_war = {
+						defender_leader = FROM
+						casus_belli = cb_trade_conflict_triggered
+					}
+				}
+			}
+			white_peace = FROM	# Immediate white peace
+			country_event = { id = mangrove.2 }
+		}
 
 		#Tsukqiao
 		if = {
 			limit = { is_or_was_tag = { tag = Z60 } }
 			if = {
 				limit = {
-					ROOT = { has_country_flag = tsukqiao_jinqiu_war_flag }
 					FROM = { tag = Y02 }
+					ROOT = { has_country_flag = tsukqiao_jinqiu_war_flag }
 				}
 				Y02 = {
 					country_event = { id = tsukqiao.41 days = 10 }
@@ -1675,17 +1831,17 @@ declarewar = {
 					FROM = { tag = Y01 } #Azjakuma
 				}
 				clr_country_flag = tsukqiao_azjakuma_flag
-					4828 = { #Kabiourgarko
-						if = {
-							limit = { owned_by = Y01 }
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-						}
+				4828 = { #Kabiourgarko
+					if = {
+						limit = { owned_by = Y01 }
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
 					}
+				}
 				if = {
 					limit = {
 						Y01 = { is_subject_of_type = slave_state } #Azjakuma
@@ -1696,7 +1852,7 @@ declarewar = {
 			}
 			if = { #Doctrine of Might
 				limit = {
-					has_doctrine_of_control_aspect = yes
+					has_doctrine_of_might_aspect = yes
 					church_power = 100
 				}
 				add_church_power = -100
@@ -1720,10 +1876,6 @@ declarewar = {
 			}
 		}
 
-		if = { #Chronophage tracking
-			limit = { has_country_modifier = necromancy_3_chronophage_mod }
-			hidden_effect = { change_variable = { chronophage_tracker = 1 } }
-		}
 		if = {
 			limit = {
 				B43 = { has_country_flag = B43_defend_grasshopper }
@@ -1737,6 +1889,55 @@ declarewar = {
 					set_country_flag = B43_defended_grasshopper_twice
 				}
 				else = { set_country_flag = B43_defended_hopper_once }
+			}
+		}
+
+		# Huugeta Tamanyouchu Sabotage
+		if = {
+			limit = {
+				has_country_flag = S45_tamanyouchu_sabotage
+			}
+			FROM = {
+				every_owned_province = {
+					limit = {
+						OR = {
+							is_claim = ROOT
+							is_core = ROOT
+						}
+					}
+					add_province_modifier = {
+						name = S45_tamanyouchu_sabotage
+						duration = 1825
+					}
+					ROOT = {
+						change_variable = {
+							which = sabotagedProvinces
+							value = 1
+						}
+					}
+
+				}
+			}
+		}
+
+		# Huugeta Poison Their Hearts
+		if = {
+			limit = {
+				ROOT = {
+					has_country_flag = S45_poison_their_hearts
+					has_spy_network_in = {
+						who = FROM
+						value = 50
+					}
+				}
+
+				FROM = { ai = yes }
+			}
+			FROM = { 
+				save_event_target_as = S45_poison_their_hearts_target
+			}
+			country_event = {
+				id = huugeta.2
 			}
 		}
 	}
@@ -2962,7 +3163,11 @@ annexationaction = {
 					vassal_of = ROOT
 					AND = {
 						is_subject_of = ROOT
-						is_subject_of_type = medasi_subject
+						OR = {
+							is_subject_of_type = medasi_subject
+							is_subject_of_type = great_daimyo_vassal
+							is_subject_of_type = vizier_vassal
+						}
 					}
 				}				
 			}
@@ -2986,7 +3191,7 @@ annexationaction = {
 			4411 = {
 				check_variable = {
 					which = raj_var_cohesion
-					value = 75
+					value = 70
 				}
 			}
 		}
@@ -3307,6 +3512,24 @@ annexationaction = {
 		}
 		allow = {
 			always = no
+		}
+	}
+
+	condition = {
+		tooltip = z18_no_early_annex_white_reachman
+		potential = {
+			tag = Z18
+			FROM = {
+				OR = {
+					tag = Z23
+					tag = Z27
+					tag = Z48
+					tag = Z49
+				}
+			}
+		}
+		allow = {
+			is_year = 1460
 		}
 	}
 
@@ -3657,7 +3880,7 @@ callaction = {
 				NOT = { truce_with = FROM }  #(important when you want subject to fight their previous overlord)
 			}
 			OR = {
-				has_country_flag = allow_to_join_war_nonetheless #Use this flag on countries you want to join fight
+				FROM = { has_country_flag = allow_to_join_war_nonetheless } #Use this flag on countries you want to join fight
 				AND = {
 					ROOT = { has_country_flag = allow_subjects_war } #Flag for allowing subjects/overlords to join
 					OR = {
@@ -3918,6 +4141,51 @@ callaction = {
 			accretive_path_gain_chi = { aspect = fill_the_begging_bowls category = dip amount = 20 }
 		}
 	}
+
+	effect = {
+		if = { #Orenvalyam
+			limit = { has_country_flag = U39_hunted_by_the_righteous_flag }
+			every_war_enemy_country = {
+				add_country_modifier = {
+					name = U39_hunted_by_the_righteous
+					duration = -1
+				}
+			}
+		}
+
+		if = { #Orenvalyam
+			limit = { FROM = { has_country_flag = U39_hunted_by_the_righteous_flag } }
+			FROM = {
+				every_war_enemy_country = {
+					add_country_modifier = {
+						name = U39_hunted_by_the_righteous
+						duration = -1
+					}
+				}
+			}
+		}
+	}
+
+	effect = {
+		if = { #Sacred Grove Monument
+			limit = {
+				FROM = {
+					owns = 1016
+					can_use_sacred_grove_generic_country_reqs_trigger = yes
+					NOT = {
+						has_country_flag = blood_contract_1
+						check_variable = { which = sacred_grove_call_to_arms value = 2 }
+					}
+				}
+			}
+			FROM = {
+				change_variable = {
+					which = sacred_grove_call_to_arms
+					value = 1
+				}
+			}
+		}
+	}
 }
 
 designate_march = {
@@ -3994,7 +4262,10 @@ insultaction = {
 		}
 		if = {
 			limit = {
-				tag = H89
+				OR = {
+					tag = H89
+					tag = S45
+				}
 			}
 			ROOT = { change_variable = { insult_counter = 1 } }
 		}
@@ -4156,6 +4427,18 @@ insultaction = {
 					}
 				}
 			}
+		}
+		#Gnollakaz
+		if = {
+			limit = {
+				has_country_modifier = U09_master_of_gremrabo
+				FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } }
+			}
+			if = {
+				limit = { has_country_modifier = U09_art_of_the_gremrabo }
+				remove_country_modifier = U09_art_of_the_gremrabo
+			}
+			add_country_modifier = { name = U09_art_of_the_gremrabo duration = 1825 }
 		}
 	}
 }
@@ -4478,6 +4761,70 @@ requestpeace = {
 		}
 		allow = {
 			always = no
+        }
+	}
+	pre_effect = { # This happens before any of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = { # If I am Samsumbat, and I make a peace offer to the defending war leader of a war with the special CB, set
+			# a flag that is checked on_country_released
+				is_or_was_tag = { tag = F60 }
+				FROM = {
+					is_in_war = {
+						defender_leader = THIS
+						participants = PREV
+						casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					}
+				}
+			}
+			set_country_flag = F60_custom_liberation_cb_target_country
+		}
+		# If they send a peace offer to Samsumbat during this CB war, give the flag to Samsumbat
+		if = {
+			limit = {
+				is_in_war = {
+					casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					defender_leader = THIS
+				}
+				NOT = { is_or_was_tag = { tag = F60 } }
+			}
+			FROM = { set_country_flag = F60_custom_liberation_cb_target_country }
+		}
+	}
+	effect = { # This happens after all of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+			}
+			clr_country_flag = F60_custom_liberation_cb_target_country
+		}
+		FROM = {
+			if = {
+				limit = {
+					is_or_was_tag = { tag = F60 }
+				}
+				clr_country_flag = F60_custom_liberation_cb_target_country
+			}
+		}
+
+	}
+	condition = { #Iochand
+		tooltip = A80_second_small_war_tt
+		potential = {
+			is_in_war = { casus_belli = cb_second_small_war }
+			FROM = { is_in_war = { casus_belli = cb_second_small_war } }
+		}
+		allow = {
+			always = no
+		}
+	}
+	condition = { #Iochand
+		tooltip = A80_the_war_of_masks_ttt
+		potential = {
+			is_in_war = { casus_belli = cb_war_of_masks }
+			FROM = { is_in_war = { casus_belli = cb_war_of_masks } }
+		}
+		allow = {
+			always = no
 		}
 	}
 }
@@ -4718,6 +5065,17 @@ trade_favors_for_men = {
 			set_country_flag = S50_traded_favors_for_manpower
 			add_army_tradition = 5
 		}
+
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = S45_mercenary_enterprise
+				}
+			}
+			FROM = { 
+				S45_add_momentum = { value = 2 action = favors }
+			}
+		}
 	}
 }
 
@@ -4754,12 +5112,14 @@ trade_favors_for_sailors = {
 }
 
 support_independence_action = {
+	#This action works for both Ask to Support Independence (ROOT is a subject, FROM is independent) and Support Independence (FROM is a subject, ROOT is independent).
+	#Make sure to write your conditions in both directions if you want to actually block independence support from being established
 	condition = {
-		tooltip = vic_league_no_external_support
+		tooltip = vic_league_no_external_support_1
 		potential = {
-			FROM = {
+			FROM = { #External country (ROOT) can't offer independence support to subject (FROM)
 				is_subject_of_type = vic_league_member
-				NOT = {
+				OR = { #Vic League members without these mechanic can have independence supported
 					has_government_attribute = expand_the_league_1_attribute
 					has_government_attribute = expand_the_league_2_attribute
 					has_government_attribute = expand_the_league_3_attribute
@@ -4767,6 +5127,33 @@ support_independence_action = {
 			}
 		}
 		allow = { always = no }
+	}
+	condition = {
+		tooltip = vic_league_no_external_support_2
+		potential = {
+			ROOT = { #Subject (ROOT) can't ask another country (FROM) for indep support
+				is_subject_of_type = vic_league_member
+				OR = { #Vic League members without these mechanic can have independence supported
+					has_government_attribute = expand_the_league_1_attribute
+					has_government_attribute = expand_the_league_2_attribute
+					has_government_attribute = expand_the_league_3_attribute
+				}
+			}
+		}
+		allow = { always = no }
+	}
+
+	condition = { #AI shouldn't interfere in this system. MP players, make your own choices
+		tooltip = crovis_no_outside_support
+		potential = { 
+			NOT = { is_year = 1460 }
+			ai = yes
+			OR = { 
+				is_subject_of = Z18
+				FROM = { is_subject_of = Z18 }
+			}
+		}
+		allow = { is_year = 1460 }
 	}
 }
 grant_electorate = {
