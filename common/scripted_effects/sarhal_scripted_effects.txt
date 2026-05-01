@@ -1604,7 +1604,7 @@ genie_cult_cooldown = {
 total_genie_cult_usage_counter = {
 	hidden_effect = {
 		change_variable = {
-			which = GeniCultUsageCounter
+			which = GenieCultUsageCounter
 			value = 1
 		}
 	}
@@ -1613,7 +1613,7 @@ total_genie_cult_usage_counter = {
 genie_cult_usage_counter_3_plus = {
 	hidden_effect = {
 		change_variable = {
-			which = GeniCultUsageCounter3plus
+			which = GenieCultUsageCounter3plus
 			value = 1
 		}
 	}
@@ -1830,10 +1830,7 @@ form_vyoronsi_nation_effect = {
 	primary_and_ruler_culture_change = { race = halfling new_culture = vyoronsi }
 	hidden_effect = { restore_country_name = yes }
 	#swap_non_generic_missions = yes #so people won't thing you get more missions and it might fix some issues related to mt and pirate missions getting messed up
-	if = {
-		limit = { NOT = { government_rank = 2 } }
-		set_government_rank = 2
-	}
+	increase_government_rank_scripted_effect = { rank = 2 }
 	dao_nako_region = {
 		limit = { NOT = { owned_by = ROOT } }
 		add_permanent_claim = S72
@@ -3851,6 +3848,78 @@ anb_sarhal_cultural_union = { #Might need an update if there's new cultures in t
 	]
 }
 
+samsumbat_slave_agitators_effect = { # Used in the rebel enforce effect for a new slave type, mostly so that Samsumbat
+# can form Prakheta, keeping all their MT content, and still have the rebels work
+	if = {
+		limit = {
+			is_emperor_of_china = yes
+		}
+		custom_tooltip = F60_agitator_rebel_effect_satrapy_tt
+		create_subject = {
+			subject_type = tributary_state
+			subject = PREV
+		}
+	}
+	else = {
+		custom_tooltip = F60_agitator_rebel_effect_tributary_tt
+		create_subject = {
+			subject_type = tributary_state_anb
+			subject = PREV
+		}
+		reverse_add_opinion = {
+			who = overlord
+			modifier = F60_slave_agitator_vassal
+		}
+		PREV = { # Mostly to help with those subjects at the very start
+			add_liberty_desire = -20
+			add_trust = { # To overcome the loss of trust from DoW a little
+				who = PREV # PREV again which should go back to Samsumbat
+				value = 10
+			}
+		}
+	}
+	# Give relations and liberty desire bonus
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = declared_war_on_us
+	}
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = declared_war_on_neighbor
+	}
+	reverse_remove_opinion = {
+		who = PREV
+		modifier = aggressive_expansion
+	}
+}
+
+# Takes $extra_limit$ and $custom_tooltip$ as arguments
+samsumbat_rebel_agitate_other_countries_effect = { # Used for an event and a mission
+	custom_tooltip = F60_support_rebels_improved_tt
+	add_country_modifier = {
+		name = F60_$rebel_type$_uprising
+		duration = 3650 # 10 years
+	}
+	custom_tooltip = $custom_tooltip$
+	hidden_effect = {
+		every_known_country = {
+			limit = {
+				[[extra_limit] $extra_limit$]
+				has_spy_network_from = {
+					who = ROOT
+					value = 30
+				}
+			}
+			capital_scope = {
+				add_province_modifier = {
+					name = F60_$rebel_type$_agitators_capital
+					duration = 3650
+				}
+			}
+		}
+	}
+}
+
 form_adzalan_effect = {
 	hidden_effect = {
 		if = {
@@ -4656,5 +4725,50 @@ spread_tolerated_minorities = {
 			owner = { high_tolerance_$race$_race_trigger = yes  }
 		}
 		add_$race$_minority_size_effect = yes
+	}
+}
+
+# Ardimyan Minors
+AYN_reform_from_tribe_custom_effect = {
+	custom_tooltip = AYN_change_qeyikul_rep_into_leg_rep
+	remove_country_modifier = qeyikul_rep_1
+	remove_country_modifier = qeyikul_rep_2
+	remove_country_modifier = qeyikul_rep_3
+	remove_country_modifier = qeyikul_rep_4
+	remove_country_modifier = qeyikul_rep_5
+	remove_country_modifier = qeyikul_rep_6
+	remove_country_modifier = qeyikul_rep_7
+	remove_country_modifier = qeyikul_rep_8
+	remove_country_modifier = qeyikul_rep_9
+	remove_country_modifier = qeyikul_rep_10
+	if = {
+		limit = {
+			check_variable = {
+				which = qeyikul_reputation_variable
+				value = 8
+			}
+		}
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_3
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = qeyikul_reputation_variable
+				value = 4
+			}
+		}
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_2
+			duration = -1
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = legacy_qeyikul_rep_1
+			duration = -1
+		}
 	}
 }
