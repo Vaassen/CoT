@@ -428,6 +428,14 @@ country_event = { # Echo of Authority
                         }
                     }
                 }
+                calc_true_if = { #At least 3 people that COULD support the giant, if not then the giant will rebel anyways
+                    amount = 3
+                    any_known_country = {
+                        capital_scope = { region = the_borders_region }
+                        NOT = { tag = event_target:salt_and_silence_giant }
+                        NOT = { tag = event_target:salt_and_silence_emperor }
+                    }
+                }
             }
             modifier = {
                 factor = 0
@@ -437,6 +445,14 @@ country_event = { # Echo of Authority
                         capital_scope = { region = the_borders_region }
                         has_country_flag = rebelling_salt_prince
                         NOT = { tag = event_target:salt_and_silence_giant }
+                    }
+                }
+                calc_true_if = { #At least 3 people that COULD support the giant, if not then the giant will rebel anyways
+                    amount = 3
+                    any_known_country = {
+                        capital_scope = { region = the_borders_region }
+                        NOT = { tag = event_target:salt_and_silence_giant }
+                        NOT = { tag = event_target:salt_and_silence_emperor }
                     }
                 }
             }
@@ -485,15 +501,15 @@ country_event = { # Echo of Authority
             limit = {
                 is_part_of_hre = yes
                 capital_scope = { region = the_borders_region }
+                NOT = { is_emperor = yes }
                 NOT = {
                     AND = {
                         has_opinion = { who = event_target:salt_and_silence_emperor value = 100 }
                         alliance_with = event_target:salt_and_silence_emperor
                         marriage_with = event_target:salt_and_silence_emperor
                     }
+                    has_opinion = { who = event_target:salt_and_silence_emperor value = 150 }
                 }
-                NOT = { has_opinion = { who = event_target:salt_and_silence_emperor value = 150 } }
-                NOT = { tag = event_target:salt_and_silence_emperor }
             }
             set_country_flag = rebelling_salt_prince
             capital_scope = {
@@ -577,6 +593,7 @@ country_event = { # Crown of Salt
 
     option = {		
 		name = flavor_salt_silence_incident.5.a
+        trigger = {  is_emperor = no }
         if = {
             limit = { is_part_of_hre = no }
             set_in_empire = yes
@@ -590,6 +607,13 @@ country_event = { # Crown of Salt
                 duration = 14600
             }
         }
+	}
+    option = {		
+		name = flavor_salt_silence_incident.5.b
+        trigger = {  is_emperor = yes }
+        add_stability = 1
+        add_prestige = 20
+        add_legitimacy = 20
 	}
 }
 
@@ -976,17 +1000,6 @@ country_event = { # Borders Victory
         set_global_flag = salt_and_silence_war_giant_won
     }
 
-    after = {
-        hidden_effect = {
-            event_target:salt_and_silence_emperor = {
-                clr_country_flag = currently_in_salt_silence_war
-            }
-            clr_global_flag = war_of_salt_and_silence 
-            clear_global_event_target = salt_and_silence_giant 
-            clear_global_event_target = salt_and_silence_emperor
-        }
-    }
-
 	trigger = {
         has_global_flag = war_of_salt_and_silence
         NOT = { has_global_flag = salt_and_silence_war_emperor_won }
@@ -994,9 +1007,17 @@ country_event = { # Borders Victory
 	
 	option = {		
 		name = flavor_salt_silence_incident.11.a
+        if = {
+            limit = {
+                event_target:salt_and_silence_giant = {
+                    war_with = event_target:salt_and_silence_emperor
+                }
+            }
+            white_peace = event_target:salt_and_silence_giant
+        }
         event_target:salt_and_silence_giant = {
-            white_peace = event_target:salt_and_silence_emperor
             every_owned_province = {
+                limit = { is_part_of_hre = yes }
                 set_in_empire = no
             }
         }
@@ -1005,12 +1026,25 @@ country_event = { # Borders Victory
                 capital_scope = { region = the_borders_region }
                 NOT = { is_emperor = yes }
             }
-            set_in_empire = no
-            white_peace = event_target:salt_and_silence_emperor
+            every_owned_province = {
+                limit = { is_part_of_hre = yes }
+                set_in_empire = no
+            }
         }
-        event_target:salt_and_silence_emperor = {
-            set_emperor = no
-        }
+        tooltip = { set_emperor = no }
         add_imperial_influence = -10
+        hidden_effect = {
+            event_target:salt_and_silence_emperor = {
+                clr_country_flag = currently_in_salt_silence_war
+            }
+            clr_global_flag = war_of_salt_and_silence 
+            clear_global_event_target = salt_and_silence_giant 
+            clear_global_event_target = salt_and_silence_emperor
+        }
 	}
+    after = {
+        hidden_effect = {
+            emperor = { set_emperor = no }
+        }
+    }
 }
