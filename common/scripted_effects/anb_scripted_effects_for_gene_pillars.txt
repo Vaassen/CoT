@@ -54,11 +54,11 @@ aPUI_gene_pillar_interaction_setup_effect = {
 aPUI_gene_pillar_interaction_update_effect = {
 	set_aPUI_cap = { name = gene_pillar_health amount = 30 }
 	set_variable = { which = aPUI_gene_pillar_health_var value = 30 }
-	gene_pillars_recount_health_for_fighters = { slot = 1 }
-	gene_pillars_recount_health_for_fighters = { slot = 2 }
-	gene_pillars_recount_health_for_fighters = { slot = 3 }
-	gene_pillars_recount_health_for_fighters = { slot = 4 }
-	gene_pillars_recount_health_for_fighters = { slot = 5 }
+	gene_pillars_recount_health_for_fighters = { slot = 1 add = yes }
+	gene_pillars_recount_health_for_fighters = { slot = 2 add = yes }
+	gene_pillars_recount_health_for_fighters = { slot = 3 add = yes }
+	gene_pillars_recount_health_for_fighters = { slot = 4 add = yes }
+	gene_pillars_recount_health_for_fighters = { slot = 5 add = yes }
 	owner = {
 		if = {
 			limit = { NOT = { has_country_modifier = mechanim_administration } }
@@ -265,12 +265,8 @@ gene_pillar_successful_end_expedition_effect = {
 				which = aPUI_gene_pillar_progress_var
 				value = 0
 			}
-			# Reset health
-			set_variable = {
-				which = aPUI_gene_pillar_health_var
-				value = 30
-			}
-			# Do I need to gene_pillars_recount_health_for_fighters?
+			# I think I can run this again
+			aPUI_gene_pillar_interaction_update_effect = yes
 		}
 	}
 	hidden_effect = {
@@ -460,7 +456,24 @@ gene_pillars_party_member_effect_tooltip = {
 
 gene_pillar_start_expedition_effect = {
 	hidden_effect = {
-		owner = { set_country_flag = aPUI_gene_pillar_is_exploring_$province$ }
+		owner = {
+			set_country_flag = aPUI_gene_pillar_is_exploring_$province$
+			if = {
+				limit = {
+					has_country_flag = gene_pillars_next_level_extra_1_hp_$province$
+				}
+				PREV = {
+					change_variable = {
+						which = aPUI_gene_pillar_health_capacity
+						value = 10
+					}
+					change_variable = {
+						which = aPUI_gene_pillar_health_var
+						value = 10
+					}
+				}
+			}
+		}
 		province_event = { id = gene_pillars.2 }
 	}
 }
@@ -654,7 +667,10 @@ gene_pillar_generic_then_specific_event = {
 			}
 			clr_country_flag = gene_pillars_exploration_next_event_small_delay
 		}
+		# This is just so the initial event doesn't advance the progress bar
+		[[advance]
 		gene_pillars_advance_progress_bar = yes
+		]
 	}
 }
 
@@ -1661,39 +1677,77 @@ gene_pillar_injure_random_party_member_effect = {
 	}
 }
 
+# If we are removing an existing fighter from the slot, change health in a certain
+# direction. If we are adding a new fighter, change health in the other direction
 gene_pillars_recount_health_for_fighters = {
+	[[remove]
 	if = {
 		limit = {
 			is_variable_equal = {
 				which = aPUI_gene_pillar_party_slot_framevar_$slot$
-				value = 14
+				value = @fighter_B # Paladin, who increases party health
 			}
 		}
 		change_variable = {
 			which = aPUI_gene_pillar_health_var
-			value = -1
+			value = -10
 		}
 		change_variable = {
 			which = aPUI_gene_pillar_health_capacity
-			value = -1
+			value = -10
 		}
 	}
 	if = {
 		limit = {
 			is_variable_equal = {
 				which = aPUI_gene_pillar_party_slot_framevar_$slot$
-				value = 15
+				value = @fighter_C # Barbarian, who decreases party health
 			}
 		}
 		change_variable = {
 			which = aPUI_gene_pillar_health_var
-			value = 1
+			value = 10
 		}
 		change_variable = {
 			which = aPUI_gene_pillar_health_capacity
-			value = 1
+			value = 10
 		}
 	}
+	]
+	[[add]
+	if = {
+		limit = {
+			is_variable_equal = {
+				which = aPUI_gene_pillar_party_slot_framevar_$slot$
+				value = @fighter_B # Paladin, who increases party health
+			}
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_health_var
+			value = 10
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_health_capacity
+			value = 10
+		}
+	}
+	if = {
+		limit = {
+			is_variable_equal = {
+				which = aPUI_gene_pillar_party_slot_framevar_$slot$
+				value = @fighter_C # Barbarian, who decreases party health
+			}
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_health_var
+			value = -10
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_health_capacity
+			value = -10
+		}
+	}
+	]
 }
 
 gene_pillars_clear_all_province_flags = {
@@ -1709,55 +1763,60 @@ gene_pillars_select_class = {
 	if = {
 		limit = { has_province_flag = gene_pillars_selecting_slot_1 }
 		hidden_effect = {
-			gene_pillars_recount_health_for_fighters = { slot = 1 }
+			gene_pillars_recount_health_for_fighters = { slot = 1 remove = yes }
 			set_variable = {
 				which = aPUI_gene_pillar_party_slot_framevar_1
 				value = $class$
 			}
+			gene_pillars_recount_health_for_fighters = { slot = 1 add = yes }
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 1 }
 	}
 	else_if = {
 		limit = { has_province_flag = gene_pillars_selecting_slot_2 }
 		hidden_effect = {
-			gene_pillars_recount_health_for_fighters = { slot = 2 }
+			gene_pillars_recount_health_for_fighters = { slot = 2 remove = yes }
 			set_variable = {
 				which = aPUI_gene_pillar_party_slot_framevar_2
 				value = $class$
 			}
+			gene_pillars_recount_health_for_fighters = { slot = 2 add = yes }
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 2 }
 	}
 	else_if = {
 		limit = { has_province_flag = gene_pillars_selecting_slot_3 }
 		hidden_effect = {
-			gene_pillars_recount_health_for_fighters = { slot = 3 }
+			gene_pillars_recount_health_for_fighters = { slot = 3 remove = yes }
 			set_variable = {
 				which = aPUI_gene_pillar_party_slot_framevar_3
 				value = $class$
 			}
+			gene_pillars_recount_health_for_fighters = { slot = 3 add = yes }
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 3 }
 	}
 	else_if = {
 		limit = { has_province_flag = gene_pillars_selecting_slot_4 }
 		hidden_effect = {
-			gene_pillars_recount_health_for_fighters = { slot = 4 }
+			gene_pillars_recount_health_for_fighters = { slot = 4 remove = yes }
 			set_variable = {
 				which = aPUI_gene_pillar_party_slot_framevar_4
 				value = $class$
 			}
+			gene_pillars_recount_health_for_fighters = { slot = 4 add = yes }
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 4 }
 	}
 	else_if = {
 		limit = { has_province_flag = gene_pillars_selecting_slot_5 }
 		hidden_effect = {
-			gene_pillars_recount_health_for_fighters = { slot = 5 }
+			gene_pillars_recount_health_for_fighters = { slot = 5 remove = yes }
 			set_variable = {
 				which = aPUI_gene_pillar_party_slot_framevar_5
 				value = $class$
 			}
+			gene_pillars_recount_health_for_fighters = { slot = 5 add = yes }
 		}
 		#gene_pillars_party_member_effect_tooltip = { slot = 5 }
 	}
@@ -1794,6 +1853,23 @@ gene_pillars_generic_loot_or_trap_repeat = {
 				country_event = {
 					id = gene_pillars.1005 # get this event again
 					days = 1 # can't trigger itself without a delay
+				}
+			}
+			# If you succeed 5 times, reset the variables in case you get this again
+			else = {
+				hidden_effect = {
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_loot_gained
+						value = 0
+					}
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_xp_gained
+						value = 0
+					}
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_count
+						value = 0
+					}
 				}
 			}
 		}
