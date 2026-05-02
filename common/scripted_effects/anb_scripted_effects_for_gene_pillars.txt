@@ -755,19 +755,26 @@ gene_pillars_add_loot_effect = {
 				}
 			}
 			# placeholder move this to end level effect
-			if = {
-				limit = {
-					check_variable = {
-						which = aPUI_gene_pillar_loot_var
-						value = 100
-					}
-				}
-				change_variable = {
-					which = aPUI_gene_pillar_loot_var
-					value = -100
-				}
-				province_event = { id = gene_pillars.10 }
+
+		}
+	}
+}
+
+gene_pillars_check_loot_threshold = {
+	if = {
+		limit = {
+			check_variable = {
+				which = aPUI_gene_pillar_loot_var
+				value = 100
 			}
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_loot_var
+			value = -100
+		}
+		custom_tooltip = gene_pillars_get_loot_again_tt
+		hidden_effect = {
+			gene_pillars_get_loot_event = yes
 		}
 	}
 }
@@ -806,20 +813,6 @@ gene_pillars_add_xp_effect = {
 					which = aPUI_gene_pillar_xp_var
 					value = 0.5
 				}
-				# placeholder move this to end level effect
-				if = {
-					limit = {
-						check_variable = {
-							which = aPUI_gene_pillar_xp_var
-							value = 100
-						}
-					}
-					change_variable = {
-						which = aPUI_gene_pillar_xp_var
-						value = -100
-					}
-					province_event = { id = gene_pillars.20 }
-				}
 			}
 			if = {
 				limit = {
@@ -837,24 +830,6 @@ gene_pillars_add_xp_effect = {
 				change_variable = {
 					which = aPUI_gene_pillar_xp_var
 					value = $amount$
-				}
-				# placeholder move this to end level effect
-				if = {
-					limit = {
-						check_variable = {
-							which = aPUI_gene_pillar_xp_var
-							value = 100
-						}
-					}
-					change_variable = {
-						which = aPUI_gene_pillar_xp_var
-						value = -100
-					}
-					province_event = { id = gene_pillars.20 }
-					if = {
-						limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
-						owner = { set_country_flag = gene_pillars_unlocked_cleric_B }
-					}
 				}
 			}
 			if = {
@@ -878,32 +853,6 @@ gene_pillars_add_xp_effect = {
 					which = aPUI_gene_pillar_xp_var
 					value = 2
 				}
-				# placeholder move this to end level effect
-				if = {
-					limit = {
-						check_variable = {
-							which = aPUI_gene_pillar_xp_var
-							value = 100
-						}
-					}
-					change_variable = {
-						which = aPUI_gene_pillar_xp_var
-						value = -100
-					}
-					province_event = { id = gene_pillars.20 }
-					if = {
-						limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
-						owner = {
-							set_country_flag = gene_pillars_unlocked_fighter_B
-							set_country_flag = gene_pillars_unlocked_fighter_C
-						}
-					}
-				}
-				# I'm pretty sure this is meant to happen before the level up check
-				# multiply_variable = {
-				# 	which = aPUI_gene_pillar_xp_var
-				# 	value = 2
-				# }
 			}
 		}
 	}
@@ -945,6 +894,63 @@ gene_pillars_lose_xp_effect = {
 				which = aPUI_gene_pillar_xp_var
 				value = 0
 			}
+		}
+	}
+}
+
+gene_pillars_level_up_check = {
+	# placeholder move this to end level effect
+	if = {
+		limit = {
+			check_variable = {
+				which = aPUI_gene_pillar_xp_var
+				value = 100
+			}
+		}
+		change_variable = {
+			which = aPUI_gene_pillar_xp_var
+			value = -100
+		}
+
+		change_variable = {
+			which = aPUI_gene_pillars_party_level_var
+			value = 1
+		}
+		if = { # Went from level 1 to level 2
+			limit = {
+				is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 2 }
+			}
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = 1 } # Change visual as you unlock slot 2
+
+			if = {
+				limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
+				owner = {
+					set_country_flag = gene_pillars_unlocked_fighter_B
+					set_country_flag = gene_pillars_unlocked_fighter_C
+				}
+			}
+		}
+		else_if = { # Went from level 2 to level 3
+			limit = {
+				is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 3 }
+			}
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = 1 } # Change visual as you unlock slot 2
+		}
+		else_if = { # Went from level 3 to level 4
+			limit = {
+				is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 4 }
+			}
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = 1 } # Change visual as you unlock slot 2
+			if = {
+				limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
+				owner = { set_country_flag = gene_pillars_unlocked_cleric_B }
+			}
+		}
+		else_if = { # Went from level 4 to level 5
+			limit = {
+				is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 5 }
+			}
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = 1 } # Change visual as you unlock slot 2
 		}
 	}
 }
@@ -1057,13 +1063,18 @@ gene_pillars_get_loot_event = {
 				}
 			}
 		}
-		10 = {
+		# placeholder Should neither of these fire if you've already got one?
+		10 = { # Get precursor relics
 			trigger = {
 				owner = { NOT = { has_country_flag = gene_pillars_has_artificer_A } }
+				NOT = { trade_goods = precursor_relics }
 			}
 			province_event = { id = gene_pillars.40 }
 		}
-		10 = {
+		10 = { # Get Damestear
+			trigger = {
+				NOT = { trade_goods = damestear }
+			}
 			province_event = { id = gene_pillars.50 }
 		}
 		10 = {
@@ -1360,42 +1371,10 @@ gene_pillar_injure_party_members_effect = {
 		limit = { has_country_flag = gene_pillars_has_artificer_E }
 		gene_pillar_injure_party_member_effect = { class = artificer_E }
 	}
-	# placeholder move this to end level effect. No separate event
 	# Fire an event to inform the player if there are any injuries
 	if = {
 		limit = {
-			OR = {
-				has_country_flag = gene_pillars_injured_rogue_A
-				has_country_flag = gene_pillars_injured_rogue_B
-				has_country_flag = gene_pillars_injured_rogue_C
-				has_country_flag = gene_pillars_injured_rogue_D
-				has_country_flag = gene_pillars_injured_rogue_E
-				has_country_flag = gene_pillars_injured_ranger_A
-				has_country_flag = gene_pillars_injured_ranger_B
-				has_country_flag = gene_pillars_injured_ranger_C
-				has_country_flag = gene_pillars_injured_ranger_D
-				has_country_flag = gene_pillars_injured_ranger_E
-				has_country_flag = gene_pillars_injured_fighter_A
-				has_country_flag = gene_pillars_injured_fighter_B
-				has_country_flag = gene_pillars_injured_fighter_C
-				has_country_flag = gene_pillars_injured_fighter_D
-				has_country_flag = gene_pillars_injured_fighter_E
-				has_country_flag = gene_pillars_injured_cleric_A
-				has_country_flag = gene_pillars_injured_cleric_B
-				has_country_flag = gene_pillars_injured_cleric_C
-				has_country_flag = gene_pillars_injured_cleric_D
-				has_country_flag = gene_pillars_injured_cleric_E
-				has_country_flag = gene_pillars_injured_mage_A
-				has_country_flag = gene_pillars_injured_mage_B
-				has_country_flag = gene_pillars_injured_mage_C
-				has_country_flag = gene_pillars_injured_mage_D
-				has_country_flag = gene_pillars_injured_mage_E
-				has_country_flag = gene_pillars_injured_artificer_A
-				has_country_flag = gene_pillars_injured_artificer_B
-				has_country_flag = gene_pillars_injured_artificer_C
-				has_country_flag = gene_pillars_injured_artificer_D
-				has_country_flag = gene_pillars_injured_artificer_E
-			}
+			gene_pillars_is_anyone_injured = yes
 		}
 		# Even though not everyone is necessarily injured, it's a bit too tricky to check each slot to see if the
 		# injured character is in that slot, so if anyone is injured, let's just reset the party
@@ -1406,7 +1385,8 @@ gene_pillar_injure_party_members_effect = {
 			gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 4 }
 			gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 5 }
 		}
-		country_event = { id = gene_pillars.21 }
+		# placeholder move this to end level effect. No separate event
+		# country_event = { id = gene_pillars.21 }
 	}
 }
 
@@ -1667,6 +1647,39 @@ gene_pillar_injure_random_party_member_effect = {
 			}
 		}
 	}
+}
+
+gene_pillars_injury_check_tooltips = {
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_rogue_A } } custom_tooltip = gene_pillars_class_injure_effect_rogue_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_rogue_B } } custom_tooltip = gene_pillars_class_injure_effect_rogue_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_rogue_C } } custom_tooltip = gene_pillars_class_injure_effect_rogue_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_rogue_D } } custom_tooltip = gene_pillars_class_injure_effect_rogue_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_rogue_E } } custom_tooltip = gene_pillars_class_injure_effect_rogue_E }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_ranger_A } } custom_tooltip = gene_pillars_class_injure_effect_ranger_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_ranger_B } } custom_tooltip = gene_pillars_class_injure_effect_ranger_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_ranger_C } } custom_tooltip = gene_pillars_class_injure_effect_ranger_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_ranger_D } } custom_tooltip = gene_pillars_class_injure_effect_ranger_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_ranger_E } } custom_tooltip = gene_pillars_class_injure_effect_ranger_E }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_fighter_A } } custom_tooltip = gene_pillars_class_injure_effect_fighter_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_fighter_B } } custom_tooltip = gene_pillars_class_injure_effect_fighter_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_fighter_C } } custom_tooltip = gene_pillars_class_injure_effect_fighter_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_fighter_D } } custom_tooltip = gene_pillars_class_injure_effect_fighter_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_fighter_E } } custom_tooltip = gene_pillars_class_injure_effect_fighter_E }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_cleric_A } } custom_tooltip = gene_pillars_class_injure_effect_cleric_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_cleric_B } } custom_tooltip = gene_pillars_class_injure_effect_cleric_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_cleric_C } } custom_tooltip = gene_pillars_class_injure_effect_cleric_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_cleric_D } } custom_tooltip = gene_pillars_class_injure_effect_cleric_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_cleric_E } } custom_tooltip = gene_pillars_class_injure_effect_cleric_E }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_mage_A } } custom_tooltip = gene_pillars_class_injure_effect_mage_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_mage_B } } custom_tooltip = gene_pillars_class_injure_effect_mage_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_mage_C } } custom_tooltip = gene_pillars_class_injure_effect_mage_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_mage_D } } custom_tooltip = gene_pillars_class_injure_effect_mage_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_mage_E } } custom_tooltip = gene_pillars_class_injure_effect_mage_E }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_artificer_A } } custom_tooltip = gene_pillars_class_injure_effect_artificer_A }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_artificer_B } } custom_tooltip = gene_pillars_class_injure_effect_artificer_B }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_artificer_C } } custom_tooltip = gene_pillars_class_injure_effect_artificer_C }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_artificer_D } } custom_tooltip = gene_pillars_class_injure_effect_artificer_D }
+	if = { limit = { owner = { has_country_flag = gene_pillars_injured_artificer_E } } custom_tooltip = gene_pillars_class_injure_effect_artificer_E }
 }
 
 # If we are removing an existing fighter from the slot, change health in a certain
