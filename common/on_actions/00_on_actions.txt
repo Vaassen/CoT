@@ -250,9 +250,6 @@ on_startup = {
 		
 		#Ashhana government setup (all Ashhana are Zaradyrra)
 		zaradyrra.0
-
-		#Amubariz starting with legacy
-		flavour_AYN.500
 		
 		anb_settings.1			#Settings - /!\ keep it at the bottom of the list
 	}
@@ -1269,10 +1266,6 @@ on_peace_actor = {
 			type = cb_tribal_raiding
 			target = ROOT
 		}
-	}
-	if = { #Iochand
-		limit = { has_country_modifier = A80_diplo_upkeep_mod }
-		country_event = { id = iochand.104 days = 1 }
 	}
 }
 
@@ -2822,6 +2815,21 @@ on_war_won = {
 				name = B43_promote_the_unbreakable_ones
 				duration = 1825
 			}
+		}
+	}
+	
+	if = {
+		limit = {
+			FROM = {
+				has_country_flag = H14_biggest_stick
+				has_country_modifier = H14_last_gasp_of_archfey
+			}
+			ROOT = {
+				tag = H14
+			}
+		}
+		country_event = {
+			id = flavour_eighard.30
 		}
 	}
 
@@ -4428,6 +4436,37 @@ on_siege_won_country = {
 		}
 		Z60 = { country_event = { id = tsukqiao.6 } }
 	}
+	if = { #Eighard Varlen Chain
+		limit = {
+			FROM = {
+				province_id = 1191 #Svemel
+				has_province_flag = H14_last_gasp
+			}
+		}
+		FROM = {
+			clr_province_flag = H14_last_gasp
+		}
+		H14 = { #Eighard
+			country_event = { #You Poor Thing
+				id = flavour_eighard.28
+			}
+		}
+	}
+	#Eighard
+	if = {
+		limit = {
+			tag = H14
+			FROM = {
+				is_capital_of = H16
+				owner = {
+					has_country_flag = gemradcurt_immariel_rules #Only fires if Immarel still alive
+				}
+			}
+		}
+		country_event = {
+			id = flavour_eighard.10
+		}
+	}
 
 	if = {
 		limit = {
@@ -4456,6 +4495,18 @@ on_siege_won_country = {
 	        power_type = dreamfire
 	        value = 15
         }
+	}
+	
+	#Landslide Infantry
+	if = {
+		limit = {
+			religion = molten_eternity
+			has_estate_privilege = estate_church_landslide_crusaders
+		}
+		change_variable = {
+			which = moltenEternityObligationVar
+			value = 25
+		}
 	}
 }
 
@@ -4714,17 +4765,7 @@ on_siege_won_province = {
 			}
 		}
 	}
-	if = { #Bonecarver
-		limit = {
-			is_capital_of = Z20
-			NOT = { is_year = 1450 }
-			controller = { tag = B27 }
-			Z20 = {
-				ai = yes
-			}
-		}
-		Z20 = { capital_scope = { cede_province = B27 } }
-	}
+	
 	if = {
 		limit = {
 			is_capital_of = U05
@@ -4736,13 +4777,6 @@ on_siege_won_province = {
 			country_event = { id = irrliam.14 }
 		}
 	}
-	if = {
-		limit = {
-			has_province_modifier = artifice_seed_siege_modifier
-		}
-		remove_province_modifier = artifice_seed_siege_modifier
-	}
-
 	S45_siege_effect = yes
 }
 
@@ -4890,7 +4924,36 @@ on_siege_lost_province =  {
 		}
 		remove_province_modifier = karakhanbar_feyinfused_grove
 	}
+	if = { #Bonecarver
+        limit = {
+			owned_by = Z20
+			FROM = { 
+				tag = B27 
+				ai = no
+				is_in_war = {
+					defender_leader = Z20
+					attackers = B27
+				}
+				OR = {
+					war_score_against = {
+						who = Z20
+						value = 90
+					}
+					Z20 = {
+						all_owned_province = {
+							controlled_by = B27
+						}
+					}
+				}
+			}
+			NOT = { is_year = 1500 }
+			Z20 = { ai = yes }
+        }
+		B27 = {
+			country_event = { id = flavour_bonecarver.18 }
+		}
 
+    }
 	if = { #Escanni WoC Slaughter
 		limit = {
 			has_global_flag = escanni_wars_global_flag
@@ -5594,7 +5657,6 @@ on_new_consort = {
 		themarenn_refresh_prosperity = yes 
 		themarenn_ryala_prosperity = yes
 	}
-
 }
 
 # country
@@ -6566,7 +6628,7 @@ on_new_heir = {
 
 	if = {
 		limit = {
-			has_reform = jinnakah_ardimyan_sultanate
+			has_reform = jinnakah_ardimyan_vizierate
 		}
 		country_event = { id = planetouched.105 }
 	}
@@ -13066,6 +13128,7 @@ on_four_year_pulse_3 = {
 		gushuokguan_event.50 #Gushuokguan Confederal Council events
 		flavour_karshyr.90 #Karshyr flavour events handler
 		bawa_simpat.1 #Lupulan DVP chain start 1
+		landslide_infantry.0 #Insyaa Landslide Hazard & Synergy Events
 	}
 	random_events = {
 		#Khetarch Curse for Brrtekuh
@@ -13310,8 +13373,8 @@ on_four_year_pulse_3 = {
 		300 = xhazobkult_events.108 # High chance because the event's trigger is fairly rare (armies in enemy land)
 		100 = gnoll_flavor.1
 		100 = gnoll_flavor.3
-		100 = planetouched.2
-		100 = planetouched.3
+		#100 = planetouched.2
+		#100 = planetouched.3
 	}
 	
 	#taychend flavour events. Moved from five year pulse to make room for future kheionai events + to increase frequency
@@ -14681,6 +14744,16 @@ on_five_year_pulse = {
 	}
 	if = { limit = { is_year = 1650 NOT = { has_global_flag = rending_active } } 4871 = { owner = { country_event = { id = spirits.700 } } } }
 
+
+	#Planetouched
+	if = {
+		limit = {
+			total_development = 400
+		}
+		country_event = {
+			id = planetouched.108
+		}
+	}
 }
 
 # Estates pulse
@@ -16718,6 +16791,61 @@ on_province_culture_changed = {
 		else = {
 			remove_province_modifier = shifters_generic_province_allow
 		}
+	}
+
+	if = { #Eighard
+		limit = {
+			superregion = ynn_superregion
+            owner = {
+                OR = {
+                    mission_completed = H14_secure_fringes
+                    AND = {
+                        overlord = { mission_completed = H14_secure_fringes }
+                        is_free_or_tributary_trigger = no
+                    }
+                }
+            }
+		}
+		if = {
+			limit = {
+				OR = {
+					culture_group = ynnsman
+					culture = steel_dwarf
+					culture = horizon_elf
+					culture = pipefoot_halfling
+				}
+			}
+			add_province_modifier = {
+				name = H14_securing_fringes
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				has_province_modifier = H14_securing_fringes
+			}
+			remove_province_modifier = H14_securing_fringes
+		}
+	}
+	if = { #Eighard
+		limit = {
+			owner = {
+				mission_completed = H14_it_means_unity
+			}
+			culture = tuathak
+		}
+		owner = {
+			add_manpower = 10
+		}
+	}
+
+	#Ardimyan Minor (colonisers)
+	if = {
+		limit = {
+			has_province_modifier = qeyikul_guryadaggan_autonomy
+			NOT = { culture = guryadagga }
+		}
+		remove_province_modifier = qeyikul_guryadaggan_autonomy
 	}
 }
 
@@ -18976,7 +19104,61 @@ on_province_owner_change = {
 			duration = -1
 		}
 	}
-	
+
+	#Eighard
+	if = {
+		limit = {
+			owner = {
+				mission_completed = H14_strange_new_faces
+			}
+			superregion = broken_lands_superregion
+			NOT = {
+				has_province_flag = H14_new_faces_done
+			}
+			FROM = {
+				OR = {
+					capital_scope = {
+						continent = europe
+					}
+					overlord = {
+						capital_scope = {
+							continent = europe
+						}
+					}
+				}
+			}
+		}
+		owner = {
+			add_adm_power = 10
+			add_dip_power = 10
+			add_mil_power = 10
+		}
+		set_province_flag = H14_new_faces_done
+	}
+	if = { #Eighard
+		limit = {
+			superregion = ynn_superregion
+			owner = {
+				OR = {
+					mission_completed = H14_secure_fringes
+					AND = {
+                        overlord = { mission_completed = H14_secure_fringes }
+                        is_free_or_tributary_trigger = no
+                    }
+				}
+			}
+			OR = {
+				culture_group = ynnsman
+				culture = steel_dwarf
+				culture = horizon_elf
+				culture = pipefoot_halfling
+			}
+		}
+		add_province_modifier = {
+			name = H14_securing_fringes
+			duration = -1
+		}
+	}
 	if = {
 		limit = {
 			owner = { has_country_flag = V05_opened_the_gate }
@@ -19157,7 +19339,6 @@ on_province_owner_change = {
 			duration = -1
 		}
 	}
-
 	#Reveria Rename Provinces
 	if = {
 		limit = {
@@ -19290,6 +19471,28 @@ on_province_owner_change = {
 			name = H83_the_fires_of_war_modifier
 			duration = -1
 		}
+	}
+	
+	if = { # Volcanic Armoury Cleanup
+		limit = {
+			OR = {
+				AND = {
+					province_id = 6181
+					FROM = { 
+						has_country_flag = kanolowele_volcanic_armoury_project
+						has_country_flag = volcanic_armoury_muatlaqua
+				 	}
+				}
+				AND = {					
+					province_id = 6182
+					FROM = { 
+						has_country_flag = kanolowele_volcanic_armoury_project
+						NOT = { has_country_flag = volcanic_armoury_muatlaqua }
+					}
+				}
+			}
+		}
+		FROM = { magic_advancement_abort_all_effect = yes }
 	}
 }
 # country 1.35
@@ -20352,7 +20555,37 @@ on_rajput_raised = {
 on_streltsy_raised = {
 }
 
-on_tercio_raised = {
+on_tercio_raised = { #Landslide Infantry, Scope: province
+	if = { 
+		limit = { #Else No Devastation
+			NOT = { 
+				has_province_modifier = yanacotle_volcanic_dig_sites
+				AND = { owner = { has_church_aspect = endless_ocean_landslide_wavesong_instructors_chronicled } has_port = yes }
+			}
+		} 
+		if = { 
+			limit = { 
+				OR = {
+					owner = { has_country_flag = landslide_infantry_half_devastation }
+					AND = { owner = { has_church_aspect = endless_ocean_landslide_wavesong_instructors } has_port = yes }
+				}
+			}
+			add_devastation = 5 #Half Devastation
+		} 
+		else = { add_devastation = 10 } #Full Devastation
+	}
+	add_province_modifier = { #Allows Hazard Events to target province for 20 years
+		name = landslide_infantry_hazards_possible
+		duration = 7300
+		hidden = yes
+	}
+	owner = {
+		if = { #For grant_noble_flamesong_rights reform
+			limit = { has_government_attribute = landslide_infantry_nobility_influence } 
+			add_country_modifier = { name = yanacotle_noble_flamesong_rights_recruited duration = 1800 }
+		}
+	}
+	
 }
 
 on_musketeer_raised = {
@@ -23762,6 +23995,13 @@ on_holy_order_established = {
 				}
 			}
 		}
+		if = { #Landslide Infantry
+			limit = { owner = { has_estate_privilege = estate_church_landslide_inquisitors } }
+			area = {
+				limit = { has_owner_religion = no }
+				add_province_modifier = { name = yanacotle_landslide_inquisitors duration = 3600 }
+			}
+		}
 	}
 	ROOT = { # Trust me, you need this ROOT
 		if = {
@@ -26999,6 +27239,52 @@ on_colony_established = {
 			}
 		}
 	}
+	#Eighard
+	if = {
+		limit = {
+			FROM = {
+				has_country_modifier = H14_to_the_north
+			}
+			ROOT = {
+				has_any_winter_trigger = yes
+			}
+		}
+		ROOT = {
+			add_province_modifier = { #+25 settler growth, -20% colony cost
+				name = H14_northern_expansion
+				duration = -1
+			}
+		}
+	}
+	if = { #Eighard
+		limit = {
+			FROM = {
+				has_country_flag = H14_first_engagement
+			}
+			ROOT = {
+				region = domandrod_region
+			}
+		}
+		add_province_modifier = { #+100% Native Uprising Chance, will clear on establish
+			name = H14_wrath_of_the_princess
+			duration = -1
+		}
+	}
+	if = { #Eighard
+		limit = {
+			has_climate = arctic
+			FROM = {
+				OR = {
+					at_least_magic_project_level = { project = eighard_project_1 level = 1 }
+					overlord = { at_least_magic_project_level = { project = eighard_project_1 level = 1 } }
+				}
+			}
+		}
+		add_province_modifier = {
+			name = H14_inner_warmth
+			duration = -1
+		}
+	}
 	if = {
 		limit = {
 			continent = oceania
@@ -27011,7 +27297,6 @@ on_colony_established = {
 		}
 		set_province_flag = precursor_steel_tracking
 	}
-
 	if = {
 		limit = {
 			owner = {
@@ -28609,6 +28894,15 @@ on_new_age = {
 		limit = { has_country_flag = G61_glorious_battle_buff_event_flag }
 		clr_country_flag = G61_glorious_battle_buff_event_flag
 	}
+
+	if = {
+		limit = {
+			current_age = age_of_reformation
+		}
+		country_event = {
+			id = planetouched.108
+		}
+	}
 }
 
 #ROOT = province
@@ -28672,6 +28966,32 @@ on_adm_exploited = {
 			}
 		}
 		set_province_flag = S30_exploit
+	}
+	#Eighard
+	if = {
+		limit = {
+			1990 = {
+				has_province_modifier = H14_salting_the_fields
+			}
+			owner = {
+				tag = H14
+				owns_or_non_sovereign_subject_of = 1990 #Raithtall
+			}
+		}
+		trigger_switch = { #Exploiting Tax Dev gives +10 gold per level of base tax in province post-exploit, up to a max of 100 crowns
+			on_trigger = base_tax
+
+			10 = { owner = { add_treasury = 100 } }
+			9 = { owner = { add_treasury = 90 } }
+			8 = { owner = { add_treasury = 80 } }
+			7 = { owner = { add_treasury = 70 } }
+			6 = { owner = { add_treasury = 60 } }
+			5 = { owner = { add_treasury = 50 } }
+			4 = { owner = { add_treasury = 40 } }
+			3 = { owner = { add_treasury = 30 } }
+			2 = { owner = { add_treasury = 20 } }
+			1 = { owner = { add_treasury = 10 } }
+		}
 	}
 }
 
@@ -29217,6 +29537,26 @@ on_colony_finished = { #ROOT - Province
 			}
 		}
 		dauvek_veker_colony_finished = yes
+	}
+
+	#Eighard
+	if = {
+		limit = {
+			has_province_modifier = H14_northern_expansion
+		}
+		remove_province_modifier = H14_northern_expansion
+	}
+	if = {
+		limit = {
+			has_province_modifier = H14_wrath_of_the_princess
+		}
+		remove_province_modifier = H14_wrath_of_the_princess
+	}
+	if = {
+		limit = {
+			has_province_modifier = H14_inner_warmth
+		}
+		remove_province_modifier = H14_inner_warmth
 	}
 
 	if = { # Colonists AI
@@ -29835,9 +30175,62 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 		}
 		FROM = {
 			add_devastation = 50
-			add_province_modifier = {
-				name = artifice_seed_siege_modifier
-				duration = 255
+			if = {
+				limit = {
+					fort_level = 10
+				}
+				add_garrison = -2000
+			}
+			else_if = {
+				limit = {
+					fort_level = 9
+				}
+				add_garrison = -1800
+			}
+			else_if = {
+				limit = {
+					fort_level = 8
+				}
+				add_garrison = -1600
+			}
+			else_if = {
+				limit = {
+					fort_level = 7
+				}
+				add_garrison = -1400
+			}
+			else_if = {
+				limit = {
+					fort_level = 6
+				}
+				add_garrison = -1200
+			}
+			else_if = {
+				limit = {
+					fort_level = 5
+				}
+				add_garrison = -1000
+			}
+			else_if = {
+				limit = {
+					fort_level = 4
+				}
+				add_garrison = -800
+			}
+			else_if = {
+				limit = {
+					fort_level = 3
+				}
+				add_garrison = -600
+			}
+			else_if = {
+				limit = {
+					fort_level = 2
+				}
+				add_garrison = -400
+			}
+			else = {
+				add_garrison = -200
 			}
 		}
 	}
