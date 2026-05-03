@@ -1267,6 +1267,17 @@ on_peace_actor = {
 			target = ROOT
 		}
 	}
+	if = { # Harpylen. Do this when you win or lose a war
+		limit = {
+			tag = F98
+			mission_completed = F98_spreading_wings
+		}
+		FROM = {
+			every_owned_province = {
+				remove_province_modifier = F98_spreading_our_wings
+			}
+		}
+	}
 }
 
 # country
@@ -1292,6 +1303,17 @@ on_peace_recipient = {
 	if = {
 		limit = { has_country_modifier = vt_outmatched }
 		remove_country_modifier = vt_outmatched
+	}
+	if = { # Harpylen. Do this when you win or lose a war
+		limit = {
+			tag = F98
+			mission_completed = F98_spreading_wings
+		}
+		FROM = {
+			every_owned_province = {
+				remove_province_modifier = F98_spreading_our_wings
+			}
+		}
 	}
 }
 
@@ -8976,13 +8998,12 @@ on_monthly_pulse = {
 		limit = {
 			has_country_flag = hasQueendomGovBarFlag
 		}
-		set_variable = { which = QueendomAdditionVar value = 0 }
+		set_variable = { which = QueendomAdditionVar value = 0.5 } #base gain
 		set_variable = { which = QueendomRoostCountVar value = 0 }
 		set_variable = { which = QueendomMonumentVar value = 0 }
 		set_variable = { which = QueendomRulerVar value = 0 }
-		ROOT = {
-			change_variable = { which = QueendomAdditionVar value = 0.5 }
-		}
+		set_variable = { which = QueendomModifierVar value = 0 }
+
 		if = {
 			limit = {
 				dip = 6
@@ -9076,10 +9097,8 @@ on_monthly_pulse = {
 					}
 				}
 			}
-			ROOT = {
-				change_variable = { which = QueendomAdditionVar value = 0.45 }
-				change_variable = { which = QueendomMonumentVar value = 0.45 }
-			}
+			change_variable = { which = QueendomAdditionVar value = 0.45 }
+			change_variable = { which = QueendomMonumentVar value = 0.45 }
 		}
 		else_if = {
 			limit = {
@@ -9091,10 +9110,8 @@ on_monthly_pulse = {
 					}
 				}
 			}
-			ROOT = {
-				change_variable = { which = QueendomAdditionVar value = 0.3 }
-				change_variable = { which = QueendomMonumentVar value = 0.3 }
-			}
+			change_variable = { which = QueendomAdditionVar value = 0.3 }
+			change_variable = { which = QueendomMonumentVar value = 0.3 }
 		}
 		else_if = {
 			limit = {
@@ -9106,33 +9123,36 @@ on_monthly_pulse = {
 					}
 				}
 			}
-			ROOT = {
-				change_variable = { which = QueendomAdditionVar value = 0.15 }
-				change_variable = { which = QueendomMonumentVar value = 0.15 }
-			}
+			change_variable = { which = QueendomAdditionVar value = 0.15 }
+			change_variable = { which = QueendomMonumentVar value = 0.15 }
 		}
-		ROOT = {
-			change_variable = { which = QueendomOverallVar which = QueendomAdditionVar }
-			if = {
-				limit = {
+		if = {
+			limit = {
+				has_country_modifier = harpylen_gov_powa
+			}
+			change_variable = { which = QueendomAdditionVar value = 0.5 }
+			change_variable = { which = QueendomModifierVar value = 0.5 }
+		}
+		change_variable = { which = QueendomOverallVar which = QueendomAdditionVar }
+		if = {
+			limit = {
+				check_variable = {
+					which = QueendomOverallVar
+					value = 100
+				}
+			}
+			set_variable = { which = QueendomOverallVar value = 100 }
+		}
+		else_if = {
+			limit = {
+				NOT = {
 					check_variable = {
 						which = QueendomOverallVar
-						value = 100
+						value = 0
 					}
 				}
-				set_variable = { which = QueendomOverallVar value = 100 }
 			}
-			if = {
-				limit = {
-					NOT = {
-						check_variable = {
-							which = QueendomOverallVar
-							value = 0
-						}
-					}
-				}
-				set_variable = { which = QueendomOverallVar value = 0 }
-			}
+			set_variable = { which = QueendomOverallVar value = 0 }
 		}
 	}
 
@@ -23094,7 +23114,6 @@ on_dependency_gained = {
 		limit = { FROM = { has_country_flag = vanrahar_claims_bomdan } }
 		bomdan_region = { add_permanent_claim = FROM }
 	}
-	
 	#Blue Mountain
 	if = {
 		limit = {
@@ -23199,6 +23218,14 @@ on_dependency_gained = {
 				set_country_flag = was_republic_twin_empire
 			}
 		}
+	}
+	if = {
+		limit = { mission_completed = F98_good_measure }
+		FROM = { add_country_modifier = { name = F98_song_and_steel duration = -1 } }
+	}
+	if = {
+		limit = { tag = F98 FROM = { owns = 3020 } }
+		country_event = { id = flavour_harpylen.15 }
 	}
 }
 
@@ -23772,6 +23799,10 @@ on_dependency_lost = {
 			clr_country_flag = was_republic_personal_union
 			clr_country_flag = was_republic_twin_empire
 		}
+	}
+	if = {
+		limit = { mission_completed = F98_good_measure }
+		FROM = { remove_country_modifier = F98_song_and_steel }
 	}
 }
 
@@ -30019,6 +30050,10 @@ on_tech_taken = { #ROOT - Country
 		}
 
 	}
+	if = {
+		limit = { mission_completed = F98_the_oddest_hunts NOT = { religion = the_hunt } }
+		change_innovativeness = 2
+	}
 }
 
 on_adm_tech_taken = { #ROOT - Country, executed after on_tech_taken!
@@ -30174,7 +30209,11 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 	}
 	if = {
 		limit = { has_estate_privilege = artifice_invention_scream_beamers }
-		FROM = { change_siege = 2 }
+		if = {
+			limit = { mission_completed = F98_elemental_artifice }
+			FROM = { change_siege = 3 }
+		}
+		else = { FROM = { change_siege = 2 } }
 	}
 
 	if = { #Orenvalyam
