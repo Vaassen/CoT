@@ -795,23 +795,6 @@ declarewar = {
 		}
 
 		if = {
-			limit = {
-				has_global_flag = war_of_salt_and_silence
-				has_saved_global_event_target = salt_and_silence_emperor
-			}
-			if = {
-				limit = {
-					tag = event_target:salt_and_silence_emperor
-					FROM = { tag = event_target:salt_and_silence_giant }
-				}
-				event_target:salt_and_silence_emperor = {
-					set_country_flag = currently_in_salt_silence_war
-					country_event = { id = flavor_salt_silence_incident.11 days = 1825 }
-				}
-			}
-		}
-
-		if = {
 			limit = { 
 				has_country_modifier = federation_war_mandat
 				FROM = { has_country_modifier = lake_federation_member }
@@ -1573,6 +1556,36 @@ declarewar = {
 		}
 		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
 
+		#Samsumbat
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_unite_the_sorrow_rebels
+				FROM = {
+					any_owned_province = {
+						province_group = mothers_sorrow_group
+					}
+				}
+			}
+			clr_country_flag = F60_unite_the_sorrow_rebels
+			FROM = {
+				random_owned_province = {
+					limit = {
+						OR = {
+							province_group = mothers_sorrow_group
+							trade_goods = slaves
+						}
+					}
+					spawn_rebels = {
+						type = samsumbat_slave_agitators
+						size = 2
+						friend = ROOT # This makes them not fight me
+						separatists_target = ROOT # This makes them blue
+					}
+				}
+			}
+		}
+
 		#Accretive Path - Rusted Blades. Remove modifiers if at war.
 		if = {
 			limit = {
@@ -1904,7 +1917,7 @@ declarewar = {
 				FROM = { ai = yes }
 			}
 			FROM = { 
-				save_event_target_as = S45_poison_their_hearts_target
+				save_event_target_as = s45_poison_their_hearts_target
 			}
 			country_event = {
 				id = huugeta.2
@@ -4728,6 +4741,60 @@ requestpeace = {
 		potential = {
 			is_or_was_tag = { tag = Z60 }
 			has_country_flag = tsukqiao_lupulan_war_flag
+		}
+		allow = {
+			always = no
+        }
+	}
+	pre_effect = { # This happens before any of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = { # If I am Samsumbat, and I make a peace offer to the defending war leader of a war with the special CB, set
+			# a flag that is checked on_country_released
+				is_or_was_tag = { tag = F60 }
+				FROM = {
+					is_in_war = {
+						defender_leader = THIS
+						participants = PREV
+						casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					}
+				}
+			}
+			set_country_flag = F60_custom_liberation_cb_target_country
+		}
+		# If they send a peace offer to Samsumbat during this CB war, give the flag to Samsumbat
+		if = {
+			limit = {
+				is_in_war = {
+					casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					defender_leader = THIS
+				}
+				NOT = { is_or_was_tag = { tag = F60 } }
+			}
+			FROM = { set_country_flag = F60_custom_liberation_cb_target_country }
+		}
+	}
+	effect = { # This happens after all of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+			}
+			clr_country_flag = F60_custom_liberation_cb_target_country
+		}
+		FROM = {
+			if = {
+				limit = {
+					is_or_was_tag = { tag = F60 }
+				}
+				clr_country_flag = F60_custom_liberation_cb_target_country
+			}
+		}
+
+	}
+	condition = { #Iochand
+		tooltip = A80_second_small_war_tt
+		potential = {
+			is_in_war = { casus_belli = cb_second_small_war }
+			FROM = { is_in_war = { casus_belli = cb_second_small_war } }
 		}
 		allow = {
 			always = no
