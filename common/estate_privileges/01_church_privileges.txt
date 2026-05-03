@@ -495,8 +495,27 @@ estate_church_new_world_mission = {
 estate_church_clerical_ministers = {
 	icon = privilege_recruit_minister
 	max_absolutism = -5
-	conditional_modifier = { trigger = { has_country_flag = estate_church_no_absolutism_cost } modifier = { max_absolutism = 5 } }
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes NOT = { has_country_flag = estate_church_no_absolutism_cost } } modifier = { max_absolutism = 1 } }
+	conditional_modifier = {
+		trigger = {
+			OR = {
+				has_country_flag = estate_church_no_absolutism_cost
+				has_country_flag = H83_upgrade_clerical_ministers
+			} 
+		} 
+		modifier = { max_absolutism = 5 }
+	}
+	conditional_modifier = {
+		trigger = {
+			has_absolutism_reduction_for_estate_privileges = yes
+			NOT = {
+				OR = {
+					has_country_flag = estate_church_no_absolutism_cost
+					has_country_flag = H83_upgrade_clerical_ministers
+				}
+			}
+		}
+		modifier = { max_absolutism = 1 }
+	}
 	influence = 0.10
 	conditional_modifier = {
 		trigger = {
@@ -753,6 +772,14 @@ estate_church_clerical_ministers = {
 		}
 		modifier = {
 			technology_cost = -0.05
+		}
+	}
+	conditional_modifier = {
+		trigger = {
+			has_country_flag = H83_upgrade_clerical_ministers
+		}
+		modifier = {
+			governing_cost = -0.15
 		}
 	}
 	penalties = {
@@ -2140,10 +2167,11 @@ estate_church_religious_diplomats = {
 estate_church_one_faith_one_culture = {
 	icon = privilege_one_faith_one_culture
 	max_absolutism = -5
-	conditional_modifier = { 
+	conditional_modifier = {
 		trigger = {
 			OR = {
 				has_country_flag = estate_church_no_absolutism_cost
+				has_country_flag = remove_absolutism_from_one_faith_one_culture
 				mission_completed = L03_isagumze_a_god_for_an_empire
 				has_country_flag = Z88_religious_culture_upgrade
 			}
@@ -2156,11 +2184,21 @@ estate_church_one_faith_one_culture = {
 			has_absolutism_reduction_for_estate_privileges = yes
 			NOT = {
 				has_country_flag = estate_church_no_absolutism_cost
+				has_country_flag = remove_absolutism_from_one_faith_one_culture
 				mission_completed = L03_isagumze_a_god_for_an_empire
 				has_country_flag = Z88_religious_culture_upgrade
 				mission_completed = G52_ways_of_west
 			}
 		} modifier = { max_absolutism = 1 }
+	}
+	conditional_modifier = { #Eighard
+		trigger = {
+			mission_completed = H14_our_due
+		}
+		modifier = {
+			manpower_in_own_culture_provinces = 0.20
+			same_culture_advisor_cost = -0.1
+		}
 	}
 	influence = 0.1
 	loyalty = 0.05
@@ -2186,6 +2224,20 @@ estate_church_one_faith_one_culture = {
 			add_country_modifier = {
 				name = estate_planetouched_religious_culture_mod
 				duration = -1
+			}
+		}
+		if = { # This is a missing DLC alternative for Samsumbat
+			limit = {
+				NOT = { has_dlc = "Domination" }
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_tt
+			tooltip = {
+				add_province_modifier = {
+					name = F60_show_them_the_way
+					duration = -1
+				}
 			}
 		}
 	}
@@ -2278,10 +2330,36 @@ estate_church_one_faith_one_culture = {
 			}
 			remove_province_modifier = estate_church_false_culture
 		}
+		if = { # This is a missing DLC alternative for Samsumbat
+			limit = {
+				owner = {
+					is_or_was_tag = { tag = F60 } # Samsumbat
+					has_country_flag = F60_temples_missionary_strength
+				}
+				NOT = { has_dlc = "Domination" }
+				has_tax_building_trigger = yes
+				has_owner_religion = no
+			}
+			add_province_modifier = {
+				name = F60_show_them_the_way
+				duration = -1
+			}
+		}
+		else = { # For Samsumbat, this will fire if the province religion changes to your religion
+			remove_province_modifier = F60_show_them_the_way
+		}
 	}
 	on_revoked = {
 		custom_tooltip = estate_church_one_faith_one_culture_rta
 		custom_tooltip = estate_church_one_faith_one_culture_rtb
+		if = {
+			limit = {
+				NOT = { has_dlc = "Domination" }
+				is_or_was_tag = { tag = F60 } # Samsumbat
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_revoke_tt
+		}
 	}
 	on_revoked_province = {
 		if = {
@@ -2302,10 +2380,24 @@ estate_church_one_faith_one_culture = {
 			}
 			remove_province_modifier = estate_church_false_culture
 		}
+		if = {
+			limit = {
+				has_province_modifier = F60_show_them_the_way
+			}
+			remove_province_modifier = F60_show_them_the_way
+		}
 	}
 	on_invalid = {
 		custom_tooltip = estate_church_one_faith_one_culture_rta
 		custom_tooltip = estate_church_one_faith_one_culture_rtb
+		if = {
+			limit = {
+				NOT = { has_dlc = "Domination" }
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_revoke_tt
+		}
 	}
 	on_invalid_province = {
 		if = {
@@ -2325,6 +2417,12 @@ estate_church_one_faith_one_culture = {
 				has_province_modifier = estate_church_false_culture
 			}
 			remove_province_modifier = estate_church_false_culture
+		}
+		if = {
+			limit = {
+				has_province_modifier = F60_show_them_the_way
+			}
+			remove_province_modifier = F60_show_them_the_way
 		}
 	}
 	penalties = {
@@ -2364,6 +2462,12 @@ estate_church_one_faith_one_culture = {
 		modifier = { 
 			max_absolutism = 5
 			embracement_cost = -0.1
+		}
+	}
+	conditional_modifier = { 
+		trigger = { has_country_flag = S45_improved_religious_culture }
+		modifier = { 
+			tolerance_own = 1
 		}
 	}
 	# conditional_modifier = {
@@ -3128,9 +3232,39 @@ estate_church_development_of_temples = {
 				duration = -1
 			}
 		}
+		if = { 
+			limit = {
+				is_or_was_tag = { tag = F60 } # Samsumbat
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_tt
+			tooltip = {
+				add_province_modifier = {
+					name = F60_show_them_the_way
+					duration = -1
+				}
+			}
+		}
 	}
 	on_revoked = {
 		custom_tooltip = estate_church_development_of_temples_rt
+		if = { 
+			limit = {
+				is_or_was_tag = { tag = F60 } # Samsumbat
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_revoke_tt
+		}
+	}
+	on_invalid = {
+		custom_tooltip = estate_church_development_of_temples_rt
+		if = { 
+			limit = {
+				is_or_was_tag = { tag = F60 } # Samsumbat
+				has_country_flag = F60_temples_missionary_strength
+			}
+			custom_tooltip = F60_estate_church_development_of_temples_bonus_revoke_tt
+		}
 	}
 	on_granted_province = {
 		if = {
@@ -3178,6 +3312,23 @@ estate_church_development_of_temples = {
 				duration = -1
 			}
 		}
+		if = {
+			limit = {
+				owner = {
+					is_or_was_tag = { tag = F60 } # Samsumbat
+					has_country_flag = F60_temples_missionary_strength
+				}
+				has_tax_building_trigger = yes
+				has_owner_religion = no
+			}
+			add_province_modifier = {
+				name = F60_show_them_the_way
+				duration = -1
+			}
+		}
+		else = { # For Samsumbat, this will fire if the province religion changes to your religion
+			remove_province_modifier = F60_show_them_the_way
+		}
 	}
 	on_invalid_province = {
 		if = {
@@ -3190,6 +3341,10 @@ estate_church_development_of_temples = {
 		}
 		remove_province_modifier = estate_church_development_of_temples_mod_planetouched_1
 		remove_province_modifier = estate_church_development_of_temples_mod_planetouched_2
+		if = {
+			limit = { has_province_modifier = F60_show_them_the_way }
+			remove_province_modifier = F60_show_them_the_way
+		}
 	}
 	on_revoked_province = {
 		if = {
@@ -3202,6 +3357,10 @@ estate_church_development_of_temples = {
 		}
 		remove_province_modifier = estate_church_development_of_temples_mod_planetouched_1
 		remove_province_modifier = estate_church_development_of_temples_mod_planetouched_2
+		if = {
+			limit = { has_province_modifier = F60_show_them_the_way }
+			remove_province_modifier = F60_show_them_the_way
+		}
 	}
 
 	mechanics = {
@@ -3352,6 +3511,16 @@ estate_church_clerical_education = {
 		}
 		modifier = {
 			reform_progress_growth = 0.25
+		}
+	}
+	# Samsumbat
+	influence_scaled_conditional_modifier = {	#Modifier that are applied if the specified conditions are true. At 100% Influence you gain 100% of the modifier.
+		trigger = {
+			is_or_was_tag = { tag = F60 }
+			mission_completed = F60_reform_the_clergy
+		}
+		modifier = {
+			global_institution_spread = 0.5
 		}
 	}
 	# conditional_modifier = {
@@ -4900,6 +5069,88 @@ estate_church_local_practice_chroniclers = {
 	}
 }
 
+estate_church_soldiers_of_freedom = {
+	icon = privilege_cawa_peacekeeper
+	max_absolutism = -5
+	conditional_modifier = { trigger = { has_country_flag = estate_church_no_absolutism_cost } modifier = { max_absolutism = 5 } }
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes NOT = { has_country_flag = estate_church_no_absolutism_cost } } modifier = { max_absolutism = 1 } }
+	influence = 0.05
+	is_valid = {
+		is_or_was_tag = { tag = F60 }
+		has_country_flag = F60_clergy_priv_soldiers_freedom
+	}
+	can_select = {
+		always = yes
+	}
+	on_granted = {
+		custom_tooltip = estate_church_soldiers_of_freedom_effect_tt
+	}
+	on_revoked = {
+		custom_tooltip = estate_church_soldiers_of_freedom_effect_tt
+	}
+	conditional_modifier = {
+		trigger = {
+			any_war_enemy_country = {
+				slaves = 1
+			}
+		}
+		modifier = {
+			land_morale = 0.1
+		}
+	}
+	conditional_modifier = {
+		trigger = {
+			is_at_war = no
+			any_neighbor_country = {
+				slaves = 1
+			}
+		}
+		modifier = {
+			global_unrest = 2
+		}
+	}
+	penalties = {
+	}
+	ai_will_do = {
+		factor = 0
+	}
+}
+
+estate_church_no_slaves_in_the_clergy = {
+	icon = privilege_autonomy
+	max_absolutism = -5
+	conditional_modifier = { trigger = { has_country_flag = estate_church_no_absolutism_cost } modifier = { max_absolutism = 5 } }
+	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes NOT = { has_country_flag = estate_church_no_absolutism_cost } } modifier = { max_absolutism = 1 } }
+	influence = 0
+	loyalty = -0.1
+	is_valid = {
+		is_or_was_tag = { tag = F60 }
+		has_estate_privilege = estate_church_no_slaves_in_the_clergy
+	}
+	can_select = {
+		always = yes
+	}
+	can_revoke = {
+		always = no
+	}
+	on_granted = {
+	}
+	on_revoked = {
+	}
+	benefits = {
+		church_privilege_slots = 1
+	}
+	penalties = {
+		meritocracy = -1
+		missionary_maintenance_cost = 0.2
+		tolerance_own = -3
+		governing_capacity_modifier = -0.1
+	}
+	ai_will_do = {
+		factor = 0
+	}
+}
+
 estate_church_primacy_of_haruspicy = {
 	icon = privilege_one_faith_one_culture
 	influence = 0.1
@@ -5201,6 +5452,47 @@ estate_church_help_expedition_2 = {
 	}
 }
 
+#Eighard
+estate_church_H14_infiltrated_klar = {
+	icon = privilege_corruption
+	max_absolutism = -5
+	loyalty = 0.00
+	influence = 0.10
+	is_valid = {
+		has_country_flag = H14_infiltrated_klar
+	}
+	can_select = {
+		always = yes
+	}
+	benefits = {
+		spy_offence = 0.2
+		siege_ability = 0.10
+	}
+	conditional_modifier = {
+		trigger = { 
+			has_absolutism_reduction_for_estate_privileges = yes
+			NOT = { mission_completed = H14_assuming_control }		
+		}
+		modifier = { max_absolutism = 1 }
+	}
+	conditional_modifier = {
+		trigger = {
+			mission_completed = H14_assuming_control
+		}
+		modifier = {
+			max_absolutism = 5
+			church_loyalty_modifier = 0.10
+		}
+	}
+	penalties = {}
+	can_revoke = {
+		always = no
+	}
+	ai_will_do = {
+		factor = 80
+	}
+}
+
 #Lupulan rangers privilege
 estate_church_lupulan_rangers_protect_sacred_groves = {
 	icon = privilege_seek_support_of_brahmins
@@ -5259,5 +5551,266 @@ estate_church_U39_kavalalist_faction = {
 	
 	ai_will_do = {
 		factor = 1
+	}
+}
+estate_church_H83_dreamforgery_1 = {
+	icon = privilege_demand_more_troops
+	land_share = 0
+	max_absolutism = 0
+	conditional_modifier = { 
+		trigger = { 
+			has_country_flag = H83_can_dreamforge_2
+		} 
+		modifier = { 
+			infantry_power = 0.1
+			yearly_army_professionalism = 0.005
+			monthly_dreamfire = -2
+		} 
+	}
+	conditional_modifier = { 
+		trigger = {
+			NOT = {
+				has_country_flag = H83_can_dreamforge_2
+			}
+		} 
+		modifier = { 
+			infantry_power = 0.05
+			yearly_army_professionalism = 0.002
+			monthly_dreamfire = -0.75
+		} 
+	}
+	influence = 0
+	is_valid = {
+		has_country_flag = H83_can_dreamforge_1
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 1
+        }
+	}
+	on_granted = {
+		add_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = -10
+        }
+	}
+	can_select = {
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 10
+        }
+	}
+	can_revoke = {
+		always = yes
+	}
+	on_revoked = {
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 20
+		}
+	}
+	penalties = {
+	}
+	benefits = {
+		church_privilege_slots = 1
+	}
+}
+
+estate_church_H83_dreamforgery_2 = {
+	icon = privilege_army_tradition
+	land_share = 0
+	max_absolutism = 0
+	conditional_modifier = { 
+		trigger = { 
+			has_country_flag = H83_can_dreamforge_2
+		} 
+		modifier = { 
+			fire_damage_received = -0.05
+			shock_damage_received = -0.05
+			yearly_army_professionalism = 0.005
+			monthly_dreamfire = -2
+		} 
+	}
+	conditional_modifier = { 
+		trigger = {
+			NOT = {
+				has_country_flag = H83_can_dreamforge_2
+			}
+		} 
+		modifier = { 
+			fire_damage_received = -0.025
+			shock_damage_received = -0.025
+			yearly_army_professionalism = 0.002
+			monthly_dreamfire = -0.75
+		} 
+	}
+	influence = 0
+	is_valid = {
+		has_country_flag = H83_can_dreamforge_1
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 1
+        }
+	}
+	on_granted = {
+		add_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = -10
+        }
+	}
+	can_select = {
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 10
+        }
+	}
+	can_revoke = {
+		always = yes
+	}
+	on_revoked = {
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 20
+		}
+	}
+	penalties = {
+	}
+	benefits = {
+		church_privilege_slots = 1
+	}
+}
+
+estate_church_H83_dreamforgery_3 = {
+	icon = privilege_comission_merchant_ships_for_war
+	land_share = 0
+	max_absolutism = 0
+	conditional_modifier = { 
+		trigger = { 
+			has_country_flag = H83_can_dreamforge_2
+		} 
+		modifier = { 
+			backrow_artillery_damage = 0.15
+			yearly_army_professionalism = 0.005
+			monthly_dreamfire = -2
+		} 
+	}
+	conditional_modifier = { 
+		trigger = {
+			NOT = {
+				has_country_flag = H83_can_dreamforge_2
+			}
+		} 
+		modifier = { 
+			backrow_artillery_damage = 0.075
+			yearly_army_professionalism = 0.002
+			monthly_dreamfire = -0.75
+		} 
+	}
+	influence = 0
+	is_valid = {
+		has_country_flag = H83_can_dreamforge_1
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 1
+        }
+	}
+	on_granted = {
+		add_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = -10
+        }
+	}
+	can_select = {
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 10
+        }
+	}
+	can_revoke = {
+		always = yes
+	}
+	on_revoked = {
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 20
+		}
+	}
+	penalties = {
+	}
+	benefits = {
+		church_privilege_slots = 1
+	}
+}
+
+estate_church_H83_dreamforgery_4 = {
+	icon = privilege_give_money
+	land_share = 0
+	max_absolutism = 0
+	conditional_modifier = { 
+		trigger = { 
+			has_country_flag = H83_can_dreamforge_2
+		} 
+		modifier = { 
+			global_regiment_cost = -0.15
+			yearly_army_professionalism = 0.005
+			monthly_dreamfire = -2
+		} 
+	}
+	conditional_modifier = { 
+		trigger = {
+			NOT = {
+				has_country_flag = H83_can_dreamforge_2
+			}
+		} 
+		modifier = { 
+			global_regiment_cost = -0.075
+			yearly_army_professionalism = 0.002
+			monthly_dreamfire = -0.75
+		} 
+	}
+	influence = 0
+	is_valid = {
+		has_country_flag = H83_can_dreamforge_1
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 1
+        }
+	}
+	on_granted = {
+		add_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = -10
+        }
+	}
+	can_select = {
+		has_government_power = {
+	        mechanic_type = anb_shadowdreamer_dreamfire
+	        power_type = dreamfire
+	        value = 10
+        }
+	}
+	can_revoke = {
+		always = yes
+	}
+	on_revoked = {
+		add_estate_loyalty = {
+			estate = estate_church
+			loyalty = 20
+		}
+	}
+	penalties = {
+	}
+	benefits = {
+		church_privilege_slots = 1
 	}
 }
