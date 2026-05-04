@@ -42,7 +42,6 @@ open_stormwall = {
 				set_province_flag = unlocked_artifice_invention_memory_storage_global
 				set_province_flag = unlocked_artifice_invention_mechanim_deconstructor_global
 			}
-			set_global_flag = stormwall_first_opening #Please dont clear it
 			4871 = { # tianlou
 				province_event = {
 					id = spirits.1005 # stormwall opens alert event
@@ -52,6 +51,13 @@ open_stormwall = {
 					days = 912 # 2.5 years
 				}
 			}
+			6181 = { # The Great Invaders Event (Landslide Infantry)
+				province_event = {
+					id = landslide_infantry.69
+					days = 3650
+				}
+			}
+			set_global_flag = stormwall_first_opening #Please dont clear it
 		}
 	}
 }
@@ -1139,538 +1145,6 @@ pachpalka_fired_from_court_effect = {
 	}
 }
 
-# They start at tech 2 so I only need to start checking tech 3
-# I will assume they will be done with this system before getting to admin tech 24
-insyaa_charkuchin_kobold_citadel_supplies_tech = {
-	# increment the variable tracking monthly gain
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain
-		value = 2.5
-	}
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-		value = 2.5
-	}
-}
-
-# FROM is the previous owner, ROOT is the province
-insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
-	# First, check if citadel. That will then exclude everything else
-	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
-	# Then, check if SF
-	# Then, check if city
-	if = {
-		limit = {
-			has_charkuchin_kobold_citadel = yes
-		}
-		FROM = {
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
-				value = -5
-			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = -5
-			}
-		}
-	}
-	else_if = {
-		limit = { # Colonies are cheaper and tracked separately
-			OR = { # I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false
-				AND = { # This will be when a colony changes hands
-					owner = { exists = yes }
-					is_city = no
-				}
-				has_province_modifier = supplies_colony # This will be when it is decolonised
-			}
-		}
-		remove_province_modifier = supplies_colony # Remove it in case the conquerer doensn't use supplies. If they do, it will be added back immediately
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = colony
-					value = -1
-					cost = -0.75
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = colony
-					value = -1
-					cost = -3
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = colony
-					value = -1
-					cost = -15
-				}
-			}
-		}
-	}
-	else_if = { #Charkuchin Kobold supply centres
-		limit = {
-			has_province_modifier = charkuchin_kobold_supply_facility
-		}
-		FROM = {
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-				value = -1
-			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = -10
-			}
-		}
-	}
-	# The script for adding uses slightly different logic and an "if" not "else" since you might conquer a SF but have it deleted
-	# That is not a concern when you lose a province
-	else = { # Otherwise, it's a province we need to spend monthly supplies on
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = city
-					value = -1
-					cost = -1.5
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = city
-					value = -1
-					cost = -6
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = city
-					value = -1
-					cost = -30
-				}
-			}
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
-	# First, check if citadel. That will then exclude everything else
-	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
-	# Then, check if SF. It might be kept, it might not
-	# Then, check if city
-
-	if = {
-		limit = {
-			has_charkuchin_kobold_citadel = yes
-		}
-		owner = {
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
-				value = 5
-			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = 5
-			}
-		}
-	}
-	else_if = {
-		limit = { # Colonies are cheaper and tracked separately
-			# I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false
-			# This will be when a colony changes hands. Since this is for the adding, I don't
-			# need to worry about the new owner being empty (from decolonisation)
-			owner = { exists = yes }
-			is_city = no
-		}
-
-		# First, set a mod so when the province is decolonised we know what it was before
-		# Can't use a province flag since those are cleared on decolonisation
-		add_permanent_province_modifier = {
-			name = supplies_colony
-			duration = -1
-		}
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = colony
-					value = 1
-					cost = 0.75
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = colony
-					value = 1
-					cost = 3
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = colony
-					value = 1
-					cost = 15
-				}
-			}
-		}
-	}
-	else_if = { #Charkuchin Kobold supply centres. Leave it be if the new owner doesn't use it
-		limit = {
-			has_province_modifier = charkuchin_kobold_supply_facility
-		}
-		if = {
-			limit = {
-				OR = {
-					owner = { #You can only have 10
-						check_variable = {
-							which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-							value = 10
-						}
-					}
-					NOT = { #The AI can build them more easily, so check it's valid for a human
-						ai = yes
-						AND = {
-							base_production = 4
-							has_fort_building_trigger = yes
-							has_production_building_trigger = yes	
-						}
-					}
-				}
-			}
-			remove_province_modifier = charkuchin_kobold_supply_facility
-			province_event = { id = charkuchin_kobold.11 }
-		}
-		else = { # else increase SF count by 1
-			owner = {
-				change_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-					value = 1
-				}
-				change_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-					value = 10
-				}
-			}
-		}
-	}
-	if = { # Otherwise, it's a province we need to spend monthly supplies on. This will include provinces that had a SF that we just deleted, hence "if" instead of "else"
-		limit = {
-			NOT = {
-				has_charkuchin_kobold_citadel = yes # Should be unnecessary, but just in case
-				has_province_modifier = charkuchin_kobold_supply_facility
-				AND = {
-					owner = { exists = yes }
-					is_city = no
-				}
-			}
-		}
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = city
-					value = 1
-					cost = 1.5
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = city
-					value = 1
-					cost = 6
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = city
-					value = 1
-					cost = 30
-				}
-			}
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_update_count_upgrade = {
-	remove_province_modifier = supplies_colony
-	# Reduce colony count by 1, increase city count by 1
-	if = { # Different regions have different costs so we track them differently
-		limit = { superregion = charkuchar_superregion }
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = charkuchar_range
-				location_type = colony
-				value = -1
-				cost = -0.75
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = charkuchar_range
-				location_type = city
-				value = 1
-				cost = 1.5
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			region = west_insyaan_lowlands_region
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = lowlands
-				location_type = colony
-				value = -1
-				cost = -3
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = lowlands
-				location_type = city
-				value = 1
-				cost = 6
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			superregion = hinuilands_superregion
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = titanoflora
-				location_type = colony
-				value = -1
-				cost = -15
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = titanoflora
-				location_type = city
-				value = 1
-				cost = 30
-			}
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_count
-		value = $value$
-	}
-
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_cost
-		value = $cost$
-	}
-	# Update the total cost in here, too
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-		value = $cost$
-	}
-	#The total cost is tripled during the migration
-	if = {
-		limit = {
-			has_disaster = hinuibird_migration_disaster
-		}
-		# Update the total cost in here, too
-		change_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-			value = $cost$
-		}
-		# Update the total cost in here, too
-		change_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-			value = $cost$
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_monthly_loss = {
-	set_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-	}
-	subtract_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-	}
-	if = {
-		limit = { # If it's positive
-			check_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-				value = 0
-			}
-		}
-		gov_power_var_effect = {
-			mechanic = charkuchin_kobold_citadel_supplies_mechanic
-			power = citadel_supplies
-			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			sign = +
-		}
-	}
-	else = { # gov_power_var_effect only works with positive numbers, so it our value if negative, flip it and use sign = -
-		multiply_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			value = -1
-		}
-		gov_power_var_effect = {
-			mechanic = charkuchin_kobold_citadel_supplies_mechanic
-			power = citadel_supplies
-			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			sign = -
-		}
-	}
-}
-
-insyaa_charkuchin_kobolds_ai_supply_centre = {
-	add_treasury = -50
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-		value = 1
-	}	
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-		value = 10
-	}
-	random_owned_province = {
-		limit = {
-			is_city = yes
-			superregion = charkuchar_superregion # Only give them freebies in the mountain range
-			NOT = {
-				has_province_modifier = charkuchin_kobold_supply_facility
-				has_charkuchin_kobold_citadel = yes
-			}
-		}
-		add_permanent_province_modifier = {
-			name = charkuchin_kobold_supply_facility
-			duration = -1
-		}
-	}
-}
-
-insyaa_charkuchin_kobolds_released_setup = {
-	clr_country_flag = charkuchin_kobold_start #I'm pretty sure flags stick around if you are annexed then released
-
-	# Since your government type depends on the type of the country that released you as a vassal or forced you to be
-	# released via peace, and we ony have 7 starting Insyaa kobold tags, I'll hardcode their starting gov types
-	# If you're not in that list (maybe more kobolds in the future) you get a monarchy if you were native
-	# or tribal
-	trigger_switch = {
-		on_trigger = tag
-		P30 = { change_government = monarchy }
-		P31 = { change_government = theocracy }
-		P32 = { change_government = monarchy }
-		P33 = { change_government = monarchy }
-		P34 = { change_government = monarchy }
-		P35 = { change_government = republic }
-		P36 = { change_government = republic }
-	}
-	trigger_switch = {
-		on_trigger = government
-		monarchy = { add_government_reform = charkuchin_monarchy_reform }
-		republic = { add_government_reform = charkuchin_council_reform }
-		theocracy = { add_government_reform = charkuchin_citadel_clerical_administration }
-		tribal = {
-			change_government = monarchy
-			add_government_reform = charkuchin_monarchy_reform
-		}
-		native = {
-			change_government = monarchy
-			add_government_reform = charkuchin_monarchy_reform
-		}
-	}
-	country_event = { #Initial variable setup and some modifiers
-		id = charkuchin_kobold.0
-	}
-	#Update the supplies counters for your provinces, since the starting event assumes
-	#you only have your capital with a citadal
-	every_owned_province = {
-		limit = {
-			is_capital = no
-		}
-		insyaa_charkuchin_kobold_citadel_supplies_update_count_add = yes
-	}
-	#Update your gain from admin tech
-	export_to_variable = {
-		which = kobold_admin_tech
-		value = adm_tech
-	}
-	#Since the starting event assumes tech 2
-	subtract_variable = { kobold_admin_tech = 2 }
-	while = {
-		limit = {
-			check_variable = {
-				which = kobold_admin_tech
-				value = 1
-			}
-		}
-		subtract_variable = { kobold_admin_tech = 1 }
-		insyaa_charkuchin_kobold_citadel_supplies_tech = yes
-	}
-}
-
-
 check_speaking_memory_yearly = {
 	if = {
 		limit = {
@@ -1902,5 +1376,976 @@ speaking_memory_remove_memory = { #Remember to add localization if your using a 
 			}
 		}
 		speaking_memory_modifier_update = yes
+	}
+}
+
+speaking_memory_add_memory_from_dragon_province = {
+	if = {
+		limit = {
+			OR = {
+				has_country_flag = friendly_$dragon_turtle$
+				has_country_flag = trusted_$dragon_turtle$
+				has_country_flag = beloved_$dragon_turtle$
+			}
+		}
+		speaking_memory_add_memory = { amount = $full_amount$ }
+	}
+	else = {
+		speaking_memory_add_memory = { amount = $lesser_amount$ }
+	}
+}
+
+dragon_turtle_kealakys_ever_hungry_fire_relationship_event = { country_event = { id = dragon_turtles.1 } }
+dragon_turtle_maxele_iron_hearted_fire_relationship_event = { country_event = { id = dragon_turtles.2 } }
+dragon_turtle_kalei_fire_relationship_event = { country_event = { id = dragon_turtles.3 } }
+dragon_turtle_vea_fire_relationship_event = { country_event = { id = dragon_turtles.4 } }
+dragon_turtle_monzaketzya_fire_relationship_event = { country_event = { id = dragon_turtles.5 } }
+dragon_turtle_nalopuukani_fire_relationship_event = { country_event = { id = dragon_turtles.6 } }
+dragon_turtle_grandfather_moss_fire_relationship_event = { country_event = { id = dragon_turtles.7 } }
+dragon_turtle_maruvarax_fire_relationship_event = { country_event = { id = dragon_turtles.8 } }
+dragon_turtle_naauao_fire_relationship_event = { country_event = { id = dragon_turtles.9 } }
+dragon_turtle_moiokalakupua_fire_relationship_event = { country_event = { id = dragon_turtles.10 } }
+dragon_turtle_haomake_fire_relationship_event = { country_event = { id = dragon_turtles.11 } }
+dragon_turtle_makaoioi_fire_relationship_event = { country_event = { id = dragon_turtles.12 } }
+dragon_turtle_kahuzaie_fire_relationship_event = { country_event = { id = dragon_turtles.13 } }
+dragon_turtle_hokieal_fire_relationship_event = { country_event = { id = dragon_turtles.14 } }
+dragon_turtle_iehu_fire_relationship_event = { country_event = { id = dragon_turtles.15 } }
+
+dragon_turtle_change_friendship = { #Prevent changing friendship without updating status
+	if = {
+		limit = {
+			dragon_turtle_$dragon_turtle$_can_interact_trigger = yes
+			tag_allowed_dragon_turtle_system = yes
+		}
+		[[amount]
+			change_variable = {
+				which = dragon_turtle_friendship_$dragon_turtle$
+				value = $amount$
+			}
+		]
+		[[var_amount]
+			change_variable = {
+				which = dragon_turtle_friendship_$dragon_turtle$
+				which = $var_amount$
+			}
+		]
+
+		hidden_effect = {
+			#Clamp upper and lower bound
+			if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 420 } }
+				set_variable = { dragon_turtle_friendship_$dragon_turtle$ = 420 }
+			}
+			else_if = {
+				limit = { NOT = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 1 } } }
+				set_variable = { dragon_turtle_friendship_$dragon_turtle$ = 1 }
+			}
+			dragon_turtle_$dragon_turtle$_fire_relationship_event = yes
+		}
+	}
+}
+
+dragon_turtle_historical_friendship = {
+	set_variable = { dragon_turtle_friendship_$dragon_turtle$ = 270 }
+	set_country_flag = friendly_$dragon_turtle$
+}
+
+clear_dragon_turtle_flags = {
+	clr_country_flag = beloved_$dragon_turtle$
+	clr_country_flag = trusted_$dragon_turtle$
+	clr_country_flag = friendly_$dragon_turtle$
+	clr_country_flag = neutral_$dragon_turtle$
+	clr_country_flag = disapproving_$dragon_turtle$
+	clr_country_flag = hated_$dragon_turtle$
+	clr_country_flag = reviled_$dragon_turtle$
+}
+
+update_dragon_turtle_friendship_flag = {
+	clear_dragon_turtle_flags = { dragon_turtle = $dragon_turtle$ }
+
+	if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 361 } }
+		set_country_flag = beloved_$dragon_turtle$
+	}
+	else_if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 301 } }
+		set_country_flag = trusted_$dragon_turtle$
+	}
+	else_if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 241 } }
+		set_country_flag = friendly_$dragon_turtle$
+	}
+	else_if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 181 } }
+		set_country_flag = neutral_$dragon_turtle$
+	}
+	else_if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 121 } }
+		set_country_flag = disapproving_$dragon_turtle$
+	}
+	else_if = {
+		limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 61 } }
+		set_country_flag = hated_$dragon_turtle$
+	}
+	else = { set_country_flag = reviled_$dragon_turtle$ }
+
+	hidden_effect = { update_$dragon_turtle$ = yes }
+}
+update_kealakys_ever_hungry = {
+	if = {
+		limit = { has_country_flag = beloved_kealakys_ever_hungry }
+		every_owned_province = {
+			limit = { has_building = farm_estate }
+			add_province_modifier = {
+				name = kealakys_ever_hungry_farm_estate
+				duration = -1
+			}
+		}
+		every_owned_province = {
+			limit = { trade_goods = fish }
+			add_province_modifier = {
+				name = kealakys_ever_hungry_fish_province
+				duration = -1
+			}
+		}
+		set_country_flag = was_beloved_kealakys_ever_hungry
+	}
+	else_if = {
+		limit = { has_country_flag = was_beloved_kealakys_ever_hungry }
+		every_owned_province = {
+			remove_province_modifier = kealakys_ever_hungry_farm_estate
+			remove_province_modifier = kealakys_ever_hungry_fish_province
+		}
+	}
+	if = {
+		limit = { has_country_flag = reviled_kealakys_ever_hungry }
+		add_country_modifier = {
+			name = kealakys_ever_hungry_trophic_chain_collapse
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = kealakys_ever_hungry_trophic_chain_collapse }
+}
+update_maxele_iron_hearted = {
+	if = {
+		limit = { has_country_flag = beloved_maxele_iron_hearted }
+		add_country_modifier = {
+			name = maxele_iron_hearted_persuasive_entreaties
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = maxele_iron_hearted_persuasive_entreaties }
+	if = {
+		limit = { has_country_flag = reviled_maxele_iron_hearted }
+		add_country_modifier = {
+			name = maxele_iron_hearted_abyssal_political_undertow
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = maxele_iron_hearted_abyssal_political_undertow }
+}
+update_kalei = {
+	if = {
+		limit = { has_country_flag = beloved_kalei }
+		add_country_modifier = {
+			name = kalei_boundless_horizons
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = kalei_boundless_horizons }
+	if = {
+		limit = { has_country_flag = reviled_kai }
+		add_country_modifier = {
+			name = kalei_cold_cruel_world
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = kalei_cold_cruel_world }
+}
+update_vea = {
+	if = {
+		limit = { has_country_flag = beloved_vea }
+		add_country_modifier = {
+			name = vea_foundations_of_empires
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = vea_foundations_of_empires }
+	if = {
+		limit = { has_country_flag = reviled_vea }
+		add_country_modifier = {
+			name = vea_headache_inducing_lesson
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = vea_headache_inducing_lesson }
+}
+update_monzaketzya = {
+	if = {
+		limit = { has_country_flag = beloved_monzaketzya }
+		add_country_modifier = {
+			name = monzaketzya_impervious_indestructible_invincible
+			duration = -1
+		}
+		make_spell_school_one_quarter_off = { school = abjuration duration = -1 }
+	}
+	else_if = {
+		limit = { has_country_modifier = monzaketzya_impervious_indestructible_invincible }
+		remove_country_modifier = monzaketzya_impervious_indestructible_invincible
+		remove_country_modifier = abjuration_spell_three_quarter
+	}
+	if = {
+		limit = { has_country_flag = reviled_monzaketzya }
+		add_country_modifier = {
+			name = monzaketzya_poached_engineers
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = monzaketzya_poached_engineers }
+}
+update_nalopuukani = {
+	if = {
+		limit = { has_country_flag = beloved_nalopuukani }
+		add_country_modifier = {
+			name = nalopuukani_hoarder_of_a_hundred_thousand_stories
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = nalopuukani_hoarder_of_a_hundred_thousand_stories }
+	if = {
+		limit = { has_country_flag = reviled_nalopuukani }
+		add_country_modifier = {
+			name = nalopuukani_labyrinthine_mists
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = nalopuukani_labyrinthine_mists }
+}
+update_grandfather_moss = {
+	if = {
+		limit = { has_country_flag = beloved_grandfather_moss }
+		every_owned_province = {
+			limit = { province_with_arable_goods = yes }
+			add_province_modifier = {
+				name = grandfather_moss_tended_lands
+				duration = -1
+			}
+		}
+		set_country_flag = was_beloved_grandfather_moss
+	}
+	else = {
+		if = {
+			limit = { has_country_flag = was_beloved_grandfather_moss }
+			clr_country_flag = was_beloved_grandfather_moss
+			every_owned_province = { remove_province_modifier = grandfather_moss_tended_lands }
+		}
+	}
+	if = {
+		limit = { has_country_flag = reviled_grandfather_moss }
+		add_country_modifier = {
+			name = grandfather_moss_crop_disease_outbreaks
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = grandfather_moss_crop_disease_outbreaks }
+}
+update_maruvarax = {
+	if = {
+		limit = { has_country_flag = beloved_maruvarax }
+		if = {
+			limit = { all_owned_province = { is_prosperous = yes } }
+			add_country_modifier = { name = maruvarax_overdue_mending duration = -1 }
+		}
+	}
+	else = { remove_country_modifier = maruvarax_overdue_mending }
+	if = {
+		limit = { has_country_flag = reviled_maruvarax }
+		add_country_modifier = {
+			name = maruvarax_known_death_merchants
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = maruvarax_known_death_merchants }
+}
+update_naauao = {
+	if = {
+		limit = { has_country_flag = beloved_naauao }
+		if = {
+			limit = {
+				NOT = {
+					has_government_attribute = heir
+					has_country_modifier = naauao_no_heir_adm
+					has_country_modifier = naauao_no_heir_dip
+					has_country_modifier = naauao_no_heir_mil
+				}
+			}
+			random_list = {
+				1 = { add_country_modifier = { name = naauao_no_heir_adm duration = -1 } }
+				1 = { add_country_modifier = { name = naauao_no_heir_dip duration = -1 } }
+				1 = { add_country_modifier = { name = naauao_no_heir_mil duration = -1 } }
+			}
+		}
+		if = {
+			limit = { has_heir = yes NOT = { has_heir_flag = naauao_heir_primed } }
+			country_event = { id = dragon_turtles.17 }
+		}
+	}
+	else = {
+		remove_country_modifier = naauao_no_heir_adm
+		remove_country_modifier = naauao_no_heir_dip
+		remove_country_modifier = naauao_no_heir_mil
+	}
+	if = {
+		limit = { has_country_flag = reviled_naauao }
+		add_country_modifier = {
+			name = naauao_blind_eyes
+			duration = 1
+		}
+	}
+	else = { remove_country_modifier = naauao_blind_eyes }
+}
+update_moiokalakupua = {
+	if = {
+		limit = { has_country_flag = beloved_moiokalakupua }
+		add_country_modifier = {
+			name = moiokalakupua_merit_of_the_worthy
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = moiokalakupua_merit_of_the_worthy }
+	if = {
+		limit = { has_country_flag = reviled_moiokalakupua }
+		add_country_modifier = {
+			name = moiokalakupua_troglodyte_command_chains
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = moiokalakupua_troglodyte_command_chains }
+}
+update_haomake = {
+	if = {
+		limit = { has_country_flag = beloved_haomake }
+		add_country_modifier = {
+			name = haomake_iron_administrators
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = haomake_iron_administrators }
+	if = {
+		limit = { has_country_flag = reviled_haomake }
+		add_country_modifier = {
+			name = haomake_purged_administrators
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = haomake_purged_administrators }
+}
+update_makaoioi = {
+	if = {
+		limit = { has_country_flag = beloved_makaoioi }
+		country_event = { id = dragon_turtles.18 } #choose hegemon bonus
+	}
+	else = {
+		remove_country_modifier = makaoioi_little_hegemon_economic
+		remove_country_modifier = makaoioi_little_hegemon_naval
+		remove_country_modifier = makaoioi_little_hegemon_military
+	}
+	if = {
+		limit = { has_country_flag = reviled_makaoioi }
+		add_country_modifier = {
+			name = makaoioi_academic_nadir
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = makaoioi_academic_nadir }
+}
+update_kahuzaie = {
+	if = {
+		limit = { has_country_flag = beloved_kahuzaie }
+		add_country_modifier = {
+			name = kahuzaie_favorable_credit_lines
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_country_modifier = kahuzaie_favorable_credit_lines }
+		remove_country_modifier = kahuzaie_favorable_credit_lines
+		country_event = { id = dragon_turtles.19 }
+	}
+	if = {
+		limit = { has_country_flag = reviled_kahuzaie }
+		add_country_modifier = {
+			name = kahuzaie_omnimalicious_sanctions
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = kahuzaie_omnimalicious_sanctions }
+}
+update_hokieal = {
+	if = {
+		limit = { has_country_flag = beloved_hokieal }
+		add_country_modifier = {
+			name = hokieal_kiamoa_scrapers
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = hokieal_kiamoa_scrapers }
+	if = {
+		limit = { has_country_flag = reviled_hokieal }
+		add_country_modifier = {
+			name = hokieal_perilous_seas
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = hokieal_perilous_seas }
+}
+update_iehu = {
+	if = {
+		limit = { has_country_flag = beloved_iehu }
+		add_country_modifier = {
+			name = iehu_master_of_flames
+			duration = -1
+		}
+		make_spell_half_off = { school = evocation level = 0 id = fireball duration = -1 }
+		make_spell_half_off = { school = evocation level = 1 id = flaming_munitions duration = -1 }
+		make_spell_half_off = { school = evocation level = 2 id = meteor_swarm duration = -1 }
+	}
+	else_if = {
+		limit = { has_country_modifier = iehu_master_of_flames }
+		remove_country_modifier = iehu_master_of_flames
+		remove_country_modifier = evocation_0_fireball_spell_half
+		remove_country_modifier = evocation_1_flaming_munitions_spell_half
+		remove_country_modifier = evocation_2_meteor_swarm_spell_half
+	}
+	if = {
+		limit = { has_country_flag = reviled_iehu }
+		add_country_modifier = {
+			name = iehu_molten_rain
+			duration = -1
+		}
+	}
+	else = { remove_country_modifier = iehu_molten_rain }
+}
+
+clean_up_dragon_turtle = {
+	clear_dragon_turtle_flags = { dragon_turtle = $dragon_turtle$ }
+	clean_up_$dragon_turtle$ = yes
+}
+clean_up_kealakys_ever_hungry = {
+	if = {
+		limit = { has_country_flag = was_beloved_kealakys_ever_hungry }
+		clr_country_flag = was_beloved_kealakys_ever_hungry
+		every_owned_province = {
+			remove_province_modifier = kealakys_ever_hungry_farm_estate
+			remove_province_modifier = kealakys_ever_hungry_fish_province
+		}
+	}
+	remove_country_modifier = kealakys_ever_hungry_trophic_chain_collapse
+	remove_country_modifier = kealakys_ever_hungry_bountiful_growth
+}
+clean_up_maxele_iron_hearted = {
+	remove_country_modifier = maxele_iron_hearted_persuasive_entreaties
+	remove_country_modifier = maxele_iron_hearted_abyssal_political_undertow
+	remove_country_modifier = maxele_iron_hearted_assets_obtained
+	remove_country_modifier = maxele_iron_hearted_societal_self_doubt
+}
+clean_up_kalei = {
+	remove_country_modifier = kalei_boundless_horizons
+	remove_country_modifier = kalei_cold_cruel_world
+	remove_country_modifier = kalei_out_imagined
+}
+clean_up_vea = {
+	remove_country_modifier = vea_headache_inducing_lesson
+	remove_country_modifier = vea_foundations_of_empires
+	remove_country_modifier = vea_bureaucratic_embroglio
+	remove_country_modifier = vea_claim_an_empire
+}
+clean_up_monzaketzya = {
+	remove_country_modifier = monzaketzya_impervious_indestructible_invincible
+	remove_country_modifier = abjuration_spell_three_quarter
+	remove_country_modifier = monzaketzya_poached_engineers
+	remove_country_modifier = monzaketzya_self_sustaining_architecture
+	remove_country_modifier = monzaketzya_competitive_supply_bids
+}
+clean_up_nalopuukani = {
+	remove_country_modifier = nalopuukani_hoarder_of_a_hundred_thousand_stories
+	remove_country_modifier = nalopuukani_labyrinthine_mists
+}
+clean_up_grandfather_moss = {
+	if = {
+		limit = { has_country_flag = was_beloved_grandfather_moss }
+		clr_country_flag = was_beloved_grandfather_moss
+		every_owned_province = { remove_province_modifier = grandfather_moss_tended_lands }
+	}
+	remove_country_modifier = grandfather_moss_crop_disease_outbreaks
+	remove_country_modifier = grandfather_moss_overgrown_strangleweed
+	if = {
+		limit = { has_country_flag = has_grandfather_moss_garden }
+		clr_country_flag = has_grandfather_moss_garden
+		every_owned_province = { remove_province_modifier = grandfather_moss_grandfathers_garden }
+	}
+}
+clean_up_maruvarax = {
+	remove_country_modifier = maruvarax_overdue_mending
+	remove_country_modifier = maruvarax_known_death_merchants
+}
+clean_up_naauao = {
+	remove_country_modifier = naauao_no_heir_adm
+	remove_country_modifier = naauao_no_heir_dip
+	remove_country_modifier = naauao_no_heir_mil
+	remove_country_modifier = naauao_codification_started
+	remove_country_modifier = naauao_codification_finished
+}
+clean_up_moiokalakupua = {
+	remove_country_modifier = moiokalakupua_merit_of_the_worthy
+	remove_country_modifier = moiokalakupua_troglodyte_command_chains
+	remove_country_modifier = moiokalakupua_followers
+}
+clean_up_haomake = {
+	remove_country_modifier = haomake_iron_administrators
+	remove_country_modifier = haomake_purged_administrators
+}
+clean_up_makaoioi = {
+	remove_country_modifier = makaoioi_little_hegemon_economic
+	remove_country_modifier = makaoioi_little_hegemon_naval
+	remove_country_modifier = makaoioi_little_hegemon_military
+	remove_country_modifier = makaoioi_academic_nadir
+	remove_country_modifier = makaoioi_administrative_focus
+	remove_country_modifier = makaoioi_diplomatic_focus
+	remove_country_modifier = makaoioi_military_focus
+}
+clean_up_kahuzaie = {
+	if = {
+		limit = { has_country_modifier = kahuzaie_favorable_credit_lines }
+		remove_country_modifier = kahuzaie_favorable_credit_lines
+		country_event = { id = dragon_turtles.19 }
+	}
+	remove_country_modifier = kahuzaie_omnimalicious_sanctions
+	remove_country_modifier = kahuzaie_debts_called
+}
+clean_up_hokieal = {
+	remove_country_modifier = hokieal_kiamoa_scrapers
+	remove_country_modifier = hokieal_perilous_seas
+	remove_country_modifier = hokieal_doomed_excursions
+}
+clean_up_iehu = {
+	remove_country_modifier = iehu_master_of_flames
+	remove_country_modifier = evocation_0_fireball_spell_half
+	remove_country_modifier = evocation_1_flaming_munitions_spell_half
+	remove_country_modifier = evocation_2_meteor_swarm_spell_half
+	remove_country_modifier = iehu_molten_rain
+	remove_country_modifier = iehu_against_the_odds
+	remove_country_modifier = iehu_manaburn
+	remove_country_modifier = iehu_teachings_of_the_master
+}
+
+dragon_turtle_new = {
+	if = {
+		limit = {
+			dragon_turtle_$dragon_turtle$_can_interact_trigger = yes
+			tag_allowed_dragon_turtle_system = yes
+		}
+		if = { #Give you starting friendship levels if you don't have them
+			limit = { NOT = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 1 } } }
+			set_variable = {
+				which = dragon_turtle_friendship_$dragon_turtle$
+				value = 210
+			}
+			[[jovial]
+				if = {
+					limit = { unrest = 4 }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[nurturing]
+				if = {
+					limit = { NOT = { manpower_percentage = 0.01 } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[monumentalist]
+				every_owned_province = {
+					limit = { devastation = 1 }
+					PREV = {
+						subtract_variable = {
+							which = dragon_turtle_friendship_$dragon_turtle$
+							value = 1
+						}
+					}
+				}
+			]
+			[[calculating]
+				if = {
+					limit = { corruption = 0.1 }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[humanitarian]
+				if = {
+					limit = { NOT = { diplomatic_reputation = 1 } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[traveler]
+				if = {
+					limit = { NOT = { navy_tradition = 25 } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[historian]
+				if = {
+					limit = { average_autonomy = 25 }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[scholar]
+				if = { #yes, it checks that you're behind on tech
+					limit = { NOT = { any_neighbor_country = { tech_difference = 1 } } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 45
+					}
+				}
+			]
+			[[judge]
+				if = {
+					limit = { NOT = { num_of_allies = 4 } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+			[[warrior]
+				if = {
+					limit = { NOT = { army_tradition = 25 } }
+					subtract_variable = {
+						which = dragon_turtle_friendship_$dragon_turtle$
+						value = 40
+					}
+				}
+			]
+		}
+		dragon_turtle_$dragon_turtle$_fire_relationship_event = yes
+	}
+}
+
+dragon_turtle_yearly_upkeep_sub_effect = {
+	if = {
+		limit = { dragon_turtle_$dragon_turtle$_can_interact_trigger = yes }
+		set_variable = { dragon_turtle_foo = 0 }
+
+		[[unrest]
+			if = {
+				limit = { NOT = { unrest = 0 } }
+				change_variable = { dragon_turtle_foo = 2 }
+			}
+			else = { change_variable = { dragon_turtle_foo = -7 } }
+		]
+		[[devastation]
+			every_owned_province = {
+				limit = { devastation = 1 }
+				owner = { change_variable = { dragon_turtle_foo = -1 } }
+			}
+		]
+		[[advisors]
+			if = {
+				limit = { employed_advisor = { category = ADM } }
+				change_variable = { dragon_turtle_foo = 1 }
+			}
+			if = {
+				limit = { employed_advisor = { category = DIP } }
+				change_variable = { dragon_turtle_foo = 1 }
+			}
+			if = {
+				limit = { employed_advisor = { category = MIL } }
+				change_variable = { dragon_turtle_foo = 1 }
+			}
+		]
+		[[edicts]
+			if = {
+				limit = {
+					calc_true_if = {
+						amount = 3
+						all_states = { has_any_vanilla_state_edict = yes }
+					}
+				}
+				change_variable = { dragon_turtle_foo = 4 }
+			}
+		]
+		[[corruption]
+			if = {
+				limit = { corruption = 0.1 }
+				change_variable = { dragon_turtle_foo = -10 }
+			}
+		]
+		[[religious_unity]
+			if = {
+				limit = { NOT = { religious_unity = 0.75 } }
+				change_variable = { dragon_turtle_foo = -1 }
+			}
+		]
+		[[diplomatic_reputation]
+			if = {
+				limit = { diplomatic_reputation = 4 }
+				change_variable = { dragon_turtle_foo = 4 }
+			}
+			else_if = {
+				limit = { NOT = { diplomatic_reputation = 1 } }
+				change_variable = { dragon_turtle_foo = -5 }
+			}
+		]
+		[[navy_tradition]
+			if = {
+				limit = { NOT = { navy_tradition = 20 } }
+				change_variable = { dragon_turtle_foo = -2 }
+			}
+		]
+		[[innovativeness]
+			if = {
+				limit = { innovativeness = 60 }
+				change_variable = { dragon_turtle_foo = 2 }
+			}
+		]
+		[[government_rank]
+			if = {
+				limit = { government_rank = 3 }
+				change_variable = { dragon_turtle_foo = 3 }
+			}
+			else_if = {
+				limit = { NOT = { government_rank = 2 } }
+				change_variable = { dragon_turtle_foo = -1 }
+			}
+		]
+		[[stability]
+			if = {
+				limit = { stability = 2 }
+				change_variable = { dragon_turtle_foo = 3 }
+			}
+		]
+		[[innovativeness]
+			if = {
+				limit = { innovativeness = 60 }
+				change_variable = { dragon_turtle_foo = 2 }
+			}
+		]
+		[[tech_difference]
+			if = {
+				limit = { NOT = { any_neighbor_country = { tech_difference = 1 } } }
+				change_variable = { dragon_turtle_foo = -10 }
+			}
+		]
+		[[average_autonomy]
+			if = {
+				limit = { average_autonomy = 25 }
+				change_variable = { dragon_turtle_foo = -6 }
+			}
+		]
+		[[estate_influence]
+			if = {
+				limit = { has_estate = estate_nobles }
+				if = { 
+					limit = { estate_influence = { estate = estate_nobles influence = 50 } }
+					change_variable = { dragon_turtle_foo = -3 }
+				}
+				else_if = { 
+					limit = { NOT = { estate_influence = { estate = estate_nobles influence = 40 } } }
+					change_variable = { dragon_turtle_foo = 2 }
+				}
+			}
+			if = {
+				limit = { has_estate = estate_adventurers }
+				if = { 
+					limit = { estate_influence = { estate = estate_adventurers influence = 50 } }
+					change_variable = { dragon_turtle_foo = -3 }
+				}
+				else_if = { 
+					limit = { NOT = { estate_influence = { estate = estate_adventurers influence = 40 } } }
+					change_variable = { dragon_turtle_foo = 2 }
+				}
+			}
+		]
+		[[had_recent_war]
+			if = {
+				limit = { NOT = { had_recent_war = 3 } }
+				change_variable = { dragon_turtle_foo = 10 }
+			}
+		]
+		[[manpower_percentage]
+			if = {
+				limit = { NOT = { manpower_percentage = 0.2 } }
+				change_variable = { dragon_turtle_foo = -6 }
+			}
+		]
+		[[alliances]
+			if = {
+				limit = { num_of_allies = 4 }
+				change_variable = { dragon_turtle_foo = 2 }
+			}
+		]
+		[[discovered_spies]
+			every_known_country = {
+				limit = {
+					has_opinion_modifier = {
+						who = ROOT
+						modifier = discovery_of_evil
+					}
+				}
+				PREV = { change_variable = { dragon_turtle_foo = -6 } }
+			}
+		]
+		[[high_unrest]
+			if = {
+				limit = { unrest = 0 }
+				change_variable = { dragon_turtle_foo = -7 }
+			}
+		]
+		[[full_drill]
+			if = {
+				limit = { num_of_regiments_at_full_drill = 10 }
+				change_variable = { dragon_turtle_foo = 4 }
+			}
+		]
+		[[military_advisor]
+			if = {
+				limit = { NOT = { employed_advisor = { category = MIL } } }
+				change_variable = { dragon_turtle_foo = -2 }
+			}
+		]
+		[[inflation]
+			if = {
+				limit = { inflation = 1 }
+				change_variable = { dragon_turtle_foo = -3 }
+			}
+		]
+		[[navy_size_percentage]
+			if = {
+				limit = { navy_size_percentage = 0.9 }
+				change_variable = { dragon_turtle_foo = 2 }
+			}
+		]
+
+		dragon_turtle_change_friendship = { dragon_turtle = $dragon_turtle$ var_amount = dragon_turtle_foo } #fires an event
+	}
+}
+
+dragon_turtle_yearly_upkeep = { #scripted effect to avoid clogging up the main file
+	if = {
+		limit = { tag_allowed_dragon_turtle_system = yes }
+
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = kealakys_ever_hungry unrest = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = maxele_iron_hearted devastation = yes advisors = yes edicts = yes corruption = yes religious_unity = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = kalei diplomatic_reputation = yes navy_tradition = yes innovativeness = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = vea government_rank = yes stability = yes innovativeness = yes tech_difference = yes average_autonomy = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = monzaketzya stability = yes average_autonomy = yes devastation = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = nalopuukani unrest = yes diplomatic_reputation = yes estate_influence = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = grandfather_moss devastation = yes innovativeness = yes tech_difference = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = maruvarax devastation = yes navy_tradition = yes manpower_percentage = yes had_recent_war = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = naauao stability = yes alliances = yes average_autonomy = yes discovered_spies = yes high_unrest = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = moiokalakupua unrest = yes full_drill = yes military_advisor = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = haomake advisors = yes edicts = yes corruption = yes alliances = yes discovered_spies = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = makaoioi alliances = yes discovered_spies = yes diplomatic_reputation = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = kahuzaie advisors = yes edicts = yes corruption = yes innovativeness = yes tech_difference = yes inflation = yes }
+		dragon_turtle_yearly_upkeep_sub_effect = { dragon_turtle = hokieal navy_tradition = yes navy_size_percentage = yes }
+
+		if = { #Maruvarax beloved modifier upkeep
+			limit = { has_country_flag = beloved_maruvarax }
+			if = {
+				limit = { all_owned_province = { is_prosperous = yes } }
+				add_country_modifier = { name = maruvarax_overdue_mending duration = -1 }
+			}
+			else = { remove_country_modifier = maruvarax_overdue_mending }
+		}
+	}
+}
+
+dragon_turtle_10_year_decay = {
+	if = {
+		limit = { dragon_turtle_$dragon_turtle$_can_interact_trigger = yes }
+		if = {
+			limit = { has_country_flag = $dragon_turtle$_relationship_decay_flag }
+			clr_country_flag = $dragon_turtle$_relationship_decay_flag
+			if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 361 } }
+				change_variable = { dragon_turtle_friendship_$dragon_turtle$ = -60 }
+			}
+			else_if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 301 } }
+				change_variable = { dragon_turtle_friendship_$dragon_turtle$ = -30 }
+			}
+			else_if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 241 } }
+				change_variable = { dragon_turtle_friendship_$dragon_turtle$ = -15 }
+			}
+			else_if = { #Do nothing
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 181 } }
+			}
+			else_if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 121 } }
+				change_variable = { dragon_turtle_friendship_$dragon_turtle$ = 15 }
+			}
+			else_if = {
+				limit = { check_variable = { dragon_turtle_friendship_$dragon_turtle$ = 61 } }
+				change_variable = { dragon_turtle_friendship_$dragon_turtle$ = 30 }
+			}
+			else = { change_variable = { dragon_turtle_friendship_$dragon_turtle$ = 60 } }
+			dragon_turtle_$dragon_turtle$_fire_relationship_event = yes
+		}
+		else = { set_country_flag = $dragon_turtle$_relationship_decay_flag }
+	}
+}
+
+dragon_turtles_casualty_friendship_effect = {
+	if = {
+		limit = { tag_allowed_dragon_turtle_system = yes }
+
+		set_variable = {
+			which = dragon_turtle_friendship_val
+			which = land_units_killed
+		}
+		change_variable = {
+			which = dragon_turtle_friendship_val
+			which = land_units_lost
+		}
+
+		if = {
+			limit = { check_variable = { dragon_turtle_friendship_val = 150000 } }
+			set_variable = { dragon_turtle_friendship_val = -8 }
+		}
+		else_if = {
+			limit = { check_variable = { dragon_turtle_friendship_val = 70000 } }
+			set_variable = { dragon_turtle_friendship_val = -4 }
+		}
+		else_if = {
+			limit = { check_variable = { dragon_turtle_friendship_val = 30000 } }
+			set_variable = { dragon_turtle_friendship_val = -2 }
+		}
+		else_if = {
+			limit = { check_variable = { dragon_turtle_friendship_val = 10000 } }
+			set_variable = { dragon_turtle_friendship_val = -1 }
+		}
+
+		dragon_turtle_change_friendship = { dragon_turtle = kealakys_ever_hungry var_amount = dragon_turtle_friendship_val }
+		dragon_turtle_change_friendship = { dragon_turtle = kalei var_amount = dragon_turtle_friendship_val }
+		dragon_turtle_change_friendship = { dragon_turtle = grandfather_moss var_amount = dragon_turtle_friendship_val }
+		dragon_turtle_change_friendship = { dragon_turtle = iehu var_amount = dragon_turtle_friendship_val }
 	}
 }
