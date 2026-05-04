@@ -1,21 +1,21 @@
-
-namespace = gene_pillars
-
-@rogue_A = 13 #3
-@rogue_B = 14 #4
-@rogue_C = 15 #5
-@rogue_D = 16 #6
-@rogue_E = 17 #7
-@ranger_A = 8
-@ranger_B = 9
-@ranger_C = 10
-@ranger_D = 11
-@ranger_E = 12
+@empty = 1
+@locked = 2
+@min_class_value = 3
 @fighter_A = 3 #13
 @fighter_B = 4 #14
 @fighter_C = 5 #15
 @fighter_D = 6 #16
 @fighter_E = 7 #17
+@ranger_A = 8
+@ranger_B = 9
+@ranger_C = 10
+@ranger_D = 11
+@ranger_E = 12
+@rogue_A = 13 #3
+@rogue_B = 14 #4
+@rogue_C = 15 #5
+@rogue_D = 16 #6
+@rogue_E = 17 #7
 @cleric_A = 18
 @cleric_B = 19
 @cleric_C = 20
@@ -32,6 +32,16 @@ namespace = gene_pillars
 @artificer_D = 31
 @artificer_E = 32
 
+
+@rogue_archetype_frame = 3
+@ranger_archetype_frame = 2
+@figher_archetype_frame = 1
+@cleric_archetype_frame = 4
+@mage_archetype_frame = 5
+@artificer_archetype_frame = 6
+
+namespace = gene_pillars
+
 #0-99 - System events					(only 1-2 are used)
 #100-199 - Kiamoa Pillar events		(Currently unused)
 #200-299 - Mechanim Pillar events		(Currently unused)
@@ -43,6 +53,7 @@ namespace = gene_pillars
 #800-899 - Sandworm Pillar events		(Currently unused)
 #900-999 - Dragon Pillar events		(Used: 900, 911-915, 921-926, 931-937)
 #1000+ - Generic exploration events	(Used: 1000, 1002-1019)
+#99999 - Debug event
 
 #Passive Study
 country_event = {
@@ -605,6 +616,133 @@ province_event = {
 	}
 }
 
+#Setup events
+##Unlock initial classes
+country_event = {
+	id = gene_pillars.90
+	title = gene_pillars.90.t
+	desc = gene_pillars.90.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		if = {
+			limit = { NOT = { has_country_modifier = mechanim_administration } }
+			set_country_flag = gene_pillars_unlocked_rogue_A
+			set_country_flag = gene_pillars_unlocked_ranger_A
+			set_country_flag = gene_pillars_unlocked_fighter_A
+			set_country_flag = gene_pillars_unlocked_cleric_A
+			if = {
+				limit = {
+					has_not_banned_magic_artificery = yes
+				}
+				if = {
+					limit = { insyaa_has_flamesong = yes }
+					set_country_flag = gene_pillars_unlocked_mage_B
+				}
+				else_if = {
+					limit = { insyaa_has_wavesong = yes }
+					set_country_flag = gene_pillars_unlocked_mage_C
+				}
+				else_if = {
+					limit = { insyaa_has_stonescrawl = yes }
+					set_country_flag = gene_pillars_unlocked_mage_D
+				}
+				else_if = {
+					limit = { insyaa_has_stonestory = yes }
+					set_country_flag = gene_pillars_unlocked_mage_E
+				}
+				else = {
+					set_country_flag = gene_pillars_unlocked_mage_A
+				}
+			}
+			if = {
+				limit = { NOT = { has_country_flag = magic_artificery_mage_only } }
+				set_country_flag = gene_pillars_unlocked_artificer_A
+			}
+		}
+		else = {
+			set_country_flag = gene_pillars_unlocked_rogue_D
+			set_country_flag = gene_pillars_unlocked_rogue_E
+			set_country_flag = gene_pillars_unlocked_ranger_E
+			set_country_flag = gene_pillars_unlocked_fighter_E
+			set_country_flag = gene_pillars_unlocked_cleric_E
+			set_country_flag = gene_pillars_unlocked_artificer_E
+		}
+	}
+
+	option = {
+		name = gene_pillars.90.a
+		#Leave empty, use the immediate
+	}
+}
+
+#update UI event
+province_event = {
+	id = gene_pillars.91
+	title = gene_pillars.91.t
+	desc = gene_pillars.91.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		aPUI_gene_pillars_calculate_health = yes
+	}
+
+	option = {
+		name = gene_pillars.91.a
+	}
+}
+
+
+#Use in on_province_owner_change and elsewhere to reset the province
+province_event = {
+	id = gene_pillars.94
+	title = gene_pillars.99.t
+	desc = gene_pillars.99.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = gene_pillars.100.a
+		if = {
+			limit = {
+				NOT = { is_empty = yes }
+				owner = {
+					exists = yes
+					has_country_flag = aPUI_gene_pillar_interaction_setup_done
+				}
+			}
+			clr_province_flag = aPUI_gene_pillar_interaction_setup_done_province
+			aPUI_gene_pillar_setup_province = yes
+		}
+	}
+}
+
+#Fire this to abandon exploration for owner
+country_event = {
+	id = gene_pillars.98
+	title = gene_pillars.98.t
+	desc = gene_pillars.98.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+
+	immediate = {
+		aPUI_clear_all_province_exploration_flags = yes
+		FROM = { aPUI_clear_all_country_exploration_flags = yes }
+	}
+
+	option = {
+		name = gene_pillars.98.a
+	}
+}
 
 #Kiamoa Pillar events
 country_event = {
@@ -6760,4 +6898,71 @@ country_event = {
 	}
 
 	after = { hidden_effect = { clr_country_flag = gene_pillars_has_pending_event } }
+}
+
+###Debug only event
+country_event = {
+	id = gene_pillars.99999
+	title = gene_pillars.99999.t
+	desc = gene_pillars.99999.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+	
+	is_triggered_only = yes
+
+	#Unlock all classes
+	option = {
+		name = gene_pillars.99999.classes
+		
+		set_country_flag = gene_pillars_unlocked_fighter_A
+		set_country_flag = gene_pillars_unlocked_fighter_B
+		set_country_flag = gene_pillars_unlocked_fighter_C
+		set_country_flag = gene_pillars_unlocked_fighter_D
+		set_country_flag = gene_pillars_unlocked_fighter_E
+		set_country_flag = gene_pillars_unlocked_ranger_A
+		set_country_flag = gene_pillars_unlocked_ranger_B
+		set_country_flag = gene_pillars_unlocked_ranger_C
+		set_country_flag = gene_pillars_unlocked_ranger_D
+		set_country_flag = gene_pillars_unlocked_ranger_E
+		set_country_flag = gene_pillars_unlocked_rogue_A
+		set_country_flag = gene_pillars_unlocked_rogue_B
+		set_country_flag = gene_pillars_unlocked_rogue_C
+		set_country_flag = gene_pillars_unlocked_rogue_D
+		set_country_flag = gene_pillars_unlocked_rogue_E
+		set_country_flag = gene_pillars_unlocked_cleric_A
+		set_country_flag = gene_pillars_unlocked_cleric_B
+		set_country_flag = gene_pillars_unlocked_cleric_C
+		set_country_flag = gene_pillars_unlocked_cleric_D
+		set_country_flag = gene_pillars_unlocked_cleric_E
+		set_country_flag = gene_pillars_unlocked_mage_A
+		set_country_flag = gene_pillars_unlocked_mage_B
+		set_country_flag = gene_pillars_unlocked_mage_C
+		set_country_flag = gene_pillars_unlocked_mage_D
+		set_country_flag = gene_pillars_unlocked_mage_E
+		set_country_flag = gene_pillars_unlocked_artificer_A
+		set_country_flag = gene_pillars_unlocked_artificer_B
+		set_country_flag = gene_pillars_unlocked_artificer_C
+		set_country_flag = gene_pillars_unlocked_artificer_D
+		set_country_flag = gene_pillars_unlocked_artificer_E
+	}
+
+	#Unlock all party slots
+	option = {
+		name = gene_pillars.99999.maxparty
+		set_variable = {
+			which = aPUI_gene_pillars_party_level_var
+			value = 5
+		}
+		gene_pillars = {
+			limit = { owned_by = ROOT }
+			set_variable = {
+				which = aPUI_gene_pillars_party_level_var
+				which = PREV
+			}
+			# set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = 1 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = 1 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = 1 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = 1 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = 1 }
+		}
+	}
 }
