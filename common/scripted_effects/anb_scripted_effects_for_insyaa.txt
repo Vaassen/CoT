@@ -1,23 +1,11 @@
 open_stormwall = {
-	4774 = {
+	if = {
+		limit = { NOT = { has_global_flag = stormwall_open } }
+		# like monuments, FROM must be a valid country scope for add_canal to succeed, so do this to ensure it
+		random_country = { country_event = { id = insyaa_flavour.9998 } }
+		set_global_flag = stormwall_open
 		if = {
-			limit = { NOT = { has_global_flag = stormwall_open } }
-			3580 = { add_canal = stormwall_canal }
-			3582 = { add_canal = stormwall_canal }
-			1621 = { add_canal = stormwall_canal }
-			3559 = { add_canal = stormwall_canal }
-			3615 = { add_canal = stormwall_canal }
-			3616 = { add_canal = stormwall_canal }
-			3619 = { add_canal = stormwall_canal }
-			3618 = { add_canal = stormwall_canal }
-			3624 = { add_canal = stormwall_canal }
-			3622 = { add_canal = stormwall_canal }
-			6905 = { add_canal = stormwall_canal }
-			6859 = { add_canal = stormwall_canal }
-			set_global_flag = stormwall_open
-		}
-		if = {
-			limit = { NOT = { has_global_flag = endless_ocean_first_opening } }
+			limit = { NOT = { has_global_flag = stormwall_first_opening } }
 			every_country = {
 				limit = { religion = endless_ocean }
 				country_event = {
@@ -54,9 +42,23 @@ open_stormwall = {
 				set_province_flag = unlocked_artifice_invention_memory_storage_global
 				set_province_flag = unlocked_artifice_invention_mechanim_deconstructor_global
 			}
-			set_global_flag = endless_ocean_first_opening #Please dont clear it
+			4871 = { # tianlou
+				province_event = {
+					id = spirits.1005 # stormwall opens alert event
+				}
+				province_event = {
+					id = spirits.1006
+					days = 912 # 2.5 years
+				}
+			}
+			6181 = { # The Great Invaders Event (Landslide Infantry)
+				province_event = {
+					id = landslide_infantry.69
+					days = 3650
+				}
+			}
+			set_global_flag = stormwall_first_opening #Please dont clear it
 		}
-		
 	}
 }
 
@@ -244,6 +246,7 @@ utubodi_unification_add_resource = {
 utubodi_unification_spawn_rebels_particularist = {
 	if = {
 		limit = { has_province_flag = utubodi_rebels_7_flag }
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 8
 			effect = "
@@ -258,6 +261,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_6_flag
 			NOT = { has_province_flag = utubodi_rebels_7_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 7
 			effect = "
@@ -273,6 +277,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_5_flag
 			NOT = { has_province_flag = utubodi_rebels_6_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 6
 			effect = "
@@ -288,6 +293,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_4_flag
 			NOT = { has_province_flag = utubodi_rebels_5_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 5
 			effect = "
@@ -303,6 +309,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_3_flag
 			NOT = { has_province_flag = utubodi_rebels_4_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 4
 			effect = "
@@ -318,6 +325,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_2_flag
 			NOT = { has_province_flag = utubodi_rebels_3_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 3
 			effect = "
@@ -333,6 +341,7 @@ utubodi_unification_spawn_rebels_particularist = {
 			has_province_flag = utubodi_rebels_1_flag
 			NOT = { has_province_flag = utubodi_rebels_2_flag }
 		}
+		custom_tooltip = utubodi_rebels_tt
 		for = {
 			amount = 2
 			effect = "
@@ -1136,541 +1145,236 @@ pachpalka_fired_from_court_effect = {
 	}
 }
 
-# They start at tech 2 so I only need to start checking tech 3
-# I will assume they will be done with this system before getting to admin tech 24
-insyaa_charkuchin_kobold_citadel_supplies_tech = {
-	# increment the variable tracking monthly gain
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain
-		value = 2.5
-	}
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-		value = 2.5
-	}
-}
-
-# FROM is the previous owner, ROOT is the province
-insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
-	# First, check if citadel. That will then exclude everything else
-	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
-	# Then, check if SF
-	# Then, check if city
+check_speaking_memory_yearly = {
 	if = {
 		limit = {
-			has_charkuchin_kobold_citadel = yes
+			NOT = { has_country_flag = speaking_memory_initialized }
 		}
-		FROM = {
+		set_country_flag = speaking_memory_initialized
+		set_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 55
+		}
+	}
+	else = {
+		subtract_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 1
+		}
+	}
+
+	every_owned_province = {
+		limit = { province_has_dragon_turtle = yes }
+		ROOT = {
 			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
-				value = -5
+				which = speaking_memory_ancestory_percentage
+				value = 0.1
 			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = -5
+		}
+	}
+
+	if = {
+		limit = { NOT = { religious_unity = 0.81 } }
+		if = {
+			limit = { religious_unity = 0.41 }
+			if = {
+				limit = { religious_unity = 0.61 }
+				subtract_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 0.2
+				}
 			}
+			else = {
+				subtract_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 0.4
+				}
+			}
+		}
+		else = {
+			if = {
+				limit = { religious_unity = 0.21 }
+				subtract_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 0.6
+				}
+			}
+			else_if = {
+				limit = { religious_unity = 0.01 }
+				subtract_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 0.8
+				}
+			}
+			else = {
+				subtract_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 1
+				}
+			}
+		}
+	}
+
+	if = {
+		limit = {
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 100
+			}
+		}
+		set_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 100
 		}
 	}
 	else_if = {
-		limit = { # Colonies are cheaper and tracked separately
-			OR = { # I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false
-				AND = { # This will be when a colony changes hands
-					owner = { exists = yes }
-					is_city = no
-				}
-				has_province_modifier = supplies_colony # This will be when it is decolonised
-			}
-		}
-		remove_province_modifier = supplies_colony # Remove it in case the conquerer doensn't use supplies. If they do, it will be added back immediately
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = colony
-					value = -1
-					cost = -0.75
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = colony
-					value = -1
-					cost = -3
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = colony
-					value = -1
-					cost = -15
-				}
-			}
-		}
-	}
-	else_if = { #Charkuchin Kobold supply centres
 		limit = {
-			has_province_modifier = charkuchin_kobold_supply_facility
-		}
-		FROM = {
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-				value = -1
-			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = -10
-			}
-		}
-	}
-	# The script for adding uses slightly different logic and an "if" not "else" since you might conquer a SF but have it deleted
-	# That is not a concern when you lose a province
-	else = { # Otherwise, it's a province we need to spend monthly supplies on
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = city
-					value = -1
-					cost = -1.5
+			NOT = {
+				check_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 0
 				}
 			}
 		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = city
-					value = -1
-					cost = -6
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			FROM = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = city
-					value = -1
-					cost = -30
-				}
-			}
+		set_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = 0
 		}
 	}
 }
 
-insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
-	# First, check if citadel. That will then exclude everything else
-	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
-	# Then, check if SF. It might be kept, it might not
-	# Then, check if city
-
+speaking_memory_modifier_update = { 
+	remove_country_modifier = speaking_memory_very_high_memory
+	remove_country_modifier = speaking_memory_high_memory
+	remove_country_modifier = speaking_memory_medium_high_memory
+	remove_country_modifier = speaking_memory_medium_memory
+	remove_country_modifier = speaking_memory_low_medium_memory
+	remove_country_modifier = speaking_memory_low_memory
+	remove_country_modifier = speaking_memory_very_low_memory
 	if = {
 		limit = {
-			has_charkuchin_kobold_citadel = yes
-		}
-		owner = {
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
-				value = 5
-			}
-			change_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-				value = 5
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 90
 			}
 		}
-	}
-	else_if = {
-		limit = { # Colonies are cheaper and tracked separately
-			# I use this because when on_province_owner_change triggers on a new colony
-			# you start is_colony = yes is still false
-			# This will be when a colony changes hands. Since this is for the adding, I don't
-			# need to worry about the new owner being empty (from decolonisation)
-			owner = { exists = yes }
-			is_city = no
-		}
-
-		# First, set a mod so when the province is decolonised we know what it was before
-		# Can't use a province flag since those are cleared on decolonisation
-		add_permanent_province_modifier = {
-			name = supplies_colony
+		add_country_modifier = {
+			name = speaking_memory_very_high_memory
 			duration = -1
 		}
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = colony
-					value = 1
-					cost = 0.75
-				}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 80
 			}
 		}
-		else_if = {
-			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = colony
-					value = 1
-					cost = 3
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = colony
-					value = 1
-					cost = 15
-				}
-			}
+		add_country_modifier = {
+			name = speaking_memory_high_memory
+			duration = -1
 		}
 	}
-	else_if = { #Charkuchin Kobold supply centres. Leave it be if the new owner doesn't use it
+	else_if = {
 		limit = {
-			has_province_modifier = charkuchin_kobold_supply_facility
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 70
+			}
+		}
+		add_country_modifier = {
+			name = speaking_memory_medium_high_memory
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 50
+			}
+		}
+		add_country_modifier = {
+			name = speaking_memory_medium_memory
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 30
+			}
+		}
+		add_country_modifier = {
+			name = speaking_memory_low_medium_memory
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 10
+			}
+		}
+		add_country_modifier = {
+			name = speaking_memory_low_memory
+			duration = -1
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = speaking_memory_very_low_memory
+			duration = -1
+		}
+	}
+}
+
+speaking_memory_add_memory = { #Remember to add localization if your using a new number of $amount$
+	custom_tooltip = speaking_memory_add_$amount$_memory
+	hidden_effect = {
+		change_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = $amount$
 		}
 		if = {
 			limit = {
-				OR = {
-					owner = { #You can only have 10
-						check_variable = {
-							which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-							value = 10
-						}
-					}
-					NOT = { #The AI can build them more easily, so check it's valid for a human
-						ai = yes
-						AND = {
-							base_production = 4
-							has_fort_building_trigger = yes
-							has_production_building_trigger = yes	
-						}
-					}
+				check_variable = {
+					which = speaking_memory_ancestory_percentage
+					value = 100
 				}
 			}
-			remove_province_modifier = charkuchin_kobold_supply_facility
-			province_event = { id = charkuchin_kobold.11 }
-		}
-		else = { # else increase SF count by 1
-			owner = {
-				change_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-					value = 1
-				}
-				change_variable = {
-					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-					value = 10
-				}
+			set_variable = {
+				which = speaking_memory_ancestory_percentage
+				value = 100
 			}
 		}
+		speaking_memory_modifier_update = yes	
 	}
-	if = { # Otherwise, it's a province we need to spend monthly supplies on. This will include provinces that had a SF that we just deleted, hence "if" instead of "else"
-		limit = {
-			NOT = {
-				has_charkuchin_kobold_citadel = yes # Should be unnecessary, but just in case
-				has_province_modifier = charkuchin_kobold_supply_facility
-				AND = {
-					owner = { exists = yes }
-					is_city = no
-				}
-			}
+}
+
+speaking_memory_remove_memory = { #Remember to add localization if your using a new number of $amount$
+	custom_tooltip = speaking_memory_remove_$amount$_memory
+	hidden_effect = {
+		subtract_variable = {
+			which = speaking_memory_ancestory_percentage
+			value = $amount$
 		}
-		if = { # Different regions have different costs so we track them differently
-			limit = { superregion = charkuchar_superregion }
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = charkuchar_range
-					location_type = city
-					value = 1
-					cost = 1.5
-				}
-			}
-		}
-		else_if = {
+		if = {
 			limit = {
-				region = west_insyaan_lowlands_region
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = lowlands
-					location_type = city
-					value = 1
-					cost = 6
+				NOT = {
+					check_variable = {
+						which = speaking_memory_ancestory_percentage
+						value = 0
+					}
 				}
 			}
-		}
-		else_if = {
-			limit = {
-				superregion = hinuilands_superregion
-			}
-			owner = {
-				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-					region_group = titanoflora
-					location_type = city
-					value = 1
-					cost = 30
-				}
-			}
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_update_count_upgrade = {
-	remove_province_modifier = supplies_colony
-	# Reduce colony count by 1, increase city count by 1
-	if = { # Different regions have different costs so we track them differently
-		limit = { superregion = charkuchar_superregion }
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = charkuchar_range
-				location_type = colony
-				value = -1
-				cost = -0.75
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = charkuchar_range
-				location_type = city
-				value = 1
-				cost = 1.5
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			region = west_insyaan_lowlands_region
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = lowlands
-				location_type = colony
-				value = -1
-				cost = -3
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = lowlands
-				location_type = city
-				value = 1
-				cost = 6
-			}
-		}
-	}
-	else_if = {
-		limit = {
-			superregion = hinuilands_superregion
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = titanoflora
-				location_type = colony
-				value = -1
-				cost = -15
-			}
-		}
-		owner = {
-			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-				region_group = titanoflora
-				location_type = city
-				value = 1
-				cost = 30
-			}
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_count
-		value = $value$
-	}
-
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_cost
-		value = $cost$
-	}
-	# Update the total cost in here, too
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-		value = $cost$
-	}
-	#The total cost is tripled during the migration
-	if = {
-		limit = {
-			has_disaster = hinuibird_migration_disaster
-		}
-		# Update the total cost in here, too
-		change_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-			value = $cost$
-		}
-		# Update the total cost in here, too
-		change_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-			value = $cost$
-		}
-	}
-}
-
-insyaa_charkuchin_kobold_citadel_supplies_monthly_loss = {
-	set_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-	}
-	subtract_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
-	}
-	if = {
-		limit = { # If it's positive
-			check_variable = {
-				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+			set_variable = {
+				which = speaking_memory_ancestory_percentage
 				value = 0
 			}
 		}
-		gov_power_var_effect = {
-			mechanic = charkuchin_kobold_citadel_supplies_mechanic
-			power = citadel_supplies
-			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			sign = +
-		}
-	}
-	else = { # gov_power_var_effect only works with positive numbers, so it our value if negative, flip it and use sign = -
-		multiply_variable = {
-			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			value = -1
-		}
-		gov_power_var_effect = {
-			mechanic = charkuchin_kobold_citadel_supplies_mechanic
-			power = citadel_supplies
-			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
-			sign = -
-		}
-	}
-}
-
-insyaa_charkuchin_kobolds_ai_supply_centre = {
-	add_treasury = -50
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
-		value = 1
-	}	
-	change_variable = {
-		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
-		value = 10
-	}
-	random_owned_province = {
-		limit = {
-			# base_production = 4
-			OR = {
-				has_fort_building_trigger = yes
-				has_production_building_trigger = yes
-			}
-			NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
-			NOT = { has_charkuchin_kobold_citadel = yes }
-		}
-		add_permanent_province_modifier = {
-			name = charkuchin_kobold_supply_facility
-			duration = -1
-		}
-	}
-}
-
-insyaa_charkuchin_kobolds_released_setup = {
-	clr_country_flag = charkuchin_kobold_start #I'm pretty sure flags stick around if you are annexed then released
-
-	# Since your government type depends on the type of the country that released you as a vassal or forced you to be
-	# released via peace, and we ony have 7 starting Insyaa kobold tags, I'll hardcode their starting gov types
-	# If you're not in that list (maybe more kobolds in the future) you get a monarchy if you were native
-	# or tribal
-	trigger_switch = {
-		on_trigger = tag
-		P30 = { change_government = monarchy }
-		P31 = { change_government = theocracy }
-		P32 = { change_government = monarchy }
-		P33 = { change_government = monarchy }
-		P34 = { change_government = monarchy }
-		P35 = { change_government = republic }
-		P36 = { change_government = republic }
-	}
-	trigger_switch = {
-		on_trigger = government
-		monarchy = { add_government_reform = charkuchin_monarchy_reform }
-		republic = { add_government_reform = charkuchin_council_reform }
-		theocracy = { add_government_reform = charkuchin_citadel_clerical_administration }
-		tribal = {
-			change_government = monarchy
-			add_government_reform = charkuchin_monarchy_reform
-		}
-		native = {
-			change_government = monarchy
-			add_government_reform = charkuchin_monarchy_reform
-		}
-	}
-	country_event = { #Initial variable setup and some modifiers
-		id = charkuchin_kobold.0
-	}
-	#Update the supplies counters for your provinces, since the starting event assumes
-	#you only have your capital with a citadal
-	every_owned_province = {
-		limit = {
-			is_capital = no
-		}
-		insyaa_charkuchin_kobold_citadel_supplies_update_count_add = yes
-	}
-	#Update your gain from admin tech
-	export_to_variable = {
-		which = kobold_admin_tech
-		value = adm_tech
-	}
-	#Since the starting event assumes tech 2
-	subtract_variable = { kobold_admin_tech = 2 }
-	while = {
-		limit = {
-			check_variable = {
-				which = kobold_admin_tech
-				value = 1
-			}
-		}
-		subtract_variable = { kobold_admin_tech = 1 }
-		insyaa_charkuchin_kobold_citadel_supplies_tech = yes
-	}
-}
-add_mechanim_minority_large_effect = {
-	custom_tooltip = add_mechanim_minority_large_effect_tooltip
-	hidden_effect = { 
-		add_mechanim_minority_size_effect = yes
-		add_mechanim_minority_size_effect = yes
+		speaking_memory_modifier_update = yes
 	}
 }
