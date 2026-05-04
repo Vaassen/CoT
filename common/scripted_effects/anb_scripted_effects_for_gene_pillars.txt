@@ -392,6 +392,8 @@ gene_pillar_abandon_expedition_effect = {
 
 gene_pillar_successful_end_expedition_effect = {
 	gene_pillar_injure_party_members_effect = yes
+
+	# These are rewards/penalties giving out during specific gene pillars
 	remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
 	if = {
 		limit = {
@@ -404,6 +406,7 @@ gene_pillar_successful_end_expedition_effect = {
 		}
 		clr_country_flag = gene_pillars_successful_gain_capital_dev
 	}
+
 	if = {
 		limit = { has_country_flag = gene_pillar_is_exploring_level_1_pillar }
 		gene_pillars_add_xp_effect = { amount = 5 }
@@ -424,6 +427,18 @@ gene_pillar_successful_end_expedition_effect = {
 		clr_country_flag = gene_pillars_visited_nexus_of_realities # Only clear once you beat the pillar on level 3
 	}
 	event_target:gene_pillar_exploration_province = {
+		gene_pillars_randomise_loot_event = yes
+		if = {
+			limit = {
+				check_variable = {
+					which = aPUI_gene_pillar_loot_var
+					value = 100
+				}
+			}
+			# The loot var is reduced by 100 in the event option
+			gene_pillars_randomise_loot_event = yes
+			# custom_tooltip = gene_pillars_get_loot_again_tt
+		}
 		province_event = { id = gene_pillars.30 }
 		hidden_effect = {
 			set_variable = { # Reset progress to 0
@@ -937,9 +952,9 @@ gene_pillars_check_loot_threshold = {
 				which = aPUI_gene_pillar_loot_var
 				value = -100
 			}
-			gene_pillars_get_loot_event = yes
+			# gene_pillars_randomise_loot_event = yes
 		}
-		custom_tooltip = gene_pillars_get_loot_again_tt
+		# custom_tooltip = gene_pillars_get_loot_again_tt
 	}
 }
 
@@ -1120,7 +1135,10 @@ gene_pillars_level_up_check = {
 	}
 }
 
-gene_pillars_get_loot_event = {
+# This fires in the immediate of the reward event to calculate the loot, and then
+# the event option will actually give it to you
+# If you have 100 loot points, make sure we only select each reward once
+gene_pillars_randomise_loot_event = {
 	random_list = {
 		10 = {
 			trigger = {
@@ -1128,59 +1146,12 @@ gene_pillars_get_loot_event = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_good_ruler
 					}
 				}
 			}
-			if = {
-				limit = {
-					owner = {
-						OR = {
-							has_country_modifier = elven_administration
-							has_country_modifier = half_elven_administration
-							has_country_modifier = ruinborn_administration
-						}
-					}
-				}
-				owner = {
-					add_legitimacy_equivalent = { amount = 50 republican_tradition = 50 }
-					add_prestige = 35
-					random_list = {
-						1 = { change_adm = 1 }
-						1 = { change_dip = 1 }
-						1 = { change_mil = 1 }
-					}
-					custom_tooltip = gene_pillar_get_loot_ae_tt
-					hidden_effect = {
-						every_known_country = {
-							add_aggressive_expansion = {
-								who = PREV
-								value = -10
-								apply_calc = no
-							}
-						}
-					}
-				}
-			}
-			else = {
-				owner = {
-					add_legitimacy_equivalent = { amount = 25 republican_tradition = 25 }
-					add_prestige = 25
-					random_list = {
-						1 = { change_adm = 1 }
-						1 = { change_dip = 1 }
-						1 = { change_mil = 1 }
-					}
-					custom_tooltip = gene_pillar_get_loot_ae_tt
-					hidden_effect = {
-						every_known_country = {
-							add_aggressive_expansion = {
-								who = PREV
-								value = -10
-								apply_calc = no
-							}
-						}
-					}
-				}
+			owner = {
+				set_country_flag = gene_pillars_loot_good_ruler
 			}
 		}
 		10 = {
@@ -1189,58 +1160,42 @@ gene_pillars_get_loot_event = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_institution
 					}
 				}
 			}
-			if = {
-				limit = {
-					owner = {
-						OR = {
-							is_ahead_of_time_in_technology = { tech = adm }
-							is_ahead_of_time_in_technology = { tech = dip }
-							is_ahead_of_time_in_technology = { tech = mil }
-						}
-					}
-				}
-				owner = {
-					capital_scope = {
-						area = {
-							add_next_institution_embracement = 100
-						}
-					}
-					add_country_modifier = {
-						name = gene_pillars_mod_1
-						duration = 3650 #10 years
-					}
-				}
-			}
-			else = {
-				owner = {
-					capital_scope = {
-						area = {
-							add_next_institution_embracement = 100
-						}
-					}
-					add_country_modifier = {
-						name = gene_pillars_mod_2
-						duration = 3650 #10 years
-					}
-				}
+			owner = {
+				set_country_flag = gene_pillars_loot_institution
 			}
 		}
-		# placeholder Should neither of these fire if you've already got one?
 		10 = { # Get precursor relics
 			trigger = {
-				owner = { NOT = { has_country_flag = gene_pillars_has_artificer_A } }
+				owner = {
+					NOT = {
+						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_precursor_relics
+						has_country_flag = gene_pillars_loot_damestear
+					}
+				}
 				NOT = { trade_goods = precursor_relics }
 			}
-			province_event = { id = gene_pillars.40 }
+			owner = {
+				set_country_flag = gene_pillars_loot_precursor_relics
+			}
 		}
 		10 = { # Get Damestear
 			trigger = {
+				owner = {
+					NOT = {
+						has_country_flag = gene_pillars_loot_damestear
+						has_country_flag = gene_pillars_loot_precursor_relics
+					}
+				}
 				NOT = { trade_goods = damestear }
 			}
-			province_event = { id = gene_pillars.50 }
+			owner = {
+				set_country_flag = gene_pillars_loot_damestear
+			}
 		}
 		10 = {
 			trigger = {
@@ -1248,45 +1203,170 @@ gene_pillars_get_loot_event = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_power_cash
 					}
 				}
 			}
-			if = {
-				limit = {
-					owner = {
-						capital_scope = { continent = oceania }
-						is_lacking_institutions = yes
+			owner = {
+				set_country_flag = gene_pillars_loot_power_cash
+			}
+		}
+	}
+}
+
+gene_pillars_gain_final_loot_event = {
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_good_ruler }
+		}
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_country_modifier = elven_administration
+						has_country_modifier = half_elven_administration
+						has_country_modifier = ruinborn_administration
 					}
 				}
-				owner = {
-					capital_scope = {
-						area = {
-							add_next_institution_embracement = 50
+			}
+			owner = {
+				add_legitimacy_equivalent = { amount = 50 republican_tradition = 50 }
+				add_prestige = 35
+				random_list = {
+					1 = { change_adm = 1 }
+					1 = { change_dip = 1 }
+					1 = { change_mil = 1 }
+				}
+				custom_tooltip = gene_pillar_get_loot_ae_tt
+				hidden_effect = {
+					every_known_country = {
+						add_aggressive_expansion = {
+							who = PREV
+							value = -10
+							apply_calc = no
 						}
 					}
-					add_adm_power = 75
-					add_dip_power = 75
-					add_mil_power = 75
-					if = {
-						limit = { monthly_income = 375 }
-						add_treasury = 3000
-					}
-					else = { add_years_of_income = 0.66 }
-				}
-			}
-			else = {
-				owner = {
-					add_adm_power = 100
-					add_dip_power = 100
-					add_mil_power = 100
-					if = {
-						limit = { monthly_income = 416.66 }
-						add_treasury = 5000
-					}
-					else = { add_years_of_income = 1 }
 				}
 			}
 		}
+		else = {
+			owner = {
+				add_legitimacy_equivalent = { amount = 25 republican_tradition = 25 }
+				add_prestige = 25
+				random_list = {
+					1 = { change_adm = 1 }
+					1 = { change_dip = 1 }
+					1 = { change_mil = 1 }
+				}
+				custom_tooltip = gene_pillar_get_loot_ae_tt
+				hidden_effect = {
+					every_known_country = {
+						add_aggressive_expansion = {
+							who = PREV
+							value = -10
+							apply_calc = no
+						}
+					}
+				}
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_good_ruler }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_institution }
+		}
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						is_ahead_of_time_in_technology = { tech = adm }
+						is_ahead_of_time_in_technology = { tech = dip }
+						is_ahead_of_time_in_technology = { tech = mil }
+					}
+				}
+			}
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 100
+					}
+				}
+				add_country_modifier = {
+					name = gene_pillars_mod_1
+					duration = 3650 #10 years
+				}
+			}
+		}
+		else = {
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 100
+					}
+				}
+				add_country_modifier = {
+					name = gene_pillars_mod_2
+					duration = 3650 #10 years
+				}
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_institution }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_precursor_relics }
+		}
+		province_event = { id = gene_pillars.40 } # TODO change scope
+		owner = { clr_country_flag = gene_pillars_loot_precursor_relics }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_damestear }
+		}
+		province_event = { id = gene_pillars.50 } # TODO change scope
+		owner = { clr_country_flag = gene_pillars_loot_damestear }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_power_cash }
+		}
+		if = {
+			limit = {
+				owner = {
+					capital_scope = { continent = oceania }
+					is_lacking_institutions = yes
+				}
+			}
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 50
+					}
+				}
+				add_adm_power = 75
+				add_dip_power = 75
+				add_mil_power = 75
+				if = {
+					limit = { monthly_income = 375 }
+					add_treasury = 3000
+				}
+				else = { add_years_of_income = 0.66 }
+			}
+		}
+		else = {
+			owner = {
+				add_adm_power = 100
+				add_dip_power = 100
+				add_mil_power = 100
+				if = {
+					limit = { monthly_income = 416.66 }
+					add_treasury = 5000
+				}
+				else = { add_years_of_income = 1 }
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_power_cash }
 	}
 	# Extra reward from gene_pillars.1005
 	if = {
@@ -1302,8 +1382,9 @@ gene_pillars_get_loot_event = {
 				add_treasury = 2500
 			}
 			else = { add_years_of_income = 0.5 }
+
+			clr_province_flag = gene_pillars_generic_extra_reward_at_end
 		}
-		clr_province_flag = gene_pillars_generic_extra_reward_at_end
 	}
 }
 
