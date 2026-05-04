@@ -402,6 +402,12 @@ estate_nobles_officer_corp = {
 		}
 	}
 	conditional_modifier = {
+		trigger = { has_country_flag = karach_improved_nobles_in_officers }
+		modifier = {
+			land_morale = 0.05
+		}
+	}
+	conditional_modifier = {
 		trigger = { has_country_flag = RSP_rhasail_improved_nobles_officer_corp }
 		modifier = {
 			navy_tradition_decay = -0.005
@@ -553,7 +559,13 @@ estate_nobles_levies = {
 estate_nobles_advisors = {
 	icon = privilege_recruit_minister
 	max_absolutism = -5
-	conditional_modifier = { trigger = { has_absolutism_reduction_for_estate_privileges = yes } modifier = { max_absolutism = 1 } }
+	conditional_modifier = {
+		trigger = {
+			has_absolutism_reduction_for_estate_privileges = yes
+			NOT = { has_country_flag = remove_absolutism_from_nobles_advisors }
+		}
+		modifier = { max_absolutism = 1 }
+	}
 	influence = 0.05
 	loyalty = 0.05
 	penalties = {
@@ -566,6 +578,7 @@ estate_nobles_advisors = {
 		# NOT = { has_estate_privilege = estate_maratha_advisor }
 		# NOT = { has_estate_privilege = estate_rajput_advisor }
 		NOT = { has_estate_privilege = estate_eunuchs_anb_advisors }	#Anbennar
+		NOT = { has_estate_privilege = estate_voltoj_royal_advisors }
 	}
 	benefits = {
 		mil_advisor_cost = -0.15
@@ -585,6 +598,14 @@ estate_nobles_advisors = {
 		modifier = {
 				vampires_loyalty_modifier = 0.05
 		}
+	}
+	conditional_modifier = {
+		trigger = { has_country_flag = remove_stability_cost_modifier_from_nobles_advisors }
+		modifier = { stability_cost_modifier = -1 }
+	}
+	conditional_modifier = {
+		trigger = { has_country_flag = remove_absolutism_from_nobles_advisors }
+		modifier = { max_absolutism = 5 }
 	}
 	#conditional_modifier = {
 	#	trigger = { has_government_mechanic = ottoman_decadence_mechanic }
@@ -842,18 +863,16 @@ estate_nobles_monopoly_of_metals = {
 					value = 1
 				}
 			}
+		}
+		custom_trigger_tooltip = {
 			tooltip = JY_LF_not_trading #Anbennar
 			NOT = { has_country_modifier = JY_LF_recent_trade }
-			NOT = { has_reform = copperlord_reform } #ANBENNAR
-			# NOT = { has_disaster = french_revolution }
-			# NOT = {
-				# has_disaster_progress = {
-					# disaster = french_revolution
-					# value = 1
-				# }
-			# }
 		}
-	}
+		if = {
+			limit = { has_reform = copperlord_reform }
+			NOT = { has_reform = copperlord_reform } #ANBENNAR
+		}
+}
 	on_granted = {
 		if = {
 			limit = {
@@ -865,18 +884,35 @@ estate_nobles_monopoly_of_metals = {
 			}
 			add_mercantilism = 1
 		}
-		add_years_of_owned_provinces_production_income = {
-			years = 8
-			trigger = {
-				OR = {
-					trade_goods = iron
-					trade_goods = copper
-					trade_goods = mithril
+		if = {
+			limit = { has_country_flag = karach_improved_smelting_monopoly }
+			add_years_of_owned_provinces_production_income = {
+				years = 10
+				trigger = {
+					OR = {
+						trade_goods = iron
+						trade_goods = copper
+						trade_goods = mithril
+					}
 				}
+				custom_tooltip = MONOPOLY_INCOME_IRON_AND_COPPER_DESC
 			}
-			custom_tooltip = MONOPOLY_INCOME_IRON_AND_COPPER_DESC
+			custom_tooltip = estate_nobles_monopoly_of_metals_effect_tooltip
 		}
-		custom_tooltip = estate_nobles_monopoly_of_metals_effect_tooltip
+		else = {
+			add_years_of_owned_provinces_production_income = {
+				years = 8
+				trigger = {
+					OR = {
+						trade_goods = iron
+						trade_goods = copper
+						trade_goods = mithril
+					}
+				}
+				custom_tooltip = MONOPOLY_INCOME_IRON_AND_COPPER_DESC
+			}
+			custom_tooltip = estate_nobles_monopoly_of_metals_effect_tooltip
+		}
 	}
 	on_granted_province = {
 		if = {
@@ -885,6 +921,22 @@ estate_nobles_monopoly_of_metals = {
 					trade_goods = iron
 					trade_goods = copper
 					trade_goods = mithril
+				}
+			}
+			if = {
+				limit = { ROOT = { has_country_flag = karach_improved_smelting_monopoly } }
+				if = {
+					limit = { ROOT = { has_country_flag = karach_improved_nobles_monopolies_again } }
+					add_province_modifier = {
+						name = improved_province_monopoly_karach_nobles
+						duration = -1
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = improved_province_monopoly_karach
+						duration = -1
+					}
 				}
 			}
 			add_province_modifier = {
@@ -897,6 +949,8 @@ estate_nobles_monopoly_of_metals = {
 				has_province_modifier = estate_nobles_monopoly_of_metals_mod
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_metals_mod
+			remove_province_modifier = improved_province_monopoly_karach
+			remove_province_modifier = improved_province_monopoly_karach_nobles
 		}
 	}
 	on_revoked = {
@@ -909,6 +963,8 @@ estate_nobles_monopoly_of_metals = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_metals_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	on_invalid = {
 		custom_tooltip = estate_nobles_monopoly_of_metals_revoke_tooltip
@@ -920,6 +976,8 @@ estate_nobles_monopoly_of_metals = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_metals_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	penalties = {
 	}
@@ -968,15 +1026,10 @@ estate_nobles_monopoly_of_livestock = {
 					value = 1
 				}
 			}
+		}
+		custom_trigger_tooltip = {
 			tooltip = JY_LF_not_trading #Anbennar
 			NOT = { has_country_modifier = JY_LF_recent_trade }
-			# NOT = { has_disaster = french_revolution }
-			# NOT = {
-				# has_disaster_progress = {
-					# disaster = french_revolution
-					# value = 1
-				# }
-			# }
 		}
 	}
 	on_granted = {
@@ -994,6 +1047,19 @@ estate_nobles_monopoly_of_livestock = {
 				}
 				custom_tooltip = MONOPOLY_INCOME_LIVESTOCK_DESC
 			}
+		}
+		else_if = { limit = { has_country_flag = karach_improved_livestock_monopolies}
+			add_years_of_owned_provinces_production_income = {
+				years = 10
+				trigger = {
+					OR = {
+						trade_goods = livestock
+						trade_goods = grain
+					}
+				}
+				custom_tooltip = KARACH_MONOPOLY_INCOME_LIVESTOCK_DESC
+			}
+			custom_tooltip = karach_estate_nobles_monopoly_of_livestock_effect_tooltip
 		}
 		else = {
 			add_years_of_owned_provinces_production_income = {
@@ -1021,11 +1087,37 @@ estate_nobles_monopoly_of_livestock = {
 	on_granted_province = {
 		if = {
 			limit = {
-				trade_goods = livestock
+				OR = {
+					trade_goods = livestock
+					AND = {
+						ROOT = { has_country_flag = karach_improved_livestock_monopolies }
+						trade_goods = grain
+					}
+				}
 			}
 			add_province_modifier = {
 				name = estate_nobles_monopoly_of_livestock_mod
 				duration = -1
+			}
+			if = {
+				limit = { 
+					ROOT = { 
+						has_country_flag = karach_improved_livestock_monopolies 
+					} 
+				}
+				if = {
+					limit = { ROOT = { has_country_flag = karach_improved_nobles_monopolies_again } }
+					add_province_modifier = {
+						name = improved_province_monopoly_karach_nobles
+						duration = -1
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = improved_province_monopoly_karach
+						duration = -1
+					}
+				}
 			}
 		}
 		else_if = {
@@ -1033,6 +1125,8 @@ estate_nobles_monopoly_of_livestock = {
 				has_province_modifier = estate_nobles_monopoly_of_livestock_mod
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_livestock_mod
+			remove_province_modifier = improved_province_monopoly_karach
+			remove_province_modifier = improved_province_monopoly_karach_nobles
 		}
 	}
 	on_revoked = {
@@ -1045,6 +1139,8 @@ estate_nobles_monopoly_of_livestock = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_livestock_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	on_invalid = {
 		custom_tooltip = estate_nobles_monopoly_of_livestock_revoke_tooltip
@@ -1056,6 +1152,8 @@ estate_nobles_monopoly_of_livestock = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_livestock_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	penalties = {
 	}
@@ -1132,15 +1230,10 @@ estate_nobles_monopoly_of_gems = {
 					value = 1
 				}
 			}
+		}
+		custom_trigger_tooltip = {
 			tooltip = JY_LF_not_trading #Anbennar
 			NOT = { has_country_modifier = JY_LF_recent_trade }
-			# NOT = { has_disaster = french_revolution }
-			# NOT = {
-				# has_disaster_progress = {
-					# disaster = french_revolution
-					# value = 1
-				# }
-			# }
 		}
 	}
 	on_granted = {
@@ -1150,14 +1243,29 @@ estate_nobles_monopoly_of_gems = {
 			}
 			add_mercantilism = 1
 		}
-		add_years_of_owned_provinces_production_income = {
-			years = 8
-			trigger = {
-				trade_goods = gems
+		if = {
+			limit = {
+				has_country_flag = karach_upgraded_gem_monopoly
 			}
-			custom_tooltip = MONOPOLY_INCOME_GEMS_DESC
+			add_years_of_owned_provinces_production_income = {
+				years = 10
+				trigger = {
+					trade_goods = gems
+				}
+				custom_tooltip = MONOPOLY_INCOME_GEMS_DESC
+			}
+			custom_tooltip = estate_nobles_monopoly_of_gems_effect_tooltip
 		}
-		custom_tooltip = estate_nobles_monopoly_of_gems_effect_tooltip
+		else = {
+			add_years_of_owned_provinces_production_income = {
+				years = 8
+				trigger = {
+					trade_goods = gems
+				}
+				custom_tooltip = MONOPOLY_INCOME_GEMS_DESC
+			}
+			custom_tooltip = estate_nobles_monopoly_of_gems_effect_tooltip
+		}
 	}
 	on_granted_province = {
 		if = {
@@ -1168,12 +1276,30 @@ estate_nobles_monopoly_of_gems = {
 				name = estate_nobles_monopoly_of_gems_mod
 				duration = -1
 			}
+			if = {
+				limit = { ROOT = { has_country_flag = karach_upgraded_gem_monopoly } }
+				if = {
+					limit = { ROOT = { has_country_flag = karach_improved_nobles_monopolies_again } }
+					add_province_modifier = {
+						name = improved_province_monopoly_karach_nobles
+						duration = -1
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = improved_province_monopoly_karach
+						duration = -1
+					}
+				}
+			}
 		}
 		else_if = {
 			limit = {
 				has_province_modifier = estate_nobles_monopoly_of_gems_mod
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_gems_mod
+			remove_province_modifier = improved_province_monopoly_karach
+			remove_province_modifier = improved_province_monopoly_karach_nobles
 		}
 	}
 	on_revoked = {
@@ -1186,6 +1312,8 @@ estate_nobles_monopoly_of_gems = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_gems_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	on_invalid = {
 		custom_tooltip = estate_nobles_monopoly_of_gems_revoke_tooltip
@@ -1197,6 +1325,8 @@ estate_nobles_monopoly_of_gems = {
 			}
 			remove_province_modifier = estate_nobles_monopoly_of_gems_mod
 		}
+		remove_province_modifier = improved_province_monopoly_karach
+		remove_province_modifier = improved_province_monopoly_karach_nobles
 	}
 	penalties = {
 	}
@@ -3271,16 +3401,34 @@ estate_nobles_development_of_castles = {
 	on_granted = {
 		custom_tooltip = estate_nobles_development_of_castles_gt
 		tooltip = {
-			add_province_modifier = {
-				name = estate_nobles_development_of_castles_mod
-				duration = -1
+			if = {
+				limit = { has_country_flag = karach_improved_fortifications }
+				add_province_modifier = {
+					name = karach_improved_fortifications_mod
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = estate_nobles_development_of_castles_mod
+					duration = -1
+				}
 			}
 		}
 		custom_tooltip = estate_nobles_development_of_castles_at
 		tooltip = {
-			add_province_modifier = {
-				name = estate_nobles_development_of_castles_ramparts_mod
-				duration = -1
+			if = {
+				limit = { has_country_flag = karach_improved_fortifications }
+				add_province_modifier = {
+					name = karach_improved_fortifications_mod
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = estate_nobles_development_of_castles_ramparts_mod
+					duration = -1
+				}
 			}
 		}
 	}
@@ -3292,18 +3440,36 @@ estate_nobles_development_of_castles = {
 			limit = {
 				has_fort_building_trigger = yes
 			}
-			add_province_modifier = {
-				name = estate_nobles_development_of_castles_mod
-				duration = -1
+			if = {
+				limit = { ROOT = { has_country_flag = karach_improved_fortifications } }
+				add_province_modifier = {
+					name = karach_improved_fortifications_mod
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = estate_nobles_development_of_castles_mod
+					duration = -1
+				}
 			}
 		}
 		if = {
 			limit = {
 				has_building = ramparts
 			}
-			add_province_modifier = {
-				name = estate_nobles_development_of_castles_ramparts_mod
-				duration = -1
+			if = {
+				limit = { ROOT = { has_country_flag = karach_improved_fortifications } }
+				add_province_modifier = {
+					name = karach_improved_fortifications_mod
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = estate_nobles_development_of_castles_ramparts_mod
+					duration = -1
+				}
 			}
 		}
 	}
@@ -3316,6 +3482,10 @@ estate_nobles_development_of_castles = {
 			limit = { has_province_modifier = estate_nobles_development_of_castles_ramparts_mod }
 			remove_province_modifier = estate_nobles_development_of_castles_ramparts_mod
 		}
+		if = {
+			limit = { has_province_modifier = karach_improved_fortifications_mod }
+			remove_province_modifier = karach_improved_fortifications_mod
+		}
 	}
 	on_revoked_province = {
 		if = {
@@ -3325,6 +3495,10 @@ estate_nobles_development_of_castles = {
 		if = {
 			limit = { has_province_modifier = estate_nobles_development_of_castles_ramparts_mod }
 			remove_province_modifier = estate_nobles_development_of_castles_ramparts_mod
+		}
+		if = {
+			limit = { has_province_modifier = karach_improved_fortifications_mod }
+			remove_province_modifier = karach_improved_fortifications_mod
 		}
 	}
 

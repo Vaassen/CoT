@@ -1,4 +1,35 @@
 namespace = unraveling
+
+# unraveling.0 helper event for players without El Dorado
+country_event = {
+	id = unraveling.90
+	title = unraveling.90.t
+	desc = unraveling.90.d
+	picture = COMET_SIGHTED_eventPicture
+	hidden = yes
+	fire_only_once  = yes
+	is_triggered_only = yes
+	trigger = {
+		# these are already the conditions set in on_actions
+		# NOT = { has_dlc = "El Dorado" } # unraveling.0 is triggered differently with El Dorado
+		# capital_scope = {	continent = europe }
+		NOT = { has_global_flag = new_world_discovered }
+		OR = { # if the AI stumbles over Aelantir early, they'll think they just found a shortcut to Feiten
+			ai = no
+			is_year = 1470
+		}
+	}
+	option = {
+		ai_chance = {
+			factor = 100
+		}
+		name = unraveling.90.a
+		event_target:unraveling_colony = {
+			province_event = { id = unraveling.0 }
+		}
+	}
+}
+
 # Rediscovery of Aelantir!
 province_event = {
 	id = unraveling.0
@@ -185,12 +216,44 @@ province_event = {
 					limit = {
 						OR = {
 							owns = 112
+							AND = {
+								tag = A80
+								112 = { owner = { is_subject_of_type = hezoggdoum } }
+							}
 							lencori_qualifies_for_behemoths = yes
 						}
 					}
 					country_event = { id = lencori_behemoth.1 days = 30 }
 				}
 			}
+		}
+	}
+}
+
+# unraveling.1 helper event for players without El Dorado
+country_event = {
+	id = unraveling.91
+	title = unraveling.91.t
+	desc = unraveling.91.d
+	picture = COMET_SIGHTED_eventPicture
+	hidden = yes
+	is_triggered_only = yes
+	trigger = {
+		# these are already the conditions set in on_actions
+		# NOT = { has_dlc = "El Dorado" } # unraveling.1 is triggered differently with El Dorado
+		# capital_scope = {	continent = europe }
+		NOT = { has_global_flag = castellar_mural_discovered }
+		NOT = {	has_country_flag = unraveling.1_fired }
+		has_global_flag = new_world_discovered
+		is_year = 1495
+	}
+	option = {
+		ai_chance = {
+			factor = 100
+		}
+		name = unraveling.91.a
+		event_target:unraveling_colony = {
+			province_event = { id = unraveling.1 }
 		}
 	}
 }
@@ -793,11 +856,15 @@ province_event = {
 	after = {
 		if = {
 			limit = {
-				NOT = {
-					has_dlc = "El Dorado"
+				# If this event fires but unraveling.0 never fired - due to a bug or because no one 
+				# bothered to sail west - it means we're in the 1520 fallback trigger and we just 
+				# pretend that Aelantir has been discovered and send the adventurers now.
+				NOT = { 
+					has_global_flag = new_world_discovered
 				}
 			}
 			hidden_effect = {
+				set_global_flag = new_world_discovered
 				169 = {
 					#Nimscodd
 					province_event = {
