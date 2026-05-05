@@ -2,20 +2,22 @@
 ### SYSTEM ###
 ##############
 
-can_use_magic = { #Can I cast spells?
+can_use_magic = { #Can I cast spells and study? (interact with the magic UI)
 	custom_trigger_tooltip = {
 		tooltip = can_use_magic
-		NOT = { has_country_flag = J84_no_casting_spells_flag }
+		has_not_banned_magic = yes #banning magic instantly blocks magic, even if you have a PM ruler
+		NOT = { has_country_modifier = block_magic_temp_modifier } #modifier to block all casting of magic, without removing the mage estate
 		OR = {
 			AND = {
 				has_magic_estate_or_equiv = yes
 				NOT = { has_country_modifier = mages_strike }	#loc is generic, reuse at will
 			}
-			has_ruler_flag = zokka_phoenix_flag
-			AND = {
-				ruler_is_powerful_mage = yes
-				NOT = { has_country_flag = magic_artificery_artificery_only }
-			}
+			has_ruler_flag = ruler_can_cast_magic_without_mage_personality_flag #For MT always letting you cast spells, like Zokka
+			ruler_is_powerful_mage = yes
+		}
+		OR = {
+			is_not_in_artificery_mode = yes
+			has_country_flag = can_use_magic_while_artificery #Command
 		}
 	}
 }
@@ -30,13 +32,12 @@ has_magic_estate_or_equiv = { #Do I have a mage estate? More to the point, do I 
 	}
 }
 
-has_banned_magic = { #Shared restrictions between mage personality and mage estate
+has_banned_magic = { #Shared restrictions between mage personality, mage estate, and magic UI
 	custom_trigger_tooltip = {
 		tooltip = has_banned_magic
 		OR = {
 			has_country_flag = banned_magic
 			has_country_flag = LF_mages_banned # LF has to go through its crisis first
-			culture_is_mechanim = yes
 		}
 	}
 }
@@ -57,7 +58,6 @@ has_not_banned_magic = { #Can I have the mage estate and roll powerful mage rule
 		NOT = {
 			has_country_flag = banned_magic
 			has_country_flag = LF_mages_banned # LF has to go through its crisis first
-			culture_is_mechanim = yes
 		}
 	}
 }
@@ -2378,7 +2378,7 @@ has_num_active_magic_spells = {
 		OR = { has_cast_heartstring_thoughtweave = yes }
 		OR = { has_cast_enchanting_envoy_embassy = yes }
 		OR = { has_cast_command_animals = yes }
-		OR = { has_country_modifier = enchantment_0_harpy_mod }
+		OR = { has_cast_firanyas_call = yes }
 		OR = { has_country_modifier = enchantment_3_harpy_mod }
 		OR = { has_country_modifier = enchantment_2_bulwar_default_2_tracking_mod }
 		
@@ -3164,7 +3164,7 @@ has_cast_any_enchantment_spell = {
 			has_cast_heartstring_thoughtweave = yes
 			has_cast_enchanting_envoy_embassy = yes
 			has_cast_command_animals = yes
-			has_country_modifier = enchantment_0_harpy_mod
+			has_cast_firanyas_call = yes
 			has_country_modifier = enchantment_3_harpy_mod
 			has_country_modifier = enchantment_2_bulwar_default_2_tracking_mod
 		}
@@ -3326,7 +3326,7 @@ has_cast_evocation_war_magic = {
 			has_cast_flaming_munitions = yes
 			has_cast_elemental_fury = yes
 
-			has_country_modifier = evocation_2_harpy_mod
+			has_cast_kiovas_gale = yes
 		}
 	}
 }
@@ -3797,7 +3797,7 @@ transmutation_3_rite_of_conception_trigger = { # Rite of Conception
 		else = { ruler_is_not_powerful_mage = yes }
 	}
 	else = {
-		has_government_attribute = heir
+		government_has_heirs = yes
 		NOT = { government = theocracy }
 		heir_is_not_powerful_mage = yes
 	}
@@ -5036,21 +5036,35 @@ custom_spell_harpy_default_3_trigger = {
 custom_spell_harpy_default_4_trigger = {
 	enchantment_3_harpy_default_4_trigger = { [[player] player = $player$ ] }
 }
+custom_spell_harpy_default_5_trigger = {
+	enchantment_3_harpy_default_5_trigger = { [[player] player = $player$ ] }
+}
 
 enchantment_0_harpy_default_1_trigger = {
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = enchantment level = 0 id = harpy_default_1 } ]
 	NOT = { has_country_modifier = enchantment_0_harpy_mod }
 }
 evocation_2_harpy_default_2_trigger = {
-	is_overall_evocation_level_2_minimum = yes
+	evocation_2_harpy_default_2_subtrigger = yes
 	war_magic_trigger = yes
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = evocation level = 2 id = harpy_default_2 } ]
+	has_not_cast_kiovas_gale = yes
+}
+evocation_2_harpy_default_2_subtrigger = {	#aka is the spell "unlocked"?
+	is_overall_evocation_level_2_minimum = yes
 	check_variable = { ruler_battles_won = 10 }
-	NOT = { has_country_modifier = evocation_2_harpy_mod }
 }
 transmutation_2_harpy_default_3_trigger = {
-	is_overall_transmutation_level_2_minimum = yes
+	transmutation_2_harpy_default_3_subtrigger = yes
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = transmutation level = 2 id = harpy_default_3 } ]
+	has_not_cast_reshape_terrain = yes
+	custom_trigger_tooltip = {
+		tooltip = transmutation_2_harpy_default_3_trigger_tt
+		NOT = { has_country_modifier = transmutation_2_harpy_default_3_tracking_mod }
+	}
+}
+transmutation_2_harpy_default_3_subtrigger = {	#aka is the spell "unlocked"?
+	is_overall_transmutation_level_2_minimum = yes
 	num_of_owned_provinces_with = {
 		value = 3
 		harpy_roost_st_has_non_fledgling_roost = yes
@@ -5059,26 +5073,47 @@ transmutation_2_harpy_default_3_trigger = {
 		if = {
 			limit = { has_dlc = "Leviathan" }
 			num_of_times_expanded_infrastructure = 1
-		}		
-	}
-	has_not_cast_reshape_terrain = yes
-	custom_trigger_tooltip = {
-		tooltip = transmutation_2_harpy_default_3_trigger_tt
-		NOT = { has_country_modifier = transmutation_2_harpy_default_3_tracking_mod }
-	}
+		}
+	}	
 }
 enchantment_3_harpy_default_4_trigger = {
-	is_overall_enchantment_level_3 = yes
+	enchantment_3_harpy_default_4_subtrigger = yes
 	[[player] has_mana_to_cast_magical_tradition_spell = { school = enchantment level = 3 id = harpy_default_4 } ]
+	NOT = { has_country_modifier = enchantment_3_harpy_mod }
+}
+enchantment_3_harpy_default_4_subtrigger = {	#aka is the spell "unlocked"?
+	is_overall_enchantment_level_3 = yes
 	government_rank = 3
 	fast_owns_num_pops_of_race = { race = harpy amount = 50 }
-	NOT = { has_country_modifier = enchantment_3_harpy_mod }
+}
+enchantment_3_harpy_default_5_trigger = {
+	[[player] has_mana_to_cast_magical_tradition_spell = { school = enchantment level = 3 id = harpy_default_5 } ]
+	custom_trigger_tooltip = {
+		tooltip = enchantment_3_harpy_default_5_trigger_tt
+		NOT = { has_country_modifier = enchantment_3_harpylen_tracking_mod }
+	}
+	num_of_subjects = 1
 }
 
 has_cast_firanyas_call = {
 	custom_trigger_tooltip = {
 		tooltip = has_cast_firanyas_call
 		has_country_modifier = enchantment_0_harpy_mod
+	}
+}
+has_cast_kiovas_gale = {
+	custom_trigger_tooltip = {
+		tooltip = has_cast_kiovas_gale
+		OR = {
+			has_country_modifier = evocation_2_harpy_mod
+			has_country_modifier = evocation_2_harpy_mod_boosted
+		}
+	}
+}
+has_not_cast_kiovas_gale = {
+	custom_trigger_tooltip = {
+		tooltip = has_not_cast_kiovas_gale
+		NOT = { has_cast_kiovas_gale = yes }
 	}
 }
 
