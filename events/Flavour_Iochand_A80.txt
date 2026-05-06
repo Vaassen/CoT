@@ -485,7 +485,7 @@ country_event = { #Agitate the Small Country
 					culture_is_halfling = no
 					small_country_region = { country_or_non_sovereign_subject_holds = PREV }
 				}
-				save_event_target_as = small_war_target
+				save_global_event_target_as = small_war_target
 			}
 		}
 		declare_war_with_cb = {
@@ -512,6 +512,7 @@ country_event = { #Agitate the Small Country
 						culture_is_halfling = no
 						NOT = {
 							tag = ROOT
+							is_subject_of = ROOT
 							tag = A64
 							tag = A65
 						}
@@ -565,6 +566,17 @@ country_event = { #Agitate the Small Country
 				name = A80_diplo_upkeep_mod
 				duration = -1
 			}
+			capital_scope = {
+				add_province_triggered_modifier = A80_second_small_war_checker
+			}
+			every_war_enemy_country = {
+				limit = {
+					is_in_war = { casus_belli = cb_second_small_war }
+					is_free_or_tributary_trigger = yes
+					NOT = { small_country_region = { country_or_non_sovereign_subject_holds = PREV } }
+				}
+				white_peace = A80
+			}
 		}
 		applefields_area = {
 			add_core = ROOT
@@ -572,6 +584,9 @@ country_event = { #Agitate the Small Country
 		pearpoint_area = {
 			add_core = ROOT
 		}
+		custom_tooltip = " "
+		custom_tooltip = " "
+		custom_tooltip = A80_second_small_war_tt
 	}
 
 	option = {
@@ -616,21 +631,39 @@ country_event = { #Barrowshire Buddies
 
 	option = {
 		name = iochand.9.a
-		A69 = {
-			change_tag = A97
+		custom_tooltip = A80_barrowshire_buddies_tt
+		hidden_effect = {
+			164 = {
+				add_core = A97
+				cede_province = A97
+			}
 			ROOT = {
 				create_subject = {
 					subject_type = hezoggdoum
-					subject = PREV
+					subject = A97
 				}
 			}
-			define_ruler = {
-				name = "Galin"
-				dynasty = "Pinefoot"
+			small_country_region = {
+				limit = { country_or_non_sovereign_subject_holds = ROOT }
+				if = {
+					limit = { is_core = owner }
+					remove_core = owner
+					add_core = A97
+				}
+				cede_province = A97
 			}
-		}
-		small_country_region = {
-			add_permanent_claim = A97
+			every_known_country = {
+				limit = {
+					culture_is_halfling = yes
+					is_free_or_tributary_trigger = yes
+					OR = {
+						alliance_with = ROOT
+						has_90_opinion_improved_relation = { target = ROOT }
+					}
+					small_country_region = { country_or_non_sovereign_subject_holds = PREV }
+				}
+				A97 = { inherit = PREV }
+			}
 		}
 		162 = { add_gnomish_minority_size_effect = yes }
 		164 = {
@@ -1211,10 +1244,7 @@ country_event = { #The Tragedy of Iochand, Act I Scene II
 		name = iochand.15.a
 		set_country_flag = A80_high_kingdom_declared
 		override_country_name = ROSORRANCHAND
-		if = {
-			limit = { NOT = { government_rank = 3 } }
-			set_government_rank = 3
-		}
+		increase_government_rank_scripted_effect = { rank = 3 }
 		mission_reward_artifice_points_15 = yes
 		if = {
 			limit = {
@@ -1254,21 +1284,12 @@ country_event = { #A Second High Kingdom
 			NOT = { total_development = 200 }
 		}
 		ai_chance = {
-			factor = 5
+			factor = 1
 			modifier = {
-				factor = 1.4
+				factor = 1000
 				has_opinion = {
 					who = FROM
 					value = 100
-				}
-			}
-			modifier = {
-				factor = 0.8
-				NOT = {
-					has_opinion = {
-						who = FROM
-						value = 100
-					}
 				}
 			}
 		}
@@ -1283,23 +1304,7 @@ country_event = { #A Second High Kingdom
 	option = { #No
 		name = iochand.16.b
 		ai_chance = {
-			factor = 5
-			modifier = {
-				factor = 0.6
-				has_opinion = {
-					who = FROM
-					value = 100
-				}
-			}
-			modifier = {
-				factor = 1.2
-				NOT = {
-					has_opinion = {
-						who = FROM
-						value = 100
-					}
-				}
-			}
+			factor = 1
 		}
 		add_prestige = 40
 		FROM = {
@@ -1422,27 +1427,6 @@ country_event = { #Subjected to Paradise
 		}
 		ai_chance = {
 			factor = 1
-			modifier = {
-				factor = 1000
-				has_opinion = {
-					who = FROM
-					value = 200
-				}
-			}
-			modifier = {
-				factor = 2
-				has_opinion = {
-					who = FROM
-					value = 150
-				}
-			}
-			modifier = {
-				factor = 2
-				has_opinion = {
-					who = FROM
-					value = 100
-				}
-			}
 		}
 		A19 = {
 			create_subject = {
@@ -1462,6 +1446,13 @@ country_event = { #Subjected to Paradise
 		}
 		ai_chance = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_opinion = {
+					who = FROM
+					value = 100
+				}
+			}
 		}
 	}
 }
@@ -1852,10 +1843,10 @@ country_event = { #Kingdoms of Aelantir
 	option = {
 		name = iochand.33.a
 		A19 = {
-			set_government_rank = 3
+			set_government_rank_scripted_effect = { rank = 3 }
 			every_subject_country = {
 				limit = { is_subject_of_type = aelantir_hezoggdoum }
-				set_government_rank = 2
+				set_government_rank_scripted_effect = { rank = 2 }
 			}
 		}
 		add_legitimacy = 20
@@ -2886,61 +2877,13 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 	}
 
 
-	option = { #Random Cannorian Subject no
-		name = iochand.60.zzz
-		ai_chance = { factor = 0 }
-		trigger = {
-			NOT = {
-				any_subject_country = {
-					capital_scope = { continent = europe }
-					NOT = { is_subject_of_type = hezoggdoum }
-				}
-			}
-		}
-		custom_tooltip = A80_establish_random_cannorian_tt
-		hidden_effect = {
-			country_event = { id = iochand.70 }
-		}
-	}
-	option = { #Random Cannorian Subject yes
-		name = iochand.60.zzz
-		ai_chance = { factor = 1000 }
-		highlight = yes
-		trigger = {
-			any_subject_country = {
-				capital_scope = { continent = europe }
-				NOT = { is_subject_of_type = hezoggdoum }
-			}
-		}
-		add_treasury = -50
-		random_subject_country = {
-			limit = {
-				capital_scope = { continent = europe }
-				NOT = { is_subject_of_type = hezoggdoum }
-			}
-			ROOT = {
-				create_subject = {
-					subject_type = hezoggdoum
-					subject = PREV
-				}
-			}
-		}
-	}
-
 	option = { #Small Country no
 		name = iochand.60.b
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				A97 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = A97 }
-						A97 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = A97 }
 					the_borders_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -2951,10 +2894,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_small_country
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = A97 }
-					A97 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = A97 }
 				the_borders_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -2977,16 +2917,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				A97 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = A97 }
-				A97 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = A97 }
 			the_borders_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -3002,15 +2933,8 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				Z38 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = Z38 }
-						Z38 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = Z38 }
 					dragonheights_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -3021,10 +2945,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_kobildzan
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = Z38 }
-					Z38 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = Z38 }
 				dragonheights_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -3047,16 +2968,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				Z38 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = Z38 }
-				Z38 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = Z38 }
 			dragonheights_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -3072,15 +2984,8 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				B78 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = B78 }
-						B78 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = B78 }
 					carneteria_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -3091,10 +2996,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_carneter
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = B78 }
-					B78 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = B78 }
 				carneteria_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -3117,16 +3019,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				B78 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = B78 }
-				B78 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = B78 }
 			carneteria_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -3142,15 +3035,8 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				A58 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = A58 }
-						A58 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = A58 }
 					west_damesear_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -3165,10 +3051,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_dameria
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = A58 }
-					A58 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = A58 }
 				west_damesear_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -3195,16 +3078,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				A58 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = A58 }
-				A58 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = A58 }
 			west_damesear_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -3224,15 +3098,8 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				A79 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = A79 }
-						A79 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = A79 }
 					dragondowns_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -3247,10 +3114,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_gnomish_hierarchy
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = A79 }
-					A79 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = A79 }
 				dragondowns_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -3277,16 +3141,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				A79 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = A79 }
-				A79 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = A79 }
 			dragondowns_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -3306,15 +3161,8 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 0 }
 		trigger = {
 			NOT = {
-				A51 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
 				AND = {
-					OR = {
-						NOT = { exists = A51 }
-						A51 = { is_subject_of = ROOT }
-					}
+					NOT = { exists = A51 }
 					south_alen_area = {
 						type = all
 						country_or_non_sovereign_subject_holds = ROOT
@@ -3325,10 +3173,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		custom_tooltip = A80_establish_ginnfield
 		if = {
 			limit = {
-				OR = {
-					NOT = { exists = A51 }
-					A51 = { is_subject_of = ROOT }
-				}
+				NOT = { exists = A51 }
 				south_alen_area = {
 					type = all
 					country_or_non_sovereign_subject_holds = ROOT
@@ -3351,16 +3196,7 @@ country_event = { #Establish Cannor Hezoggdoum Menu
 		ai_chance = { factor = 1000 }
 		highlight = yes
 		trigger = {
-			NOT = {
-				A51 = {
-					is_subject_of = ROOT
-					is_subject_of_type = hezoggdoum
-				}
-			}
-			OR = {
-				NOT = { exists = A51 }
-				A51 = { is_subject_of = ROOT }
-			}
+			NOT = { exists = A51 }
 			south_alen_area = {
 				type = all
 				country_or_non_sovereign_subject_holds = ROOT
@@ -5019,29 +4855,6 @@ country_event = { #Cede region Daccasded and Triarchy for country
 				}
 				cede_province = U31
 			}
-		}
-	}
-}
-
-country_event = { #Second small war peace
-	id = iochand.104
-	title = iochand.104.t
-	desc = iochand.104.d
-	picture = TRADEGOODS_eventPicture
-	
-	is_triggered_only = yes
-	hidden = yes
-
-	trigger = {
-		NOT = { is_in_war = { casus_belli = cb_second_small_war } }
-	}
-	
-	option = {
-		name = iochand.104.a
-		remove_country_modifier = A80_diplo_upkeep_mod
-		every_ally = {
-			limit = { has_country_flag = A80_small_war_rebel_side }
-			break_alliance = ROOT
 		}
 	}
 }
