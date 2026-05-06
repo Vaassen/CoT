@@ -722,8 +722,73 @@ gene_pillar_generic_then_specific_event = {
 	}
 }
 
-#USE THIS IN EVENTS - generic change loot effect
+#These are for compatibility with events written with previous versions of the effect
+gene_pillars_add_loot_effect = {
+	gene_pillars_change_loot_effect = { amount = $amount$ add = yes }
+}
+gene_pillars_lose_loot_effect = {
+	gene_pillars_change_loot_effect = { amount = -$amount$ }
+}
+#Changes loot value on province
+#Needs to be updated to handle the overflow reward, it got broken in a merge?
+#Use add = yes to show the tooltips
 gene_pillars_change_loot_effect = {
+	# "Change Loot by X"
+	tooltip = {
+		change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
+	}
+	
+	#Bonus for having specific party members
+	[[add]
+		hidden_effect = { set_variable = { which = temp value = 0 } }
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = fighter_C } }
+			custom_tooltip = gene_pillars_add_loot_effect_fighter_C_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.5 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = rogue_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_rogue_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = mage_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_mage_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = mage_B } }
+			custom_tooltip = gene_pillars_add_loot_effect_mage_B_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = artificer_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_artificer_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		hidden_effect = {
+			multiply_variable = { which = temp value = $amount$ }
+			event_target:gene_pillar_exploration_province = {
+				set_variable = { which = temp which = PREV }
+				change_aPUI_var = { name = gene_pillar_loot which = temp }
+			}
+		}
+	]
+
+	#Change on province, refresh Gene Pillar UI
+	hidden_effect = {
+		event_target:gene_pillar_exploration_province = {
+			change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
+			cap_aPUI_var = { name = gene_pillar_loot }
+			update_aPUI_var_bar = { name = gene_pillar_loot }
+		}
+	}
+}
+
+
+
+#USE THIS IN EVENTS - generic change loot effect
+gene_pillars_change_loot_effect_old = {
 	set_variable = {
 		which = aPUI_gene_pillar_loot_framevar
 		value = $amount$
@@ -742,7 +807,7 @@ gene_pillars_change_loot_effect = {
 }
 
 #DO NOT USE THIS IN EVENTS - only for adding loot
-gene_pillars_add_loot_effect = {
+gene_pillars_add_loot_effect_old = {
 	tooltip = {
 		change_variable = {
 			which = aPUI_gene_pillar_loot_var
@@ -751,23 +816,23 @@ gene_pillars_add_loot_effect = {
 	}
 	# Tooltips to remind the player of the bonus loot effects
 	if = {
-		limit = { has_country_flag = gene_pillars_has_fighter_C }
+		limit = { gene_pillars_has_class_in_party = { class = fighter_C } }
 		custom_tooltip = gene_pillars_add_loot_effect_fighter_C_bonus_tt
 	}
 	if = {
-		limit = { has_country_flag = gene_pillars_has_rogue_A }
+		limit = { gene_pillars_has_class_in_party = { class = rogue_A } }
 		custom_tooltip = gene_pillars_add_loot_effect_rogue_A_bonus_tt
 	}
 	if = {
-		limit = { has_country_flag = gene_pillars_has_mage_A }
+		limit = { gene_pillars_has_class_in_party = { class = mage_A } }
 		custom_tooltip = gene_pillars_add_loot_effect_mage_A_bonus_tt
 	}
 	if = {
-		limit = { has_country_flag = gene_pillars_has_mage_B }
+		limit = { gene_pillars_has_class_in_party = { class = mage_B } }
 		custom_tooltip = gene_pillars_add_loot_effect_mage_B_bonus_tt
 	}
 	if = {
-		limit = { has_country_flag = gene_pillars_has_artificer_A }
+		limit = { gene_pillars_has_class_in_party = { class = artificer_A } }
 		custom_tooltip = gene_pillars_add_loot_effect_artificer_A_bonus_tt
 	}
 	hidden_effect = {
@@ -781,7 +846,7 @@ gene_pillars_add_loot_effect = {
 				value = 4
 			}
 			if = {
-				limit = { owner = { has_country_flag = gene_pillars_has_fighter_C } }
+				limit = { owner = { gene_pillars_has_class_in_party = { class = fighter_C } } }
 				change_variable = {
 					which = aPUI_gene_pillar_loot_var
 					value = $amount$
@@ -792,28 +857,28 @@ gene_pillars_add_loot_effect = {
 				}
 			}
 			if = {
-				limit = { owner = { has_country_flag = gene_pillars_has_rogue_A } }
+				limit = { owner = { gene_pillars_has_class_in_party = { class = rogue_A } } }
 				change_variable = {
 					which = aPUI_gene_pillar_loot_var
 					value = $amount$
 				}
 			}
 			if = {
-				limit = { owner = { has_country_flag = gene_pillars_has_mage_A } }
+				limit = { owner = { gene_pillars_has_class_in_party = { class = mage_A } } }
 				change_variable = {
 					which = aPUI_gene_pillar_loot_var
 					value = $amount$
 				}
 			}
 			if = {
-				limit = { owner = { has_country_flag = gene_pillars_has_mage_B } }
+				limit = { owner = { gene_pillars_has_class_in_party = { class = mage_B } } }
 				change_variable = {
 					which = aPUI_gene_pillar_loot_var
 					value = $amount$
 				}
 			}
 			if = {
-				limit = { owner = { has_country_flag = gene_pillars_has_artificer_A } }
+				limit = { owner = { gene_pillars_has_class_in_party = { class = artificer_A } } }
 				change_variable = {
 					which = aPUI_gene_pillar_loot_var
 					value = $amount$
@@ -849,7 +914,7 @@ gene_pillars_add_loot_effect = {
 }
 
 #DO NOT USE THIS IN EVENTS - only for removing loot
-gene_pillars_lose_loot_effect = {
+gene_pillars_lose_loot_effect_old = {
 	tooltip = {
 		change_variable = {
 			which = aPUI_gene_pillar_loot_var
@@ -1294,9 +1359,9 @@ gene_pillars_change_hp_effect = {
 				value = 0
 			}
 		}
-		gene_pillars_add_health_effect = { amount = $amount$ [[overheal] overheal = yes] }
+		gene_pillars_add_hp_effect = { amount = $amount$ [[overheal] overheal = yes] }
 	}
-	else = { gene_pillars_lose_health_effect = { amount = $amount$ } }
+	else = { gene_pillars_lose_hp_effect = { amount = $amount$ } }
 	update_aPUI_var_bar = { name = gene_pillar_health }
 	update_aPUI_var_bar = { name = gene_pillar_health_max }
 }
