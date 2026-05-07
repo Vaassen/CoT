@@ -3211,7 +3211,11 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 			add_base_production = -1
 			add_base_manpower = -1
 		}
-		add_devastation = 50
+		# don't mess with provinces on initial settlement
+		if = {
+			limit = { NOT = { owner = { has_country_flag = forming_i_numbe_flag } } }
+			add_devastation = 50
+		} 
 		change_culture = pure_mechanim
 		if = {
 			limit = {
@@ -3271,7 +3275,10 @@ on_province_religion_changed_effect = { #Randomizer has fixed outcomes on this o
 			if = {
 				limit = { owner = { has_church_aspect = foundationism_golodhspeakers } }
 				add_devastation = -25
-				add_local_autonomy = -33
+				if = {
+					limit = { NOT = { has_tax_building_trigger = yes } }
+					add_building = temple
+				}
 			}
 		}
 		add_province_modifier = {
@@ -5789,6 +5796,10 @@ on_battle_ended_effect = {
 				which = land_units_killed
 			}
 		}
+	}
+	if = {
+		limit = { has_saved_global_event_target = bonelake }
+		bonelake_casualties_to_buffs = yes
 	}
 }
 
@@ -8968,6 +8979,20 @@ on_colony_finished_effect = {
 			id = insyaa_flavour.1001
 		}
 	}
+
+	# Secret of the Hinuilands
+	# Can't add great project to colony, so need to do here if it started as one
+	if = {
+		limit = { has_province_flag = hinuilands_secret_here }
+		settle_secret_of_the_hinuilands = { great_project = grasswhirlpool }
+		settle_secret_of_the_hinuilands = { great_project = fires_beneath }
+		settle_secret_of_the_hinuilands = { great_project = treegrave }
+		settle_secret_of_the_hinuilands = { great_project = hinuibee_hive }
+		settle_secret_of_the_hinuilands = { great_project = bonelake }
+		settle_secret_of_the_hinuilands = { great_project = damestear_island }
+		settle_secret_of_the_hinuilands = { great_project = deepest }
+		settle_secret_of_the_hinuilands = { great_project = fluvial_waterworks }
+	}
 }
 
 on_colonist_boosting_colony_effect = {
@@ -9964,7 +9989,6 @@ on_development_effect = {
 			add_next_institution_embracement_scaled = 3
 		}
 	}
-
 	#Dragon Turtle
 	owner = {
 		if = {
@@ -9972,6 +9996,100 @@ on_development_effect = {
 			dragon_turtle_change_friendship = { dragon_turtle = kealakys_ever_hungry amount = 2 }
 			dragon_turtle_change_friendship = { dragon_turtle = grandfather_moss amount = 2 }
 			dragon_turtle_change_friendship = { dragon_turtle = iehu amount = 2 }
+		}
+	}
+	# Treegrave
+	if = {
+		limit = { 
+			has_saved_global_event_target = treegrave 
+		}
+		if = {
+			limit = {
+				superregion = hinuilands_superregion
+				OR = { trade_goods = tropical_wood trade_goods = paper }
+				owner = { 
+					event_target:treegrave = { 
+						owned_by = PREV 
+						has_great_project = { type = treegrave tier = 1 } 
+					} 
+				}
+			}
+			if = {
+				limit = {
+					event_target:treegrave = {
+						has_great_project = { 
+							type = treegrave
+							tier = 3
+						}
+					}
+					num_of_times_improved_by_owner = 4
+				}
+				if = { limit = { NOT = { trade_goods = paper } } change_trade_goods = paper }
+				add_permanent_province_modifier = { name = treegrave_rush_of_wood_3 duration = -1 }
+				remove_province_modifier = treegrave_rush_of_wood_2
+			}
+			else_if = {
+				limit = { 
+					event_target:treegrave = { 
+						has_great_project = { 
+							type = treegrave 
+							tier = 2 
+						} 
+					}
+				}
+				add_province_modifier = { name = treegrave_rush_of_wood_2 duration = 3650 }
+				remove_province_modifier = treegrave_rush_of_wood_1
+			}
+			else_if = {
+				limit = { 
+					event_target:treegrave = { 
+						has_great_project = { 
+							type = treegrave 
+							tier = 1
+						} 
+					}
+				}
+				add_province_modifier = { name = treegrave_rush_of_wood_1 duration = 3650 }
+			}
+		}
+	}
+	# Grasswhirlpool
+	if = {
+		limit = {
+			has_province_modifier = hinuilands_grasswhirlpool_secret
+			has_great_project = {
+				type = grasswhirlpool
+				tier = 3
+			}
+		}
+		random = {
+			chance = 25
+			owner = {
+				grasswhirlpool_define_grassrider_admiral = yes
+			}
+		}
+	}
+	# Bonelake
+	if = {
+		limit = { has_province_modifier = bonelakes_demand }
+		owner = {
+			add_years_of_owned_provinces_production_income = {
+				years = 1
+				trigger = { has_province_modifier = hinuilands_bonelake_secret }
+			}
+			add_years_of_owned_provinces_manpower = {
+					years = 1
+					trigger = { has_province_modifier = hinuilands_bonelake_secret }
+				}
+			}
+		}
+	else_if = {
+		limit = { has_province_modifier = bonelakes_due }
+		owner = {
+			add_years_of_owned_provinces_production_income = {
+				years = 1
+				trigger = { has_province_modifier = hinuilands_bonelake_secret }
+			}
 		}
 	}
 }
@@ -13019,6 +13137,12 @@ startup_1444_effects = {
 			if = {
 				limit = { owns = 6954 }
 				REB = { country_event = { id = mangrove.100 days = 30 } } # start voting
+			}
+		}
+		if = {
+			limit = { tag = M15 }
+			6877 = {
+				province_event = { id = insyaa_flavour.2000 days = 365 } # year 1445
 			}
 		}
 		if = {
@@ -17406,6 +17530,7 @@ anb_on_exploit_effect = {
 	giberd_exploit_benonhill = yes
 	if_chi_wellspring_reset_size_activity = yes #Transmutative Path
 	diggy_diggy_uesrennu = yes
+	fires_beneath_exploit_dev = yes
 	if = { #umbral covenant
 		limit = {
 			owner = {
@@ -18749,6 +18874,17 @@ on_province_owner_change_monuments = {
 			FROM = { overlord = { iochand_hezoggdoum_owned_monument_effect_all = yes } }
 		}
 	}
+
+	# Secret of the Hinuilands
+	if = {
+		limit = {
+			has_province_flag = hinuilands_secret_here
+		}
+		province_event = { id = insyaa_flavour.2003 } #on_secret_of_the_hinuilands_owned needs a 1 day delay
+	}
+	
+	hinuibee_hive_province_owner_change = yes
+	fluvial_waterworks_province_owner_change = yes
 }
 
 on_production_manufactory_built_effect = { #Farm Estate, Wharf, Plantation but not Ramparts
