@@ -2814,7 +2814,6 @@ custom_button = { # Y25_zongji_fealty_action_ai_accept
 		number = 1
 	}
 }
-
 custom_window = {
 	name = custom_diplomacy_J95
 	potential = {
@@ -3272,6 +3271,282 @@ custom_button = { #Send Bongo Band
 			add_splendor = 10
 			add_treasury = -50
 			add_manpower = -2
+		}
+	}
+}
+
+#A80 Iochand
+custom_window = {
+	name = custom_diplomacy_A80
+	potential = {
+		FROM = {
+			custdip_unique_A80_potential = yes
+		}
+	}
+}
+custom_button = { #Establish Hezoggdoum
+	name = A80_establish_hezoggdoum
+	tooltip = A80_establish_hezoggdoum_tt
+	potential = { }
+	trigger = {
+		FROM = { NOT = { has_country_modifier = A80_bureaucratic_integration } }
+		ROOT = {
+			if = { #Daccasded
+				limit = { FROM = { has_country_flag = daccasded_not_portnamm } }
+				capital_scope = {
+					OR = {
+						continent = north_america
+						continent = south_america
+					}
+				}
+				is_subject_of = FROM
+			}
+			else_if = {
+				limit = { FROM = { mission_completed = A80_5_6 } }
+				OR = {
+					capital_scope = { continent = europe }
+					AND = {
+						capital_scope = {
+							OR = {
+								continent = north_america
+								continent = south_america
+							}
+						}
+						A19 = { is_subject_of_type = daccasded }
+					}
+				}
+				OR = {
+					is_subject_of = FROM
+					AND = {
+						is_subject_of = A19
+						A19 = { is_subject_of_type = daccasded }
+					}
+				}
+			}
+			else = {
+				capital_scope = { continent = europe }
+				is_subject_of = FROM
+			}
+			is_subject_of_type = vassal
+			NOT = { liberty_desire = 50 }
+			has_opinion = {
+				who = FROM
+				value = 150
+			}
+		}
+	}
+	effect = {
+		FROM = {
+			add_country_modifier = {
+				name = A80_bureaucratic_integration
+				duration = 3650
+			}
+			if = {
+				limit = { has_country_flag = daccasded_not_portnamm }
+				create_subject = {
+					subject_type = aelantir_hezoggdoum
+					subject = ROOT
+				}
+			}
+			else_if = {
+				limit = {
+					FROM = { mission_completed = A80_5_6 }
+					ROOT = {
+						capital_scope = {
+							OR = {
+								continent = north_america
+								continent = south_america
+							}
+						}
+					}
+				}
+				A19 = {
+					create_subject = {
+						subject_type = aelantir_hezoggdoum
+						subject = ROOT
+					}
+				}
+			}
+			else = {
+				create_subject = {
+					subject_type = hezoggdoum
+					subject = ROOT
+				}
+			}
+		}
+		ROOT = {
+			if = {
+				limit = {
+					monstrous_culture = yes
+					NOT = { has_country_flag = no_longer_monstrous }
+				}
+				remove_country_modifier = monstrous_nation
+				set_country_flag = no_longer_monstrous
+				clr_country_flag = removing_monstrous
+				clr_country_flag = semi_monstrous
+				clear_monstrous_opinion_effect = yes
+				hidden_effect = {
+					country_event = { id = monstrous.1 } #opinion setup
+				}
+				add_stability = -1
+				add_country_modifier = {
+					name = A80_forced_demonsterization
+					duration = 3650
+				}
+			}
+		}
+	}
+}
+# F98 Harpylen
+custom_window = {
+	name = custom_diplomacy_F98
+	potential = {
+		FROM = {
+			custdip_unique_F98_potential = yes
+		}
+	}
+}
+custom_button = {
+	name = F98_harpylen_encourage_migration_action
+	tooltip = F98_harpylen_encourage_migration_action_tt
+	potential = { }
+	trigger = {
+		FROM = {
+			if = { #
+				limit = {
+					NOT = {
+						is_emperor_of_china = yes
+					}
+				}
+				legitimacy = 5
+			}
+			reverse_has_opinion = {
+				who = ROOT
+				value = 0
+			}
+			if = {
+				limit = {
+					monthly_income = 166
+				}
+				treasury = 500
+			}
+			else = {
+				years_of_income = 0.25 
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = harpylen_not_encouraged_migration_tt
+			NOT = { has_country_modifier = F98_harpylen_encourage_migration_cooldown }
+		}
+	}
+	effect = {
+		FROM = {
+			# lose 0.25 years of income. custom tooltip?
+			if = {
+				limit = {
+					monthly_income = 166
+				}
+				add_treasury = -500
+			}
+			else = {
+				add_years_of_income = -0.25 
+			}
+			# lose 5 legitimacy
+			if = { #
+				limit = {
+					NOT = {
+						is_emperor_of_china = yes
+					}
+				}
+				add_legitimacy = -5
+			}
+			# gain 2 minorities of their primary race
+			gain_minorities_of_target_country_primary_race = {
+				custom_tooltip = gain_2_minorities_of_target_country_primary_race_tt
+				target = ROOT
+				amount = 2
+			}
+		}
+		ROOT = {
+			add_opinion = {
+				# They gain 25 opinion of you
+				who = FROM
+				modifier = opinion_harpylen_encourage_migration
+			}
+			# They gain 5 harpy minorities
+			custom_tooltip = F98_5_random_provinces_gain_minorities_tt
+			for = {
+				amount = 5
+				effect = "
+					random_owned_province = {
+						limit = {
+							NOT = { fast_has_pop_of_race = { race = harpy } }
+						}
+						add_harpy_minority_size_effect = yes
+					}"
+			}
+			# Cooldown
+			hidden_effect = {
+				add_country_modifier = {
+					name = F98_harpylen_encourage_migration_cooldown
+					duration = 1825 # 5 years
+					hidden = yes
+				}
+			}
+		}
+	}
+}
+custom_button = {
+	name = F98_harpylen_soothe_ruffled_feathers_action
+	tooltip = F98_harpylen_soothe_ruffled_feathers_action_tt
+	potential = { }
+	trigger = {
+		FROM = {
+			splendor = 50
+		}
+		custom_trigger_tooltip = {
+			tooltip = harpylen_not_soothed_feathers_tt
+			NOT = { has_country_modifier = F98_harpylen_soothe_ruffled_feathers_cooldown }
+		}
+	}
+	effect = {
+		FROM = {
+			# lose 50 splendor
+			add_splendor = -50
+			# gain 1 minority of their primary race
+			gain_minorities_of_target_country_primary_race = {
+				custom_tooltip = gain_1_minorities_of_target_country_primary_race_tt
+				target = ROOT
+				amount = 1
+			}
+		}
+		ROOT = {
+			# They lose 10 aggressive expansion opinion of you
+			add_aggressive_expansion = {
+				who = FROM 
+				value = -10
+				apply_calc = no 
+			}
+			# They gain 3 harpy minorities
+			custom_tooltip = F98_3_random_provinces_gain_minorities_tt
+			for = {
+				amount = 3
+				effect = "
+					random_owned_province = {
+						limit = {
+							NOT = { fast_has_pop_of_race = { race = harpy } }
+						}
+						add_harpy_minority_size_effect = yes
+					}"
+			}
+			# Cooldown
+			hidden_effect = {
+				add_country_modifier = {
+					name = F98_harpylen_soothe_ruffled_feathers_cooldown
+					duration = 1825 # 5 years
+					hidden = yes
+				}
+			}
 		}
 	}
 }

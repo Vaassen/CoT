@@ -6,8 +6,11 @@
 #Events 40-49 - Mechanim flavour events
 #Events 50-99 - Artificery related events
 #Events 100-199 - Unlocked invention/mechanim parts
+#Events 201-204 - Kiamoa system
 #Events 1000 - Mechanim Over Forcelimit event
 #Events 100 - Mechanim Over Forcelimit event
+#Events 2000 - Secrets of the Hinuilands 
+#Events 3000 - Holohana-related events
 #Events 9998-9999 - Kiamoa/Stormwall
 
 namespace = insyaa_flavour
@@ -216,7 +219,22 @@ province_event = { # Helper event for Golodh, Wandering
 	option = {
 		name = insyaa_flavour.10.a
 		ai_chance = { factor = 100 }
-		if = {
+		if = { # Prioritize firing for the player
+			limit = {
+				any_country = {
+					ai = no
+					has_country_modifier = mechanim_administration
+				}
+			}
+			random_country = {
+				limit = {
+					ai = no
+					has_country_modifier = mechanim_administration
+				}
+				country_event = { id = insyaa_flavour.15 }
+			}
+		}
+		else_if = {
 			limit = { M15 = { exists = yes } }
 			M15 = { country_event = { id = insyaa_flavour.15 } }
 		}
@@ -279,6 +297,28 @@ province_event = { # Golodh, A Meeting
 		custom_tooltip = golodh_weakened_tt
 		set_global_flag = golodh_weakened
 	}
+	option = {	# Let you speed this up if you're ready for your formable
+		name = insyaa_flavour.11.dd
+		highlight = yes
+		trigger = {
+			custom_trigger_tooltip = {
+				tooltip = can_form_mechanim_nation_tt
+				owner = {
+					check_variable = {
+						which = mechanim_progress_level
+						value = 5
+					}
+				}
+			}
+		}
+		remove_province_modifier = golodh_wandering
+		owner = {
+			country_event = {
+				id = insyaa_flavour.12
+				days = 90
+			}
+		}
+	}
 }
 
 country_event = { # Golodh, Teaching
@@ -292,22 +332,10 @@ country_event = { # Golodh, Teaching
 	option = {
 		name = insyaa_flavour.12.a
 		ai_chance = { factor = 0 }
-		define_ruler = {
-			name = "Golodh"
-			dynasty = "the Visionary"
-			culture = sporewalker_mechanim
-			adm = 3
-			dip = 6
-			mil = 3
-			age = 99
-		}
-		add_ruler_personality = cruel_personality
-		add_ruler_personality = zealot_personality
-		add_ruler_personality = lawgiver_personality
+		golodh_define_ruler = yes
 		custom_tooltip = ""
 		custom_tooltip = golodh_rules_tt
 		set_country_flag = golodh_rules
-		make_ruler_immortal = yes
 	}
 	option = {
 		name = insyaa_flavour.12.b
@@ -335,6 +363,7 @@ country_event = { # Golodh, at the End of the Beginning
 
 	is_triggered_only = yes
 
+	major = yes
 
 	option = {
 		name = insyaa_flavour.13.a
@@ -343,7 +372,59 @@ country_event = { # Golodh, at the End of the Beginning
 			limit = { has_global_flag = golodh_weakened }
 			add_country_modifier = { name = golodh_weakened_mod duration = 18250 }
 		}
-		change_religion = foundationism
+		if = {
+			limit = {
+				ai = yes
+			}
+			hidden_effect = {
+				insyaan_mushroom_forest_region = {
+					limit = {
+						NOT = {
+							province_id = 3529
+							province_id = 3530
+							province_id = 3527
+						}
+					}
+					add_siberian_construction = 250
+				}
+				3514 = {
+					if = {
+						limit = { 
+							# Technically don't need this check, since the SE will do nothing if there's no Holohana
+							# But seems worthwhile all the same?
+							has_province_flag = holohana_is_here_flag
+						}
+						holohana_migrate_local_holohana = yes
+					}
+					add_siberian_construction = 100
+					add_province_modifier = { name = mechanim_ward_conduit duration = -1 }
+					add_province_modifier = { name = mycobiological_holohana_wards duration = -1 }
+				}
+				3512 = { 
+					if = {
+						limit = { 
+							# Technically don't need this check, since the SE will do nothing if there's no Holohana
+							# But seems worthwhile all the same?
+							has_province_flag = holohana_is_here_flag
+						}
+						holohana_migrate_local_holohana = yes
+					}
+					add_siberian_construction = 100
+					add_province_modifier = { name = mechanim_ward_conduit duration = -1 }
+					add_province_modifier = { name = mycobiological_holohana_wards duration = -1 }
+				}
+			}
+			add_country_modifier = { name = golodh_vision_ai duration = -1 }
+			great_plateau_region = { add_permanent_claim = M30 }
+		}
+		create_general = {
+			tradition = 100
+			add_fire = 1 
+			add_shock = 2
+			add_manuever = 3
+			add_siege = 1
+			name = "Grest, Bodyguard-of-Golodh"
+		}
 		if = { # Beikdugang MT effect
 			limit = { 4907 = { owner = { mission_completed = Y15_tides_of_change } } }
 			custom_tooltip = Y15_inumbe_fucked_tt
@@ -369,7 +450,6 @@ country_event = { # Golodh, at the End of the Beginning
 				}	
 			}
 		}
-		# AI buffs for I-numbe, up to insyaa team to add later
 	}
 }
 
@@ -394,19 +474,7 @@ country_event = { # Golodh, Immortal
 		name = insyaa_flavour.14.a
 		add_country_modifier = { name = golodh_new_tool duration = 1825 }
 		# TODO: trigger somewhere else to stop the death completely? idk
-		define_ruler = {
-			name = "Golodh"
-			dynasty = "the Visionary"
-			culture = sporewalker_mechanim
-			adm = 3
-			dip = 6
-			mil = 3
-			age = 99
-		}
-		add_ruler_personality = cruel_personality
-		add_ruler_personality = zealot_personality
-		add_ruler_personality = lawgiver_personality
-		make_ruler_immortal = yes
+		golodh_define_ruler = yes
 	}
 
 	after = {
@@ -429,12 +497,16 @@ country_event = { # Golodh, Wandering
 
 	option = {
 		name = insyaa_flavour.15.a
+		goto = 3518
 		custom_tooltip = insyaa_flavour.15.a.tt
 		3518 = {
+			discover_country = ROOT
 			add_permanent_province_modifier = {
 				name = golodh_wandering duration = -1
 			}
 		}
+		3517 = { discover_country = ROOT }
+		3519 = { discover_country = ROOT }
 	}
 }
 #Gift Ring Events
@@ -2344,7 +2416,7 @@ country_event = { #artifice_invention_industrial_automatories
 
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 
 		custom_tooltip = new_artifice_invention_tooltip
@@ -2384,7 +2456,7 @@ country_event = { #artifice_invention_fireproof_plating
 
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 
 		custom_tooltip = new_artifice_invention_tooltip
@@ -2461,7 +2533,7 @@ country_event = { #artifice_invention_construction_bots
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2476,7 +2548,7 @@ country_event = { #artifice_invention_mechanim_regiments
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2491,7 +2563,7 @@ country_event = { #artifice_invention_auto_scribes
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 20
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2537,7 +2609,7 @@ country_event = { #artifice_invention_animal_gene
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_technomancy
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2552,7 +2624,7 @@ country_event = { #artifice_invention_titano_thorns
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_technomancy
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2567,7 +2639,7 @@ country_event = { #artifice_invention_titano_weed
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_technomancy
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2582,7 +2654,7 @@ country_event = { #artifice_invention_seed_siege
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_brilliance
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2642,7 +2714,7 @@ country_event = { #artifice_invention_titano_cav
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_brilliance
-			influence = 10
+			influence = 20
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2688,7 +2760,7 @@ country_event = { #artifice_invention_flak_cannons
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2703,7 +2775,7 @@ country_event = { #artifice_invention_terrain_shaper
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_technomancy
-			influence = 10
+			influence = 20
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2718,7 +2790,7 @@ country_event = { #artifice_invention_steel_tracking
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_technomancy
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2748,7 +2820,7 @@ country_event = { #artifice_invention_mechanim_deconstructor
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2764,7 +2836,7 @@ country_event = { #artifice_invention_mech_steel_detector
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2779,7 +2851,7 @@ country_event = { #artifice_invention_mech_reawakening_procedure
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2809,7 +2881,7 @@ country_event = { #artifice_invention_mech_terrain_specialization
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 20
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -2824,7 +2896,7 @@ country_event = { #artifice_invention_mech_lava_cell
 		name = artifice_inventions.69.a
 		add_faction_influence = {
 			faction = tec_mechanists
-			influence = 10
+			influence = 15
 		}
 		custom_tooltip = new_artifice_invention_tooltip
 	}
@@ -3105,6 +3177,23 @@ country_event = { #artifice_invention_legs_trailblazer
 		custom_tooltip = new_artifice_legs_part_tooltip
 	}
 }
+#New ones
+country_event = { #artifice_invention_mech_amphibious_attachements
+	id = insyaa_flavour.154
+	title = insyaa_flavour.154.t
+	desc = insyaa_flavour.154.d
+	picture = INVENTION_eventPicture
+	is_triggered_only = yes
+	option = {
+		name = artifice_inventions.69.a
+		add_faction_influence = {
+			faction = tec_mechanists
+			influence = 10
+		}
+		custom_tooltip = new_artifice_invention_tooltip
+	}
+}
+#Switching Events
 country_event = { #Switching Head
 	id = insyaa_flavour.195
 	title = insyaa_flavour.195.t
@@ -3281,6 +3370,150 @@ country_event = { #Switching Legs
 	}
 }
 
+country_event = {
+	id = insyaa_flavour.201
+	title = insyaa_flavour.201.t
+	desc = {
+		desc = insyaa_flavour.201.d1
+		trigger = {
+			NOT = { religion = speaking_memory }
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.201.d2
+		trigger = {
+			religion = speaking_memory
+		}
+	}
+	picture = GENE_PILLAR_SPIRIT_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { owns = 3376 has_country_flag = aPUI_gene_pillar_explored_level_3_in_3376 }
+				3376 = { save_event_target_as = event_province }
+			}
+			else = { 6950 = { save_event_target_as = event_province } }
+			set_country_flag = had_gene_pillars_kiamoa_hint_1_event
+		}
+	}
+
+	option = {
+		name = insyaa_flavour.201.a
+		custom_tooltip = kiamoa_opening_hint_1_tt
+	}
+}
+
+country_event = {
+	id = insyaa_flavour.202
+	title = insyaa_flavour.202.t
+	desc = {
+		desc = insyaa_flavour.202.d1
+		trigger = {
+			religion = endless_ocean
+			NOT = { has_country_flag = had_gene_pillars_kiamoa_hint_1_event }
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.202.d2
+		trigger = {
+			religion = endless_ocean
+			has_country_flag = had_gene_pillars_kiamoa_hint_1_event
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.202.d3
+		trigger = {
+			religion = speaking_memory
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.202.d4
+		trigger = {
+			religion = foundationism
+		}
+	}
+	picture = GENE_PILLAR_SPIRIT_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { owns = 3376 has_country_flag = aPUI_gene_pillar_explored_level_3_in_3376 }
+				3376 = { save_event_target_as = event_province }
+			}
+			else = { 6950 = { save_event_target_as = event_province } }
+			set_country_flag = had_gene_pillars_kiamoa_hint_1_event
+		}
+	}
+
+	trigger = {
+		OR = {
+			religion = endless_ocean
+			religion = foundationism
+			religion = speaking_memory
+		}
+	}
+
+	option = {
+		name = insyaa_flavour.202.a
+		custom_tooltip = kiamoa_opening_hint_2_tt
+		set_country_flag = had_gene_pillars_kiamoa_hint_2_event
+	}
+}
+
+country_event = {
+	id = insyaa_flavour.203
+	title = insyaa_flavour.203.t
+	desc = {
+		desc = insyaa_flavour.203.d1
+		trigger = {
+			religion = endless_ocean
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.203.d2
+		trigger = {
+			religion = speaking_memory
+		}
+	}
+	desc = {
+		desc = insyaa_flavour.203.d3
+		trigger = {
+			religion = foundationism
+		}
+	}
+	picture = GENE_PILLAR_SPIRIT_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = insyaa_flavour.203.a
+		custom_tooltip = kiamoa_opening_hint_3_tt
+		set_country_flag = had_gene_pillars_kiamoa_hint_3_event
+	}
+}
+
+country_event = {
+	id = insyaa_flavour.204
+	title = insyaa_flavour.204.t
+	desc = insyaa_flavour.204.d
+	picture = GENE_PILLAR_SPIRIT_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = insyaa_flavour.204.a
+		hidden_effect = {
+			open_stormwall = yes
+			set_country_flag = opened_the_kiamoa_flag
+		}
+	}
+}
+
 country_event = { #Mechanim Over Forcelimit event
 	id = insyaa_flavour.1000
 	title = insyaa_flavour.1000.t
@@ -3350,6 +3583,790 @@ country_event = { #Random dev
 	}
 }
 
+province_event = { # Helper event for spawning Hinuisecrets
+	id = insyaa_flavour.2000
+	title = insyaa_flavour.2000.t
+	desc = insyaa_flavour.2000.d
+	picture = MECHANIM_AWAKENING_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+	fire_only_once = yes	#reloading in nov 1444 should never happen, but to be safe...
+
+	option = {
+		name = insyaa_flavour.2000.a
+		ai_chance = { factor = 100 }
+		every_country = { 
+			limit = { ai = no has_reform = mechanim_migratory_reform }
+			country_event = { id = insyaa_flavour.2001 }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_forests_region 
+				NOT = { province_group = gene_pillars }
+				NOT = { is_city = yes }
+			}
+			spawn_secret_of_the_hinuilands = { great_project = treegrave track_with_global_event_target = yes }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_forests_region 
+				NOT = { province_group = gene_pillars }
+				NOT = { is_city = yes }
+				NOT = { has_province_flag = hinuilands_secret_here }
+			}
+			spawn_secret_of_the_hinuilands = { great_project = hinuibee_hive track_with_global_event_target = yes }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_savanna_region  
+				NOT = { is_city = yes }
+				NOT = { province_group = gene_pillars }
+				NOT = { province_id = 3483 }
+				NOT = { province_id = 3484 }
+				NOT = { province_id = 3485 } # These are the provinces in the savanna that are disconnected
+			}
+			spawn_secret_of_the_hinuilands = { great_project = grasswhirlpool track_with_global_event_target = yes }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_savanna_region 
+				NOT = { is_city = yes }
+				NOT = { province_group = gene_pillars }
+				NOT = { has_province_flag = hinuilands_secret_here }
+				NOT = { province_id = 3483 }
+				NOT = { province_id = 3484 }
+				NOT = { province_id = 3485 } # These are the provinces in the savanna that are disconnected
+			}
+			spawn_secret_of_the_hinuilands = { great_project = fires_beneath track_with_global_event_target = yes }
+		}
+		3389 = {
+			spawn_secret_of_the_hinuilands = { great_project = damestear_island }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_lakelands_region  
+				NOT = { is_city = yes }
+				NOT = { province_group = gene_pillars }
+				NOT = { has_province_flag = hinuilands_secret_here }
+			}
+			spawn_secret_of_the_hinuilands = { great_project = bonelake track_with_global_event_target = yes }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_riverlands_region  
+				NOT = { is_city = yes }
+				NOT = { province_group = gene_pillars }
+			}
+			spawn_secret_of_the_hinuilands = { great_project = deepest track_with_global_event_target = yes }
+		}
+		random_province = {
+			limit = { 
+				region = titanoflora_riverlands_region 
+				NOT = { is_city = yes }
+				NOT = { province_group = gene_pillars }
+				NOT = { has_province_flag = hinuilands_secret_here }
+			}
+			spawn_secret_of_the_hinuilands = { great_project = fluvial_waterworks track_with_global_event_target = yes }
+		}
+	}
+}
+
+country_event = { # Spawning Hinuisecrets
+	id = insyaa_flavour.2001
+	title = insyaa_flavour.2001.t
+	desc = insyaa_flavour.2001.d
+	picture = MECHANIM_AWAKENING_eventPicture
+
+	is_triggered_only = yes
+
+	option = {
+		name = insyaa_flavour.2001.a
+		custom_tooltip = secrets_of_the_hinuilands_tt
+		custom_tooltip = secrets_of_the_hinuilands_effect_tt
+		tooltip = {
+			add_permanent_province_modifier = { name = hinuilands_grasswhirlpool_secret duration = -1 }
+			add_base_tax = 1
+			add_base_production = 1
+			add_base_manpower = 1
+		}
+	}
+}
+
+country_event = {
+	id = insyaa_flavour.2002
+	title = insyaa_flavour.2002.t
+	desc = insyaa_flavour.2002.d
+	picture = KOBOLD_BALRIS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_province = {
+			limit = {
+				superregion = hinuilands_superregion
+				is_unvisited_hinuiland_secret = { country_scope_visiting = ROOT }
+				num_of_units_in_province = { who = ROOT type = infantry amount = 5 }
+			}
+			if = {
+				limit = { has_province_modifier = hinuilands_deepest_secret }
+				observe_secret_of_the_hinuilands = { great_project = deepest country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_grasswhirlpool_secret }
+				observe_secret_of_the_hinuilands = { great_project = grasswhirlpool country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_fires_beneath_secret }
+				observe_secret_of_the_hinuilands = { great_project = fires_beneath country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_treegrave_secret }
+				observe_secret_of_the_hinuilands = { great_project = treegrave country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_hinuibee_hive_secret }
+				observe_secret_of_the_hinuilands = { great_project = hinuibee_hive country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_bonelake_secret }
+				observe_secret_of_the_hinuilands = { great_project = bonelake country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_damestear_island_secret }
+				observe_secret_of_the_hinuilands = { great_project = damestear_island country_scope_visiting = ROOT }
+			}
+			else_if = {
+				limit = { has_province_modifier = hinuilands_fluvial_waterworks_secret }
+				observe_secret_of_the_hinuilands = { great_project = fluvial_waterworks country_scope_visiting = ROOT }
+			}
+
+		}
+	}
+
+	option = {
+		name = insyaa_flavour.2002.a
+	}
+}
+
+province_event = {
+	id = insyaa_flavour.2003
+	title = insyaa_flavour.2002.t
+	desc = insyaa_flavour.2002.d
+	picture = KOBOLD_BALRIS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+	trigger = { has_province_flag = hinuilands_secret_here }
+
+	option = {
+		name = insyaa_flavour.2003.a
+		on_secret_of_the_hinuilands_owned = { great_project = grasswhirlpool }
+		on_secret_of_the_hinuilands_owned = { great_project = fires_beneath }
+		on_secret_of_the_hinuilands_owned = { great_project = treegrave }
+		on_secret_of_the_hinuilands_owned = { great_project = hinuibee_hive }
+		on_secret_of_the_hinuilands_owned = { great_project = bonelake }
+		on_secret_of_the_hinuilands_owned = { great_project = damestear_island }
+		on_secret_of_the_hinuilands_owned = { great_project = deepest }
+		on_secret_of_the_hinuilands_owned = { great_project = fluvial_waterworks }
+	}
+}
+
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20031
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_grasswhirlpool
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_grasswhirlpool duration = 36500 }
+	}
+	after = { set_country_flag = visited_grasswhirlpool_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20032
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_deepest
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_deepest duration = 36500 }
+	}
+	after = { set_country_flag = visited_deepest_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20033
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_fires_beneath
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_fires_beneath duration = 36500 }
+	}
+	after = { set_country_flag = visited_fires_beneath_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20034
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_treegrave
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_treegrave duration = 36500 }
+	}
+	after = { set_country_flag = visited_treegrave_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20035
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_hinuibee_hive
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_hinuibee_hive duration = 36500 }
+	}
+	after = { set_country_flag = visited_hinuibee_hive_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20036
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_bonelake
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_bonelake duration = 36500 }
+	}
+	after = { set_country_flag = visited_bonelake_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20037
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_damestear_island
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_damestear_island duration = 36500 }
+	}
+	after = { set_country_flag = visited_damestear_island_flag }
+}
+country_event = { # The Hinuilands Reveals a Secret
+	id = insyaa_flavour.20038
+	title = insyaa_flavour.2003.t
+	picture = TRADEGOODS_eventPicture
+	desc = insyaa_flavour.2003.d_fluvial_waterworks
+	is_triggered_only = yes
+	goto = hinuilands_secret_prov
+	option = {
+		name = insyaa_flavour.2003.a
+		trigger = { NOT = { has_reform = mechanim_migratory_reform } }
+		add_prestige = 10
+		add_splendor = 50
+	}
+	option = {
+		name = insyaa_flavour.2003.b
+		trigger = { has_reform = mechanim_migratory_reform }
+		add_church_power = 50
+		add_splendor = 100
+		custom_tooltip = hinuilands_secret_will_spawn_monument_tt
+		mechanim_visit_hinuilands_secret_first_time_effect = yes
+		add_country_modifier = { name = mechanim_visit_fluvial_waterworks duration = 36500 }
+	}
+	after = { set_country_flag = visited_fluvial_waterworks_flag }
+}
+
+country_event = { # Need this spacer country event so FROM is a tag
+	id = insyaa_flavour.2004
+	title = insyaa_flavour.2004.t
+	desc = insyaa_flavour.2004.d
+	picture = CAVE_eventPicture
+	
+	hidden = yes
+	is_triggered_only = yes
+	
+	immediate = {
+        if = {
+			limit = { FROM = { has_province_modifier = hinuilands_grasswhirlpool_secret } }
+			country_event = { id = insyaa_flavour.20051 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_deepest_secret } }
+			country_event = { id = insyaa_flavour.20052 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_fires_beneath_secret } }
+			country_event = { id = insyaa_flavour.20053 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_treegrave_secret } }
+			country_event = { id = insyaa_flavour.20054 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_hinuibee_hive_secret } }
+			country_event = { id = insyaa_flavour.20055 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_bonelake_secret } }
+			country_event = { id = insyaa_flavour.20056 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_damestear_island_secret } }
+			country_event = { id = insyaa_flavour.20057 }
+		}
+		else_if = {
+			limit = { FROM = { has_province_modifier = hinuilands_fluvial_waterworks_secret } }
+			country_event = { id = insyaa_flavour.20058 }
+		}
+	}
+	option = {}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20051
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_grasswhirlpool
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = grasswhirlpool }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20052
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_deepest
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = deepest }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20053
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_fires_beneath
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = fires_beneath }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20054
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_treegrave
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = treegrave }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20055
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_hinuibee_hive
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = hinuibee_hive }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20056
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_bonelake
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = bonelake }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20057
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_damestear_island
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = damestear_island }
+	}
+}
+country_event = { # Build monument for real
+	id = insyaa_flavour.20058
+	title = insyaa_flavour.2005.t
+	desc = insyaa_flavour.2005.d_fluvial_waterworks
+	picture = CAVE_eventPicture
+	goto = hinuilands_secret_prov
+	
+	is_triggered_only = yes
+	
+	option = {
+        name = insyaa_flavour.2005.a
+		build_hinuilands_monuments = { great_project = fluvial_waterworks }
+	}
+}
+
+# Deepest events
+country_event = {
+	id = insyaa_flavour.2020
+	title = insyaa_flavour.2020.t
+	desc = insyaa_flavour.2020.d
+	picture = DARK_EXPEDITION_eventPicture
+	is_triggered_only = yes
+
+	trigger = {
+		event_target:deepest = {
+			owned_by = ROOT
+			has_great_project = {
+				type = deepest
+				tier = 1
+			}
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				1 = { set_country_flag = deepest_option_0 }
+				1 = { set_country_flag = deepest_option_1 }
+				1 = { set_country_flag = deepest_option_2 }
+				1 = { set_country_flag = deepest_option_3 }
+				1 = { set_country_flag = deepest_option_4 }
+				1 = { set_country_flag = deepest_option_5 }
+			}
+			random_list = {
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_0 } }
+					set_country_flag = deepest_option_0
+				}
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_1 } }
+					set_country_flag = deepest_option_1
+				}
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_2 } }
+					set_country_flag = deepest_option_2
+				}
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_3 } }
+					set_country_flag = deepest_option_3
+				}
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_4 } }
+					set_country_flag = deepest_option_4
+				}
+				1 = {
+					trigger = { NOT = { has_country_flag = deepest_option_5 } }
+					set_country_flag = deepest_option_5
+				}
+			}
+		}
+	}
+
+	option = {
+		name = insyaa_flavour.2020.a
+		trigger = { has_country_flag = deepest_option_0 }
+		add_adm_power = 100
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_adm_advisor_effect = { skill = 2 cost_multiplier = 0.25}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.b
+		trigger = { has_country_flag = deepest_option_1 }
+		add_dip_power = 100
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_dip_advisor_effect = { skill = 2 cost_multiplier = 0.25}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.c
+		trigger = { has_country_flag = deepest_option_2 }
+		add_mil_power = 100
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_mil_advisor_effect = { skill = 2 cost_multiplier = 0.25}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.e
+		trigger = { has_country_flag = deepest_option_3 }
+		change_innovativeness = 5
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_advisor_effect = { skill = 3 cost_multiplier = 0.5}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.f
+		trigger = { has_country_flag = deepest_option_4 }
+		add_country_modifier = {
+			name = deepest_spark_of_genius
+			duration = 365
+		}
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_advisor_effect = { skill = 3 cost_multiplier = 0.5}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.g
+		trigger = { has_country_flag = deepest_option_5 }
+		add_country_modifier = {
+			name = deepest_knowledge_of_past
+			duration = 365
+		}
+		if = {
+			limit = {
+				event_target:deepest = {
+					has_great_project = {
+						type = deepest
+						tier = 2
+					}
+				}
+			}
+			define_random_advisor_effect = { skill = 3 cost_multiplier = 0.5}
+		}
+	}
+	option = {
+		name = insyaa_flavour.2020.h
+		trigger = {
+			event_target:deepest = {
+				has_great_project = {
+					type = deepest
+					tier = 3
+				}
+			}
+			NOT = { has_ruler_flag = deepest_ruler_option_taken }
+		}
+		increase_ruler_adm_effect = yes
+		add_ruler_personality = free_thinker_personality
+		add_ruler_personality = scholar_personality
+		set_ruler_flag = deepest_ruler_option_taken
+	}
+	option = {
+		name = insyaa_flavour.2020.i
+		trigger = {
+			event_target:deepest = {
+				has_great_project = {
+					type = deepest
+					tier = 3
+				}
+			}
+			NOT = { has_ruler_flag = deepest_ruler_option_taken }
+		}
+		increase_ruler_dip_effect = yes
+		add_ruler_personality = free_thinker_personality
+		add_ruler_personality = scholar_personality
+		set_ruler_flag = deepest_ruler_option_taken
+	}
+	option = {
+		name = insyaa_flavour.2020.j
+		trigger = {
+			event_target:deepest = {
+				has_great_project = {
+					type = deepest
+					tier = 3
+				}
+			}
+			NOT = { has_ruler_flag = deepest_ruler_option_taken }
+		}
+		increase_ruler_mil_effect = yes
+		add_ruler_personality = free_thinker_personality
+		add_ruler_personality = scholar_personality
+		set_ruler_flag = deepest_ruler_option_taken
+	}
+
+	after = {
+		clr_country_flag = deepest_5_year_pulse_passed
+		clr_country_flag = deepest_option_0
+		clr_country_flag = deepest_option_1
+		clr_country_flag = deepest_option_2
+		clr_country_flag = deepest_option_3
+		clr_country_flag = deepest_option_4
+		clr_country_flag = deepest_option_5
+	}
+}
+country_event = { 
+	id = insyaa_flavour.3000
+	title = insyaa_flavour.3000.t
+	desc = insyaa_flavour.3000.d
+	picture = TEMPORAL_RIFT_eventPicture
+
+	is_triggered_only = yes
+	option = {
+		name = insyaa_flavour.3000.a
+		trigger = { NOT = { has_country_flag = first_holohana_kill } }
+		add_adm_power = 100
+		add_dip_power = 100
+		add_mil_power = 100
+		add_prestige_excess_to_splendour_effect = { VAL = 50 }
+		add_splendor = 400
+		set_country_flag = first_holohana_kill
+	}
+	option = {
+		trigger = { has_country_flag = first_holohana_kill }
+		name = insyaa_flavour.3000.b
+		add_prestige_excess_to_splendour_effect = { VAL = 25 }
+		add_splendor = 100
+	}
+}
 country_event = { #Kiamoa Change FROM scope to country
 	id = insyaa_flavour.9998
 	title = none
