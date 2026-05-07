@@ -211,7 +211,7 @@ aPUI_gene_pillar_interaction_setup_effect = {
 	set_aPUI_cap = { name = gene_pillar_loot amount = 100 }
 	set_aPUI_var = { name = gene_pillar_loot value = 0 }
 
-	set_aPUI_cap = { name = gene_pillar_progress amount = 0 }
+	set_aPUI_cap = { name = gene_pillar_progress amount = 100 }
 	set_aPUI_var = { name = gene_pillar_progress value = 0 }
 	update_aPUI_var_bar = { name = gene_pillar_progress }
 	
@@ -747,7 +747,7 @@ gene_pillars_add_loot_effect = {
 	gene_pillars_change_loot_effect = { amount = $amount$ add = yes }
 }
 gene_pillars_lose_loot_effect = {
-	gene_pillars_change_loot_effect = { amount = -$amount$ }
+	gene_pillars_change_loot_effect = { amount = $amount$ }
 }
 #Changes loot value on province
 #Needs to be updated to handle the overflow reward, it got broken in a merge?
@@ -954,152 +954,99 @@ gene_pillars_lose_loot_effect_old = {
 	hidden_effect = { update_aPUI_var_bar = { name = gene_pillar_loot } }
 }
 
+
 #USE THIS IN EVENTS - generic change xp effect
 gene_pillars_change_xp_effect = {
-	set_variable = {
-		which = aPUI_gene_pillar_xp_framevar
-		value = $amount$
-	}
-	if = {
-		limit = {		
-			check_variable = {
-				which = aPUI_gene_pillar_xp_framevar
-				value = 0
-			}
-		}
-		gene_pillars_add_xp_effect = { amount = $amount$ }
-	}
-	else = { gene_pillars_lose_xp_effect = { amount = $amount$ } }
-	update_aPUI_var_bar = { name = gene_pillar_xp }
-}
-
-#DO NOT USE THIS IN EVENTS - only for adding xp
-gene_pillars_add_xp_effect = {
 	tooltip = {
-		change_variable = {
-			which = aPUI_gene_pillar_xp_var
-			value = $amount$
-		}
+		change_aPUI_var = { name = gene_pillar_xp value = $amount$ }
 	}
-	hidden_effect = {
-		event_target:gene_pillar_exploration_province = {
-			if = {
-				limit = {
-					NOT = {
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillars_party_level_var
-								value = 5
-							}
-						}
-					}
-				}
-				change_variable = {
-					which = aPUI_gene_pillar_xp_var
-					value = $amount$
-				}
+	#Skip all this if you're capped
+	if = {
+		limit = { NOT = { aPUI_check_variable = { name = gene_pillars_party_level value = 5 } } }
+
+		hidden_effect = {
+			change_aPUI_var = { name = gene_pillar_xp value = $amount$ }
+
+			event_target:gene_pillar_exploration_province = {
+				set_aPUI_var = { name = gene_pillar_xp which = PREV }
+				gene_pillars_level_up_check = yes
+				#Update bar
+				update_aPUI_var_bar = { name = gene_pillar_xp }
 			}
-			gene_pillars_level_up_check = yes
 		}
 	}
-	
-	#Temporary until everything is converted
-	hidden_effect = { update_aPUI_var_bar = { name = gene_pillar_xp } }
 }
 
-#DO NOT USE THIS IN EVENTS - only for removing xp
+#Temporary for compatibility with other branches
+gene_pillars_add_xp_effect = {
+	gene_pillars_change_xp_effect = { amount = $amount$ }
+}
 gene_pillars_lose_xp_effect = {
-	event_target:gene_pillar_exploration_province = {
-		if = {
-			limit = { NOT = { owner = { check_variable = { which = aPUI_gene_pillars_party_level_var value = 5 } } } }
-			change_variable = { which = gene_pillar_xp value = $amount$ }
-			cap_aPUI_var = { name = gene_pillar_xp }
-		}
-	}
-	#Temporary until everything is converted
-	hidden_effect = { update_aPUI_var_bar = { name = gene_pillar_xp } }
+	gene_pillars_change_xp_effect = { amount = $amount$ }
 }
 
 gene_pillars_level_up_check = {
 	hidden_effect = {
 		if = {
 			limit = {
-				check_variable = {
-					which = aPUI_gene_pillar_xp_var
-					which = aPUI_gene_pillar_xp_capacity
-				}
+				#Don't have a specific scripted trigger
+				aPUI_check_variable = { name = gene_pillar_xp which = aPUI_gene_pillar_xp_capacity }
 			}
-			subtract_variable = {
-				which = aPUI_gene_pillar_xp_var
-				which = aPUI_gene_pillar_xp_capacity
-			}
-			change_variable = {
-				which = aPUI_gene_pillars_party_level_var
-				value = 1
-			}
-			if = { # Went from level 1 to level 2
-				limit = {
-					owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 2 } }
-				}
-				owner = {
+			#Nor specific effect
+			subtract_variable = { which = aPUI_gene_pillar_xp_var which = aPUI_gene_pillar_xp_capacity }
+			change_aPUI_var = { which = gene_pillars_party_level value = 1 }
+
+			owner = {
+				if = { # Went from level 1 to level 2
+					limit = { gene_pillars_is_party_level = { level = 2 } }
 					gene_pillars = {
 						limit = { owned_by = ROOT } #Change visual as you unlock slot 2
 						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = 1 }
 					}
+					set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
 				}
-				set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
-			}
-			else_if = { # Went from level 2 to level 3
-				limit = {
-					owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 3 } }
-				}
-				owner = {
+				else_if = { # Went from level 2 to level 3
+					limit = { gene_pillars_is_party_level = { level = 3 } }
 					gene_pillars = {
 						limit = { owned_by = ROOT } #Change visual as you unlock slot 3
 						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = 1 }
 					}
-				}
-				set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
-
-				if = {
-					limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
-					owner = {
+					set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
+	
+					if = {
+						limit = { NOT = { has_country_modifier = mechanim_administration } }
 						set_country_flag = gene_pillars_unlocked_fighter_B
 						set_country_flag = gene_pillars_unlocked_fighter_C
 					}
 				}
-			}
-			else_if = { # Went from level 3 to level 4
-				limit = {
-					owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 4 } }
-				}
-				owner = {
+				else_if = { # Went from level 3 to level 4
+					limit = { gene_pillars_is_party_level = { level = 4 } }
 					gene_pillars = {
 						limit = { owned_by = ROOT } #Change visual as you unlock slot 4
 						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = 1 }
 					}
+					set_aPUI_cap = { name = gene_pillar_xp amount = 200 }
+	
+					if = {
+						limit = { NOT = { has_country_modifier = mechanim_administration } }
+						set_country_flag = gene_pillars_unlocked_cleric_B
+					}
 				}
-				set_aPUI_cap = { name = gene_pillar_xp amount = 200 }
-
-				if = {
-					limit = { NOT = { owner = { has_country_modifier = mechanim_administration } } }
-					owner = { set_country_flag = gene_pillars_unlocked_cleric_B }
-				}
-			}
-			else_if = { # Went from level 4 to level 5
-				limit = {
-					owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 5 } }
-				}
-				owner = {
+				else_if = { # Went from level 4 to level 5
+					limit = { gene_pillars_is_party_level = { level = 5 } }
 					gene_pillars = {
 						limit = { owned_by = ROOT } #Change visual as you unlock slot 5
 						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = 1 }
 					}
+					set_variable = { which = aPUI_gene_pillar_xp_var value = 200 }
 				}
-				set_variable = { which = aPUI_gene_pillar_xp_var value = 200 }
 			}
+			#Then get the updated values
+			set_aPUI_var = { name = gene_pillar_xp which = PREV }
+			set_aPUI_cap = { name = gene_pillar_xp which = PREV }
+			# Necessary as this is called without change/add/lose XP effect
+			update_aPUI_var_bar = { name = gene_pillar_xp }
 		}
-		update_aPUI_var_bar = { name = gene_pillar_xp }
 	}
 }
 
@@ -1367,120 +1314,59 @@ gene_pillars_gain_final_loot_event = {
 	}
 }
 
-#USE THIS IN EVENTS - generic change hp effect
-gene_pillars_change_hp_effect = {
-	set_variable = {
-		which = aPUI_gene_pillar_health_framevar
-		value = $amount$
-	}
-	if = {
-		limit = {		
-			check_variable = {
-				which = aPUI_gene_pillar_health_framevar
-				value = 0
-			}
-		}
-		gene_pillars_add_hp_effect = { amount = $amount$ [[overheal] overheal = yes] }
-	}
-	else = { gene_pillars_lose_hp_effect = { amount = $amount$ } }
-	update_aPUI_var_bar = { name = gene_pillar_health }
-	update_aPUI_var_bar = { name = gene_pillar_health_max }
-}
 
-#DO NOT USE THIS IN EVENTS - only for adding hp
-gene_pillars_add_hp_effect = {
+#Overheal sets maxHP to HP if HP > maxHP, and shows a tooltip
+#Lose is effectively optional, but will show the player that they lost extra for not having a frontliner
+gene_pillars_change_hp_effect = {
+	# "Change Health by X"
 	tooltip = {
-		change_variable = {
-			which = aPUI_gene_pillar_health_var
-			value = $amount$
-		}
+		change_aPUI_var = { name = gene_pillar_health value = $amount$ }
 	}
 	[[overheal] custom_tooltip = gene_pillars_overheal_tt ]
+	[[lose]
+		if = {
+			limit = { NOT = { owner = { gene_pillars_has_any_frontliner_class_country = yes } } }
+			custom_tooltip = gene_pillars_lose_health_effect_frontliner_tt
+		}
+	]
+
 	hidden_effect = {
 		event_target:gene_pillar_exploration_province = {
-			change_variable = {
-				which = aPUI_gene_pillar_health_var
-				value = $amount$
-			}
+			set_variable = { which = temp value = $amount$ }
+			change_aPUI_var = { name = gene_pillar_health value = $amount$ }
+			# change_aPUI_var = { name = gene_pillar_health value = $amount$ }
 			[[overheal]
+				# Is Max HP Less than current HP? Set to max for an 'overheal'
 				if = {
-					limit = {
-						check_variable = {
-							which = aPUI_gene_pillar_health_max_var
-							which = aPUI_gene_pillar_health_var
-						}
-					}
-					set_variable = {
-						which = aPUI_gene_pillar_health_max_var
-						which = aPUI_gene_pillar_health_var
-					}
+					limit = { aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max } }
+					set_aPUI_to_aPUI_var = { name = gene_pillar_health_max which = gene_pillar_health }
 				}
 			]
+
 			if = {
-				limit = {
-					check_variable = {
-						which = aPUI_gene_pillar_health_var
-						which = aPUI_gene_pillar_health_max_var
-					}
+				limit = { # Take more damage if you have no frontliner
+					#In this generic effect, check there was a hp reduction before applying again
+					NOT = { check_variable = { which = temp value = 0 } }
+					NOT = { owner = { gene_pillars_has_any_frontliner_class_country = yes } }
 				}
-				set_variable = {
-					which = aPUI_gene_pillar_health_var
-					which = aPUI_gene_pillar_health_max_var
-				}
+				change_aPUI_var = { name = gene_pillar_health value = $amount$ }
 			}
+
+			#Cap the health bar
+			if = {
+				limit = { aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max } }
+				set_aPUI_to_aPUI_var = { name = gene_pillar_health which = gene_pillar_health_max }
+			}
+			update_aPUI_var_bar = { name = gene_pillar_health }
+			update_aPUI_var_bar = { name = gene_pillar_health_max }
 		}
 	}
 }
-
-#DO NOT USE THIS IN EVENTS - only for removing hp
+gene_pillars_add_hp_effect = {
+	gene_pillars_change_hp_effect = { amount = $amount$ [[overheal] overheal = yes ] }
+}
 gene_pillars_lose_hp_effect = {
-	tooltip = {
-		change_variable = {
-			which = aPUI_gene_pillar_health_var
-			value = $amount$
-		}
-	}
-	# Tooltips to remind the player of the "bonus" health effects
-	if = {
-		limit = {
-			gene_pillars_has_any_frontliner_class_country = no
-		}
-		custom_tooltip = gene_pillars_lose_health_effect_frontliner_tt
-	}
-	hidden_effect = {
-		event_target:gene_pillar_exploration_province = {
-			change_variable = {
-				which = aPUI_gene_pillar_health_var
-				value = $amount$
-			}
-			if = {
-				limit = { # Take more damage if you have no frontliner
-					owner = {
-						gene_pillars_has_any_frontliner_class_country = yes
-					}
-				}
-				change_variable = {
-					which = aPUI_gene_pillar_health_var
-					value = $amount$
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						check_variable = {
-							which = aPUI_gene_pillar_health_var
-							value = 0.1
-						}
-					}
-				}
-				owner = {
-					reduce_stability_or_adm_power = yes
-					set_country_flag = gene_pillars_got_killed
-					gene_pillar_abandon_expedition_effect = yes
-				}
-			}
-		}
-	}
+	gene_pillars_change_hp_effect = { amount = $amount$ lose = yes }
 }
 
 #Sets up the progress bar
@@ -1488,7 +1374,7 @@ gene_pillars_set_up_progress_bar = {
 	# Define the increments based on the number of events
 	event_target:gene_pillar_exploration_province = {
 		set_aPUI_cap = { name = gene_pillar_progress amount = $events$ }
-		set_variable = { which = aPUI_gene_pillar_progress_var value = 0 }
+		set_aPUI_var = { name = gene_pillar_progress value = 0 }
 		update_aPUI_var_bar = { name = gene_pillar_progress }
 	}
 }
@@ -1496,10 +1382,7 @@ gene_pillars_set_up_progress_bar = {
 #Advances the progress bar
 gene_pillars_advance_progress_bar = {
 	event_target:gene_pillar_exploration_province = {
-		change_variable = {
-			which = aPUI_gene_pillar_progress_var
-			value = 1
-		}
+		change_aPUI_var = { name = gene_pillar_progress value = 1 }
 		update_aPUI_var_bar = { name = gene_pillar_progress }
 	}
 }
