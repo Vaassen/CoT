@@ -267,6 +267,7 @@ custom_icon = {
             has_government_mechanic = hessian_militarization_mechanic
             has_government_mechanic = rezankand_exemplar_mechanic
 			has_government_mechanic = vic_league_mechanic
+			has_government_mechanic = anb_parusahan_saya_tactical_maneuvers
 			has_government_mechanic = badakhan_orcish_soul_mechanic
 			has_government_mechanic = lelanan_love_mechanic
         }
@@ -610,6 +611,7 @@ custom_button = {
 			is_at_war = no
 			if = {
 				limit = { NOT = { owns_ruby_gardens = { tier = 3 } } }
+				NOT = { truce_with = event_target:raj_vizier_global_target }
 				calc_true_if = {
 					amount = 3
 					custom_trigger_tooltip = {
@@ -637,6 +639,7 @@ custom_button = {
 				}
 			}
 			else = {
+				NOT = { truce_with = event_target:raj_vizier_global_target }
 				custom_trigger_tooltip = {
 					tooltip = owns_ruby_gardens
 					always = yes
@@ -647,6 +650,7 @@ custom_button = {
 			is_at_war = no
 			if = {
 				limit = { NOT = { owns_ruby_gardens = { tier = 3 } } }
+				NOT = { truce_with = event_target:raj_raja_global_target }
 				calc_true_if = {
 					amount = 3
 					custom_trigger_tooltip = {
@@ -674,6 +678,7 @@ custom_button = {
 				}
 			}
 			else = {
+				NOT = { truce_with = event_target:raj_raja_global_target }
 				custom_trigger_tooltip = {
 					tooltip = owns_ruby_gardens
 					always = yes
@@ -708,47 +713,71 @@ custom_button = {
 			}
 		}
 		else_if = { limit = { is_subject_of_type = great_daimyo_vassal }
-			event_target:raj_vizier_global_target = {
-				ROOT = {
-					declare_war_with_cb = {
-						casus_belli = cb_raj_promotion_vizier
-						who = PREV
-					}
-				}
-			}
-			custom_tooltip = senaptis_to_war_tt
+
+			# Parusahan Saya MT - must wait to declare vizier war
 			if = {
 				limit = {
-					OR = {
-						rahen_raj_promotion_senapti_subtrigger_1 = no
-						rahen_raj_promotion_senapti_subtrigger_2 = no
-						rahen_raj_promotion_senapti_subtrigger_3 = no
-						rahen_raj_promotion_senapti_subtrigger_4 = no
-					}
-					NOT = { owns_ruby_gardens = { tier = 2 } }
+					tag = R54
+					NOT = { has_country_flag = R54_ready_flag }
 				}
-				custom_tooltip = raj_3_objective_ttoltip
-				add_legitimacy = -10
-				add_dip_power = -100
+				custom_tooltip = R54_not_ready_tt
 			}
-			hidden_effect = {
-				every_ally = {
-					limit = {
-						is_subject_of_type = great_daimyo_vassal
-						trust = {
-							who = ROOT
-							value = 65
+			else = {
+				event_target:raj_vizier_global_target = {
+					ROOT = {
+						declare_war_with_cb = {
+							casus_belli = cb_raj_promotion_vizier
+							who = PREV
 						}
 					}
-					join_all_offensive_wars_of = ROOT
 				}
-				event_target:raj_vizier_global_target = {
-					every_known_country = {
+				custom_tooltip = senaptis_to_war_tt
+				if = {
+					limit = {
+						OR = {
+							rahen_raj_promotion_senapti_subtrigger_1 = no
+							rahen_raj_promotion_senapti_subtrigger_2 = no
+							rahen_raj_promotion_senapti_subtrigger_3 = no
+							rahen_raj_promotion_senapti_subtrigger_4 = no
+						}
+						NOT = { owns_ruby_gardens = { tier = 2 } }
+					}
+					custom_tooltip = raj_3_objective_ttoltip
+					add_legitimacy = -10
+					add_dip_power = -100
+				}
+				hidden_effect = {
+					every_ally = {
 						limit = {
 							is_subject_of_type = great_daimyo_vassal
-							NOT = { war_with = PREV }
+							trust = {
+								who = ROOT
+								value = 65
+							}
+							NOT = { truce_with = event_target:raj_vizier_global_target }
 						}
-						join_all_defensive_wars_of = PREV
+						join_all_offensive_wars_of = ROOT
+					}
+					event_target:raj_vizier_global_target = {
+						every_known_country = {
+							limit = {
+								is_subject_of_type = great_daimyo_vassal
+								NOT = { war_with = PREV }
+								NOT = { alliance_with = ROOT }
+							}
+							join_all_defensive_wars_of = PREV
+						}
+					}
+				}
+				# Parusahan Saya MT - Raja called in
+				hidden_effect = {
+					if = {
+						limit = {
+							tag = R54
+						}
+						country_event = {
+							id = flavor_parusahan_saya.3
+						}
 					}
 				}
 			}
@@ -770,6 +799,7 @@ custom_button = {
 							who = ROOT
 							value = 65
 						}
+						NOT = { truce_with = event_target:raj_raja_global_target }
 					}
 					join_all_offensive_wars_of = ROOT
 					set_country_flag = has_vizier_won
