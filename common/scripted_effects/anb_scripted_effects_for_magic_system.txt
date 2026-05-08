@@ -2080,7 +2080,70 @@ define_powerful_mage = { #types are ruler, heir, and consort
 	}
 }
 
-define_type_to_war_wizard_effect = { #works on heir and ruler, else statements in scripted effects break general traits
+magic_level_up_all_ruler_schools = {
+	custom_tooltip = magic_level_up_all_ruler_schools_tt
+	hidden_effect = {
+		magic_school_level_up = { type = ruler school = abjuration }
+		magic_school_level_up = { type = ruler school = divination }
+		magic_school_level_up = { type = ruler school = conjuration }
+		magic_school_level_up = { type = ruler school = enchantment }
+		magic_school_level_up = { type = ruler school = evocation }
+		magic_school_level_up = { type = ruler school = illusion }
+		magic_school_level_up = { type = ruler school = necromancy }
+		magic_school_level_up = { type = ruler school = transmutation }
+	}
+}
+
+###################
+### MAGE ESTATE ###
+###################
+
+estate_action_RECRUIT_WAR_WIZARD = {
+	if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
+		add_mil_power = -40
+	}
+	else_if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
+		add_mil_power = -60
+	}
+	else_if = {
+		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
+		add_mil_power = -80
+	}
+	else = {
+		add_mil_power = -100
+	}
+	create_war_wizard = yes
+}
+
+estate_action_RECRUIT_RHAIDD ={
+	create_leader_scaling_with_tradition = {
+		leader = general
+		type = army
+	}
+	add_estate_loyalty = {
+		estate = estate_mages
+		loyalty = -10
+	}
+}
+
+estate_action_RECRUIT_COURT_MAGE = {
+	generate_estate_advisor = {
+		estate = estate_mages
+		type = court_mage
+	}
+	add_estate_loyalty = {
+		estate = estate_mages
+		loyalty = -10
+	}
+}
+
+###################
+### WAR WIZARDS ###
+###################
+
+define_type_to_war_wizard_effect = { #works on heir and ruler
 	custom_tooltip = define_$type$_to_war_wizard_tt
 	if = {
 		limit = {
@@ -2147,17 +2210,13 @@ define_type_to_war_wizard_effect = { #works on heir and ruler, else statements i
 		custom_tooltip = war_wizard_mil_0_base_stats_tt
 	}
 
-	if = {
+	if = { #Ruler-specific war wizard buff
 		limit = { at_least_magic_project_level = { project = battlemage_academy level = 3 } }
 		add_country_modifier = { name = ruler_war_wizard_max_academy_mod duration = 1 hidden = yes } #+1 Shock
 		custom_tooltip = war_wizard_max_academy_tt
 	}
 
-	if = { #Wyvernheart
-		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
-		add_country_modifier = { name = wyvernheart_war_wizard_mod duration = 1 hidden = yes } #+1 maneuver
-		custom_tooltip = wyvernheart_war_wizard_tt
-	}
+	apply_war_wizard_buffs = yes
 
 	hidden_effect = {
 		if = {
@@ -2177,7 +2236,9 @@ define_type_to_war_wizard_effect = { #works on heir and ruler, else statements i
 	remove_country_modifier = ruler_war_wizard_1_mod
 	remove_country_modifier = ruler_war_wizard_0_mod
 
-	remove_country_modifier = wyvernheart_war_wizard_mod
+	remove_country_modifier = ruler_war_wizard_max_academy_mod
+
+	clear_war_wizard_buffs = yes
 }
 
 define_ruler_to_war_wizard = { define_type_to_war_wizard_effect = { type = ruler } }
@@ -2213,65 +2274,6 @@ define_type_to_historic_war_wizard_sub_effect = { #since this is in the history 
 	else = { define_$type$_to_general = { fire = 0 shock = 7 manuever = 2 siege = 0 [[female] female = $female$ ] } }
 }
 
-magic_level_up_all_ruler_schools = {
-	custom_tooltip = magic_level_up_all_ruler_schools_tt
-	hidden_effect = {
-		magic_school_level_up = { type = ruler school = abjuration }
-		magic_school_level_up = { type = ruler school = divination }
-		magic_school_level_up = { type = ruler school = conjuration }
-		magic_school_level_up = { type = ruler school = enchantment }
-		magic_school_level_up = { type = ruler school = evocation }
-		magic_school_level_up = { type = ruler school = illusion }
-		magic_school_level_up = { type = ruler school = necromancy }
-		magic_school_level_up = { type = ruler school = transmutation }
-	}
-}
-
-###################
-### MAGE ESTATE ###
-###################
-
-estate_action_RECRUIT_WAR_WIZARD = {
-	if = {
-		limit = { exactly_magic_project_level = { project = battlemage_academy level = 3 } }
-		add_mil_power = -40
-	}
-	else_if = {
-		limit = { exactly_magic_project_level = { project = battlemage_academy level = 2 } }
-		add_mil_power = -60
-	}
-	else_if = {
-		limit = { exactly_magic_project_level = { project = battlemage_academy level = 1 } }
-		add_mil_power = -80
-	}
-	else = {
-		add_mil_power = -100
-	}
-	create_war_wizard = yes
-}
-
-estate_action_RECRUIT_RHAIDD ={
-	create_leader_scaling_with_tradition = {
-		leader = general
-		type = army
-	}
-	add_estate_loyalty = {
-		estate = estate_mages
-		loyalty = -10
-	}
-}
-
-estate_action_RECRUIT_COURT_MAGE = {
-	generate_estate_advisor = {
-		estate = estate_mages
-		type = court_mage
-	}
-	add_estate_loyalty = {
-		estate = estate_mages
-		loyalty = -10
-	}
-}
-
 define_war_wizard = { #Allows access to a few pre-defined war wizards.
 	define_war_wizard_sub_effect = {
 		[[name] name = "$name$" ]
@@ -2283,23 +2285,19 @@ define_war_wizard = { #Allows access to a few pre-defined war wizards.
 define_war_wizard_sub_effect = { #the levels here correspond with the war wizard project
 	define_general = {
 		[[name] name = "$name$" ]
-		[[3] fire = 3 shock = 8 manuever = 7 siege = 4 ]
-		[[2] fire = 2 shock = 8 manuever = 5 siege = 3 ]
-		[[1] fire = 1 shock = 7 manuever = 4 siege = 2 ]
-		[[0] fire = 0 shock = 7 manuever = 2 siege = 1 ]
+		[[3] fire = 4 shock = 9 manuever = 7 siege = 4 ]
+		[[2] fire = 2 shock = 8 manuever = 6 siege = 3 ]
+		[[1] fire = 1 shock = 7 manuever = 5 siege = 2 ]
+		[[0] fire = 0 shock = 7 manuever = 3 siege = 1 ]
 
 		[[female] female = $female$ ]
 	}
 	custom_tooltip = this_is_war_wizard_[[female]fe]male
 }
 
-# Unfortunately, we have to use if statements here due to how define_general appends traits to characters
-# (it breaks inside else statements in scripted effects )
-# Also, RNG for names is broken unless we set saved name
-
 create_war_wizard = { #the more general war-wizard function
 	custom_tooltip = create_war_wizard_tt
-	hidden_effect = {
+	hidden_effect = { #RNG for names is broken unless we set saved name
 		set_saved_name = { key = ww_male_name type = leader }
 		set_saved_name = { key = ww_female_name type = leader female = yes }
 	}
@@ -2324,27 +2322,7 @@ create_war_wizard = { #the more general war-wizard function
 		custom_tooltip = war_wizard_level_0_base_stats_tt
 	}
 
-	if = { #Wyvernheart
-		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
-		add_country_modifier = { name = wyvernheart_war_wizard_mod duration = 1 hidden = yes } #+1 maneuver
-		custom_tooltip = wyvernheart_war_wizard_tt
-	}
-	if = {
-		limit = { at_least_magic_project_level = { project = cangji_project level = 2 } }
-		hidden_effect = { add_country_modifier = { name = cangji_war_wizard_mod_1 duration = 1 hidden = yes } } #+1 maneuver
-		custom_tooltip = V05_wiz_speed # something that tells player they get +1 maneuver
-		if = {
-			limit = { at_least_magic_project_level = { project = cangji_project level = 3 } }
-			hidden_effect = {
-				every_owned_province = {
-					limit = { has_level_2_cinder_monastery = yes }
-					owner = { add_mil_power = 2 }
-				}
-				add_country_modifier = { name = cangji_war_wizard_mod_2 duration = 1 hidden = yes }  #+1 fire
-			}
-			custom_tooltip = V05_wiz_shoot # something that tells player they get +1 fire as well
-		}
-	}
+	apply_war_wizard_buffs = yes
 
 	hidden_effect = { #We need the PRNG for situations like the evocation project
 		if = {
@@ -2369,11 +2347,61 @@ create_war_wizard = { #the more general war-wizard function
 		remove_country_modifier = war_wizard_1_mod
 		remove_country_modifier = war_wizard_0_mod
 
-		remove_country_modifier = wyvernheart_war_wizard_mod
-		
-		remove_country_modifier = cangji_war_wizard_mod_1
-		remove_country_modifier = cangji_war_wizard_mod_2
+		clear_war_wizard_buffs = yes
 	}
+}
+
+apply_war_wizard_buffs = { #These are the effects you edit for generic war wizard buffs
+	if = { #Wyvernheart
+		limit = { has_estate_privilege = estate_wyvernheart_floodborn_council }
+		add_country_modifier = { name = wyvernheart_war_wizard_mod duration = 1 hidden = yes } #+1 maneuver
+		custom_tooltip = wyvernheart_war_wizard_tt #Tells the player they get +1 maneuver
+	}
+	if = {
+		limit = { at_least_magic_project_level = { project = cangji_project level = 2 } }
+		add_country_modifier = { name = cangji_war_wizard_mod_1 duration = 1 hidden = yes } #+1 maneuver
+		custom_tooltip = V05_wiz_speed # something that tells player they get +1 maneuver
+		if = {
+			limit = { at_least_magic_project_level = { project = cangji_project level = 3 } }
+			hidden_effect = {
+				every_owned_province = {
+					limit = { has_level_2_cinder_monastery = yes }
+					owner = { add_mil_power = 2 }
+				}
+				add_country_modifier = { name = cangji_war_wizard_mod_2 duration = 1 hidden = yes }  #+1 fire
+			}
+			custom_tooltip = V05_wiz_shoot # something that tells player they get +1 fire as well
+		}
+	}
+}
+
+clear_war_wizard_buffs = {
+	remove_country_modifier = wyvernheart_war_wizard_mod
+	remove_country_modifier = cangji_war_wizard_mod_1
+	remove_country_modifier = cangji_war_wizard_mod_2
+}
+
+spawn_war_wizard_rebels = { #province-level effect
+	hidden_effect = { owner = { add_country_modifier = { name = generic_war_wizard_rebels_mod duration = 1 hidden = yes } } }
+	spawn_rebels = { #modular spawn rebels effect, listing all base-game arguments. please copy-paste as needed!
+		type = $type$
+		size = $size$
+		[[culture] culture = $culture$]
+		[[religion] religion = $religion$]
+		[[unrest] unrest = $unrest$]
+		[[win] win = $win$]
+		[[friend] friend = $friend$]
+		[[leader] leader = "$leader$"]
+		[[leader_dynasty] leader_dynasty = "$leader_dynasty$"]
+		[[female] female = $female$]
+		[[use_heir_as_leader] use_heir_as_leader = $use_heir_as_leader$]
+		[[use_consort_as_leader] use_consort_as_leader = $use_consort_as_leader$]
+		[[separatists_target] separatists_target = $separatists_target$]
+		[[estate] estate = $estate$]
+		[[as_if_faction] as_if_faction = $as_if_faction$]
+		[[should_take_capital] should_take_capital = $should_take_capital$]
+	}
+	hidden_effect = { owner = { remove_country_modifier = generic_war_wizard_rebels_mod } }
 }
 
 ######################
