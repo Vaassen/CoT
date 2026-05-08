@@ -90,7 +90,7 @@ aPUI_gene_pillar_reset_province = {
 		else = {
 			set_aPUI_cap = { name = gene_pillar_xp amount = 1 }
 		} # failsafe... we shouldn't really need it if all goes well - TODO: determine if necessary
-		set_aPUI_var = { name = gene_pillar_loot value = 0 }
+		set_aPUI_var = { name = gene_pillar_loot which = owner } # Loot is stored between expeditions
 		set_aPUI_var = { name = gene_pillar_progress value = 0 }
 
 		set_variable = { which = aPUI_gene_pillar_loot_capacity value = 100 }
@@ -100,7 +100,15 @@ aPUI_gene_pillar_reset_province = {
 		update_aPUI_var_bar = { name = gene_pillar_progress }
 		
 		# set_aPUI_var = { name = gene_pillars_party_level which = owner }
-		[[new_owner] gene_pillar_UI_setup_party_slots = yes ]
+		[[new_owner]
+			gene_pillar_UI_setup_party_slots = yes
+			gene_pillars_setup_clr_province_class_flags_rogue = yes
+			gene_pillars_setup_clr_province_class_flags_ranger = yes
+			gene_pillars_setup_clr_province_class_flags_fighter = yes
+			gene_pillars_setup_clr_province_class_flags_cleric = yes
+			gene_pillars_setup_clr_province_class_flags_mage = yes
+			gene_pillars_setup_clr_province_class_flags_artificer = yes
+		]
 		aPUI_gene_pillars_setup_update_UI = yes
 	}
 }
@@ -113,16 +121,18 @@ aPUI_gene_pillar_setup_province = {
 	}
 }
 
-aPUI_gene_pillar_update_all_gene_pillar_xp_bars = {
-	# the XP bar in each gene pillar window is mirroring a country variable,
+aPUI_gene_pillar_update_all_gene_pillar_progress_bars = {
+	# the XP bar and Loot bar in each gene pillar window is mirroring a country variable,
 	# so when you are not in an expedition you can see the bar in all expedition windows and it should have the same value in each
-	# thus, when finishing or abandoning an expedition, we need to update the XP in all owned gene pillars
+	# thus, when finishing or abandoning an expedition, we need to update the XP + Loot in all owned gene pillars
 	# as doing so allows you to see the other gene pillar windows again
 	gene_pillars = {
 		limit = { owned_by = PREV }
 		set_aPUI_var = { name = gene_pillar_xp which = owner }
 		set_aPUI_cap = { name = gene_pillar_xp which = owner } # necessary in case a level-up increased these
 		update_aPUI_var_bar = { name = gene_pillar_xp }
+		set_aPUI_var = { name = gene_pillar_loot which = owner }
+		update_aPUI_var_bar = { name = gene_pillar_loot }
 	}
 }
 
@@ -237,11 +247,12 @@ aPUI_clear_all_country_exploration_modifiers = {
 	remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
 }
 aPUI_clear_all_province_exploration_flags = {
-	clr_province_flag = aPUI_gene_pillar_is_exploring_here
+	# Add em
 }
 aPUI_clear_all_province_exploration_modifiers = {
 	#Put em in
 	remove_province_modifier = gene_pillars_kiamoa_strange_experiment
+	remove_province_modifier = gene_pillars_next_level_extra_1_hp
 }
 
 #Clears archetype selection
@@ -274,10 +285,11 @@ gene_pillar_abandon_expedition_effect = {
 			aPUI_gene_pillar_reset_province = yes
 		}
 
-		# TODO: hacky - we have to clear the XP here as you can see the expedition window again if you hold the finishing events open
+		# TODO: hacky - we have to clear the XP and Loot here as you can see the expedition window again if you hold the finishing events open
 		# but we also need to update XP again in each completion event, because you might level up and change your XP again
+		# and you may have maxed your Loot, thereby resetting it
 		# improve this
-		aPUI_gene_pillar_update_all_gene_pillar_xp_bars = yes
+		aPUI_gene_pillar_update_all_gene_pillar_progress_bars = yes
 
 		#Pillar ends in failure
 		[[province] event_target:gene_pillar_exploration_province = { province_event = { id = gene_pillars.31 } } ]
@@ -339,31 +351,15 @@ gene_pillar_successful_end_expedition_effect = {
 		which = num_gene_pillar_explorations_completed
 		value = 1
 	}
-	# TODO: hacky - we have to clear the XP here as you can see the expedition window again if you hold the finishing events open
+	# TODO: hacky - we have to clear the XP and Loot here as you can see the expedition window again if you hold the finishing events open
 	# but we also need to update XP again in each completion event, because you might level up and change your XP again
+	# and you may have maxed your Loot, thereby resetting it
 	# improve this
-	aPUI_gene_pillar_update_all_gene_pillar_xp_bars = yes
+	aPUI_gene_pillar_update_all_gene_pillar_progress_bars = yes
 
 	event_target:gene_pillar_exploration_province = {
-		gene_pillars_randomise_loot_event = yes
-		if = {
-			limit = {
-				check_variable = {
-					which = aPUI_gene_pillar_loot_var
-					value = 100
-				}
-			}
-			# The loot var is reduced by 100 in the event option
-			gene_pillars_randomise_loot_event = yes
-			# custom_tooltip = gene_pillars_get_loot_again_tt
-		}
 		province_event = { id = gene_pillars.30 }
 		hidden_effect = {
-			set_variable = { # Reset progress to 0
-				which = aPUI_gene_pillar_progress_var
-				value = 0
-			}
-			# I think I can run this again
 			aPUI_gene_pillar_reset_province = yes
 		}
 	}
@@ -416,15 +412,6 @@ gene_pillar_start_expedition_effect = {
 	}
 }
 
-gene_pillar_start_expedition_effect = {
-	hidden_effect = {
-		owner = {
-			set_country_flag = aPUI_gene_pillar_is_exploring_$province$
-		}
-		set_province_flag = aPUI_gene_pillar_is_exploring_here
-		province_event = { id = gene_pillars.2 }
-	}
-}
 
 gene_pillars_clr_all_selecting_slot_flags = {
 	clr_province_flag = gene_pillars_selecting_slot_1
@@ -686,6 +673,7 @@ gene_pillars_change_loot_effect = {
 		}
 		hidden_effect = {
 			multiply_variable = { which = temp value = $amount$ }
+			change_aPUI_var = { name = gene_pillar_loot which = temp } # Update country level so we save between expedition
 			event_target:gene_pillar_exploration_province = {
 				set_variable = { which = temp which = PREV }
 				change_aPUI_var = { name = gene_pillar_loot which = temp }
@@ -695,9 +683,19 @@ gene_pillars_change_loot_effect = {
 
 	#Change on province, refresh Gene Pillar UI
 	hidden_effect = {
+		change_aPUI_var = { name = gene_pillar_loot value = $amount$ } # Update country level so we save between expedition
+		if = {
+			limit = { NOT = { aPUI_check_variable = { name = gene_pillar_loot value = 0 } } }
+			set_aPUI_var = { name = gene_pillar_loot value = 0 }
+		}
 		event_target:gene_pillar_exploration_province = {
-			change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
-			cap_aPUI_var = { name = gene_pillar_loot }
+			set_aPUI_var = { name = gene_pillar_loot which = PREV }
+			
+			#Maybe not best positioned here
+			if = {
+				limit = { aPUI_check_variable = { name = gene_pillar_loot value = 100 } }
+				province_event = { id = gene_pillars.33 }
+			}
 			update_aPUI_var_bar = { name = gene_pillar_loot }
 		}
 	}
@@ -803,10 +801,7 @@ gene_pillars_level_up_check = {
 gene_pillars_check_loot_threshold = {
 	if = {
 		limit = { gene_pillars_has_capped_loot = yes }
-		change_variable = {
-			which = aPUI_gene_pillar_loot_var
-			value = -100
-		}
+		change_aPUI_var = { name = gene_pillar_loot value = -100 }
 		gene_pillars_randomise_loot_event = yes
 	}
 }
@@ -815,84 +810,74 @@ gene_pillars_check_loot_threshold = {
 # the event option will actually give it to you
 # If you have 100 loot points, make sure we only select each reward once
 gene_pillars_randomise_loot_event = {
-	random_list = {
-		10 = {
-			trigger = {
-				owner = {
+	owner = {
+		random_list = {
+			10 = {
+				trigger = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
 						has_country_flag = gene_pillars_loot_good_ruler
 					}
 				}
-			}
-			owner = {
 				set_country_flag = gene_pillars_loot_good_ruler
 			}
-		}
-		10 = {
-			trigger = {
-				owner = {
+			10 = {
+				trigger = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
 						has_country_flag = gene_pillars_loot_institution
 					}
 				}
-			}
-			owner = {
 				set_country_flag = gene_pillars_loot_institution
 			}
-		}
-		10 = { # Get precursor relics
-			trigger = {
-				owner = {
+			10 = { # Get precursor relics
+				trigger = {
 					NOT = {
 						has_country_flag = gene_pillars_has_artificer_A
 						has_country_flag = gene_pillars_loot_precursor_relics
 						has_country_flag = gene_pillars_loot_damestear
 					}
+					NOT = { PREV = { trade_goods = precursor_relics } }
 				}
-				NOT = { trade_goods = precursor_relics }
-			}
-			owner = {
 				set_country_flag = gene_pillars_loot_precursor_relics
 			}
-		}
-		10 = { # Get Damestear
-			trigger = {
-				owner = {
+			10 = { # Get Damestear
+				trigger = {
 					NOT = {
 						has_country_flag = gene_pillars_loot_damestear
 						has_country_flag = gene_pillars_loot_precursor_relics
 					}
+					NOT = { PREV = { trade_goods = damestear } }
 				}
-				NOT = { trade_goods = damestear }
-			}
-			owner = {
 				set_country_flag = gene_pillars_loot_damestear
 			}
-		}
-		10 = {
-			trigger = {
-				owner = {
+			10 = {
+				trigger = {
 					NOT = {
 						has_country_flag = gene_pillars_has_mage_A
 						has_country_flag = gene_pillars_has_artificer_A
 						has_country_flag = gene_pillars_loot_power_cash
 					}
 				}
-			}
-			owner = {
 				set_country_flag = gene_pillars_loot_power_cash
 			}
-		}
-		5 = {
-			owner = {
+			5 = {
+				#TODO: Add trigger to ensure an eligible invention exists
+				trigger = {
+					NOT = { has_country_flag = gene_pillars_loot_insyaa_invention }
+				}
 				set_country_flag = gene_pillars_loot_insyaa_invention
-		 	}
+			}
 		}
 	}
+	[[looted]
+		# subtract from the loot variable as 'earned' loot, reset the bar
+		owner = { change_aPUI_var = { name = gene_pillar_loot value = -100 } }
+		set_aPUI_var = { name = gene_pillar_loot which = owner }
+		update_aPUI_var_bar = { name = gene_pillar_loot }
+	]
 }
 
 gene_pillars_gain_final_loot_event = {
@@ -1638,7 +1623,6 @@ gene_pillars_clear_all_province_flags = {
 	clr_province_flag = gene_pillars_selecting_slot_3
 	clr_province_flag = gene_pillars_selecting_slot_4
 	clr_province_flag = gene_pillars_selecting_slot_5
-	clr_province_flag = aPUI_gene_pillar_is_exploring_here
 	aPUI_gene_pillar_reset_province = { new_owner = yes }
 }
 
@@ -1807,7 +1791,48 @@ gene_pillars_setup_clr_archetype_flags_artificer = {
 	}
 }
 
-
+	gene_pillars_setup_clr_province_class_flags_rogue = {
+	clr_province_flag = gene_pillars_has_rogue_A
+	clr_province_flag = gene_pillars_has_rogue_B
+	clr_province_flag = gene_pillars_has_rogue_C
+	clr_province_flag = gene_pillars_has_rogue_D
+	clr_province_flag = gene_pillars_has_rogue_E
+}
+	gene_pillars_setup_clr_province_class_flags_ranger = {
+	clr_province_flag = gene_pillars_has_ranger_A
+	clr_province_flag = gene_pillars_has_ranger_B
+	clr_province_flag = gene_pillars_has_ranger_C
+	clr_province_flag = gene_pillars_has_ranger_D
+	clr_province_flag = gene_pillars_has_ranger_E
+}
+	gene_pillars_setup_clr_province_class_flags_fighter = {
+	clr_province_flag = gene_pillars_has_fighter_A
+	clr_province_flag = gene_pillars_has_fighter_B
+	clr_province_flag = gene_pillars_has_fighter_C
+	clr_province_flag = gene_pillars_has_fighter_D
+	clr_province_flag = gene_pillars_has_fighter_E
+}
+	gene_pillars_setup_clr_province_class_flags_cleric = {
+	clr_province_flag = gene_pillars_has_cleric_A
+	clr_province_flag = gene_pillars_has_cleric_B
+	clr_province_flag = gene_pillars_has_cleric_C
+	clr_province_flag = gene_pillars_has_cleric_D
+	clr_province_flag = gene_pillars_has_cleric_E
+}
+	gene_pillars_setup_clr_province_class_flags_mage = {
+	clr_province_flag = gene_pillars_has_mage_A
+	clr_province_flag = gene_pillars_has_mage_B
+	clr_province_flag = gene_pillars_has_mage_C
+	clr_province_flag = gene_pillars_has_mage_D
+	clr_province_flag = gene_pillars_has_mage_E
+}
+	gene_pillars_setup_clr_province_class_flags_artificer = {
+	clr_province_flag = gene_pillars_has_artificer_A
+	clr_province_flag = gene_pillars_has_artificer_B
+	clr_province_flag = gene_pillars_has_artificer_C
+	clr_province_flag = gene_pillars_has_artificer_D
+	clr_province_flag = gene_pillars_has_artificer_E
+}
 
 
 #class = <class number, set by @$class$>
@@ -2013,7 +2038,6 @@ gene_pillars_T4_invention_unlock = {
 }
 
 gene_pillars_random_insyaa_invention_unlock = {
-	custom_tooltip = gene_pillars_random_insyaa_invention_unlock_tt
 	if = {
 		limit = { NOT = { has_country_modifier = mechanim_administration } }
 
@@ -2028,9 +2052,9 @@ gene_pillars_random_insyaa_invention_unlock = {
 			custom_tooltip = gene_pillars_insyaa_invention_available_later_tt
 			# sorry..
 		}
+		custom_tooltip = gene_pillars_random_insyaa_invention_unlock_tt
 		hidden_effect = {
 			random_list = {
-				#Mechanim
 				100 = {
 					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_reverse_mechanim } }
 					unlock_insyaa_invention = { invention = artifice_invention_reverse_mechanim }
@@ -2158,6 +2182,7 @@ gene_pillars_random_insyaa_invention_unlock = {
 	}
 	if = {
 		limit = { has_country_modifier = mechanim_administration }
+		custom_tooltip = gene_pillars_random_mechanim_body_part_unlock_tt
 		hidden_effect = {
 			random_list = {
 				#Cultural
