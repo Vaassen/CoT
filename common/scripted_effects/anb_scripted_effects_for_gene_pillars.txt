@@ -81,13 +81,20 @@ aPUI_gene_pillar_reset_province = {
 		set_aPUI_var = { name = gene_pillar_health_max value = 3 }
 		set_aPUI_cap = { name = gene_pillar_health_max amount = 10 }
 		
-		set_aPUI_var = { name = gene_pillar_xp value = 0 }
-		set_aPUI_cap = { name = gene_pillar_xp amount = 1 }
+		set_aPUI_var = { name = gene_pillar_xp which = owner } # if we haven't set up, this is 0, otherwise it's our current xp - necessary for e.g. on_province_owner_change conquering new gene pillars while having XP
+		# we also need to copy the capacity from the owner, but we must set it to a safe value if the owner doesn't have it set up and not 0, to avoid divide-by-zero errors
+		if = {
+			limit = { owner = { aPUI_check_capacity_variable = { name = gene_pillar_xp value = 1 } } }
+			set_aPUI_cap = { name = gene_pillar_xp which = owner }
+		}
+		else = {
+			set_aPUI_cap = { name = gene_pillar_xp amount = 1 }
+		} # failsafe... we shouldn't really need it if all goes well - TODO: determine if necessary
 		set_aPUI_var = { name = gene_pillar_loot value = 0 }
 		set_aPUI_var = { name = gene_pillar_progress value = 0 }
 
-		set_variable = { which = aPUI_gene_pillar_loot_capacity			value = 100 }
-		set_variable = { which = aPUI_gene_pillar_progress_capacity		value = 10 }
+		set_variable = { which = aPUI_gene_pillar_loot_capacity value = 100 }
+		set_variable = { which = aPUI_gene_pillar_progress_capacity value = 10 }
 
 		update_aPUI_var_bar = { name = gene_pillar_xp }
 		update_aPUI_var_bar = { name = gene_pillar_progress }
@@ -103,6 +110,19 @@ aPUI_gene_pillar_setup_province = {
 			NOT = { has_province_flag = aPUI_gene_pillar_interaction_setup_done_province }
 		}
 		aPUI_gene_pillar_reset_province = { new_owner = yes }
+	}
+}
+
+aPUI_gene_pillar_update_all_gene_pillar_xp_bars = {
+	# the XP bar in each gene pillar window is mirroring a country variable,
+	# so when you are not in an expedition you can see the bar in all expedition windows and it should have the same value in each
+	# thus, when finishing or abandoning an expedition, we need to update the XP in all owned gene pillars
+	# as doing so allows you to see the other gene pillar windows again
+	gene_pillars = {
+		limit = { owned_by = PREV }
+		set_aPUI_var = { name = gene_pillar_xp which = owner }
+		set_aPUI_cap = { name = gene_pillar_xp which = owner } # necessary in case a level-up increased these
+		update_aPUI_var_bar = { name = gene_pillar_xp }
 	}
 }
 
@@ -251,10 +271,16 @@ gene_pillar_abandon_expedition_effect = {
 			aPUI_clear_all_province_exploration_flags = yes
 			aPUI_clear_all_province_exploration_modifiers = yes
 			aPUI_gene_pillar_reset_province = yes
-		}	
+		}
+
+		# TODO: hacky - we have to clear the XP here as you can see the expedition window again if you hold the finishing events open
+		# but we also need to update XP again in each completion event, because you might level up and change your XP again
+		# improve this
+		aPUI_gene_pillar_update_all_gene_pillar_xp_bars = yes
+
 		#Pillar ends in failure
 		[[province] event_target:gene_pillar_exploration_province = { province_event = { id = gene_pillars.31 } } ]
-		[[country] owner = { country_event = { id = gene_pillars.32 } } ]
+		[[country] country_event = { id = gene_pillars.32 } ]
 	}
 }
 
@@ -312,6 +338,11 @@ gene_pillar_successful_end_expedition_effect = {
 		which = num_gene_pillar_explorations_completed
 		value = 1
 	}
+	# TODO: hacky - we have to clear the XP here as you can see the expedition window again if you hold the finishing events open
+	# but we also need to update XP again in each completion event, because you might level up and change your XP again
+	# improve this
+	aPUI_gene_pillar_update_all_gene_pillar_xp_bars = yes
+
 	event_target:gene_pillar_exploration_province = {
 		gene_pillars_randomise_loot_event = yes
 		if = {
