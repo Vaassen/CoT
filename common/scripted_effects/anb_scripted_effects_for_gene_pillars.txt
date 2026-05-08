@@ -100,7 +100,15 @@ aPUI_gene_pillar_reset_province = {
 		update_aPUI_var_bar = { name = gene_pillar_progress }
 		
 		# set_aPUI_var = { name = gene_pillars_party_level which = owner }
-		[[new_owner] gene_pillar_UI_setup_party_slots = yes ]
+		[[new_owner]
+			gene_pillar_UI_setup_party_slots = yes
+			gene_pillars_setup_clr_province_class_flags_rogue = yes
+			gene_pillars_setup_clr_province_class_flags_ranger = yes
+			gene_pillars_setup_clr_province_class_flags_fighter = yes
+			gene_pillars_setup_clr_province_class_flags_cleric = yes
+			gene_pillars_setup_clr_province_class_flags_mage = yes
+			gene_pillars_setup_clr_province_class_flags_artificer = yes
+		]
 		aPUI_gene_pillars_setup_update_UI = yes
 	}
 }
@@ -242,6 +250,7 @@ aPUI_clear_all_province_exploration_flags = {
 aPUI_clear_all_province_exploration_modifiers = {
 	#Put em in
 	remove_province_modifier = gene_pillars_kiamoa_strange_experiment
+	remove_province_modifier = gene_pillars_next_level_extra_1_hp
 }
 
 #Clears archetype selection
@@ -416,15 +425,6 @@ gene_pillar_start_expedition_effect = {
 	}
 }
 
-gene_pillar_start_expedition_effect = {
-	hidden_effect = {
-		owner = {
-			set_country_flag = aPUI_gene_pillar_is_exploring_$province$
-		}
-		set_province_flag = aPUI_gene_pillar_is_exploring_here
-		province_event = { id = gene_pillars.2 }
-	}
-}
 
 gene_pillars_clr_all_selecting_slot_flags = {
 	clr_province_flag = gene_pillars_selecting_slot_1
@@ -646,12 +646,7 @@ gene_pillars_add_loot_effect = {
 	hidden_effect = {
 		event_target:gene_pillar_exploration_province = {
 			if = {
-				limit = {
-					check_variable = {
-						which = aPUI_gene_pillar_loot_var
-						value = 100
-					}
-				}
+				limit = { aPUI_check_variable = { name = gene_pillar_loot value = 100 } }
 				gene_pillars_randomise_loot_event = yes
 				province_event = {
 					id = gene_pillars.33
@@ -661,7 +656,7 @@ gene_pillars_add_loot_effect = {
 	}
 }
 gene_pillars_lose_loot_effect = {
-	gene_pillars_change_loot_effect = { amount = $amount$ lose = yes }
+	gene_pillars_change_loot_effect = { amount = $amount$ }
 }
 #Changes loot value on province
 #Needs to be updated to handle the overflow reward, it got broken in a merge?
@@ -713,9 +708,12 @@ gene_pillars_change_loot_effect = {
 	#Change on province, refresh Gene Pillar UI
 	hidden_effect = {
 		change_aPUI_var = { name = gene_pillar_loot value = $amount$ } # Update country level so we save between expedition
+		if = {
+			limit = { NOT = { aPUI_check_variable = { name = gene_pillar_loot value = 0 } } }
+			set_aPUI_var = { name = gene_pillar_loot value = 0 }
+		}
 		event_target:gene_pillar_exploration_province = {
-			change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
-			[[lose]cap_aPUI_var = { name = gene_pillar_loot }]
+			set_aPUI_var = { name = gene_pillar_loot which = PREV }
 			update_aPUI_var_bar = { name = gene_pillar_loot }
 		}
 	}
@@ -821,10 +819,7 @@ gene_pillars_level_up_check = {
 gene_pillars_check_loot_threshold = {
 	if = {
 		limit = { gene_pillars_has_capped_loot = yes }
-		change_variable = {
-			which = aPUI_gene_pillar_loot_var
-			value = -100
-		}
+		change_aPUI_var = { name = gene_pillar_loot value = -100 }
 		gene_pillars_randomise_loot_event = yes
 	}
 }
@@ -912,9 +907,9 @@ gene_pillars_randomise_loot_event = {
 		}
 	}
 	# Each time we randomise a reward, reduce our loot counter by 100 in both scopes
-	subtract_variable = { which = aPUI_gene_pillar_loot_var which = 100 }
+	subtract_variable = { which = aPUI_gene_pillar_loot_var value = 100 }
 	owner = {
-		subtract_variable = { which = aPUI_gene_pillar_loot_var which = 100 }
+		subtract_variable = { which = aPUI_gene_pillar_loot_var value = 100 }
 	}
 	update_aPUI_var_bar = { name = gene_pillar_loot }
 
@@ -1838,7 +1833,48 @@ gene_pillars_setup_clr_archetype_flags_artificer = {
 	}
 }
 
-
+	gene_pillars_setup_clr_province_class_flags_rogue = {
+	clr_province_flag = gene_pillars_has_rogue_A
+	clr_province_flag = gene_pillars_has_rogue_B
+	clr_province_flag = gene_pillars_has_rogue_C
+	clr_province_flag = gene_pillars_has_rogue_D
+	clr_province_flag = gene_pillars_has_rogue_E
+}
+	gene_pillars_setup_clr_province_class_flags_ranger = {
+	clr_province_flag = gene_pillars_has_ranger_A
+	clr_province_flag = gene_pillars_has_ranger_B
+	clr_province_flag = gene_pillars_has_ranger_C
+	clr_province_flag = gene_pillars_has_ranger_D
+	clr_province_flag = gene_pillars_has_ranger_E
+}
+	gene_pillars_setup_clr_province_class_flags_fighter = {
+	clr_province_flag = gene_pillars_has_fighter_A
+	clr_province_flag = gene_pillars_has_fighter_B
+	clr_province_flag = gene_pillars_has_fighter_C
+	clr_province_flag = gene_pillars_has_fighter_D
+	clr_province_flag = gene_pillars_has_fighter_E
+}
+	gene_pillars_setup_clr_province_class_flags_cleric = {
+	clr_province_flag = gene_pillars_has_cleric_A
+	clr_province_flag = gene_pillars_has_cleric_B
+	clr_province_flag = gene_pillars_has_cleric_C
+	clr_province_flag = gene_pillars_has_cleric_D
+	clr_province_flag = gene_pillars_has_cleric_E
+}
+	gene_pillars_setup_clr_province_class_flags_mage = {
+	clr_province_flag = gene_pillars_has_mage_A
+	clr_province_flag = gene_pillars_has_mage_B
+	clr_province_flag = gene_pillars_has_mage_C
+	clr_province_flag = gene_pillars_has_mage_D
+	clr_province_flag = gene_pillars_has_mage_E
+}
+	gene_pillars_setup_clr_province_class_flags_artificer = {
+	clr_province_flag = gene_pillars_has_artificer_A
+	clr_province_flag = gene_pillars_has_artificer_B
+	clr_province_flag = gene_pillars_has_artificer_C
+	clr_province_flag = gene_pillars_has_artificer_D
+	clr_province_flag = gene_pillars_has_artificer_E
+}
 
 
 #class = <class number, set by @$class$>
@@ -2053,7 +2089,7 @@ gene_pillars_random_insyaa_invention_unlock = {
 			# unlock a restricted form of artificery if you don't yet have it
 			# TODO: very experimental and likely temporary, revisit this asap as there are a host of caveats with this, gameplay and code-wise
 		}
-
+		custom_tooltip = gene_pillars_random_insyaa_invention_unlock_tt
 		random_list = {
 			#Mechanim
 			100 = {
@@ -2182,6 +2218,7 @@ gene_pillars_random_insyaa_invention_unlock = {
 	}
 	if = {
 		limit = { has_country_modifier = mechanim_administration }
+		custom_tooltip = gene_pillars_random_mechanim_body_part_unlock_tt
 		random_list = {
 			#Cultural
 			100 = {
