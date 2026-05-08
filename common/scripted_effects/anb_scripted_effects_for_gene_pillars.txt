@@ -90,7 +90,7 @@ aPUI_gene_pillar_reset_province = {
 		else = {
 			set_aPUI_cap = { name = gene_pillar_xp amount = 1 }
 		} # failsafe... we shouldn't really need it if all goes well - TODO: determine if necessary
-		set_aPUI_var = { name = gene_pillar_loot value = 0 }
+		set_aPUI_var = { name = gene_pillar_loot which = owner } # Loot is stored between expeditions
 		set_aPUI_var = { name = gene_pillar_progress value = 0 }
 
 		set_variable = { which = aPUI_gene_pillar_loot_capacity value = 100 }
@@ -643,9 +643,25 @@ gene_pillar_generic_then_specific_event = {
 # right now these are similar, but separating add/lose is likely to be relevant for future effects, and so these are preferred over the change scripted effects
 gene_pillars_add_loot_effect = {
 	gene_pillars_change_loot_effect = { amount = $amount$ add = yes }
+	hidden_effect = {
+		event_target:gene_pillar_exploration_province = {
+			if = {
+				limit = {
+					check_variable = {
+						which = aPUI_gene_pillar_loot_var
+						value = 100
+					}
+				}
+				gene_pillars_randomise_loot_event = yes
+				province_event = {
+					id = gene_pillars.33
+				}
+			}
+		}
+	}
 }
 gene_pillars_lose_loot_effect = {
-	gene_pillars_change_loot_effect = { amount = $amount$ }
+	gene_pillars_change_loot_effect = { amount = $amount$ lose = yes }
 }
 #Changes loot value on province
 #Needs to be updated to handle the overflow reward, it got broken in a merge?
@@ -686,6 +702,7 @@ gene_pillars_change_loot_effect = {
 		}
 		hidden_effect = {
 			multiply_variable = { which = temp value = $amount$ }
+			change_aPUI_var = { name = gene_pillar_loot which = temp } # Update country level so we save between expedition
 			event_target:gene_pillar_exploration_province = {
 				set_variable = { which = temp which = PREV }
 				change_aPUI_var = { name = gene_pillar_loot which = temp }
@@ -695,9 +712,10 @@ gene_pillars_change_loot_effect = {
 
 	#Change on province, refresh Gene Pillar UI
 	hidden_effect = {
+		change_aPUI_var = { name = gene_pillar_loot value = $amount$ } # Update country level so we save between expedition
 		event_target:gene_pillar_exploration_province = {
 			change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
-			cap_aPUI_var = { name = gene_pillar_loot }
+			[[lose]cap_aPUI_var = { name = gene_pillar_loot }]
 			update_aPUI_var_bar = { name = gene_pillar_loot }
 		}
 	}
@@ -893,6 +911,19 @@ gene_pillars_randomise_loot_event = {
 		 	}
 		}
 	}
+	# Each time we randomise a reward, reduce our loot counter by 100 in both scopes
+	subtract_variable = { which = aPUI_gene_pillar_loot_var which = 100 }
+	owner = {
+		subtract_variable = { which = aPUI_gene_pillar_loot_var which = 100 }
+	}
+	update_aPUI_var_bar = { name = gene_pillar_loot }
+
+	# change_aPUI_var = { name = gene_pillar_loot value = -100 } # Update country level so we save between expedition
+	# event_target:gene_pillar_exploration_province = {
+	# 	change_aPUI_var = { name = gene_pillar_loot value = -100 }
+	# 	cap_aPUI_var = { name = gene_pillar_loot }
+	# 	update_aPUI_var_bar = { name = gene_pillar_loot }
+	# }
 }
 
 gene_pillars_gain_final_loot_event = {
