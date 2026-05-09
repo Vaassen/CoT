@@ -53,10 +53,6 @@ aPUI_gene_pillar_setup_first_time = {
 				
 				set_aPUI_var = { name = gene_pillar_xp value = 0 }
 				set_aPUI_cap = { name = gene_pillar_xp amount = 50 }
-				set_aPUI_var = { name = gene_pillar_health value = 3 }
-				set_aPUI_cap = { name = gene_pillar_health amount = 10 }
-				set_aPUI_var = { name = gene_pillar_health_max value = 3 }
-				set_aPUI_cap = { name = gene_pillar_health_max amount = 10 }
 
 				aPUI_gene_pillar_setup_country_classes = yes
 
@@ -459,7 +455,11 @@ gene_pillar_generic_then_specific_event = {
 	hidden_effect = {
 		# Check party isn't dead before firing events
 		if = {
-			limit = { aPUI_check_variable = { name = gene_pillar_health value = 1 } }
+			limit = {
+				event_target:gene_pillar_exploration_province = {
+					aPUI_check_variable = { name = gene_pillar_health value = 1 }
+				}
+			}
 
 			# This does not take into account every single combinatio of speed factors, but it handles
 			# each flag in combination with the two increased speed estate privileges
@@ -612,18 +612,6 @@ gene_pillar_generic_then_specific_event = {
 				gene_pillars_advance_progress_bar = yes
 			]
 		}
-		# If Party is dead, abandon Exploration and don't queue another event
-		# We check this second, because this resets the HP variable to the default (>0)
-		if = {
-			limit = {
-				event_target:gene_pillar_exploration_province = {
-					NOT = { aPUI_check_variable = { name = gene_pillar_health value = 1 } }
-				}
-			}
-			reduce_stability_or_adm_power = yes
-			set_country_flag = gene_pillars_got_killed
-			gene_pillar_abandon_expedition_effect = { province = yes }
-		}
 	}
 }
 
@@ -632,7 +620,7 @@ gene_pillars_add_loot_effect = {
 	gene_pillars_change_loot_effect = { amount = $amount$ add = yes }
 }
 gene_pillars_lose_loot_effect = {
-	gene_pillars_change_loot_effect = { amount = $amount$ }
+	gene_pillars_change_loot_effect = { amount = -$amount$ }
 }
 #Changes loot value on province
 #Needs to be updated to handle the overflow reward, it got broken in a merge?
@@ -729,7 +717,7 @@ gene_pillars_add_xp_effect = {
 	gene_pillars_change_xp_effect = { amount = $amount$ }
 }
 gene_pillars_lose_xp_effect = {
-	gene_pillars_change_xp_effect = { amount = $amount$ }
+	gene_pillars_change_xp_effect = { amount = -$amount$ }
 }
 
 gene_pillars_level_up_check = {
@@ -1082,7 +1070,6 @@ gene_pillars_change_hp_effect = {
 		event_target:gene_pillar_exploration_province = {
 			set_variable = { which = temp value = $amount$ }
 			change_aPUI_var = { name = gene_pillar_health value = $amount$ }
-			# change_aPUI_var = { name = gene_pillar_health value = $amount$ }
 			[[overheal]
 				# Is Max HP Less than current HP? Set to max for an 'overheal'
 				if = {
@@ -1116,7 +1103,22 @@ gene_pillars_add_hp_effect = {
 	gene_pillars_change_hp_effect = { amount = $amount$ [[overheal] overheal = yes ] }
 }
 gene_pillars_lose_hp_effect = {
-	gene_pillars_change_hp_effect = { amount = $amount$ lose = yes }
+	gene_pillars_change_hp_effect = { amount = -$amount$ lose = yes }
+
+	# If Party is dead, abandon Exploration and don't queue another event
+	# We check this second, because this resets the HP variable to the default (>0)
+	if = {
+		limit = {
+			event_target:gene_pillar_exploration_province = {
+				NOT = { aPUI_check_variable = { name = gene_pillar_health value = 1 } }
+			}
+			is_exploring_any_gene_pillar = yes
+			# in case you trigger this twice by e.g. having two health loss effects in one option
+		}
+		reduce_stability_or_adm_power = yes
+		set_country_flag = gene_pillars_got_killed
+		gene_pillar_abandon_expedition_effect = { province = yes }
+	}
 }
 
 #Sets up the progress bar
@@ -1299,16 +1301,31 @@ gene_pillar_injure_party_member_effect = {
 	event_target:gene_pillar_exploration_province = {
 		if = {
 			limit = {
-				check_variable = {
+				NOT = {
+					AND = {
+						aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max }
+						aPUI_check_variable = { name = gene_pillar_health value = 1 }
+					}
+				} # not at max health, and at least 1 health
+				# because there is an edge case here, if both vars are 0 from e.g. the province being uncolonised
+			}
+			if = {
+				limit = { aPUI_check_variable = { name = gene_pillar_health_max value = 1 } }
+				set_variable = {
+					which = temp
 					which = aPUI_gene_pillar_health_var
+				} # the other injury effects after this need to use the same health var
+				divide_variable = {
+					which = temp
 					which = aPUI_gene_pillar_health_max_var
 				}
 			}
-			divide_variable = {
-				which = aPUI_gene_pillar_health_var
-				which = aPUI_gene_pillar_health_max_var
+			else = {
+				set_variable = {
+					which = temp
+					value = 0
+				}
 			}
-			owner = {
 			random_list = {
 				32 = {
 					modifier = {
@@ -1370,87 +1387,68 @@ gene_pillar_injure_party_member_effect = {
 				1 = {
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.1
-							}
+						check_variable = {
+							which = temp
+							value = 0.1
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.2
-							}
+						check_variable = {
+							which = temp
+							value = 0.2
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.3
-							}
+						check_variable = {
+							which = temp
+							value = 0.3
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.4
-							}
+						check_variable = {
+							which = temp
+							value = 0.4
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.5
-							}
+						check_variable = {
+							which = temp
+							value = 0.5
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.6
-							}
+						check_variable = {
+							which = temp
+							value = 0.6
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.7
-							}
+						check_variable = {
+							which = temp
+							value = 0.7
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.8
-							}
+						check_variable = {
+							which = temp
+							value = 0.8
 						}
 					}
 					modifier = {
 						factor = 2
-						owner = {
-							check_variable = {
-								which = aPUI_gene_pillar_health_var
-								value = 0.9
-							}
+						check_variable = {
+							which = temp
+							value = 0.9
 						}
 					}
 				}
-			}
 			}
 		}
 	}
