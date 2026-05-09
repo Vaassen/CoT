@@ -684,6 +684,10 @@ declarewar = {
 				id = caergaraen.2 #Judging The Guilty
 			}
 		}
+		if = {
+			limit = { truce_with = FROM FROM = { religion_group = fey_religion } }
+			clr_country_flag = need_to_break_truce_fey
+		}
 	}
 
 	condition = {
@@ -788,23 +792,6 @@ declarewar = {
 				B28 = { ai = yes }
 			}
 			country_event = { id = flavor_clouded_eye.20 }
-		}
-
-		if = {
-			limit = {
-				has_global_flag = war_of_salt_and_silence
-				has_saved_global_event_target = salt_and_silence_emperor
-			}
-			if = {
-				limit = {
-					tag = event_target:salt_and_silence_emperor
-					FROM = { tag = event_target:salt_and_silence_giant }
-				}
-				event_target:salt_and_silence_emperor = {
-					set_country_flag = currently_in_salt_silence_war
-					country_event = { id = flavor_salt_silence_incident.11 days = 1825 }
-				}
-			}
 		}
 
 		if = {
@@ -1569,6 +1556,36 @@ declarewar = {
 		}
 		accretive_path_gain_chi = { aspect = right_of_raid category = mil amount = 25 }
 
+		#Samsumbat
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+				has_country_flag = F60_unite_the_sorrow_rebels
+				FROM = {
+					any_owned_province = {
+						province_group = mothers_sorrow_group
+					}
+				}
+			}
+			clr_country_flag = F60_unite_the_sorrow_rebels
+			FROM = {
+				random_owned_province = {
+					limit = {
+						OR = {
+							province_group = mothers_sorrow_group
+							trade_goods = slaves
+						}
+					}
+					spawn_rebels = {
+						type = samsumbat_slave_agitators
+						size = 2
+						friend = ROOT # This makes them not fight me
+						separatists_target = ROOT # This makes them blue
+					}
+				}
+			}
+		}
+
 		#Accretive Path - Rusted Blades. Remove modifiers if at war.
 		if = {
 			limit = {
@@ -1784,8 +1801,8 @@ declarewar = {
 			limit = { is_or_was_tag = { tag = Z60 } }
 			if = {
 				limit = {
-					ROOT = { has_country_flag = tsukqiao_jinqiu_war_flag }
 					FROM = { tag = Y02 }
+					ROOT = { has_country_flag = tsukqiao_jinqiu_war_flag }
 				}
 				Y02 = {
 					country_event = { id = tsukqiao.41 days = 10 }
@@ -1797,17 +1814,17 @@ declarewar = {
 					FROM = { tag = Y01 } #Azjakuma
 				}
 				clr_country_flag = tsukqiao_azjakuma_flag
-					4828 = { #Kabiourgarko
-						if = {
-							limit = { owned_by = Y01 }
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-							infantry = ROOT
-						}
+				4828 = { #Kabiourgarko
+					if = {
+						limit = { owned_by = Y01 }
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
+						infantry = ROOT
 					}
+				}
 				if = {
 					limit = {
 						Y01 = { is_subject_of_type = slave_state } #Azjakuma
@@ -1816,9 +1833,9 @@ declarewar = {
 					white_peace = R62 #The Command
 				}
 			}
-			if = { #Doctrine of Might
+			if = { #Mask of Might
 				limit = {
-					has_doctrine_of_might_aspect = yes
+					has_mask_of_might_aspect = yes
 					church_power = 100
 				}
 				add_church_power = -100
@@ -1856,6 +1873,71 @@ declarewar = {
 				}
 				else = { set_country_flag = B43_defended_hopper_once }
 			}
+		}
+
+		# Huugeta Tamanyouchu Sabotage
+		if = {
+			limit = {
+				has_country_flag = S45_tamanyouchu_sabotage
+			}
+			FROM = {
+				every_owned_province = {
+					limit = {
+						OR = {
+							is_claim = ROOT
+							is_core = ROOT
+						}
+					}
+					add_province_modifier = {
+						name = S45_tamanyouchu_sabotage
+						duration = 1825
+					}
+					ROOT = {
+						change_variable = {
+							which = sabotagedProvinces
+							value = 1
+						}
+					}
+
+				}
+			}
+		}
+
+		# Huugeta Poison Their Hearts
+		if = {
+			limit = {
+				ROOT = {
+					has_country_flag = S45_poison_their_hearts
+					has_spy_network_in = {
+						who = FROM
+						value = 50
+					}
+				}
+
+				FROM = { ai = yes }
+			}
+			FROM = { 
+				save_event_target_as = s45_poison_their_hearts_target
+			}
+			country_event = {
+				id = huugeta.2
+			}
+		}
+
+		if = { #Zerat/Anzara Fort Upgrade
+			limit = {
+				has_country_flag = zerat_yezel_war
+				FROM = { tag = S70 } #Yezel Mora  
+			}
+			every_owned_province = {
+				limit = {
+					is_neighbor_of = S70
+					has_fort_building_trigger = yes
+				}
+				upgrade_fort_building = yes
+			}
+			country_event = { id = flavour_zerat.10 } #The Second Northern Expedition
+			clr_country_flag = zerat_yezel_war
 		}
 	}
 }
@@ -4179,7 +4261,10 @@ insultaction = {
 		}
 		if = {
 			limit = {
-				tag = H89
+				OR = {
+					tag = H89
+					tag = S45
+				}
 			}
 			ROOT = { change_variable = { insult_counter = 1 } }
 		}
@@ -4354,6 +4439,20 @@ insultaction = {
 			}
 			add_country_modifier = { name = U09_art_of_the_gremrabo duration = 1825 }
 		}
+		#Dragon Turtle
+		if = {
+			limit = { FROM = { has_opinion_modifier = { who = ROOT modifier = scornfully_insulted } } }
+			dragon_turtle_change_friendship = { dragon_turtle = kealakys_ever_hungry amount = -5 }
+		}
+		else = { dragon_turtle_change_friendship = { dragon_turtle = kealakys_ever_hungry amount = -3 } }
+	}
+}
+
+threaten_war = {
+	condition = {
+		tooltip = mangrove_disabled_threaten_war_tt
+		potential = { has_country_modifier = mangrove_peace }
+		allow = { always = no }
 	}
 }
 
@@ -4675,6 +4774,60 @@ requestpeace = {
 		}
 		allow = {
 			always = no
+        }
+	}
+	pre_effect = { # This happens before any of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = { # If I am Samsumbat, and I make a peace offer to the defending war leader of a war with the special CB, set
+			# a flag that is checked on_country_released
+				is_or_was_tag = { tag = F60 }
+				FROM = {
+					is_in_war = {
+						defender_leader = THIS
+						participants = PREV
+						casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					}
+				}
+			}
+			set_country_flag = F60_custom_liberation_cb_target_country
+		}
+		# If they send a peace offer to Samsumbat during this CB war, give the flag to Samsumbat
+		if = {
+			limit = {
+				is_in_war = {
+					casus_belli = cb_samsumbat_liberation_of_oppressed_people
+					defender_leader = THIS
+				}
+				NOT = { is_or_was_tag = { tag = F60 } }
+			}
+			FROM = { set_country_flag = F60_custom_liberation_cb_target_country }
+		}
+	}
+	effect = { # This happens after all of the peace effects like on_province_owner_change, on_country_released, etc
+		if = {
+			limit = {
+				is_or_was_tag = { tag = F60 }
+			}
+			clr_country_flag = F60_custom_liberation_cb_target_country
+		}
+		FROM = {
+			if = {
+				limit = {
+					is_or_was_tag = { tag = F60 }
+				}
+				clr_country_flag = F60_custom_liberation_cb_target_country
+			}
+		}
+
+	}
+	condition = { #Iochand
+		tooltip = A80_second_small_war_tt
+		potential = {
+			is_in_war = { casus_belli = cb_second_small_war }
+			FROM = { is_in_war = { casus_belli = cb_second_small_war } }
+		}
+		allow = {
+			always = no
 		}
 	}
 	condition = { #Iochand
@@ -4881,6 +5034,16 @@ giftaction = {
 				canvas_strength = 0.75
 			}
 		}
+		#Dragon Turtle
+		if = {
+			limit = {
+				FROM = {
+					marriage_with = ROOT 
+					has_25_opinion_sent_gift = { target = ROOT }
+				}
+			}
+			dragon_turtle_change_friendship = { dragon_turtle = makaoioi amount = -5 }
+		}
 	}
 }
 
@@ -4924,6 +5087,17 @@ trade_favors_for_men = {
 			}
 			set_country_flag = S50_traded_favors_for_manpower
 			add_army_tradition = 5
+		}
+
+		if = {
+			limit = {
+				FROM = {
+					has_country_flag = S45_mercenary_enterprise
+				}
+			}
+			FROM = { 
+				S45_add_momentum = { value = 2 action = favors }
+			}
 		}
 	}
 }
