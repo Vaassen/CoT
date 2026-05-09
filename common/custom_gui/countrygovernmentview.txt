@@ -261,12 +261,14 @@ custom_icon = {
             has_government_mechanic = corinsfield_paranoia_mechanic
             has_government_mechanic = floodborn_council_mechanic
             has_government_mechanic = vacyntassi_temple_authority
-            has_government_mechanic = sri_baginda_mechanic
             has_government_mechanic = tribal_federation_mechanic
             has_government_mechanic = cossacks_mechanic
             has_government_mechanic = hessian_militarization_mechanic
             has_government_mechanic = rezankand_exemplar_mechanic
 			has_government_mechanic = vic_league_mechanic
+			has_government_mechanic = anb_parusahan_saya_tactical_maneuvers
+			has_government_mechanic = badakhan_orcish_soul_mechanic
+			has_government_mechanic = lelanan_love_mechanic
         }
     }
 }
@@ -446,29 +448,36 @@ custom_icon = {
 	tooltip = raj_mandate_active
 }
 custom_button = {
-    name = raj_mandate_raja_land_redistribution
+    name = raj_mandate_raja_introspection
     potential = {
 		always = yes
 	}
 	trigger = {
-		always = no		#remove when effect gets made
 		custom_trigger_tooltip = {
 			tooltip = raj_mandate_raja_req
 			is_the_raja = yes
 		}
-		mil_power = 100
+		custom_trigger_tooltip = {
+			tooltip = raj_mandate_raja_introspection_cd_tt
+			NOT = { has_country_modifier = rahen_raj_mandate_raja_4_raja_cd_mod }
+		}
+		any_subject_country = {
+			is_in_war = { casus_belli = cb_raj_wars }
+		}
+		is_at_war = no
+		mil_power = 150
 	}
 	effect = {
-		add_mil_power = -100
-		rahen_raj_mandate_raja_land_redistribution = yes
+		add_mil_power = -150
+		rahen_raj_mandate_raja_introspection = yes
 	}
-	tooltip = raj_mandate_raja_land_redistribution_tt	#change tt when effect gets made
+	tooltip = raj_mandate_raja_introspection_tt
 }
-# custom_icon = {	#uncomment in gui file as well when made
-# 	name = raj_mandate_raja_land_redistribution_active
-# 	potential = { event_target:raj_raja_global_target = { has_country_modifier = rahen_raj_mandate_raja_4_raja_mod } }
-# 	tooltip = raj_mandate_active
-# }
+custom_icon = {	#uncomment in gui file as well when made
+	name = raj_mandate_raja_introspection_active
+	potential = { event_target:raj_raja_global_target = { any_subject_country = { has_country_modifier = rahen_raj_mandate_raja_4_raja_mod } } }
+	tooltip = raj_mandate_active
+}
 custom_text_box = {
 	name = raj_vizier_influence_title
 	potential = { always = yes }
@@ -601,6 +610,7 @@ custom_button = {
 			is_at_war = no
 			if = {
 				limit = { NOT = { owns_ruby_gardens = { tier = 3 } } }
+				NOT = { truce_with = event_target:raj_vizier_global_target }
 				calc_true_if = {
 					amount = 3
 					custom_trigger_tooltip = {
@@ -628,6 +638,7 @@ custom_button = {
 				}
 			}
 			else = {
+				NOT = { truce_with = event_target:raj_vizier_global_target }
 				custom_trigger_tooltip = {
 					tooltip = owns_ruby_gardens
 					always = yes
@@ -638,6 +649,7 @@ custom_button = {
 			is_at_war = no
 			if = {
 				limit = { NOT = { owns_ruby_gardens = { tier = 3 } } }
+				NOT = { truce_with = event_target:raj_raja_global_target }
 				calc_true_if = {
 					amount = 3
 					custom_trigger_tooltip = {
@@ -665,6 +677,7 @@ custom_button = {
 				}
 			}
 			else = {
+				NOT = { truce_with = event_target:raj_raja_global_target }
 				custom_trigger_tooltip = {
 					tooltip = owns_ruby_gardens
 					always = yes
@@ -699,47 +712,71 @@ custom_button = {
 			}
 		}
 		else_if = { limit = { is_subject_of_type = great_daimyo_vassal }
-			event_target:raj_vizier_global_target = {
-				ROOT = {
-					declare_war_with_cb = {
-						casus_belli = cb_raj_promotion_vizier
-						who = PREV
-					}
-				}
-			}
-			custom_tooltip = senaptis_to_war_tt
+
+			# Parusahan Saya MT - must wait to declare vizier war
 			if = {
 				limit = {
-					OR = {
-						rahen_raj_promotion_senapti_subtrigger_1 = no
-						rahen_raj_promotion_senapti_subtrigger_2 = no
-						rahen_raj_promotion_senapti_subtrigger_3 = no
-						rahen_raj_promotion_senapti_subtrigger_4 = no
-					}
-					NOT = { owns_ruby_gardens = { tier = 2 } }
+					tag = R54
+					NOT = { has_country_flag = R54_ready_flag }
 				}
-				custom_tooltip = raj_3_objective_ttoltip
-				add_legitimacy = -10
-				add_dip_power = -100
+				custom_tooltip = R54_not_ready_tt
 			}
-			hidden_effect = {
-				every_ally = {
-					limit = {
-						is_subject_of_type = great_daimyo_vassal
-						trust = {
-							who = ROOT
-							value = 65
+			else = {
+				event_target:raj_vizier_global_target = {
+					ROOT = {
+						declare_war_with_cb = {
+							casus_belli = cb_raj_promotion_vizier
+							who = PREV
 						}
 					}
-					join_all_offensive_wars_of = ROOT
 				}
-				event_target:raj_vizier_global_target = {
-					every_known_country = {
+				custom_tooltip = senaptis_to_war_tt
+				if = {
+					limit = {
+						OR = {
+							rahen_raj_promotion_senapti_subtrigger_1 = no
+							rahen_raj_promotion_senapti_subtrigger_2 = no
+							rahen_raj_promotion_senapti_subtrigger_3 = no
+							rahen_raj_promotion_senapti_subtrigger_4 = no
+						}
+						NOT = { owns_ruby_gardens = { tier = 2 } }
+					}
+					custom_tooltip = raj_3_objective_ttoltip
+					add_legitimacy = -10
+					add_dip_power = -100
+				}
+				hidden_effect = {
+					every_ally = {
 						limit = {
 							is_subject_of_type = great_daimyo_vassal
-							NOT = { war_with = PREV }
+							trust = {
+								who = ROOT
+								value = 65
+							}
+							NOT = { truce_with = event_target:raj_vizier_global_target }
 						}
-						join_all_defensive_wars_of = PREV
+						join_all_offensive_wars_of = ROOT
+					}
+					event_target:raj_vizier_global_target = {
+						every_known_country = {
+							limit = {
+								is_subject_of_type = great_daimyo_vassal
+								NOT = { war_with = PREV }
+								NOT = { alliance_with = ROOT }
+							}
+							join_all_defensive_wars_of = PREV
+						}
+					}
+				}
+				# Parusahan Saya MT - Raja called in
+				hidden_effect = {
+					if = {
+						limit = {
+							tag = R54
+						}
+						country_event = {
+							id = flavor_parusahan_saya.3
+						}
 					}
 				}
 			}
@@ -761,6 +798,7 @@ custom_button = {
 							who = ROOT
 							value = 65
 						}
+						NOT = { truce_with = event_target:raj_raja_global_target }
 					}
 					join_all_offensive_wars_of = ROOT
 					set_country_flag = has_vizier_won
@@ -1375,6 +1413,7 @@ custom_icon = {
 			}
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 custom_icon = {
 	name = ashhana_blood_curse_bar_frame_canvas_2
@@ -1384,6 +1423,7 @@ custom_icon = {
 			value = 30
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 # Five possible "backgrounds"
 custom_icon = {
@@ -1400,6 +1440,7 @@ custom_icon = {
 			}
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 custom_icon = {
 	name = ashhana_blood_curse_bg_canvas_1
@@ -1415,6 +1456,7 @@ custom_icon = {
 			}
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 custom_icon = {
 	name = ashhana_blood_curse_bg_canvas_2
@@ -1424,6 +1466,7 @@ custom_icon = {
 			value = 30
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 custom_icon = {
 	name = ashhana_blood_curse_bg_claw_1
@@ -1439,6 +1482,7 @@ custom_icon = {
 			}
 		}
 	}
+	tooltip = ashhana_blood_curse_control_desc
 }
 custom_icon = {
 	name = ashhana_blood_curse_bg_claw_2
@@ -1449,6 +1493,31 @@ custom_icon = {
 				value = -30
 			}
 		}
+	}
+	tooltip = ashhana_blood_curse_control_desc
+}
+
+# Charkuchin Citadel Supplies
+# One window to contain all of the icons (frames and "backgrounds") and images that change
+# depending on having the disaster or not
+
+custom_window = {
+	name = kobold_supply_bg_window
+	potential = {
+		has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic
+	}
+}
+# Two possible "backgrounds"
+custom_icon = {
+	name = kobold_supply_bg_default
+	potential = {
+		NOT = { has_disaster = hinuibird_migration_disaster }
+	}
+}
+custom_icon = {
+	name = kobold_supply_bg_disaster
+	potential = {
+		has_disaster = hinuibird_migration_disaster
 	}
 }
 
@@ -2162,5 +2231,132 @@ custom_icon = {
 			has_country_modifier = S90_ritual_cd_4
 			# has_country_modifier = S90_ritual_cd_5
 		}
+	}
+}
+
+custom_window = {
+	name = strengthen_government_custom
+	potential = {
+		OR = {
+			has_government_attribute = disable_strengthen_government
+			has_government_attribute = expensive_strengthen_government
+		}
+	}
+}
+
+custom_button = {
+	name = strengthen_government_custom_button_blocker
+}
+
+custom_button = {
+	name = strengthen_government_custom_button
+
+	tooltip = custom_strengthen_government_tt
+	trigger = {
+		NOT = { legitimacy_equivalent = 100 }
+		if = {
+			limit = {
+				has_government_attribute = disable_strengthen_government
+			}
+			NOT = { has_government_attribute = disable_strengthen_government }
+		}
+		else_if = {
+			limit = {
+				has_government_attribute = expensive_strengthen_government
+			}
+			mil_power_cost = 200
+		}
+		else = {
+			mil_power_cost = 100
+		}
+	}
+	effect = {
+		if = {
+			limit = {
+				has_government_attribute = expensive_strengthen_government
+			}
+			mil_power_cost = 200
+			add_absolutism = 2
+			add_legitimacy_equivalent = { amount = 10 republican_tradition = 3 }
+		}
+		else = {
+			mil_power_cost = 100
+			add_absolutism = 2
+			add_legitimacy_equivalent = { amount = 10 republican_tradition = 3 }
+		}
+	}
+}
+
+custom_icon = {
+	name = mykx_scourge_of_the_seas_board
+	potential = {
+		ai = no
+		has_government_mechanic = mykx_scourge_of_the_seas
+	}
+}
+
+custom_window = {
+	name = sri_baginda_buttons
+	potential = {
+		has_government_mechanic = sri_baginda_mechanic
+	}
+}
+
+custom_button = {
+	name = sri_baginda_button_left
+
+	tooltip = sri_baginda_demand_tribute
+	trigger = {
+		is_tier_2_baginda_or_higher = yes
+		tributary_state_anb = 1
+		has_government_power = { 
+			mechanic_type = sri_baginda_mechanic
+			power_type = sri_baginda_power
+			value = 50
+		}
+	}
+	effect = {
+		add_government_power = {
+			mechanic_type = sri_baginda_mechanic
+			power_type = sri_baginda_power
+			value = -50
+		}
+		custom_tooltip = sri_baginda_demand_tribute_tt
+		hidden_effect = { 
+			every_subject_country = {
+				limit = { is_subject_of_type = tributary_state_anb }
+				random_list = {
+					1 = { gain_yearly_tribute = { ducats = yes } }
+					1 = { gain_yearly_tribute = { manpower = yes } }
+					1 = { gain_yearly_tribute = { mana = yes } }
+				}
+			}
+		}
+	}
+}
+
+custom_button = {
+	name = sri_baginda_button_right
+
+	tooltip = sri_baginda_elevate_subject
+	trigger = {
+		is_tier_3_baginda = yes
+		any_subject_country = {
+			is_subject_of_type = tributary_state_anb
+			NOT = { liberty_desire = 50 }
+		}
+		has_government_power = { 
+			mechanic_type = sri_baginda_mechanic
+			power_type = sri_baginda_power
+			value = 50
+		}
+	}
+	effect = {
+		add_government_power = {
+			mechanic_type = sri_baginda_mechanic
+			power_type = sri_baginda_power
+			value = -50
+		}
+		country_event = { id = lupulan_events.1012 }
 	}
 }

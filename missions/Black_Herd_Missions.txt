@@ -102,7 +102,7 @@ I55_1_necro_missions = {
 					who = ROOT
 				}
 			}
-			at_least_magic_project_level = { project = lichdom level = 1 }
+			at_least_magic_project_level = { project = black_herd_project_lichdom level = 1 }
 			has_adm_advisor = yes
 			has_dip_advisor = yes
 			has_mil_advisor = yes
@@ -172,6 +172,7 @@ I55_2_missions = {
 				ruler_is_advancing_transmutation = yes
 			}
 			has_estate_privilege = estate_mages_seek_magical_advice
+			has_estate_privilege = estate_mages_land_grant_academies
 			has_malukhuga_religious_practice = yes
 			church_power = 50
 		} 
@@ -393,14 +394,7 @@ I55_2_necro_missions = {
 		}
 
 		trigger = {
-			OR = {
-				AND = {
-					is_ruler_necromancy_level_2_minimum = yes
-					ruler_is_advancing_necromancy = yes
-					check_variable = { ruler_magic_experience = 500 }
-				}
-				is_ruler_necromancy_level_3 = yes
-			}
+			is_ruler_necromancy_level_3 = yes
 			ogre_valley_region = {
 				type = all
 				OR = {
@@ -414,26 +408,66 @@ I55_2_necro_missions = {
 
 		effect = {
 			if = {
-				limit = { has_not_cast_undead_army = yes }
-				custom_tooltip = I55_undead_army_tt
-				if = {
-					limit = { mission_completed = I55_1_4_study }
-					custom_tooltip = I55_spawn_infantry_tt
+				limit = { NOT = { at_least_magic_project_level = { project = army_of_the_dead level = 1 } } }
+				custom_tooltip = I55_aotd_1_yes_tt
+				hidden_effect = { magic_project_level_up = { project = army_of_the_dead } }
+			}
+			else = { custom_tooltip = I55_aotd_1_no_tt }
+			if = {
+				limit = {
+					at_least_magic_project_level = { project = army_of_the_dead level = 1 }
+					NOT = { at_least_magic_project_level = { project = army_of_the_dead level = 3 } }
 				}
+				custom_tooltip = I55_aotd_2_yes_tt
 				hidden_effect = {
-					set_country_flag = necromancy_3_undead_army_spell_free_next_cast
-					generic_cast_spell = { school = necromancy level = 3 id = undead_army }
+					if = {
+						limit = { is_advancing_army_of_the_dead = yes }
+						increase_magic_experience = { unmodified_amount = 500 }
+					}
+					else = { set_country_flag = I55_aotd_exp_flag }
 				}
 			}
-			custom_tooltip = I55_vanishing_migration_tt
+			else = { custom_tooltip = I55_aotd_2_no_tt }
+			if = {
+				limit = { has_country_modifier = aotd_centaur_mod }
+				if = {
+					limit = { at_least_magic_project_level = { project = army_of_the_dead level = 3 } }
+					custom_tooltip = I55_aotd_3_cavalry_yes_tt
+					hidden_effect = {
+						create_unit_forcelimit_percentage = {
+							type = cavalry
+							force_limit_percentage = 0.25
+						}
+					}
+				}
+				else = { custom_tooltip = I55_aotd_3_cavalry_no_tt }
+			}
+			else = {
+				if = {
+					limit = { at_least_magic_project_level = { project = army_of_the_dead level = 3 } }
+					custom_tooltip = I55_aotd_3_infantry_yes_tt
+					hidden_effect = {
+						create_unit_forcelimit_percentage = {
+							type = infantry
+							force_limit_percentage = 0.25
+						}
+					}
+				}
+				else = { custom_tooltip = I55_aotd_3_infantry_no_tt }
+			}
+			if = {
+				limit = { current_age = age_of_discovery }
+				custom_tooltip = I55_vanishing_migration_tt
+				hidden_effect = {
+					set_country_flag = I55_vanishing_migration_flag
+					add_country_modifier_for_age = {
+						name = I55_vanishing_migration
+						age = age_of_discovery
+					}
+				}
+			}
+			else = { add_yearly_manpower = 1 }
 			add_splendor = 800
-			hidden_effect = {
-				set_country_flag = I55_vanishing_migration_flag
-				add_country_modifier_for_age = {
-					name = I55_vanishing_migration
-					age = age_of_discovery
-				}
-			}
 		}
 	}
 }
@@ -626,6 +660,7 @@ I55_3_necro_missions = {
 				change_trade_goods = damestear
 				set_province_flag = permanent_damestear
 				custom_tooltip = I55_permanent_damestear_tt
+				remove_province_modifier = dwindling_resources
 				add_province_modifier = {
 					name = I55_deposit_divination_double_mod
 					duration = -1
@@ -704,10 +739,10 @@ I55_3_necro_missions = {
 
 		trigger = {
 			is_ruler_necromancy_level_3 = yes
-			at_least_magic_project_level = { project = lichdom level = 2 }
+			at_least_magic_project_level = { project = black_herd_project_lichdom level = 2 }
 			if = {
-				limit = { NOT = { at_least_magic_project_level = { project = lichdom level = 3 } } }
-				is_advancing_lichdom = yes
+				limit = { NOT = { at_least_magic_project_level = { project = black_herd_project_lichdom level = 3 } } }
+				is_advancing_specific_project = { project = black_herd_project_lichdom }
 			}
 			army_size_percentage = 0.5
 		}
@@ -983,7 +1018,7 @@ I55_4_missions = {
 			NOT = {
 				estate_influence = {
 					estate = estate_monstrous_tribes
-					influence = 40
+					influence = 45
 				}
 			}
 			has_estate_privilege = estate_mages_magocratic_administration
@@ -1084,9 +1119,9 @@ I55_5_missions = {
 			if = {
 				limit = {
 					OR = {
-						ruler_is_advancing_evocation = yes
-						ruler_is_advancing_transmutation = yes
-						ruler_is_advancing_necromancy = yes
+						is_overall_advancing_school = { school = evocation }
+						is_overall_advancing_school = { school = transmutation }
+						is_overall_advancing_school = { school = necromancy }
 					}
 				}
 				custom_tooltip = I55_studying_event_yes_tt
@@ -1121,7 +1156,7 @@ I55_5_missions = {
 			make_spell_half_off = {
 				school = evocation
 				level = 2
-				id = black_herd_default_5
+				id = centaur_black_herd_5
 				next_cast = yes
 			}
 		}

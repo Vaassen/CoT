@@ -5,9 +5,30 @@
 # Add additional aPUI flags here
 #Must use the form 'aPUI_$name$_flag'
 clear_all_aPUI_flags = {
-	clr_province_flag = aPUI_parent_container_flag
-	clr_province_flag = aPUI_template_flag
-	clr_province_flag = aPUI_gor_vazumbrog_vault_flag
+	FROM = {
+		clr_country_flag = aPUI_template_flag
+		clr_country_flag = aPUI_gor_vazumbrog_vault_flag
+		clr_country_flag = aPUI_transmutative_path_flag
+		clr_country_flag = aPUI_mangrove_bio_infra_flag
+		clr_country_flag = aPUI_zena_medakas_majestic_menagerie_flag
+		clr_country_flag = aPUI_kobold_citadel_flag
+		clr_country_flag = aPUI_gene_pillar_interaction_flag
+	}
+}
+
+open_aPUI_in_province = {
+	if = {
+		limit = {
+			FROM = { NOT = { has_country_flag = aPUI_$name$_flag } }
+		}
+		clear_all_aPUI_flags = yes
+		FROM = {
+			set_country_flag = aPUI_$name$_flag
+		}
+	}
+	else = {
+		clear_all_aPUI_flags = yes
+	}
 }
 
 #Use these scripted effects to properly manage the variable for a progress bar
@@ -57,34 +78,48 @@ change_aPUI_var_provincial = {
 	}
 }
 set_aPUI_cap = {
-	set_variable = {
-		which = aPUI_$name$_capacity
-		value = $amount$
-	}
+	[[amount] set_variable = { which = aPUI_$name$_capacity value = $amount$ } ]
+	[[which] set_variable = { which = aPUI_$name$_capacity which = $which$ } ]
 }
 change_aPUI_cap = {
-	change_variable = {
-		which = aPUI_$name$_capacity
-		value = $amount$
-	}
+	[[amount] change_variable = { which = aPUI_$name$_capacity value = $amount$ } ]
+	[[which] change_variable = { which = aPUI_$name$_capacity which = $which$ } ]
 }
 update_aPUI_var_bar = { # This prevents the framevar going negative and then showing 100%
-	if = { limit = { check_variable = { which = aPUI_$name$_var value = 0 } }
-		set_variable = { which = aPUI_$name$_framevar which = aPUI_$name$_var }
-		divide_variable = { which = aPUI_$name$_framevar which = aPUI_$name$_capacity }
-		multiply_variable = { which = aPUI_$name$_framevar value = 100 }
+	hidden_effect = {
+		if = { limit = { check_variable = { which = aPUI_$name$_var value = 0 } }
+			set_variable = { which = aPUI_$name$_framevar which = aPUI_$name$_var }
+			divide_variable = { which = aPUI_$name$_framevar which = aPUI_$name$_capacity }
+			multiply_variable = { which = aPUI_$name$_framevar value = 100 }
+		}
+		else = { set_variable = { which = aPUI_$name$_framevar value = 0 } }
 	}
-	else = { set_variable = { which = aPUI_$name$_framevar value = 0 } }
 }
 cap_aPUI_var = { # When the 'currency' goes above your capacity, or drops into negatives
-	if = {
-		limit = { NOT = { check_variable = { which = aPUI_$name$_var value = 0 } } }
-		set_variable = { which = aPUI_$name$_var value = 0 }
+	hidden_effect = {
+		if = {
+			limit = { NOT = { check_variable = { which = aPUI_$name$_var value = 0 } } }
+			set_variable = { which = aPUI_$name$_var value = 0 }
+		}
+		else_if = {
+			limit = { check_variable = { which = aPUI_$name$_var which = aPUI_$name$_capacity } }
+			set_variable = { which = aPUI_$name$_var which = aPUI_$name$_capacity }
+		}
 	}
-	else_if = {
-		limit = { check_variable = { which = aPUI_$name$_var which = aPUI_$name$_capacity } }
-		set_variable = { which = aPUI_$name$_var which = aPUI_$name$_capacity }
-	}
+}
+set_aPUI_var = {
+	[[value] set_variable = { which = aPUI_$name$_var value = $value$ } ]
+	[[which] set_variable = { which = aPUI_$name$_var which = $which$ } ]
+}
+change_aPUI_var = {
+	[[value] change_variable = { which = aPUI_$name$_var value = $value$ } ]
+	[[which] change_variable = { which = aPUI_$name$_var which = $which$ } ]
+}
+set_aPUI_to_aPUI_var = {
+	[[which] set_variable = { which = aPUI_$name$_var which = aPUI_$which$_var } ]
+}
+change_aPUI_by_aPUI_var = {
+	[[which] change_variable = { which = aPUI_$name$_var which = aPUI_$which$_var } ]
 }
 #Saved up to 20 event targets as a GOTO
 aPUI_save_targets_effect = {
