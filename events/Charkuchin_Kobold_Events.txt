@@ -16,12 +16,6 @@ country_event = {
 
 	immediate = {
 		hidden_effect = {
-			capital_scope = {
-				add_permanent_province_modifier = {
-					name = charkuchin_kobold_citadel_1
-					duration = -1
-				}
-			}
 			set_country_flag = charkuchin_kobold_start
 			REB = {
 				if = { # Make sure this is only set at game start when neither flag is set, not when new kobolds are released. See insyaa_charkuchin_kobolds_released_setup
@@ -53,6 +47,7 @@ country_event = {
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_citadel_gain = 5 } #from a citadel level 1
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count = 0 }
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain = 5 } #from admin tech 2
+			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain = 0 }
 
 			set_variable = { insyaa_charkuchin_kobold_citadel_supplies_total_gain = 10 }
 		}
@@ -73,11 +68,9 @@ country_event = {
 				duration = 72
 			}
 		}
-		else = {
-			add_country_modifier = {
-				name = charkuchin_expansion
-				duration = -1
-			}
+		add_country_modifier = {
+			name = charkuchin_expansion
+			duration = -1
 		}
 	}
 }
@@ -197,7 +190,7 @@ country_event = {
 		hidden_effect = {
 			random_owned_province = {
 				limit = {
-					NOT = { has_charkuchin_kobold_citadel = yes }
+					NOT = { province_group = citadel_group_main }
 				}
 				save_event_target_as = hinuibird_predation
 			}
@@ -248,7 +241,7 @@ country_event = {
 		hidden_effect = {
 			random_owned_province = {
 				limit = {
-					NOT = { has_charkuchin_kobold_citadel = yes }
+					NOT = { province_group = citadel_group_main }
 				}
 				save_event_target_as = hinuibird_carcass
 			}
@@ -305,7 +298,7 @@ country_event = {
 		hidden_effect = {
 			random_owned_province = {
 				limit = {
-					NOT = { has_charkuchin_kobold_citadel = yes }
+					NOT = { province_group = citadel_group_main }
 				}
 				save_event_target_as = hinuibird_landslide
 			}
@@ -417,7 +410,7 @@ country_event = {
 		}
 		any_owned_province = {
 			is_city = yes
-			NOT = { has_charkuchin_kobold_citadel = yes }
+			NOT = { province_group = citadel_group_main }
 			NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
 		}
 	}
@@ -438,17 +431,20 @@ country_event = {
 		custom_tooltip = charkuchin_kobold.7.a.tt
 
 		hidden_effect = {
-		#Target lowland and titanoflora provinces first
-		# However, lowland provinces will go straight to decolonisation so the AI doesn't depopulate the whole
+		#Target lowland, horn of Insyaa, and titanoflora provinces first
+		# However, lowland and horn of Insyaa provinces will go straight to decolonisation so the AI doesn't depopulate the whole
 		# region
 			if = {
 				limit = {
 					any_owned_province = {
 						is_city = yes
-						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { province_group = citadel_group_main }
 						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
 						OR = {
-							region = west_insyaan_lowlands_region
+							AND = {
+								superregion = insyaan_lowlands_superregion
+								NOT = { region = tagaala_mangroves_region }
+							}
 							superregion = hinuilands_superregion
 						}
 					}
@@ -456,10 +452,14 @@ country_event = {
 				every_owned_province = {
 					limit = {
 						is_city = yes
-						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { province_group = citadel_group_main }
 						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
-						region = west_insyaan_lowlands_region
+						AND = {
+							superregion = insyaan_lowlands_superregion
+							NOT = { region = tagaala_mangroves_region }
+						}
 					}
+					remove_core = ROOT
 					decolonize = THIS
 				}
 				every_owned_province = {
@@ -476,6 +476,7 @@ country_event = {
 						remove_random_development = yes
 					}
 					else = {
+						remove_core = ROOT
 						decolonize = THIS
 					}
 				}
@@ -484,7 +485,7 @@ country_event = {
 				every_owned_province = {
 					limit = {
 						is_city = yes
-						NOT = { has_charkuchin_kobold_citadel = yes }
+						NOT = { province_group = citadel_group_main }
 						NOT = { has_province_modifier = charkuchin_kobold_supply_facility }
 					}
 					if = {
@@ -494,6 +495,7 @@ country_event = {
 						remove_random_development = yes
 					}
 					else = {
+						remove_core = ROOT
 						decolonize = THIS
 					}
 				}
@@ -543,6 +545,7 @@ country_event = {
 			# with the regular disaster
 			regenerate_government_mechanics = yes
 			end_disaster = hinuibird_migration_disaster
+			set_country_flag = charkuchin_kobold_supplies_finished_country #This flag is to replace supply with other stuff
 		}
 	}
 }
@@ -728,7 +731,7 @@ country_event = {
 	trigger = {
 		NOT = { has_country_modifier = hinuibird_disaster_event_wait }
 		any_owned_province = {
-			NOT = { has_charkuchin_kobold_citadel = yes }
+			NOT = { province_group = citadel_group_main }
 		}
 	}
 
@@ -739,6 +742,391 @@ country_event = {
 			1 = { country_event = { id = charkuchin_kobold.3 } }
 			1 = { country_event = { id = charkuchin_kobold.4 } }
 			1 = { country_event = { id = charkuchin_kobold.5 } }
+		}
+	}
+}
+#Citadel Finish Upgrading Hidden
+province_event = {
+	id = charkuchin_kobold.18
+	title = charkuchin_kobold.18.title
+	desc = charkuchin_kobold.18.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+	
+	immediate = {
+		kobold_citadel_effect = { effect = upgrade_kobold_citadel }
+	}
+
+	option = {
+		name = charkuchin_kobold.18.a
+		
+	}
+}
+#Citadel Finish Upgrading Notification
+province_event = {
+	id = charkuchin_kobold.19
+	title = charkuchin_kobold.19.title
+	desc = charkuchin_kobold.19.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			owner = {
+				set_country_flag = charkuchin_kobold_19_open
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.19.a
+		
+	}
+
+	after = {
+		owner = {
+			clr_country_flag = charkuchin_kobold_19_open
+			random_owned_province = {
+				limit = {
+					has_province_flag = waiting_for_charkuchin_kobold_19
+				}
+				clr_province_flag = waiting_for_charkuchin_kobold_19
+				province_event = {
+					id = charkuchin_kobold.25
+				}
+			}
+		}
+	}
+}
+#Choose ordinance for upgrading
+province_event = {
+	id = charkuchin_kobold.20
+	title = charkuchin_kobold.20.title
+	desc = charkuchin_kobold.20.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			owner = {
+				set_country_flag = charkuchin_kobold_20_open
+			}
+		}
+	}
+
+	option = {
+		name = charkuchin_kobold.20.a
+		trigger = {
+			has_province_flag = current_ordinance_food
+			NOT = { has_province_flag = upgraded_ordinance_food }
+		}
+		kobold_citadel_effect = { effect = kobold_citadel_upgrading_food }
+	}
+	option = {
+		name = charkuchin_kobold.20.b
+		trigger = {
+			has_province_flag = current_ordinance_education
+			NOT = { has_province_flag = upgraded_ordinance_education }
+		}
+		kobold_citadel_effect = { effect = kobold_citadel_upgrading_education }
+	}
+	option = {
+		name = charkuchin_kobold.20.c
+		trigger = {
+			has_province_flag = current_ordinance_foundations
+			NOT = { has_province_flag = upgraded_ordinance_foundations }
+		}
+		kobold_citadel_effect = { effect = kobold_citadel_upgrading_foundations }
+	}
+	option = {
+		name = charkuchin_kobold.20.d
+		trigger = {
+			has_province_flag = current_ordinance_working
+			NOT = { has_province_flag = upgraded_ordinance_working }
+		}
+		kobold_citadel_effect = { effect = kobold_citadel_upgrading_working }
+	}
+	option = {
+		name = charkuchin_kobold.20.e
+		trigger = {
+			has_province_flag = current_ordinance_services
+			NOT = { has_province_flag = upgraded_ordinance_services }
+		}
+		kobold_citadel_effect = { effect = kobold_citadel_upgrading_services }
+	}
+	after = {
+		kobold_citadel_effect = { effect = clear_all_kobold_ordinances }
+		if = { #Just no
+			limit = {
+				NOT = {
+					has_construction = kobold_citadel_expansion
+				}
+			}
+			province_event = {
+				id = charkuchin_kobold.23
+			}
+		}
+		owner = {
+			clr_country_flag = charkuchin_kobold_20_open
+		}
+	}
+}
+#Ai Citadel Menagment
+country_event = {
+	id = charkuchin_kobold.21
+	title = charkuchin_kobold.20.title
+	desc = charkuchin_kobold.20.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	trigger = {
+		owns = 6474
+	}
+
+	option = {
+		name = charkuchin_kobold.20.a
+		citadel_group_main = {
+			limit = {
+				NOT = { has_province_flag = kobold_citadel_level_5 }
+				owner = {
+					ai = yes
+					can_use_charkuchin_citadels = yes
+				}
+			}
+			province_event = {
+				id = charkuchin_kobold.22
+			}
+		}
+		if = {
+			limit = {
+				NOT = { is_year = 1480 }
+				P32 = { ai = yes }
+				6454 = { is_city = yes owned_by = P32 }
+			}
+			P32 = {
+				random_list = {
+					1 = {
+						trigger = {
+							6418 = { is_empty = yes }
+						}
+						6418 = { create_colony = 1000	}
+					}
+					1 = {
+						trigger = {
+							6458 = { is_empty = yes }
+						}
+						6458 = { create_colony = 1000	}				
+					}
+				}
+			}
+		}
+	}
+}
+#Ai Citadel Effect
+province_event = {
+	id = charkuchin_kobold.22
+	title = charkuchin_kobold.20.title
+	desc = charkuchin_kobold.20.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = charkuchin_kobold.20.a
+		if = { #Work only in builded citadels
+			limit = {
+				NOT = { has_province_modifier = charkuchin_kobold_citadel_0 }
+			}
+			if = {
+				limit = {
+					NOT = { has_province_modifier = ai_have_enacted_unupgraded_ordinance }
+				}
+				add_province_modifier = {
+					name = ai_have_enacted_unupgraded_ordinance
+					duration = -1
+					hidden = yes
+				}
+				random_list = {
+					3 = {
+						trigger = {
+							owner ={
+								charkuchin_kobold_culture = yes
+							}
+							NOT = { has_province_flag = upgraded_ordinance_food }
+							NOT = { has_province_flag = current_ordinance_food }
+						}
+						kobold_citadel_effect = { effect = kobold_citadel_food_button }
+					}
+					1 = {
+						trigger = {
+							NOT = { has_province_flag = upgraded_ordinance_education }
+							NOT = { has_province_flag = current_ordinance_education }
+						}
+						kobold_citadel_effect = { effect = kobold_citadel_education_button }
+					}
+					1 = {
+						trigger = {
+							NOT = { has_province_flag = upgraded_ordinance_foundations }
+							NOT = { has_province_flag = current_ordinance_foundations  }
+						}
+						kobold_citadel_effect = { effect = kobold_citadel_foundations_button }
+					}
+					1 = {
+						trigger = {
+							NOT = { has_province_flag = upgraded_ordinance_working }
+							NOT = { has_province_flag = current_ordinance_working }
+						}
+						kobold_citadel_effect = { effect = kobold_citadel_working_button }
+					}
+					1 = {
+						trigger = {
+							NOT = { has_province_flag = upgraded_ordinance_services }
+							NOT = { has_province_flag = current_ordinance_services }
+						}
+						kobold_citadel_effect = { effect = kobold_citadel_services_button }
+					}
+				}
+			}
+			else = {
+				if = {
+					limit = {
+						has_province_flag = kobold_citadel_level_1
+						owner = {
+							OR = {
+								AND = {
+									num_of_cities = 8
+									culture_group = kobold
+								}
+								num_of_cities = 16
+							}
+						}
+					}
+					random_list = {
+						6 = {
+							modifier = {
+								factor = 2
+								owner = {
+									has_idea_group = infrastructure_ideas
+								}
+							}
+							set_province_flag = ai_citadel_upgrade
+						}
+						4 = { }
+					}
+				}
+				else_if = {
+					limit = {
+						has_province_flag = kobold_citadel_level_2
+						owner = {
+							num_of_cities = 15
+						}
+					}
+					random_list = {
+						3 = {
+							modifier = {
+								factor = 2
+								owner = {
+									has_idea_group = infrastructure_ideas
+								}
+							}
+							set_province_flag = ai_citadel_upgrade
+						}
+						7 = { }
+					}
+				}
+				else_if = {
+					limit = {
+						has_province_flag = kobold_citadel_level_3
+						owner = {
+							num_of_cities = 30
+							culture_group = kobold
+						}
+					}
+					random_list = {
+						2 = {
+							modifier = {
+								factor = 2
+								owner = {
+									has_idea_group = infrastructure_ideas
+								}
+							}
+							set_province_flag = ai_citadel_upgrade
+						}
+						8 = { }
+					}
+				}
+			}
+		}
+		else_if = { #Citadel is not built
+			limit = {
+				OR = {
+					owner = {
+						has_idea_group = infrastructure_ideas
+						num_of_cities = 40
+					}
+					owner = {
+						num_of_cities = 60
+					}
+					AND = {
+						is_year = 1610
+						development = 9
+					}
+				}
+			}
+			random = {
+				chance = 50
+				set_province_flag = ai_citadel_upgrade
+			}
+		}
+		if = { #Upgrade Citadel if flag is present
+			limit = { has_province_flag = ai_citadel_upgrade }
+			clr_province_flag = ai_citadel_upgrade
+			kobold_citadel_effect = { effect = kobold_citadel_ai_upgrade_citadel }
+		}
+		random = { #Small boost to keep citadels a little more developed
+			chance = 25
+			add_random_development = 1
+		}
+	}
+}
+#Citadel Upgrading Canceled
+province_event = {
+	id = charkuchin_kobold.23
+	title = charkuchin_kobold.20.title
+	desc = charkuchin_kobold.20.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		kobold_citadel_effect = { effect = kobold_citadel_clear_any_upgrading_effect }
+	}
+
+	option = {
+		name = charkuchin_kobold.20.a
+	}
+}
+province_event = { #Re sending event 19
+	id = charkuchin_kobold.25
+	title = charkuchin_kobold.20.title
+	desc = charkuchin_kobold.20.desc
+	picture = KOBOLD_HOARD_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = charkuchin_kobold.20.a
+		province_event = {
+			id = charkuchin_kobold.19
 		}
 	}
 }
