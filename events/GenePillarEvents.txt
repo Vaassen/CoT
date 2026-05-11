@@ -15486,6 +15486,10 @@ country_event = {
 }
 
 # Draconic suppression matrix
+# some event options clear gene_pillars_suppression_matrix_reward
+# this is because option d sets this flag but doesn't disable the matrix
+# so if you fail the expedition and come to this event again,
+# you won't be able to take a disqualifying option and maintain the reward flag
 country_event = {
 	id = gene_pillars.933
 	title = gene_pillars.933.t
@@ -15493,14 +15497,23 @@ country_event = {
 		trigger = {
 			gene_pillars_has_kobold_in_party = yes
 			gene_pillars_dragon_power_core_activated_province = yes
+			gene_pillars_dragon_suppression_matrix_disabled_province = no
 		}
 		desc = gene_pillars.933.desc.kobold_active_power
 	}
 	desc = {
 		trigger = {
 			gene_pillars_dragon_power_core_activated_province = yes
+			gene_pillars_dragon_suppression_matrix_disabled_province = no
 		}
 		desc = gene_pillars.933.desc.active_power
+	}
+	desc = {
+		trigger = {
+			gene_pillars_dragon_power_core_activated_province = yes
+			gene_pillars_dragon_suppression_matrix_disabled_province = yes
+		}
+		desc = gene_pillars.933.desc.active_power_disabled
 	}
 	desc = {
 		trigger = {
@@ -15518,33 +15531,17 @@ country_event = {
 
 	immediate = {
 		hidden_effect = { set_country_flag = gene_pillars_has_pending_event }
-		if = { ### placeholder tooltip, or extra event text?
-			limit = {
-				gene_pillars_dragon_power_core_activated_province = yes
-			}
-			if = {
-				limit = {
-					culture_is_kobold = yes
-				}
-				gene_pillars_lose_hp_effect = { amount = 2 }
-				set_country_flag = gene_pillar_dragon_kobold_suppression # 50% -1 HP on subsequent encounters
-			}
-			else_if = {
-				limit = {
-					OR = {
-						high_tolerance_kobold_race_trigger = yes
-						medium_tolerance_kobold_race_trigger = yes
-					}
-				}
-				gene_pillars_lose_hp_effect = { amount = 1 }
-				set_country_flag = gene_pillar_dragon_kobold_suppression # 50% -1 HP on subsequent encounters
-			}
-			gene_pillars_add_xp_effect = { amount = 2 }
-		}
 	}
 
 	option = { # destroy it
 		name = gene_pillars.933.a
+		trigger = {
+			gene_pillars_dragon_power_core_activated_province = yes
+			hidden_trigger = { gene_pillars_dragon_suppression_matrix_disabled_province = no }
+		}
+		highlight = yes
+
+		gene_pillars_dragon_suppression_matrix_damage = yes
 		
 		generic_increase_of_racial_tolerance_effect = { race = kobold large = yes }
 		if = {
@@ -15560,35 +15557,41 @@ country_event = {
 			}
 		}
 		add_dip_power = 15
-		event_target:gene_pillar_exploration_province = {
-			set_province_flag = gene_pillars_dragon_suppression_disabled
-		}
+		gene_pillars_dragon_disable_matrix = yes
+		clr_country_flag = gene_pillars_suppression_matrix_reward
 	}
 
 	option = { # turn it off
 		name = gene_pillars.933.b
+		trigger = {
+			gene_pillars_dragon_power_core_activated_province = yes
+			hidden_trigger = { gene_pillars_dragon_suppression_matrix_disabled_province = no }
+		}
+		highlight = yes
 
-		if = {
-			limit = {
-				gene_pillars_dragon_power_core_activated_province = yes
-			}
-			hidden_effect = { set_country_flag = gene_pillars_draconic_suppress_deactivated }
-		}
+		gene_pillars_dragon_suppression_matrix_damage = yes
+
 		add_adm_power = 15
-		event_target:gene_pillar_exploration_province = {
-			set_province_flag = gene_pillars_dragon_suppression_disabled
-		}
+		gene_pillars_dragon_disable_matrix = yes
+		gene_pillars_dragon_suppression_matrix_reward_hint = yes
 	}
 
 	option = { # We can use this
 		name = gene_pillars.933.c
 		trigger = {
-			NOT = {
-				culture_is_kobold = yes
-				high_tolerance_kobold_race_trigger = yes
+			gene_pillars_dragon_power_core_activated_province = yes
+			custom_trigger_tooltip = {
+				tooltip = gene_pillars_dragon_kobold_not_integrated_or_primary
+				NOT = {
+					culture_is_kobold = yes
+					high_tolerance_kobold_race_trigger = yes
+				}
 			}
+			hidden_trigger = { gene_pillars_dragon_suppression_matrix_disabled_province = no }
 		}
 		highlight = yes
+
+		gene_pillars_dragon_suppression_matrix_damage = yes
 
 		generic_decrease_of_racial_tolerance_effect = { race = kobold large = yes }
 		custom_tooltip = gene_pillar_dragon_kobold_suppress_tt
@@ -15603,21 +15606,20 @@ country_event = {
 				}
 			}
 		}
-		if = {
-			limit = {
-				gene_pillars_dragon_power_core_activated_province = yes
-			}
-			hidden_effect = { set_country_flag = gene_pillars_draconic_suppress_deactivated }
-		}
+		gene_pillars_dragon_suppression_matrix_reward_hint = yes
 	}
 
 	option = { # Can we adapt this to suppress our people?
 		name = gene_pillars.933.d
 		trigger = {
+			gene_pillars_dragon_power_core_activated_province = yes
 			ruler_has_personality = cruel_personality
 			has_mana = { amount = 25 }
+			hidden_trigger = { gene_pillars_dragon_suppression_matrix_disabled_province = no }
 		}
 		highlight = yes
+
+		gene_pillars_dragon_suppression_matrix_damage = yes
 
 		add_dip_power = -25
 		change_mana = { amount = -25 }
@@ -15625,14 +15627,17 @@ country_event = {
 			name = gene_pillars_dragon_unrest_minus_2
 			duration = 5475 # 15 years
 		}
+		clr_country_flag = gene_pillars_suppression_matrix_reward
 	}
 
 	option = { # Can we learn anything?
 		name = gene_pillars.933.e
-		trigger = {
-			
+		trigger = { # this option is a fallback for if the matrix was disabled or power core is off
+			OR = {
+				gene_pillars_dragon_power_core_activated_province = no
+				gene_pillars_dragon_suppression_matrix_disabled_province = yes
+			}
 		}
-		highlight = yes
 
 		add_adm_power = 10
 		add_dip_power = 10
@@ -15642,12 +15647,13 @@ country_event = {
 	option = { # It would make a fine trophy
 		name = gene_pillars.933.f
 		trigger = {
-			
+			gene_pillars_dragon_power_core_activated_province = no
+			gene_pillars_dragon_suppression_matrix_disabled_province = no
 		}
-		highlight = yes
 
 		gene_pillars_add_loot_effect = { amount = 5 }
-			hidden_effect = { set_country_flag = gene_pillars_draconic_suppress_deactivated }
+		gene_pillars_dragon_disable_matrix = yes
+		# clr_country_flag = gene_pillars_suppression_matrix_reward # unnecessary since once power core is on, it can't be turned off
 	}
 	
 	after = {
