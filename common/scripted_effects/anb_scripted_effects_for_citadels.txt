@@ -1,0 +1,2337 @@
+################# Charkuchin Supply System #################
+# They start at tech 2 so I only need to start checking tech 3
+# I will assume they will be done with this system before getting to admin tech 24
+insyaa_charkuchin_kobold_citadel_supplies_tech = {
+	# increment the variable tracking monthly gain
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_adm_tech_gain
+		value = 2.5
+	}
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+		value = 2.5
+	}
+}
+
+# FROM is the previous owner, ROOT is the province
+insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
+	# First, check if citadel. That will then exclude everything else
+	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
+	# Then, check if SF
+	# Then, check if city
+	if = {
+		limit = { province_group = citadel_group_main NOT = { has_province_modifier = charkuchin_kobold_citadel_0 } }
+		if = {
+			limit = {
+				OR = {
+					has_province_flag = kobold_citadel_level_1
+					has_province_flag = kobold_citadel_level_2
+				}
+			}
+			FROM = { #Citadel
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = -5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -5
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_province_flag = kobold_citadel_level_3
+					has_province_flag = kobold_citadel_level_4
+				}
+			}
+			FROM = { #Citadel
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = -10
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -10
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_province_flag = kobold_citadel_level_5
+			}
+			FROM = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = -15
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -15
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { # Colonies are cheaper and tracked separately
+			OR = { # I use this because when on_province_owner_change triggers on a new colony
+			# you start is_colony = yes is still false
+				AND = { # This will be when a colony changes hands
+					owner = { exists = yes }
+					is_city = no
+				}
+				has_province_modifier = supplies_colony # This will be when it is decolonised
+			}
+		}
+		remove_province_modifier = supplies_colony # Remove it in case the conquerer doensn't use supplies. If they do, it will be added back immediately
+		if = { # Different regions have different costs so we track them differently
+			limit = { superregion = charkuchar_superregion }
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = charkuchar_range
+					location_type = colony
+					value = -1
+					cost = -0.75
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = insyaan_lowlands_superregion
+				NOT = { region = tagaala_mangroves_region }
+			}
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = lowlands
+					location_type = colony
+					value = -1
+					cost = -3
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = hinuilands_superregion
+			}
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = titanoflora
+					location_type = colony
+					value = -1
+					cost = -15
+				}
+			}
+		}
+	}
+	else_if = { #Charkuchin Kobold supply centres
+		limit = {
+			has_province_modifier = charkuchin_kobold_supply_facility
+		}
+		FROM = {
+			change_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+				value = -1
+			}
+			change_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+				value = -10
+			}
+		}
+	}
+	# The script for adding uses slightly different logic and an "if" not "else" since you might conquer a SF but have it deleted
+	# That is not a concern when you lose a province
+	else = { # Otherwise, it's a province we need to spend monthly supplies on
+		if = { # Different regions have different costs so we track them differently
+			limit = { superregion = charkuchar_superregion }
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = charkuchar_range
+					location_type = city
+					value = -1
+					cost = -1.5
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = insyaan_lowlands_superregion
+				NOT = { region = tagaala_mangroves_region }
+			}
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = lowlands
+					location_type = city
+					value = -1
+					cost = -6
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = hinuilands_superregion
+			}
+			FROM = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = titanoflora
+					location_type = city
+					value = -1
+					cost = -30
+				}
+			}
+		}
+	}
+}
+
+insyaa_charkuchin_kobold_citadel_supplies_update_count_add = {
+	# First, check if citadel. That will then exclude everything else
+	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
+	# Then, check if SF. It might be kept, it might not
+	# Then, check if city
+
+	if = {
+		limit = { province_group = citadel_group_main NOT = { has_province_modifier = charkuchin_kobold_citadel_0 } }
+		if = {
+			limit = {
+				OR = {
+					has_province_flag = kobold_citadel_level_1
+					has_province_flag = kobold_citadel_level_2
+				}
+			}
+			owner = { #Citadel
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 5
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					has_province_flag = kobold_citadel_level_3
+					has_province_flag = kobold_citadel_level_4
+				}
+			}
+			owner = { #Citadel
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 10
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 10
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				has_province_flag = kobold_citadel_level_5
+			}
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 15
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 15
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { # Colonies are cheaper and tracked separately
+			# I use this because when on_province_owner_change triggers on a new colony
+			# you start is_colony = yes is still false
+			# This will be when a colony changes hands. Since this is for the adding, I don't
+			# need to worry about the new owner being empty (from decolonisation)
+			owner = { exists = yes }
+			is_city = no
+		}
+
+		# First, set a mod so when the province is decolonised we know what it was before
+		# Can't use a province flag since those are cleared on decolonisation
+		add_permanent_province_modifier = {
+			name = supplies_colony
+			duration = -1
+		}
+		if = { # Different regions have different costs so we track them differently
+			limit = { superregion = charkuchar_superregion }
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = charkuchar_range
+					location_type = colony
+					value = 1
+					cost = 0.75
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = insyaan_lowlands_superregion
+				NOT = { region = tagaala_mangroves_region }
+			}
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = lowlands
+					location_type = colony
+					value = 1
+					cost = 3
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = hinuilands_superregion
+			}
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = titanoflora
+					location_type = colony
+					value = 1
+					cost = 15
+				}
+			}
+		}
+	}
+	else_if = { #Charkuchin Kobold supply centres. Leave it be if the new owner doesn't use it
+		limit = {
+			has_province_modifier = charkuchin_kobold_supply_facility
+		}
+		if = {
+			limit = {
+				OR = {
+					owner = { #You can only have 10
+						check_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+							value = 10
+						}
+					}
+					NOT = { #The AI can build them more easily, so check it's valid for a human
+						ai = yes
+						AND = {
+							base_production = 4
+							has_fort_building_trigger = yes
+							has_production_building_trigger = yes	
+						}
+					}
+				}
+			}
+			remove_province_modifier = charkuchin_kobold_supply_facility
+			province_event = { id = charkuchin_kobold.11 }
+		}
+		else = { # else increase SF count by 1
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+					value = 1
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 10
+				}
+			}
+		}
+	}
+	if = { # Otherwise, it's a province we need to spend monthly supplies on. This will include provinces that had a SF that we just deleted, hence "if" instead of "else"
+		limit = {
+			NOT = {
+				province_group = citadel_group_main # Should be unnecessary, but just in case
+				has_province_modifier = charkuchin_kobold_supply_facility
+				AND = {
+					owner = { exists = yes }
+					is_city = no
+				}
+			}
+		}
+		if = { # Different regions have different costs so we track them differently
+			limit = { superregion = charkuchar_superregion }
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = charkuchar_range
+					location_type = city
+					value = 1
+					cost = 1.5
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = insyaan_lowlands_superregion
+				NOT = { region = tagaala_mangroves_region }
+			}
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = lowlands
+					location_type = city
+					value = 1
+					cost = 6
+				}
+			}
+		}
+		else_if = {
+			limit = {
+				superregion = hinuilands_superregion
+			}
+			owner = {
+				insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+					region_group = titanoflora
+					location_type = city
+					value = 1
+					cost = 30
+				}
+			}
+		}
+	}
+}
+
+insyaa_charkuchin_kobold_citadel_supplies_update_count_upgrade = {
+	remove_province_modifier = supplies_colony
+	# Reduce colony count by 1, increase city count by 1
+	if = { # Different regions have different costs so we track them differently
+		limit = { superregion = charkuchar_superregion }
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = charkuchar_range
+				location_type = colony
+				value = -1
+				cost = -0.75
+			}
+		}
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = charkuchar_range
+				location_type = city
+				value = 1
+				cost = 1.5
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				superregion = insyaan_lowlands_superregion
+				NOT = { region = tagaala_mangroves_region }
+			}
+		}
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = lowlands
+				location_type = colony
+				value = -1
+				cost = -3
+			}
+		}
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = lowlands
+				location_type = city
+				value = 1
+				cost = 6
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			superregion = hinuilands_superregion
+		}
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = titanoflora
+				location_type = colony
+				value = -1
+				cost = -15
+			}
+		}
+		owner = {
+			insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+				region_group = titanoflora
+				location_type = city
+				value = 1
+				cost = 30
+			}
+		}
+	}
+}
+
+insyaa_charkuchin_kobold_citadel_supplies_update_counter = {
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_count
+		value = $value$
+	}
+
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_$region_group$_$location_type$_cost
+		value = $cost$
+	}
+	# Update the total cost in here, too
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+		value = $cost$
+	}
+	#The total cost is tripled during the migration
+	if = {
+		limit = {
+			has_disaster = hinuibird_migration_disaster
+		}
+		# Update the total cost in here, too
+		change_variable = {
+			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+			value = $cost$
+		}
+		# Update the total cost in here, too
+		change_variable = {
+			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+			value = $cost$
+		}
+	}
+}
+
+insyaa_charkuchin_kobold_citadel_supplies_monthly_loss = {
+	set_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+	}
+	subtract_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_cost
+	}
+	if = {
+		limit = { # If it's positive
+			check_variable = {
+				which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+				value = 0
+			}
+		}
+		gov_power_var_effect = {
+			mechanic = charkuchin_kobold_citadel_supplies_mechanic
+			power = citadel_supplies
+			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+			sign = +
+		}
+	}
+	else = { # gov_power_var_effect only works with positive numbers, so it our value if negative, flip it and use sign = -
+		multiply_variable = {
+			which = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+			value = -1
+		}
+		gov_power_var_effect = {
+			mechanic = charkuchin_kobold_citadel_supplies_mechanic
+			power = citadel_supplies
+			var = insyaa_charkuchin_kobold_citadel_supplies_total_cost_temp
+			sign = -
+		}
+	}
+}
+
+insyaa_charkuchin_kobolds_ai_supply_centre = {
+	add_treasury = -50
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_supply_facility_count
+		value = 1
+	}	
+	change_variable = {
+		which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+		value = 10
+	}
+	random_owned_province = {
+		limit = {
+			is_city = yes
+			superregion = charkuchar_superregion # Only give them freebies in the mountain range
+			NOT = {
+				has_province_modifier = charkuchin_kobold_supply_facility
+				province_group = citadel_group_main
+			}
+		}
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_supply_facility
+			duration = -1
+		}
+	}
+}
+
+insyaa_charkuchin_kobolds_released_setup = {
+	clr_country_flag = charkuchin_kobold_start #I'm pretty sure flags stick around if you are annexed then released
+
+	# Since your government type depends on the type of the country that released you as a vassal or forced you to be
+	# released via peace, and we ony have 7 starting Insyaa kobold tags, I'll hardcode their starting gov types
+	# If you're not in that list (maybe more kobolds in the future) you get a monarchy if you were native
+	# or tribal
+	trigger_switch = {
+		on_trigger = tag
+		P30 = { change_government = monarchy }
+		P31 = { change_government = theocracy }
+		P32 = { change_government = monarchy }
+		P33 = { change_government = monarchy }
+		P34 = { change_government = monarchy }
+		P35 = { change_government = republic }
+		P36 = { change_government = republic }
+	}
+	trigger_switch = {
+		on_trigger = government
+		monarchy = { add_government_reform = charkuchin_monarchy_reform }
+		republic = { add_government_reform = charkuchin_council_reform }
+		theocracy = { add_government_reform = charkuchin_citadel_clerical_administration }
+		tribal = {
+			change_government = monarchy
+			add_government_reform = charkuchin_monarchy_reform
+		}
+		native = {
+			change_government = monarchy
+			add_government_reform = charkuchin_monarchy_reform
+		}
+	}
+	country_event = { #Initial variable setup and some modifiers
+		id = charkuchin_kobold.0
+	}
+	#Update the supplies counters for your provinces, since the starting event assumes
+	#you only have your capital with a citadal
+	every_owned_province = {
+		limit = {
+			is_capital = no
+		}
+		insyaa_charkuchin_kobold_citadel_supplies_update_count_add = yes
+	}
+	#Update your gain from admin tech
+	export_to_variable = {
+		which = kobold_admin_tech
+		value = adm_tech
+	}
+	#Since the starting event assumes tech 2
+	subtract_variable = { kobold_admin_tech = 2 }
+	while = {
+		limit = {
+			check_variable = {
+				which = kobold_admin_tech
+				value = 1
+			}
+		}
+		subtract_variable = { kobold_admin_tech = 1 }
+		insyaa_charkuchin_kobold_citadel_supplies_tech = yes
+	}
+}
+################# Main Citadel System #################
+kobold_citadel_effect = { #Effect to select correct Citadel Zone
+	if = {
+		limit = { province_id = 6478 }
+		$effect$ = { name = sayupagoka }
+	}
+	else_if = {
+		limit = { province_id = 6474 }
+		$effect$ = { name = parmalchaa }
+	}
+	else_if = {
+		limit = { province_id = 6461 }
+		$effect$ = { name = kachiqasil }
+	}
+	else_if = {
+		limit = { province_id = 6443 }
+		$effect$ = { name = pachapuru }
+	}
+	else_if = {
+		limit = { province_id = 6438 }
+		$effect$ = { name = upallurqaq }
+	}
+	else_if = {
+		limit = { province_id = 6455 }
+		$effect$ = { name = chakturri }
+	}
+	else_if = {
+		limit = { province_id = 6425 }
+		$effect$ = { name = armadura_kawsay }
+	}
+	else_if = {
+		limit = { province_id = 6406 }
+		$effect$ = { name = rachkasary }
+	}
+	else_if = {
+		limit = { province_id = 6394 }
+		$effect$ = { name = ganna_rassoo }
+	}
+	else_if = {
+		limit = { province_id = 6380 }
+		$effect$ = { name = rinakaru }
+	}
+	else_if = {
+		limit = { province_id = 6368 }
+		$effect$ = { name = puraphanak }
+	}
+	else_if = {
+		limit = { province_id = 6353 }
+		$effect$ = { name = tantiokusqa }
+	}
+	else_if = {
+		limit = { province_id = 6345 }
+		$effect$ = { name = kuchiyarku }
+	}
+}
+
+### Effects of Ordinance Buttons ###
+kobold_citadel_food_button = {
+	if = { #Disable Ordinance
+		limit = { has_province_flag = current_ordinance_food }
+		if = {
+			limit = {
+				has_province_flag = upgraded_ordinance_food
+			}
+			kobold_citadel_clear_ordinance_food = { name = $name$ upgraded = yes }
+		}
+		else = {
+			kobold_citadel_clear_ordinance_food = { name = $name$ }
+		}
+	}
+	else_if = { #After Upgrade
+		limit = {
+			has_province_flag = upgraded_ordinance_food
+		}
+		custom_tooltip = ordinance_durin_active_food_tt
+		kobold_citadel_any_group_effect_food = { name = $name$ upgraded = yes }
+	}
+	else = { #Starting version
+		custom_tooltip = ordinance_durin_active_food_tt
+		kobold_citadel_any_group_effect_food = { name = $name$ }
+		#Tooltip
+		custom_tooltip = ordinance_durin_upgrade_tt
+		tooltip = {
+			kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = food }
+		}
+		custom_tooltip = ordinance_after_upgrade_tt
+		kobold_citadel_any_group_effect_food_tooltip = { name = $name$ }
+	}
+}
+kobold_citadel_education_button = {
+	if = {
+		limit = { has_province_flag = current_ordinance_education }
+		if = {
+			limit = {
+				has_province_flag = upgraded_ordinance_education
+			}
+			kobold_citadel_clear_ordinance_education = { name = $name$ upgraded = yes }
+		}
+		else = {
+			kobold_citadel_clear_ordinance_education = { name = $name$ }
+		}
+	}
+	else_if = {
+		limit = {
+			has_province_flag = upgraded_ordinance_education
+		}
+		custom_tooltip = ordinance_durin_active_education_tt
+		kobold_citadel_any_group_effect_education = { name = $name$ upgraded = yes }
+	}
+	else = {
+		custom_tooltip = ordinance_durin_active_education_tt
+		kobold_citadel_any_group_effect_education = { name = $name$ }
+		custom_tooltip = ordinance_durin_upgrade_tt
+		tooltip = {
+			kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = education }
+		}
+		custom_tooltip = ordinance_after_upgrade_tt
+		kobold_citadel_any_group_effect_education_tooltip = { name = $name$ }
+	}
+}
+kobold_citadel_foundations_button = {
+	if = {
+		limit = { has_province_flag = current_ordinance_foundations }
+		if = {
+			limit = {
+				has_province_flag = upgraded_ordinance_foundations
+			}
+			kobold_citadel_clear_ordinance_foundations = { name = $name$ upgraded = yes }
+		}
+		else = {
+			kobold_citadel_clear_ordinance_foundations = { name = $name$ }
+		}
+	}
+	else_if = {
+		limit = {
+			has_province_flag = upgraded_ordinance_foundations
+		}
+		custom_tooltip = ordinance_durin_active_foundations_tt
+		kobold_citadel_any_group_effect_foundations = { name = $name$ upgraded = yes }
+	}
+	else = {
+		custom_tooltip = ordinance_durin_active_foundations_tt
+		kobold_citadel_any_group_effect_foundations = { name = $name$ }
+		custom_tooltip = ordinance_durin_upgrade_tt
+		tooltip = {
+			kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = foundations }
+		}
+		custom_tooltip = ordinance_after_upgrade_tt
+		kobold_citadel_any_group_effect_foundations_tooltip = { name = $name$ }
+	}
+}
+kobold_citadel_working_button = {
+	if = {
+		limit = { has_province_flag = current_ordinance_working }
+		if = {
+			limit = {
+				has_province_flag = upgraded_ordinance_working
+			}
+			kobold_citadel_clear_ordinance_working = { name = $name$ upgraded = yes }
+		}
+		else = {
+			kobold_citadel_clear_ordinance_working = { name = $name$ }
+		}
+	}
+	else_if = {
+		limit = {
+			has_province_flag = upgraded_ordinance_working
+		}
+		custom_tooltip = ordinance_durin_active_working_tt
+		kobold_citadel_any_group_effect_working = { name = $name$ upgraded = yes }
+	}
+	else = {
+		custom_tooltip = ordinance_durin_active_working_tt
+		kobold_citadel_any_group_effect_working = { name = $name$ }
+		custom_tooltip = ordinance_durin_upgrade_tt
+		tooltip = {
+			kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = working }
+		}
+		custom_tooltip = ordinance_after_upgrade_tt
+		kobold_citadel_any_group_effect_working_tooltip = { name = $name$ }
+	}
+}
+kobold_citadel_services_button = {
+	if = {
+		limit = { has_province_flag = current_ordinance_services }
+		if = {
+			limit = {
+				has_province_flag = upgraded_ordinance_services
+			}
+			kobold_citadel_clear_ordinance_services = { name = $name$ upgraded = yes }
+		}
+		else = {
+			kobold_citadel_clear_ordinance_services = { name = $name$ }
+		}
+	}
+	else_if = {
+		limit = {
+			has_province_flag = upgraded_ordinance_services
+		}
+		custom_tooltip = ordinance_durin_active_services_tt
+		kobold_citadel_any_group_effect_services = { name = $name$ upgraded = yes }
+	}
+	else = {
+		custom_tooltip = ordinance_durin_active_services_tt
+		kobold_citadel_any_group_effect_services = { name = $name$ }
+		custom_tooltip = ordinance_durin_upgrade_tt
+		tooltip = {
+			kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = services }
+		}
+		custom_tooltip = ordinance_after_upgrade_tt
+		kobold_citadel_any_group_effect_services_tooltip = { name = $name$ }
+	}
+}
+#Specific Ordinance Effects kept separete for sake of additional effects
+kobold_citadel_any_group_effect_food = {
+	set_province_flag = current_ordinance_food
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_zone[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+	}
+	#bleh
+	if = {
+		limit = { OR = { has_province_flag = kobold_citadel_level_3 has_province_flag = kobold_citadel_level_4 } }
+		if = {
+			limit = {
+				owner = { has_country_flag = charkuchin_kobold_supplies_finished_country }
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_without_supply_2[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+		else = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_2[[upgraded]_upgraded]
+				duration = -1
+			}
+			custom_tooltip = charkuchin_kobold_ordinance_food_supply_2_tt
+			hidden_effect = {
+				owner = {
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = 10
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = 10
+					}
+					[[upgraded]
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+							value = 10
+						}
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+							value = 10
+						}
+					]
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_5 }
+		if = {
+			limit = {
+				owner = { has_country_flag = charkuchin_kobold_supplies_finished_country }
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_without_supply_3[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+		else = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_3[[upgraded]_upgraded]
+				duration = -1
+			}
+			custom_tooltip = charkuchin_kobold_ordinance_food_supply_3_tt
+			hidden_effect = {
+				owner = {
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = 15
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = 15
+					}
+					[[upgraded]
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+							value = 15
+						}
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+							value = 15
+						}
+					]
+				}
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = {
+				owner = { has_country_flag = charkuchin_kobold_supplies_finished_country }
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_without_supply_1[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+		else = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_main_1[[upgraded]_upgraded]
+				duration = -1
+			}
+			custom_tooltip = charkuchin_kobold_ordinance_food_supply_1_tt
+			hidden_effect = {
+				owner = {
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = 5
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = 5
+					}
+					[[upgraded]
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+							value = 5
+						}
+						change_variable = {
+							which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+							value = 5
+						}
+					]
+				}
+			}
+		}
+	}
+}
+kobold_citadel_any_group_effect_food_tooltip = { #Smoool effect for tooltip!
+	tooltip = {
+		citadel_group_$name$ = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_food_zone_upgraded
+				duration = -1
+			}
+		}
+		#bleh but smaller
+		if = {
+			limit = { OR = { has_province_flag = kobold_citadel_level_3 has_province_flag = kobold_citadel_level_4 } }
+			if = {
+				limit = { owner = { has_country_flag = charkuchin_kobold_supplies_finished_country } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_without_supply_2_upgraded
+					duration = -1
+				}
+			}
+			else = {
+				add_permanent_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_2_upgraded
+					duration = -1
+				}
+				custom_tooltip = charkuchin_kobold_ordinance_food_supply_2_tt
+			}
+			
+		}
+		else_if = {
+			limit = { has_province_flag = kobold_citadel_level_5 }
+			if = {
+				limit = { owner = { has_country_flag = charkuchin_kobold_supplies_finished_country } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_without_supply_3_upgraded
+					duration = -1
+				}
+			}
+			else = {
+				add_permanent_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_3_upgraded
+					duration = -1
+				}
+				custom_tooltip = charkuchin_kobold_ordinance_food_supply_3_tt
+			}
+		}
+		else = {
+			if = {
+				limit = { owner = { has_country_flag = charkuchin_kobold_supplies_finished_country } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_without_supply_1_upgraded
+					duration = -1
+				}
+			}
+			else = {
+				add_permanent_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_1_upgraded
+					duration = -1
+				}
+				custom_tooltip = charkuchin_kobold_ordinance_food_supply_1_tt
+			}
+		}
+	}
+}
+kobold_citadel_any_group_effect_education = {
+	set_province_flag = current_ordinance_education
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_education_zone[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+	}
+	[[upgraded]
+		add_province_modifier = {
+			name = charkuchin_kobold_ordinance_education_main_upgraded
+			duration = -1
+		}
+	]
+}
+kobold_citadel_any_group_effect_education_tooltip = { #Smoool effect for tooltip!
+	tooltip = {
+		citadel_group_$name$ = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_education_zone_upgraded
+				duration = -1
+			}
+		}
+		add_province_modifier = {
+			name = charkuchin_kobold_ordinance_education_main_upgraded
+			duration = -1
+		}
+	}
+}
+kobold_citadel_any_group_effect_foundations = {
+	set_province_flag = current_ordinance_foundations
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_zone[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+	}
+	#
+	custom_tooltip = kobold_citadel_foundations_mountain_tt
+	hidden_effect = {
+		kobold_citadel_foundations_mountain = { name = $name$ }
+	}
+}
+kobold_citadel_any_group_effect_foundations_tooltip = { #Smoool effect for tooltip!
+	tooltip = {
+		citadel_group_$name$ = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_zone_upgraded
+				duration = -1
+			}
+		}
+		custom_tooltip = kobold_citadel_foundations_mountain_tt
+	}
+}
+kobold_citadel_any_group_effect_working = {
+	set_province_flag = current_ordinance_working
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_working_zone[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+	}
+}
+kobold_citadel_any_group_effect_working_tooltip = { #Smoool effect for tooltip!
+	tooltip = {
+		citadel_group_$name$ = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_working_zone_upgraded
+				duration = -1
+			}
+		}
+	}
+}
+kobold_citadel_any_group_effect_services = {
+	set_province_flag = current_ordinance_services
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_services_zone[[upgraded]_upgraded]
+				duration = -1
+			}
+		}
+	}
+}
+kobold_citadel_any_group_effect_services_tooltip = { #Smoool effect for tooltip!
+	tooltip = {
+		citadel_group_$name$ = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_services_zone_upgraded
+				duration = -1
+			}
+		}
+	}
+}
+kobold_citadel_foundations_mountain = { #Subeffect of foundation ordinance, work on whole zone
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+				has_terrain = mountain
+			}
+			remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_1
+			remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_2
+			remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_3
+			remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_4
+			if = {
+				limit = { ROOT = { has_province_flag = kobold_citadel_level_5 } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_foundations_mountain_5
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { ROOT = { has_province_flag = kobold_citadel_level_4 } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_foundations_mountain_4
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { ROOT = { has_province_flag = kobold_citadel_level_3 } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_foundations_mountain_3
+					duration = -1
+				}
+			}
+			else_if = {
+				limit = { ROOT = { has_province_flag = kobold_citadel_level_2 } }
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_foundations_mountain_2
+					duration = -1
+				}
+			}
+			else = {
+				add_province_modifier = {
+					name = charkuchin_kobold_ordinance_foundations_mountain_1
+					duration = -1
+				}
+			}
+		}
+	}
+}
+kobold_citadel_add_any_ordinance_effect = { #on_province_owner_change
+	kobold_citadel_add_zone_effect = { id = $id$ ordinance = food }
+	kobold_citadel_add_zone_effect = { id = $id$ ordinance = education }
+	kobold_citadel_add_zone_effect = { id = $id$ ordinance = foundations }
+	kobold_citadel_add_zone_effect = { id = $id$ ordinance = working }
+	kobold_citadel_add_zone_effect = { id = $id$ ordinance = services }
+	kobold_citadel_add_mountain_effect = { id = $id$ }
+}
+kobold_citadel_add_zone_effect = { #Adding only modifiers for zones not for Citadels itself
+	if = {
+		limit = {
+			$id$ = {
+				has_province_flag = current_ordinance_$ordinance$
+			}
+		}
+		add_province_modifier = {
+			name = charkuchin_kobold_ordinance_$ordinance$_zone
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			$id$ = {
+				has_province_flag = upgrading_ordinance_$ordinance$
+			}
+		}
+		add_province_modifier = {
+			name = charkuchin_kobold_ordinance_$ordinance$_zone_upgrading
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = {
+			$id$ = {
+				has_province_flag = upgraded_ordinance_$ordinance$
+			}
+		}
+		add_province_modifier = {
+			name = charkuchin_kobold_ordinance_$ordinance$_zone_upgraded
+			duration = -1
+		}
+	}
+}
+kobold_citadel_add_mountain_effect = { 
+	if = {
+		limit = {
+			has_terrain = mountain
+			$id$ = {
+				OR = {
+					has_province_flag = current_ordinance_foundations
+					has_province_flag = upgraded_ordinance_foundations
+				}
+			}
+		}
+		if = {
+			limit = {
+				$id$ = {
+					has_province_flag = kobold_citadel_level_5
+				}
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_mountain_5
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				$id$ = {
+					has_province_flag = kobold_citadel_level_4
+				}
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_mountain_4
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				$id$ = {
+					has_province_flag = kobold_citadel_level_3
+				}
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_mountain_3
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = {
+				$id$ = {
+					has_province_flag = kobold_citadel_level_2
+				}
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_mountain_2
+				duration = -1
+			}
+		}
+		else = {
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_foundations_mountain_1
+				duration = -1
+			}
+		}
+	}
+}
+### Upgrading Button ###
+export_build_cost_and_time = {
+	export_to_variable = {
+		which = globalCost
+		value = modifier:build_cost
+		who = owner
+	}
+	export_to_variable = {
+		which = globalTime
+		value = modifier:build_time
+		who = owner
+	}
+	export_to_variable = {
+		which = localCost
+		value = modifier:local_build_cost
+	}
+	export_to_variable = {
+		which = localTime
+		value = modifier:local_build_time
+	}
+	change_variable = {
+		which = localCost
+		which = globalCost
+	}
+	change_variable = {
+		which = localTime
+		which = globalTime
+	}
+}
+kobold_create_tooltip_for_building = {
+	multiply_variable = {
+		which = localTime
+		value = $base_time$
+	}
+	multiply_variable = {
+		which = localCost
+		value = $base_cost$
+	}
+}
+cap_build_cost_and_time = {
+	#
+	if = {
+		limit = { NOT = { check_variable = { localTime = $time_cap$ } } }
+		set_variable = { localTime = $time_cap$ }
+	}
+	
+	if = {
+		limit = { NOT = { check_variable = { localCost = $cost_cap$ } } }
+		set_variable = { localCost = $cost_cap$ }
+	}
+	#
+}
+kobold_citadel_estimate_time_and_cost = {
+	export_build_cost_and_time = yes
+	##these are just for the tooltips
+	cap_build_cost_and_time = { time_cap = -0.500 cost_cap = -0.900 } # cap time to -85% cap cost to -90%
+	change_variable = {
+		which = localTime
+		value = 1
+	}
+	change_variable = {
+		which = localCost
+		value = 1
+	}
+	if = {
+		limit = { has_province_flag = kobold_citadel_level_4 }
+		kobold_create_tooltip_for_building = { base_cost = 2400 base_time = 144 } #Time in Months
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_3 }
+		kobold_create_tooltip_for_building = { base_cost = 1200 base_time = 144 }
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_2 }
+		kobold_create_tooltip_for_building = { base_cost = 700 base_time = 144 }
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_1 }
+		kobold_create_tooltip_for_building = { base_cost = 350 base_time = 144 }
+	}
+	else = {
+		kobold_create_tooltip_for_building = { base_cost = 5000 base_time = 144 }
+	}
+	if = {
+		limit = {
+			NOT = {
+				check_variable = {
+					which = localTime
+					value = 60
+				}
+			}
+		}
+		set_variable = {
+			which = localTime
+			value = 60
+		}
+	}
+}
+kobold_citadel_start_expanding = {
+	custom_tooltip = kobold_citadel_completion
+	##
+	hidden_effect = {
+		export_build_cost_and_time = yes
+		if = {
+			limit = { NOT = { check_variable = { localTime = 0.01 } } }
+			multiply_variable = {
+				which = localTime
+				value = -1
+			}
+		}
+		change_variable = { #Effect bellow cap at 85% as it is for holds so I need to subtract 35 to have 50
+			which = localTime
+			value = 0.35
+		}
+		add_modifier_to_cap_building_speed = { variable = localTime }
+		cancel_construction = yes
+	}
+	##
+	if = {
+		limit = { has_province_flag = kobold_citadel_level_5 }
+		#Special effect in future
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_4 }
+		tooltip = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_citadel_$name$_5
+				duration = -1
+			}
+			custom_tooltip = kobold_citadel_monthly_supply_3
+		}
+		hidden_effect = {
+			kobold_citadel_add_construction = { speed = 10 cost = 2000 }
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_3 }
+		tooltip = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_citadel_$name$_4
+				duration = -1
+			}
+			custom_tooltip = kobold_citadel_monthly_supply_2
+		}
+		hidden_effect = {
+			kobold_citadel_add_construction = { speed = 10 cost = 1000 }
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_2 }
+		tooltip = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_citadel_$name$_3
+				duration = -1
+			}
+			custom_tooltip = kobold_citadel_monthly_supply_2
+		}
+		hidden_effect = {
+			kobold_citadel_add_construction = { speed = 10 cost = 500 }
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_1 }
+		tooltip = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_citadel_$name$_2
+				duration = -1
+			}
+			custom_tooltip = kobold_citadel_monthly_supply_1
+		}
+		hidden_effect = {
+			kobold_citadel_add_construction = { speed = 10 cost = 250 }
+		}
+	}
+	else = {
+		tooltip = {
+			add_permanent_province_modifier = {
+				name = charkuchin_kobold_citadel_$name$_1
+				duration = -1
+			}
+			custom_tooltip = kobold_citadel_monthly_supply_1
+		}
+		hidden_effect = {
+			kobold_citadel_add_construction = { speed = 10 cost = 5000 }
+		}
+	}
+	hidden_effect = {
+		uncap_digging_speed = yes
+	}
+}
+kobold_citadel_start_upgrading_ordinance = {
+	if = { 
+		limit = { has_province_flag = current_ordinance_food NOT = { has_province_flag = upgraded_ordinance_food } }
+		custom_tooltip = kobold_citadel_debuff_building_tt
+		kobold_citadel_upgrading_food = { name = $name$ }
+	}
+	else_if = {
+		limit = { has_province_flag = current_ordinance_education NOT = { has_province_flag = upgraded_ordinance_education } }
+		custom_tooltip = kobold_citadel_debuff_building_tt
+		kobold_citadel_upgrading_education = { name = $name$ }
+	}
+	else_if = {
+		limit = { has_province_flag = current_ordinance_foundations NOT = { has_province_flag = upgraded_ordinance_foundations } }
+		custom_tooltip = kobold_citadel_debuff_building_tt
+		kobold_citadel_upgrading_foundations = { name = $name$ }
+	}
+	else_if = {
+		limit = { has_province_flag = current_ordinance_working NOT = { has_province_flag = upgraded_ordinance_working } }
+		custom_tooltip = kobold_citadel_debuff_building_tt
+		kobold_citadel_upgrading_working = { name = $name$ }
+	}
+	else_if = {
+		limit = { has_province_flag = current_ordinance_services NOT = { has_province_flag = upgraded_ordinance_services } }
+		custom_tooltip = kobold_citadel_debuff_building_tt
+		kobold_citadel_upgrading_services = { name = $name$ }
+	}
+	clear_all_kobold_ordinances = { name = $name$ }
+}
+### Upgrading Effects ###
+kobold_citadel_any_group_upgrading_effect = {
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			add_province_modifier = {
+				name = charkuchin_kobold_ordinance_$ordinance$_zone_upgrading
+				duration = -1
+			}
+		}
+	}
+}
+kobold_citadel_any_group_remove_upgrading_effect = {
+	clr_province_flag = upgrading_ordinance_$ordinance$
+	owner = {
+		citadel_group_$name$ = {
+			limit = {
+				owned_by = PREV
+			}
+			remove_province_modifier = charkuchin_kobold_ordinance_$ordinance$_zone_upgrading
+		}
+	}
+}
+### Construction of fake building that self destruct after construction finish ###
+kobold_citadel_add_construction = {
+	if = {
+		limit = {
+			NOT = { check_variable = { local_build_cost = -0.9 } } #If you have more than 90% reduction of cost just eat 10% of cost
+		}
+		set_variable = {
+			cappedcost = $cost$
+		}
+		multiply_variable = { which = cappedcost value = 0.1 }
+		while = {
+			limit = {
+				check_variable = {
+					which = cappedcost
+					value = 1
+				}
+			}
+			subtract_variable = {
+				which = cappedcost
+				value = 1
+			}
+			add_treasury = -1
+		}
+	}
+	#
+	add_building_construction = { building = kobold_citadel_expansion speed = $speed$ cost = $cost$ }
+}
+### Effect when building finish construction ###
+upgrade_kobold_citadel = {
+	if = {
+		limit = { has_province_flag = kobold_citadel_level_5 }
+		#Special effect in future
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_4 }
+		remove_province_modifier = charkuchin_kobold_citadel_$name$_4
+		clr_province_flag = kobold_citadel_level_4
+		set_province_flag = kobold_citadel_level_5
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_citadel_$name$_5
+			duration = -1
+		}
+		if = {
+			limit = { owner = { has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic } }
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 5
+				}
+			}
+		}
+		if = {
+			limit = { province_id = 6368 }
+			change_trade_goods = damestear
+			hidden_effect = {
+				set_province_flag = permanent_damestear
+			}
+		}
+		else_if = {
+			limit = { province_id = 6461 }
+			change_trade_goods = precursor_relics
+			hidden_effect = {
+				set_province_flag = permanent_precursor_relics
+			}
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_3 }
+		remove_province_modifier = charkuchin_kobold_citadel_$name$_3
+		clr_province_flag = kobold_citadel_level_3
+		set_province_flag = kobold_citadel_level_4
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_citadel_$name$_4
+			duration = -1
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_2 }
+		remove_province_modifier = charkuchin_kobold_citadel_$name$_2
+		clr_province_flag = kobold_citadel_level_2
+		set_province_flag = kobold_citadel_level_3
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_citadel_$name$_3
+			duration = -1
+		}
+		if = {
+			limit = { owner = { has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic } }
+			owner = { #Citadel
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 5
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { has_province_flag = kobold_citadel_level_1 }
+		remove_province_modifier = charkuchin_kobold_citadel_$name$_1
+		clr_province_flag = kobold_citadel_level_1
+		set_province_flag = kobold_citadel_level_2
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_citadel_$name$_2
+			duration = -1
+		}
+	}
+	else = {
+		remove_province_modifier = charkuchin_kobold_citadel_0
+		add_permanent_province_modifier = {
+			name = charkuchin_kobold_citadel_$name$_1
+			duration = -1
+		}
+		set_province_flag = kobold_citadel_level_1
+		if = {
+			limit = { owner = { has_government_mechanic = charkuchin_kobold_citadel_supplies_mechanic } }
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_citadel_gain
+					value = 5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 5
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_province_flag = upgrading_ordinance_food }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = food }
+		kobold_citadel_any_group_effect_food = { name = $name$ upgraded = yes }
+		set_province_flag = upgraded_ordinance_food
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_education }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = education }
+		kobold_citadel_any_group_effect_education = { name = $name$ upgraded = yes }
+		set_province_flag = upgraded_ordinance_education
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_foundations }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = foundations }
+		kobold_citadel_any_group_effect_foundations = { name = $name$ upgraded = yes }
+		set_province_flag = upgraded_ordinance_foundations
+		kobold_citadel_foundations_mountain = { name = $name$ }
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_working }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = working }
+		kobold_citadel_any_group_effect_working = { name = $name$ upgraded = yes }
+		set_province_flag = upgraded_ordinance_working
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_services }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = services }
+		kobold_citadel_any_group_effect_services = { name = $name$ upgraded = yes }
+		set_province_flag = upgraded_ordinance_services
+	}
+	kobold_citadel_estimate_time_and_cost = yes
+}
+
+#Upgrading effect for event
+kobold_citadel_upgrading_food = {
+	kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = food }
+	custom_tooltip = ordinance_after_upgrade_tt
+	kobold_citadel_any_group_effect_food_tooltip = { name = $name$ }
+	set_province_flag = upgrading_ordinance_food
+}
+kobold_citadel_upgrading_education = {
+	kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = education }
+	custom_tooltip = ordinance_after_upgrade_tt
+	kobold_citadel_any_group_effect_education_tooltip = { name = $name$ }
+	set_province_flag = upgrading_ordinance_education
+}
+kobold_citadel_upgrading_foundations = {
+	kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = foundations }
+	custom_tooltip = ordinance_after_upgrade_tt
+	kobold_citadel_any_group_effect_foundations_tooltip = { name = $name$ }
+	set_province_flag = upgrading_ordinance_foundations
+}
+kobold_citadel_upgrading_working = {
+	kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = working }
+	custom_tooltip = ordinance_after_upgrade_tt
+	kobold_citadel_any_group_effect_working_tooltip = { name = $name$ }
+	set_province_flag = upgrading_ordinance_working
+}
+kobold_citadel_upgrading_services = {
+	kobold_citadel_any_group_upgrading_effect = { name = $name$ ordinance = services }
+	custom_tooltip = ordinance_after_upgrade_tt
+	kobold_citadel_any_group_effect_services_tooltip = { name = $name$ }
+	set_province_flag = upgrading_ordinance_services
+}
+### Clearing Effects ###
+clear_all_kobold_ordinances_modifier_shotgun = { #Less precise version just for modifiers
+	clr_province_flag = current_ordinance_food
+	clr_province_flag = current_ordinance_education
+	clr_province_flag = current_ordinance_foundations
+	clr_province_flag = current_ordinance_working
+	clr_province_flag = current_ordinance_services
+	clr_province_flag = upgrading_ordinance_food
+	clr_province_flag = upgrading_ordinance_education
+	clr_province_flag = upgrading_ordinance_foundations
+	clr_province_flag = upgrading_ordinance_working
+	clr_province_flag = upgrading_ordinance_services
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_1
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_2
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_3
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_1_upgraded
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_2_upgraded
+	remove_province_modifier = charkuchin_kobold_ordinance_food_main_3_upgraded
+	citadel_group_$name$ = {
+		remove_province_modifier = charkuchin_kobold_ordinance_food_zone
+		remove_province_modifier = charkuchin_kobold_ordinance_food_zone_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_education_zone
+		remove_province_modifier = charkuchin_kobold_ordinance_education_zone_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_zone
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_zone_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_working_zone
+		remove_province_modifier = charkuchin_kobold_ordinance_working_zone_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_services_zone
+		remove_province_modifier = charkuchin_kobold_ordinance_services_zone_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_1
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_2
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_3
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_4
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_5
+		remove_province_modifier = charkuchin_kobold_ordinance_food_zone_upgrading
+		remove_province_modifier = charkuchin_kobold_ordinance_education_zone_upgrading
+		remove_province_modifier = charkuchin_kobold_ordinance_foundations_zone_upgrading
+		remove_province_modifier = charkuchin_kobold_ordinance_working_zone_upgrading
+		remove_province_modifier = charkuchin_kobold_ordinance_services_zone_upgrading
+	}
+}
+clear_all_kobold_ordinances = { 
+	hidden_effect = {
+		#Clear Food
+		if = {
+			limit = { has_province_flag = current_ordinance_food }
+			if = {
+				limit = {
+					has_province_flag = upgraded_ordinance_food
+				}
+				kobold_citadel_clear_ordinance_food = { name = $name$ upgraded = yes }
+			}
+			else = {
+				kobold_citadel_clear_ordinance_food = { name = $name$ }
+			}
+		}
+		#Clear Education
+		if = {
+			limit = {
+				has_province_flag = current_ordinance_education
+			}
+			if = {
+				limit = {
+					has_province_flag = upgraded_ordinance_education
+				}
+				kobold_citadel_clear_ordinance_education = { name = $name$ upgraded = yes }
+			}
+			else = {
+				kobold_citadel_clear_ordinance_education = { name = $name$ }
+			}
+		}
+		#Clear Foundations
+		if = {
+			limit = {
+				has_province_flag = current_ordinance_foundations
+			}
+			if = {
+				limit = {
+					has_province_flag = upgraded_ordinance_foundations
+				}
+				kobold_citadel_clear_ordinance_foundations = { name = $name$ upgraded = yes }
+			}
+			else = {
+				kobold_citadel_clear_ordinance_foundations = { name = $name$ }
+			}
+		}
+		#Clear Working
+		if = {
+			limit = {
+				has_province_flag = current_ordinance_working
+			}
+			if = {
+				limit = {
+					has_province_flag = upgraded_ordinance_working
+				}
+				kobold_citadel_clear_ordinance_working = { name = $name$ upgraded = yes }
+			}
+			else = {
+				kobold_citadel_clear_ordinance_working = { name = $name$ }
+			}
+		}
+		#Clear Services
+		if = {
+			limit = {
+				has_province_flag = current_ordinance_services
+			}
+			if = {
+				limit = {
+					has_province_flag = upgraded_ordinance_services
+				}
+				kobold_citadel_clear_ordinance_services = { name = $name$ upgraded = yes }
+			}
+			else = {
+				kobold_citadel_clear_ordinance_services = { name = $name$ }
+			}
+		}
+	}
+}
+
+kobold_citadel_clear_ordinance_food = {
+	custom_tooltip = kobold_citadel_clear_ordinance_tt
+	hidden_effect = {
+		clr_province_flag = current_ordinance_food
+		citadel_group_$name$ = {
+			remove_province_modifier = charkuchin_kobold_ordinance_food_zone[[upgraded]_upgraded]
+		}
+		#
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_1
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_2
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_3
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_1_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_2_upgraded
+		remove_province_modifier = charkuchin_kobold_ordinance_food_main_without_supply_3_upgraded
+		if = {
+			limit = {
+				has_province_modifier = charkuchin_kobold_ordinance_food_main_3[[upgraded]_upgraded]
+			}
+			remove_province_modifier = charkuchin_kobold_ordinance_food_main_3[[upgraded]_upgraded]
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+					value = -15
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -15
+				}
+				[[upgraded]
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = -15
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = -15
+					}
+				]
+			}
+		}
+		else_if = {
+			limit = {
+				has_province_modifier = charkuchin_kobold_ordinance_food_main_2[[upgraded]_upgraded]
+			}
+			remove_province_modifier = charkuchin_kobold_ordinance_food_main_2[[upgraded]_upgraded]
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+					value = -10
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -10
+				}
+				[[upgraded]
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = -10
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = -10
+					}
+				]
+			}
+		}
+		else_if = {
+			limit = {
+				has_province_modifier = charkuchin_kobold_ordinance_food_main_1[[upgraded]_upgraded]
+			}
+			remove_province_modifier = charkuchin_kobold_ordinance_food_main_1[[upgraded]_upgraded]
+			owner = {
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+					value = -5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = -5
+				}
+				[[upgraded]
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+						value = -5
+					}
+					change_variable = {
+						which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+						value = -5
+					}
+				]
+			}
+		}
+	}
+}
+kobold_citadel_clear_ordinance_education = {
+	custom_tooltip = kobold_citadel_clear_ordinance_tt
+	hidden_effect = {
+		clr_province_flag = current_ordinance_education
+		citadel_group_$name$ = {
+			remove_province_modifier = charkuchin_kobold_ordinance_education_zone[[upgraded]_upgraded]
+		}
+		remove_province_modifier = charkuchin_kobold_ordinance_education_main_upgraded
+	}
+}
+kobold_citadel_clear_ordinance_foundations = {
+	custom_tooltip = kobold_citadel_clear_ordinance_tt
+	hidden_effect = {
+		clr_province_flag = current_ordinance_foundations
+		citadel_group_$name$ = {
+			remove_province_modifier = charkuchin_kobold_ordinance_foundations_zone[[upgraded]_upgraded]
+			if = {
+				limit = {
+					has_terrain = mountain
+				}
+				remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_1
+				remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_2
+				remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_3
+				remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_4
+				remove_province_modifier = charkuchin_kobold_ordinance_foundations_mountain_5
+			}
+		}
+	}
+}
+kobold_citadel_clear_ordinance_working = {
+	custom_tooltip = kobold_citadel_clear_ordinance_tt
+	hidden_effect = {
+		clr_province_flag = current_ordinance_working
+		citadel_group_$name$ = {
+			remove_province_modifier = charkuchin_kobold_ordinance_working_zone[[upgraded]_upgraded]
+		}
+	}
+}
+kobold_citadel_clear_ordinance_services = {
+	custom_tooltip = kobold_citadel_clear_ordinance_tt
+	hidden_effect = {
+		clr_province_flag = current_ordinance_services
+		citadel_group_$name$ = {
+			remove_province_modifier = charkuchin_kobold_ordinance_services_zone[[upgraded]_upgraded]
+		}
+	}
+}
+kobold_citadel_clear_any_upgrading_effect = {
+	if = {
+		limit = { has_province_flag = upgrading_ordinance_food }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = food }
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_education }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = education }
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_foundations }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = foundations }
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_working }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = working }
+	}
+	else_if = {
+		limit = { has_province_flag = upgrading_ordinance_services }
+		kobold_citadel_any_group_remove_upgrading_effect = { name = $name$ ordinance = services }
+	}
+}
+kobold_citadel_on_province_owner_change = {
+	if = { 
+		limit = {
+			province_group = citadel_group_whole
+		}
+		if = { #Citadels Itselfs
+			limit = { province_group = citadel_group_main }
+
+			if = {
+				limit = { FROM = { can_use_charkuchin_citadels = yes } }
+				# the tag who just lost it might have been using them, clean up
+				if = {
+					limit = {
+						has_province_flag = current_ordinance_food
+					}
+					if = {
+						limit = {
+							has_province_flag = upgraded_ordinance_food
+						}
+						FROM = {
+							if = {
+								limit = {
+									PREV = {
+										has_province_modifier = charkuchin_kobold_ordinance_food_main_1
+									}
+								}
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -5
+								}
+							}
+							else_if = {
+								limit = {
+									PREV = {
+										has_province_modifier = charkuchin_kobold_ordinance_food_main_2
+									}
+								}
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -10
+								}
+							}
+							else = {
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -15
+								}
+							}
+						}
+					}
+					else = {
+						FROM = {
+							if = {
+								limit = {
+									PREV = {
+										has_province_modifier = charkuchin_kobold_ordinance_food_main_1
+									}
+								}
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -5
+								}
+							}
+							else_if = {
+								limit = {
+									PREV = {
+										has_province_modifier = charkuchin_kobold_ordinance_food_main_2
+									}
+								}
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -10
+								}
+							}
+							else = {
+								change_variable = {
+									which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+									value = -15
+								}
+							}
+						}
+					}
+				}
+				kobold_citadel_effect = { effect = clear_all_kobold_ordinances_modifier_shotgun }
+			}
+			if = {
+				limit = {
+					fast_has_pop_of_race = { race = kobold }
+				}
+				if = {
+					limit = { has_province_flag = kobold_citadel_level_1 }
+					add_province_modifier = {
+						name = charkuchin_kobold_deep_resistance
+						duration = 365
+					}
+				}
+				else_if = {
+					limit = { has_province_flag = kobold_citadel_level_2 }
+					add_province_modifier = {
+						name = charkuchin_kobold_deep_resistance
+						duration = 730
+					}
+				}
+				else_if = {
+					limit = { has_province_flag = kobold_citadel_level_3 }
+					add_province_modifier = {
+						name = charkuchin_kobold_deep_resistance
+						duration = 1460
+					}
+				}
+				else = {
+					add_province_modifier = {
+						name = charkuchin_kobold_deep_resistance
+						duration = 3650
+					}
+				}
+			}
+		}
+		#Provinces in their groups
+		else_if = {
+			limit = {
+				province_group = citadel_group_parmalchaa
+				owner = {
+					owns = 6474
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6474 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_kachiqasil
+				owner = {
+					owns = 6461
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6461 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_pachapuru
+				owner = {
+					owns = 6443
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6443 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_upallurqaq
+				owner = {
+					owns = 6438
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6438 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_chakturri
+				owner = {
+					owns = 6455
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6455 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_armadura_kawsay
+				owner = {
+					owns = 6425
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6425 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_rachkasary
+				owner = {
+					owns = 6406
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6406 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_ganna_rassoo
+				owner = {
+					owns = 6394
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6394 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_rinakaru
+				owner = {
+					owns = 6380
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6380 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_puraphanak
+				owner = {
+					owns = 6368
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6368 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_tantiokusqa
+				owner = {
+					owns = 6353
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6353 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_kuchiyarku
+				owner = {
+					owns = 6345
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6345 }
+		}
+		else_if = {
+			limit = {
+				province_group = citadel_group_sayupagoka
+				owner = {
+					owns = 6478
+				}
+			}
+			kobold_citadel_add_any_ordinance_effect = { id = 6478 }
+		}
+	}
+}
+kobold_citadel_ai_upgrade_citadel = {
+	if = {
+		limit = {
+			has_province_flag = current_ordinance_food
+		}
+		if = { #Upgrade Food
+			limit = {
+				NOT = { has_province_flag = upgraded_ordinance_food }
+			}
+			kobold_citadel_clear_ordinance_food = { name = $name$ }
+			set_province_flag = upgrading_ordinance_food
+		}
+		else = {
+			if = { #If they are able to finish roc system add version without supply to this effect
+				limit = { has_province_flag = kobold_citadel_level_2 }
+				remove_province_modifier = charkuchin_kobold_ordinance_food_main_1_upgraded
+				add_permanent_province_modifier = {
+					name = charkuchin_kobold_ordinance_food_main_2_upgraded
+					duration = -1
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_ordinance_gain
+					value = 5
+				}
+				change_variable = {
+					which = insyaa_charkuchin_kobold_citadel_supplies_total_gain
+					value = 5
+				}
+			}
+		}
+	}
+	#Upgrade Education
+	if = {
+		limit = {
+			has_province_flag = current_ordinance_education
+			NOT = { has_province_flag = upgraded_ordinance_education }
+		}
+		kobold_citadel_clear_ordinance_education = { name = $name$ }
+		set_province_flag = upgrading_ordinance_education
+	}
+	
+	if = {
+		limit = {
+			has_province_flag = current_ordinance_foundations
+		}
+		if = { #Upgrade Foundations
+			limit = { NOT = { has_province_flag = upgraded_ordinance_foundations } }
+			kobold_citadel_clear_ordinance_foundations = { name = $name$ }
+			set_province_flag = upgrading_ordinance_foundations
+		}
+		else = {
+			set_province_flag = ai_kobold_citadel_update_mountain
+		}
+	}
+	#Upgrade Working
+	if = {
+		limit = {
+			has_province_flag = current_ordinance_working
+			NOT = { has_province_flag = upgraded_ordinance_working }
+		}
+		kobold_citadel_clear_ordinance_working = { name = $name$ }
+		set_province_flag = upgrading_ordinance_working
+	}
+	#Upgrade Services
+	if = {
+		limit = {
+			has_province_flag = current_ordinance_services
+			NOT = { has_province_flag = upgraded_ordinance_services }
+		}
+		kobold_citadel_clear_ordinance_services = { name = $name$ }
+		set_province_flag = upgrading_ordinance_services
+	}
+	remove_province_modifier = ai_have_enacted_unupgraded_ordinance
+	upgrade_kobold_citadel = { name = $name$ }
+	if = {
+		limit = { has_province_flag = ai_kobold_citadel_update_mountain }
+		clr_province_flag = ai_kobold_citadel_update_mountain
+		kobold_citadel_foundations_mountain = { name = $name$ }
+	}
+}

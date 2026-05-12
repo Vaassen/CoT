@@ -540,6 +540,7 @@ clear_active_war_magic = {
 		limit = { NOT = { has_country_flag = enchantment_heartstring_no_count_war_magic } }
 		remove_country_modifier = enchantment_1_heartstring_mod
 		remove_country_modifier = enchantment_2_thoughtweave_mod
+		remove_country_modifier = mechanim_sonic_amplifiers_modifier_country
 	}
 	if = {
 		limit = { NOT = { has_ruler_modifier = avatar_of_the_nightmarish_end } }
@@ -549,6 +550,7 @@ clear_active_war_magic = {
 	}
 
 	remove_country_modifier = evocation_2_harpy_mod
+	remove_country_modifier = evocation_2_harpy_mod_boosted
 
 	#Patrons
 	remove_country_modifier = patron_green_shock_and_awe 
@@ -578,6 +580,9 @@ clear_active_war_magic = {
 	#Cangji 
 	remove_country_modifier = V05_elemental_fury_upgrade
 	remove_country_modifier = V05_shock_and_awe
+
+	#Eighard
+	remove_country_modifier = H14_icewardery_magic
 
 	#Yanacotle (Landslide Infantry)
 	remove_country_modifier = yanacotle_volcanic_armoury_manipulated_fortune
@@ -760,6 +765,7 @@ abjuration_1_ward_sub_effect = { # Ward sub-effect
 	if = {
 		limit = { owner = { has_country_flag = V05_upgraded_ward } }
 		custom_tooltip = V05_upgraded_ward_tt
+		hidden_effect = { change_siege = -1 }
 		add_province_modifier = { name = V05_devastation_ward duration = $duration$ }
 		every_neighbor_province = {
 			limit = { owned_by = V05 }
@@ -2435,7 +2441,8 @@ illusion_3_lead_the_crowds_effect = { # Lead the Crowds
 ##################
 
 on_necromancy_spell_cast = {
-	
+	#Dragon Turtle
+	dragon_turtle_change_friendship = { dragon_turtle = haomake amount = -4 }
 }
 
 necromancy_0_false_life_effect = { # False Life
@@ -2559,7 +2566,7 @@ necromancy_2_speak_with_dead_effect = { # Speak With Dead
 			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 7300 }
 		}
 		else = { #8 years - default
-			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 2120 }
+			add_ruler_modifier = { name = necromancy_2_speak_with_dead_cooldown_mod duration = 2920 }
 		}
 	}
 	
@@ -3159,6 +3166,7 @@ clr_all_custom_spell_groups = {
 		clr_harpy_spell_lists = yes
 		clr_bulwar_spell_lists = yes
 		clr_xhazobkult_spell_lists = yes
+		clr_eordand_spell_lists = yes
 		hidden_effect = { #Keep this here - simplifies this effect
 			clr_country_flag = magic_list_any
 			clr_country_flag = show_custom_spell_list #just in case
@@ -3223,12 +3231,34 @@ clr_centaur_spell_lists = {
 	}
 }
 
+clr_eordand_spell_lists = {
+	if = {
+		limit = { has_any_custom_spell_list_in_group = { group = eordand } }
+		clr_custom_spell_list = { group = eordand subgroup = default }
+		clr_custom_spell_list = { group = eordand subgroup = eighard }
+	}
+}
+
 magical_tradition_on_spell_cast_effect = { magical_tradition_on_$group$_spell_cast_effect = yes }
 # magical_tradition_on_$group$_spell_cast_effect
 magical_tradition_on_template_spell_cast_effect = {}
-magical_tradition_on_harpy_spell_cast_effect = {}
+magical_tradition_on_harpy_spell_cast_effect = {
+	# Harpylen (F98) MT cares about this
+	hidden_effect = {
+		if = {
+			limit = {
+				tag = F98
+			}
+			change_variable = {
+				which = F98_harpy_spells_cast
+				value = 1
+			}
+		}
+	}
+}
 magical_tradition_on_centaur_spell_cast_effect = {}
 magical_tradition_on_bulwar_spell_cast_effect = {}
+magical_tradition_on_eordand_spell_cast_effect = {}
 magical_tradition_on_xhazobkult_spell_cast_effect = {}
 
 
@@ -3289,11 +3319,24 @@ enchantment_0_harpy_default_1_effect = {
 		}
 		add_country_modifier = { name = F80_cmod_our_song_spell_effect duration = 1825 }
 	}
+	if = {
+		limit = { at_least_magic_project_level = { project = harpylen_project level = 1 } }
+		add_legitimacy = 5
+	}
 }
 evocation_2_harpy_default_2_effect = {
-	add_country_modifier = {
-		name = evocation_2_harpy_mod
-		duration = 1825
+	if = {
+		limit = { at_least_magic_project_level = { project = harpylen_project level = 1 } }
+		add_country_modifier = {
+			name = evocation_2_harpy_mod_boosted
+			duration = 1825
+		}
+	}
+	else = {
+		add_country_modifier = {
+			name = evocation_2_harpy_mod
+			duration = 1825
+		}
 	}
 }
 transmutation_2_harpy_default_3_effect = {
@@ -3307,6 +3350,32 @@ transmutation_2_harpy_default_3_effect = {
 		every_owned_province = {
 			limit = { harpy_roost_st_has_any_roost = yes }
 			if = {
+				limit = {
+					PREV = { at_least_magic_project_level = { project = harpylen_project level = 2 } }
+					calc_true_if = {
+						amount = 5
+						all_neighbor_province = { harpy_roost_st_has_any_roost = yes }
+					}				
+				}
+				add_province_modifier = {
+					name = transmutation_2_harpy_mod_5
+					duration = 3650
+				}
+			}
+			else_if = {
+				limit = {
+					PREV = { at_least_magic_project_level = { project = harpylen_project level = 2 } }
+					calc_true_if = {
+						amount = 4
+						all_neighbor_province = { harpy_roost_st_has_any_roost = yes }
+					}				
+				}
+				add_province_modifier = {
+					name = transmutation_2_harpy_mod_4
+					duration = 3650
+				}
+			}
+			else_if = {
 				limit = {
 					calc_true_if = {
 						amount = 3
@@ -3349,38 +3418,77 @@ enchantment_3_harpy_default_4_effect = {
 	}
 	custom_tooltip = enchantment_3_harpy_more_subject_more_rep_tt
 	if = {
-		limit = { num_of_subjects = 5 }
-		add_country_modifier = {
-			name = enchantment_3_harpy_mod_rep_5
-			duration = 3650
+		limit = { at_least_magic_project_level = { project = harpylen_project level = 2 } num_of_subjects = 6 }
+		if = {
+			limit = { num_of_subjects = 10 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_10
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 9 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_9
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 8 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_8
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 7 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_7
+				duration = 3650
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_6
+				duration = 3650
+			}
 		}
 	}
-	else_if = {
-		limit = { num_of_subjects = 4 }
-		add_country_modifier = {
-			name = enchantment_3_harpy_mod_rep_4
-			duration = 3650
+	else = {
+		if = {
+			limit = { num_of_subjects = 5 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_5
+				duration = 3650
+			}
 		}
-	}
-	else_if = {
-		limit = { num_of_subjects = 3 }
-		add_country_modifier = {
-			name = enchantment_3_harpy_mod_rep_3
-			duration = 3650
+		else_if = {
+			limit = { num_of_subjects = 4 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_4
+				duration = 3650
+			}
 		}
-	}
-	else_if = {
-		limit = { num_of_subjects = 2 }
-		add_country_modifier = {
-			name = enchantment_3_harpy_mod_rep_2
-			duration = 3650
+		else_if = {
+			limit = { num_of_subjects = 3 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_3
+				duration = 3650
+			}
 		}
-	}
-	else_if = {
-		limit = { num_of_subjects = 1 }
-		add_country_modifier = {
-			name = enchantment_3_harpy_mod_rep_1
-			duration = 3650
+		else_if = {
+			limit = { num_of_subjects = 2 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_2
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 1 }
+			add_country_modifier = {
+				name = enchantment_3_harpy_mod_rep_1
+				duration = 3650
+			}
 		}
 	}
 	if = {
@@ -3391,6 +3499,181 @@ enchantment_3_harpy_default_4_effect = {
 		custom_tooltip = enchantment_3_harpy_gain_stab_tt
 		hidden_effect = {
 			change_variable = { enchantment_3_harpy_stabvar = 1 }
+		}
+	}
+}
+enchantment_3_harpy_default_5_effect = {
+	hidden_effect = {
+		add_country_modifier = {
+			name = enchantment_3_harpylen_tracking_mod
+			duration = 3650
+			hidden = yes
+		}
+	}
+	if = {
+		limit = { at_least_magic_project_level = { project = harpylen_project level = 3 } }
+		custom_tooltip = enchantment_3_harpylen_gain_ae2_tt
+	}
+	else = { custom_tooltip = enchantment_3_harpylen_gain_ae1_tt }
+	if = {
+		limit = { at_least_magic_project_level = { project = harpylen_project level = 3 } num_of_subjects = 11 }
+		if = {
+			limit = { num_of_subjects = 20 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_20
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 19 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_19
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 18 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_18
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 17 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_17
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 16 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_16
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 15 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_15
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 14 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_14
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 13 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_13
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 12 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_12
+				duration = 3650
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_11
+				duration = 3650
+			}
+		}
+	}
+	else = {
+		if = {
+			limit = { num_of_subjects = 10 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_10
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 9 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_9
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 8 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_8
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 7 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_7
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 6 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_6
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 5 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_5
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 4 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_4
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 3 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_3
+				duration = 3650
+			}
+		}
+		else_if = {
+			limit = { num_of_subjects = 2 }
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_2
+				duration = 3650
+			}
+		}
+		else = {
+			add_country_modifier = {
+				name = enchantment_3_harpylen_mod_1
+				duration = 3650
+			}
+		}
+	}
+	custom_tooltip = enchantment_3_harpylen_gain_mana_tt
+	hidden_effect = {
+		if = {
+			limit = { num_of_subjects = 20 }
+			add_adm_power = 100
+			add_dip_power = 100
+			add_mil_power = 100
+		}
+		else = {
+			every_subject_country = {
+				PREV = {
+					add_adm_power = 5
+					add_dip_power = 5
+					add_mil_power = 5
+				}
+			}
 		}
 	}
 }
@@ -3751,6 +4034,25 @@ evocation_2_centaur_black_herd_5_sub_sub_effect = {
 				$priority_trigger$
 			}
 			change_siege = 4
+		}
+	}
+}
+
+#Eighard
+abjuration_1_eordand_eighard_5_effect = { #Icewardery
+	if = {
+		limit = { #Double Duration
+			mission_completed = H14_growing_strength
+		}
+		add_country_modifier = {
+			name = H14_icewardery_magic
+			duration = 3650
+		}
+	}
+	else = {
+		add_country_modifier = { #-10% Land Attrition, -10% Morale Damage Recieved, -0.02 Monthly War Exhaustion
+			name = H14_icewardery_magic
+			duration = 1825
 		}
 	}
 }
