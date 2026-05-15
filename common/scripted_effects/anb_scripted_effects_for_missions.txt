@@ -125,6 +125,16 @@ form_crimson_caehnate = {
 		else = {
 			set_variable = { centaur_zeal = 10 }
 		}
+		add_faction = burning_spear
+		add_faction = verdant_bliss
+		add_faction = tiger_bane
+		add_faction = raging_blizzard
+		add_faction = vine_tearer
+		add_faction = rosen_rider
+		add_faction_influence = {
+			faction = burning_spear
+			influence = -70
+		}
 		set_global_flag = crimson_caehn_formed
 	}
 	country_event = { id = ideagroups.1 } #Swap Ideas
@@ -21685,12 +21695,16 @@ F80_se_what_the_hills_hold_sub_effect = {
 
 F80_se_divination_discover_forbidden_plains = {
 	if = { limit = { is_or_was_tag = { tag = F80 } mission_completed = F80_mission_peering_past_the_pass }
-		custom_tooltip = F80_tt_fp_divination_discovery_$scope$
-		custom_tooltip = F80_tt_fp_divination_trade_bonus_$power$
-		hidden_effect = {
-			set_country_flag = F80_cflag_divination_discover_forbidden_plains_$scope$
-			country_event = { id = flavor_nansalen.100 }
+		if = {
+			limit = { NOT = { has_country_flag = F80_cflag_discovered_everything_in_forbidden_lands } }
+			custom_tooltip = F80_tt_fp_divination_discovery_$scope$
+			hidden_effect = {
+				set_country_flag = F80_cflag_divination_discover_forbidden_plains_$scope$
+				country_event = { id = flavor_nansalen.100 }
+			}
 		}
+		custom_tooltip = F80_tt_fp_divination_trade_bonus_$power$
+		F80_se_divination_discover_forbidden_plains_sub_effect = { power = $power$ }
 	}
 }
 
@@ -21924,10 +21938,10 @@ S88_move_buildings_effect = {
 S88_sea_migration_effect = {
 	hidden_effect = {
 		$province$ = { cede_province = ROOT move_capital_effect = yes }
-		event_target:S85_old_capital = { S88_move_buildings_effect = { target = $province$ } }
+		event_target:S88_old_capital = { S88_move_buildings_effect = { target = $province$ } }
 		add_core = $province$
-		remove_core = event_target:S85_old_capital
-		event_target:S85_old_capital = { change_tribal_land = ROOT decolonize = yes }
+		remove_core = event_target:S88_old_capital
+		event_target:S88_old_capital = { change_tribal_land = ROOT decolonize = yes }
 		add_government_reform = native_federation_reform
 		add_government_reform = native_chiefdom_reform
 		$province$ = { change_religion = genie_cult }
@@ -22308,6 +22322,7 @@ enable_iochandization_effect = {
 	}
 	if = {
 		limit = {
+			has_reform = iochand_hezoggdoum
 			NOT = {
 				ruler_culture = creek_gnome
 				ruler_culture = iochander
@@ -23047,6 +23062,279 @@ iochand_explode_gawed_effect = {
 		create_subject = {
 			subject_type = hezoggdoum
 			subject = B83
+		}
+	}
+}
+
+#Zerat/Anzara
+anzara_add_gov_power = {
+	add_government_power = {
+		mechanic_type = anzara_resurgence_mechanic
+		power_type = anzara_power
+		value = $amount$
+	}
+}
+
+anzara_reset_naga_privilege = {
+	hidden_effect = {
+		if = { #because the conditional mod doesn't get set apparently
+			limit = { has_estate_privilege = estate_church_state_loyal_nagas }
+			remove_estate_privilege = estate_church_state_loyal_nagas
+			set_estate_privilege = estate_church_state_loyal_nagas
+		}
+	}
+}
+
+anzara_zerat_claim_effect = {
+	random_owned_province = {
+		limit = {
+			any_neighbor_province = {
+				superregion = taneyas_superregion
+				area_for_scope_province = {
+					type = all
+					is_city = yes
+					NOT = { owned_by = ROOT }
+					owner = {
+						NOT = { is_subject_of = ROOT }
+						NOT = { alliance_with = ROOT }
+						NOT = { truce_with = ROOT }
+					}
+					NOT = { has_province_modifier = zerat_province_claim_modifier }
+				}
+			}
+		}
+		random_neighbor_province = {
+			limit = {
+				superregion = taneyas_superregion
+				area_for_scope_province = {
+					type = all
+					is_city = yes
+					NOT = { owned_by = ROOT }
+					owner = {
+						NOT = { is_subject_of = ROOT }
+						NOT = { alliance_with = ROOT }
+						NOT = { truce_with = ROOT }
+					}
+					NOT = { has_province_modifier = zerat_province_claim_modifier }
+				}
+			}
+			area = {
+				add_claim = ROOT
+				hidden_effect = {
+					add_permanent_province_modifier = {
+						name = zerat_province_claim_modifier
+						duration = 9125 #25 years
+					}
+				}
+			}
+		}
+	}
+}
+
+anzara_shalazar_convert_effect = { #This is done so it targets provinces not your culture AND religion first, before the half ones
+	if = {
+		limit = {
+			any_owned_province = {
+				NOT = {
+					culture = ROOT
+					religion = ROOT
+				}
+				NOT = {
+					has_province_modifier = zerat_prototype_ashhana_compounds
+					has_province_modifier = zerat_prototype_ashhana_compounds_upgraded
+					has_province_modifier = zerat_the_shadow_compounds
+				}
+			}
+		}
+		random_owned_province = {
+			limit = {
+				NOT = {
+					culture = ROOT
+					religion = ROOT
+				}
+				NOT = {
+					has_province_modifier = zerat_prototype_ashhana_compounds
+					has_province_modifier = zerat_prototype_ashhana_compounds_upgraded
+					has_province_modifier = zerat_the_shadow_compounds
+				}
+			}
+			change_culture = ROOT
+			change_religion = ROOT
+		}
+	}
+	else = {
+		random_owned_province = {
+			limit = {
+				NOT = {
+					AND = {
+						culture = ROOT
+						religion = ROOT
+					}
+				}
+				NOT = {
+					has_province_modifier = zerat_prototype_ashhana_compounds
+					has_province_modifier = zerat_prototype_ashhana_compounds_upgraded
+					has_province_modifier = zerat_the_shadow_compounds
+				}
+			}
+			change_culture = ROOT
+			change_religion = ROOT
+		}
+	}
+}
+
+anzara_make_subject = {
+	custom_tooltip = " " #Linebreak
+	ROOT = {
+		create_subject = {
+			subject = PREV
+			subject_type = anzara_march	
+		}
+	}
+	change_primary_culture = ROOT
+	change_religion = ROOT
+	capital_scope = {
+		change_culture = ROOT
+		change_religion = ROOT
+	}
+	hidden_effect = {
+		#To reset the rulers
+		remove_consort = yes
+		kill_heir = { allow_new_heir = no }
+		kill_ruler = yes
+		set_country_flag = zerat_anzaran_march
+		save_global_event_target_as = anzara_march_$region$
+	}
+}
+
+anzara_triplet_capital_effect = {
+	if = {
+		limit = { capital = 5921 } #Zerat
+		if = {
+			limit = { mission_completed = zerat_the_rivals_of_the_jungles }
+			remove_province_modifier = zerat_zerat_capital_mod_1
+			5921 = {	
+				add_province_modifier = {
+					name = zerat_zerat_capital_mod_2
+					duration = -1
+				}
+			}
+		}
+		katala_raz_region = {
+			limit = { country_or_non_sovereign_subject_holds = ROOT }
+			add_province_modifier = {
+				name = zerat_zerat_capital_region_mod
+				duration = -1
+			}
+		}
+	}
+	else_if = {
+		limit = { capital = 5898 } #Karassk
+		if = {
+			limit = { mission_completed = zerat_the_rivals_of_the_seas }
+			remove_province_modifier = zerat_karassk_capital_mod_1
+			5898 = {	
+				add_province_modifier = {
+					name = zerat_karassk_capital_mod_2
+					duration = -1
+				}
+			}
+		}
+		throden_gokad_region = {
+			limit = { country_or_non_sovereign_subject_holds = ROOT }
+			add_province_modifier = {
+				name = zerat_karassk_capital_region_mod
+				duration = -1
+			}
+		}
+	}
+	else_if = {
+		limit = { capital = 5650 } #Shalazar
+		if = {
+			limit = { mission_completed = zerat_the_eternal_cities }
+			remove_province_modifier = zerat_shalazar_capital_mod_1
+			5650 = {	
+				add_province_modifier = {
+					name = zerat_shalazar_capital_mod_2
+					duration = -1
+				}
+			}
+		}
+		odu_kherass_region = {
+			limit = { country_or_non_sovereign_subject_holds = ROOT }
+			add_province_modifier = {
+				name = zerat_shalazar_capital_region_mod
+				duration = -1
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { capital = 5921 } } #Zerat
+		remove_province_modifier = zerat_zerat_capital_mod_2
+		5921 = {	
+			add_province_modifier = {
+				name = zerat_zerat_capital_mod_1
+				duration = -1
+			}
+		}
+		katala_raz_region = {
+			remove_province_modifier = zerat_zerat_capital_region_mod
+		}
+	}
+	if = {
+		limit = { NOT = { capital = 5898 } } #Karassk
+		remove_province_modifier = zerat_karassk_capital_mod_2
+		5898 = {	
+			add_province_modifier = {
+				name = zerat_karassk_capital_mod_1
+				duration = -1
+			}
+		}
+		throden_gokad_region = {
+			remove_province_modifier = zerat_karassk_capital_region_mod
+		}
+	}
+	if = {
+		limit = { NOT = { capital = 5650 } } #Shalazar
+		remove_province_modifier = zerat_shalazar_capital_mod_2
+		5650 = {	
+			add_province_modifier = {
+				name = zerat_shalazar_capital_mod_1
+				duration = -1
+			}
+		}
+		odu_kherass_region = {
+			remove_province_modifier = zerat_shalazar_capital_region_mod
+		}
+	}
+}
+
+anzara_make_compound = {
+	add_province_modifier = {
+		name = zerat_prototype_ashhana_compounds
+		duration = -1
+	}
+	change_culture = ashhana_lizardfolk
+	change_religion = zaradyrra
+	custom_tooltip = " " #Linebreak
+}
+
+anzara_gain_subjugation_cb = {
+	custom_tooltip = zerat_subjugation_cb_$region$
+	hidden_effect = {
+		random_known_country = {
+			limit = {
+				capital_scope = {
+					region = $region$
+				}
+				NOT = { is_subject_of = ROOT }
+				NOT = { alliance_with = ROOT }
+			}
+			reverse_add_casus_belli = {
+				type = cb_vassalize_mission
+				months = 240
+				target = ROOT
+			}
 		}
 	}
 }

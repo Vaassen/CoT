@@ -189,15 +189,26 @@ F60_1_missions = {
 		}
 
 		trigger = {
-			num_of_provinces_owned_or_owned_by_subjects_with = {
-				value = 7 # This is all of them, but I like this trigger tooltip better
-				region = kubaci_region
-				trade_goods = livestock
-				has_terrain = savannah
-				num_of_times_improved = 1
-				OR = {
-					has_trade_building_trigger = yes 
-					has_production_building_trigger = yes
+			custom_trigger_tooltip = {
+				tooltip = F60_kubaci_region_all_savannah_livestock_tt
+				kubaci_region = {
+					type = all
+					OR = {
+						AND = {
+							num_of_times_improved = 1
+							country_or_subject_holds = ROOT
+							OR = {
+								has_trade_building_trigger = yes 
+								has_production_building_trigger = yes
+							}
+						}
+						NOT = {
+							AND = {
+								trade_goods = livestock
+								has_terrain = savannah
+							}
+						}
+					}
 				}
 			}
 		}
@@ -402,23 +413,38 @@ F60_1_missions = {
 			}
 		}
 
-		trigger = { # definitely needs some custom tooltips
+		trigger = {
 			trading_policy_in_node = {
 				node = 1465 # Ironwood Coast
 				policy = hostile_trading
 			}
-			calc_true_if = {
-				amount = 2
-				desc = F60_west_sarhal_spy_tt
-				all_known_country = {
-					culture_group = west_sarhaly
-					has_spy_network_from = {
-						who = ROOT
-						value = 30
+			# If there aren't 2 countries that aren't your subject or ally, you can just bypass this
+			if = {
+				limit = {
+					calc_true_if = {
+						amount = 2
+						all_known_country = {
+							culture_group = west_sarhaly
+							NOT = {
+								alliance_with = ROOT
+								is_subject_of = ROOT
+							}
+						}
 					}
-					NOT = {
-						alliance_with = ROOT
-						is_subject_of = ROOT
+				}
+				calc_true_if = {
+					amount = 2
+					desc = F60_west_sarhal_spy_tt
+					all_known_country = {
+						culture_group = west_sarhaly
+						has_spy_network_from = {
+							who = ROOT
+							value = 30
+						}
+						NOT = {
+							alliance_with = ROOT
+							is_subject_of = ROOT
+						}
 					}
 				}
 			}
@@ -726,8 +752,6 @@ F60_2_missions = {
 					}
 				}
 			}
-			custom_tooltip = F60_clergy_priv_soldiers_freedom_enabled_tt
-			custom_tooltip = estate_church_soldiers_of_freedom_effect_tt
 			hidden_effect = {
 				set_country_flag = F60_clergy_priv_soldiers_freedom
 				if = {
@@ -737,6 +761,7 @@ F60_2_missions = {
 					set_global_flag = F60_no_ahati_disaster
 				}
 			}
+			set_estate_privilege = estate_church_soldiers_of_freedom
 		}
 	}
 
@@ -1275,7 +1300,7 @@ F60_3_missions = {
 					}
 				}
 				AND = {
-					NOT = { owned_by = ROOT }
+					NOT = { country_or_subject_holds = ROOT }
 					OR = {
 						area = leta_muhaqaar_area
 						area = shena_muhaqaar_area
@@ -1287,11 +1312,11 @@ F60_3_missions = {
 		trigger = {
 			leta_muhaqaar_area = {
 				type = all
-				owned_by = ROOT
+				country_or_subject_holds = ROOT
 			}
 			shena_muhaqaar_area = {
 				type = all
-				owned_by = ROOT
+				country_or_subject_holds = ROOT
 			}
 			F70 = {
 				OR = {
@@ -1421,7 +1446,7 @@ F60_3_missions = {
 		provinces_to_highlight = {
 			province_group = mothers_sorrow_group
 			OR = {
-				NOT = { owned_by = ROOT }
+				NOT = { country_or_subject_holds = ROOT }
 				devastation = 1
 			}
 		}
@@ -1431,7 +1456,7 @@ F60_3_missions = {
 			NOT = { num_of_loans = 1 }
 			mothers_sorrow_group = {
 				type = all
-				owned_by = ROOT
+				country_or_subject_holds = ROOT
 				NOT = { devastation = 1 }
 			}
 		}
@@ -1585,8 +1610,30 @@ F60_3_missions = {
 					is_capital = yes
 					owner = {
 						OR = {
-							government = monarchy
-							government = republic
+							# Highlight monarchies that aren't allies, subjects, and don't have a spy network of 30
+							AND = {
+								government = monarchy
+								NOT = {
+									alliance_with = ROOT
+									is_subject = yes # Can't spy in subjects
+									has_spy_network_from = {
+										who = ROOT
+										value = 30
+									}
+								}
+							}
+							# Highlight republics that aren't allies, my subjects, and don't have the opinion modifiers
+							AND = {
+								government = republic
+								NOT = {
+									alliance_with = ROOT
+									is_subject_of = ROOT
+									AND = {
+										has_20_opinion_sent_gift = { target = ROOT }
+										has_80_opinion_improved_relation = { target = ROOT }
+									}
+								}
+							}
 						}
 					}
 				}
@@ -1604,7 +1651,7 @@ F60_3_missions = {
 					share = 0.1
 				}
 			}
-			if = { # If there are >=3 Bulwar monarchies, have 3 of them with spy networks
+			if = { # If there are >=3 "unfriendly" and sovereign Bulwar monarchies, have 3 of them with spy networks
 				limit = {
 					calc_true_if = {
 						amount = 3
@@ -1612,8 +1659,8 @@ F60_3_missions = {
 							capital_scope = { superregion = bulwar_superregion }
 							government = monarchy
 							NOT = {
-								alliance_with = ROOT
-								is_subject_of = ROOT
+								alliance_with = ROOT # Doesn't make sense to spy in allies
+								is_subject = yes # Can't spy in subjects
 							}
 						}
 					}
@@ -1625,7 +1672,7 @@ F60_3_missions = {
 						government = monarchy
 						NOT = {
 							alliance_with = ROOT
-							is_subject_of = ROOT
+							is_subject = yes # Can't spy in subjects
 						}
 						has_spy_network_from = {
 							who = ROOT
@@ -1635,20 +1682,23 @@ F60_3_missions = {
 					desc = F60_phoenix_agitators_monarchies_tt
 				}
 			}
-			else = { # If not 3, then all of them
-				all_known_country = {
-					OR = {
-						NOT = {
-							AND = {
-								capital_scope = { superregion = bulwar_superregion }
-								government = monarchy
+			else = { # If not 3, then all of them. This has an ugly tooltip
+				custom_trigger_tooltip = {
+					tooltip = F60_phoenix_agitators_fallback_all_monarchies_tt
+					all_known_country = {
+						OR = {
+							NOT = {
+								AND = {
+									capital_scope = { superregion = bulwar_superregion }
+									government = monarchy
+								}
+							}
+							has_spy_network_from = {
+								who = ROOT
+								value = 30
 							}
 							alliance_with = ROOT
-							is_subject_of = ROOT
-						}
-						has_spy_network_from = {#need to check for ally/subject
-							who = ROOT
-							value = 30
+							is_subject = yes # Can't spy in subjects
 						}
 					}
 				}
@@ -2375,20 +2425,48 @@ F60_4_missions = {
 			custom_trigger_tooltip = { # Improve those 4 provinces once if you or your subject owns it
 				tooltip = F60_starting_capitals_improved_tt
 				5483 = { # Muhaqaar
-					country_or_subject_holds = ROOT
-					num_of_times_improved = 1
+					OR = {
+						AND = {
+							num_of_times_improved = 1
+							country_or_subject_holds = ROOT
+						}
+						owner = {
+							alliance_with = ROOT
+						}
+					}
 				}
 				5489 = { # Mattabo
-					country_or_subject_holds = ROOT
-					num_of_times_improved = 1
+					OR = {
+						AND = {
+							num_of_times_improved = 1
+							country_or_subject_holds = ROOT
+						}
+						owner = {
+							alliance_with = ROOT
+						}
+					}
 				}
 				6022 = { # Duwarkani
-					country_or_subject_holds = ROOT
-					num_of_times_improved = 1
+					OR = {
+						AND = {
+							num_of_times_improved = 1
+							country_or_subject_holds = ROOT
+						}
+						owner = {
+							alliance_with = ROOT
+						}
+					}
 				}
 				5870 = { # Aramoole
-					country_or_subject_holds = ROOT
-					num_of_times_improved = 1
+					OR = {
+						AND = {
+							num_of_times_improved = 1
+							country_or_subject_holds = ROOT
+						}
+						owner = {
+							alliance_with = ROOT
+						}
+					}
 				}
 			}
 			if = {
@@ -2996,9 +3074,11 @@ F60_5_missions = {
 				}
 				AND = {
 					province_id = 463
-					has_great_project = {
-						type = koroshesh_library
-						tier = 2
+					NOT = {
+						has_great_project = {
+							type = koroshesh_library
+							tier = 2
+						}
 					}
 				}
 			}

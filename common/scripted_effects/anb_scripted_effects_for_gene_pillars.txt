@@ -1,0 +1,2508 @@
+@empty = 1
+@locked = 2
+@min_class_value = 3
+@fighter_A = 3 #13
+@fighter_B = 4 #14
+@fighter_C = 5 #15
+@fighter_D = 6 #16
+@fighter_E = 7 #17
+@ranger_A = 8
+@ranger_B = 9
+@ranger_C = 10
+@ranger_D = 11
+@ranger_E = 12
+@rogue_A = 13 #3
+@rogue_B = 14 #4
+@rogue_C = 15 #5
+@rogue_D = 16 #6
+@rogue_E = 17 #7
+@cleric_A = 18
+@cleric_B = 19
+@cleric_C = 20
+@cleric_D = 21
+@cleric_E = 22
+@mage_A = 23
+@mage_B = 24
+@mage_C = 25
+@mage_D = 26
+@mage_E = 27
+@artificer_A = 28
+@artificer_B = 29
+@artificer_C = 30
+@artificer_D = 31
+@artificer_E = 32
+
+
+@rogue_archetype_frame = 3
+@ranger_archetype_frame = 2
+@figher_archetype_frame = 1
+@cleric_archetype_frame = 4
+@mage_archetype_frame = 5
+@artificer_archetype_frame = 6
+
+#Gene Pillars
+aPUI_gene_pillar_setup_first_time = {
+	hidden_effect = {
+		owner = {
+			if = {
+				limit = { NOT = { has_country_flag = aPUI_gene_pillar_interaction_setup_done } }
+				set_country_flag = aPUI_gene_pillar_interaction_setup_done
+
+				#System base values
+				set_aPUI_var = { name = gene_pillars_party_level value = 1 }
+				
+				set_aPUI_var = { name = gene_pillar_xp value = 0 }
+				set_aPUI_cap = { name = gene_pillar_xp amount = 50 }
+
+				aPUI_gene_pillar_setup_country_classes = yes
+
+				gene_pillars = {
+					limit = { owned_by = PREV }
+					aPUI_gene_pillar_setup_province = yes
+				} # setup each owned gene pillar as well
+			} 
+		}
+	}
+}
+aPUI_gene_pillar_setup_country_classes = {
+	country_event = { id = gene_pillars.90 }
+}
+
+aPUI_gene_pillar_reset_province = {
+	hidden_effect = {
+		set_province_flag = aPUI_gene_pillar_interaction_setup_done_province
+	
+		set_aPUI_var = { name = gene_pillar_health value = 3 }
+		set_aPUI_cap = { name = gene_pillar_health amount = 10 }
+		set_aPUI_var = { name = gene_pillar_health_max value = 3 }
+		set_aPUI_cap = { name = gene_pillar_health_max amount = 10 }
+		
+		set_aPUI_var = { name = gene_pillar_xp which = owner } # if we haven't set up, this is 0, otherwise it's our current xp - necessary for e.g. on_province_owner_change conquering new gene pillars while having XP
+		# we also need to copy the capacity from the owner, but we must set it to a safe value if the owner doesn't have it set up and not 0, to avoid divide-by-zero errors
+		if = {
+			limit = { owner = { aPUI_check_capacity_variable = { name = gene_pillar_xp value = 1 } } }
+			set_aPUI_cap = { name = gene_pillar_xp which = owner }
+		}
+		else = {
+			set_aPUI_cap = { name = gene_pillar_xp amount = 1 }
+		} # failsafe... we shouldn't really need it if all goes well - TODO: determine if necessary
+		set_aPUI_var = { name = gene_pillar_loot which = owner } # Loot is stored between expeditions
+		set_aPUI_var = { name = gene_pillar_progress value = 0 }
+
+		set_variable = { which = aPUI_gene_pillar_loot_capacity value = 100 }
+		set_variable = { which = aPUI_gene_pillar_progress_capacity value = 10 }
+
+		update_aPUI_var_bar = { name = gene_pillar_xp }
+		update_aPUI_var_bar = { name = gene_pillar_progress }
+		
+		# set_aPUI_var = { name = gene_pillars_party_level which = owner }
+		[[new_owner]
+			gene_pillars_setup_clr_province_class_flags_rogue = yes
+			gene_pillars_setup_clr_province_class_flags_ranger = yes
+			gene_pillars_setup_clr_province_class_flags_fighter = yes
+			gene_pillars_setup_clr_province_class_flags_cleric = yes
+			gene_pillars_setup_clr_province_class_flags_mage = yes
+			gene_pillars_setup_clr_province_class_flags_artificer = yes
+			gene_pillar_UI_setup_party_slots = yes
+		]
+		aPUI_gene_pillars_setup_update_UI = yes
+	}
+}
+aPUI_gene_pillar_setup_province = {
+	if = {
+		limit = {
+			NOT = { has_province_flag = aPUI_gene_pillar_interaction_setup_done_province }
+		}
+		aPUI_gene_pillar_reset_province = { new_owner = yes }
+	}
+}
+
+aPUI_gene_pillar_update_all_gene_pillar_progress_bars = {
+	# the XP bar and Loot bar in each gene pillar window is mirroring a country variable,
+	# so when you are not in an expedition you can see the bar in all expedition windows and it should have the same value in each
+	# thus, when finishing or abandoning an expedition, we need to update the XP + Loot in all owned gene pillars
+	# as doing so allows you to see the other gene pillar windows again
+	gene_pillars = {
+		limit = { owned_by = PREV }
+		set_aPUI_var = { name = gene_pillar_xp which = owner }
+		set_aPUI_cap = { name = gene_pillar_xp which = owner } # necessary in case a level-up increased these
+		update_aPUI_var_bar = { name = gene_pillar_xp }
+		set_aPUI_var = { name = gene_pillar_loot which = owner }
+		update_aPUI_var_bar = { name = gene_pillar_loot }
+	}
+}
+
+#Copy party level from owner and set n slots to empty
+gene_pillar_UI_setup_party_slots = {
+	if = {
+		limit = { owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 1 } } }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @locked }
+	}
+	else_if = {
+		limit = { owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 2 } } }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @locked }
+	}
+	else_if = {
+		limit = { owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 3 } } }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @locked }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @locked }
+	}
+	else_if = {
+		limit = { owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 4 } } }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @locked }
+	}
+	else_if = {
+		limit = { owner = { is_variable_equal = { which = aPUI_gene_pillars_party_level_var value = 5 } } }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @empty }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @empty }
+	}
+
+}
+
+aPUI_gene_pillars_update_UI = {
+	hidden_effect = { province_event = { id = gene_pillars.91 } }
+}
+aPUI_gene_pillars_setup_update_UI = { hidden_effect = { province_event = { id = gene_pillars.92 } } }
+
+
+update_aPUI_health_bar = {
+	if = { limit = { check_variable = { which = aPUI_$name$_var value = 0 } }
+		set_variable = { which = aPUI_$name$_framevar which = aPUI_$name$_var }
+		divide_variable = { which = aPUI_$name$_framevar value = 10 } #hardcoded max
+		multiply_variable = { which = aPUI_$name$_framevar value = 100 }
+	}
+	else = { set_variable = { which = aPUI_$name$_framevar value = 0 } }
+}
+aPUI_gene_pillars_setup_calculate_health = {
+	set_variable = { which = temp value = 3 }
+
+	if = { limit = { gene_pillars_setup_has_specific_class_in_party = { class = fighter_B } } change_variable = { which = temp value = 1 } }
+	if = { limit = { gene_pillars_setup_has_specific_class_in_party = { class = fighter_C } } change_variable = { which = temp value = -1 } }
+
+	# Add things that would affect party starting health here
+
+	#gene_pillars_check_extra_hp_at_start = {
+	#... make this a province mod or something
+	if = {
+		limit = { has_province_modifier = gene_pillars_next_level_extra_1_hp }
+		change_variable = { which = temp value = 1 }
+	}
+	
+	#Cap health to max of 10?
+	if = {
+		limit = { check_variable = { which = temp value = 10 } }
+		set_variable = { which = temp value = 10 }
+	}
+	set_aPUI_var = { name = gene_pillar_health which = temp }
+	set_aPUI_var = { name = gene_pillar_health_max which = temp }
+	update_aPUI_health_bar = { name = gene_pillar_health }
+	update_aPUI_health_bar = { name = gene_pillar_health_max }
+}
+
+aPUI_clear_all_country_exploration_flags = {
+	#Core System Flags
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3376 # - Red - Kiamoa
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3415 # - Blue - Mechanim
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3329 # - Orange - Hinuifauna
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3173 # - Yellow - Holohana
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3153 # - White - Forest
+	clr_country_flag = aPUI_gene_pillar_is_exploring_6950 # - Pink - Collection
+	clr_country_flag = aPUI_gene_pillar_is_exploring_6962 # - Gray - Kraken
+	clr_country_flag = aPUI_gene_pillar_is_exploring_3551 # - Green - Sandworm
+	clr_country_flag = aPUI_gene_pillar_is_exploring_6386 # - Black - Dragon
+	clr_country_flag = gene_pillar_is_exploring_level_1_pillar
+	clr_country_flag = gene_pillar_is_exploring_level_2_pillar
+	clr_country_flag = gene_pillar_is_exploring_level_3_pillar
+	clr_country_flag = gene_pillars_loot_good_ruler
+	clr_country_flag = gene_pillars_loot_institution
+	clr_country_flag = gene_pillars_loot_precursor_relics
+	clr_country_flag = gene_pillars_loot_damestear
+	clr_country_flag = gene_pillars_loot_power_cash
+
+}
+aPUI_clear_all_country_exploration_modifiers = {
+	remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
+}
+aPUI_clear_all_province_exploration_flags = {
+	# Add em
+}
+aPUI_clear_all_province_exploration_modifiers = {
+	#Put em in
+	remove_province_modifier = gene_pillars_kiamoa_strange_experiment
+	remove_province_modifier = gene_pillars_next_level_extra_1_hp
+}
+
+#Clears archetype selection
+gene_pillars_clear_all_class_flags = {
+	clr_country_flag = gene_pillars_archetype_selected_rogue
+	clr_country_flag = gene_pillars_archetype_selected_ranger
+	clr_country_flag = gene_pillars_archetype_selected_fighter
+	clr_country_flag = gene_pillars_archetype_selected_cleric
+	clr_country_flag = gene_pillars_archetype_selected_mage
+	clr_country_flag = gene_pillars_archetype_selected_artificer
+}
+
+# Ends the expedition (unsuccessful)
+# the actual effect is in the immediate of the two country_events -
+# this is because this scripted effect is used indirectly in hundreds of places (f.e. everywhere that does the lose hp effect)
+# and that would mean hundreds of copies of it in memory - like this, only the event call is copied in memory
+# NOTE: this does mean that this will not work in a scripted effect else_if/else/trigger_switch as it would not fire the event,
+# but it would be broken anyway as it would be unable to fire gene_pillars.30 in that case
+gene_pillar_abandon_expedition_effect = {
+	hidden_effect = {
+		[[province_notification_event]	country_event = { id = gene_pillars.3 } ]
+		[[country_notification_event]	country_event = { id = gene_pillars.4 } ]
+	}
+}
+gene_pillar_abandon_expedition_effect_helper = {
+	gene_pillars_expedition_finished_roll_final_injuries_effect = yes
+	gene_pillars_injury_clear_UI_slots_and_province_flags = yes
+
+	hidden_effect = {
+		gene_pillar_clear_all_class_country_flags = yes
+		aPUI_clear_all_country_exploration_flags = yes
+		aPUI_clear_all_country_exploration_modifiers = yes
+
+	}
+	hidden_effect = {
+		# Reset progress to 0
+		event_target:gene_pillar_exploration_province = {
+			aPUI_clear_all_province_exploration_flags = yes
+			aPUI_clear_all_province_exploration_modifiers = yes
+			aPUI_gene_pillar_reset_province = yes
+		}
+
+		# TODO: hacky - we have to clear the XP and Loot here as you can see the expedition window again if you hold the finishing events open
+		# but we also need to update XP again in each completion event, because you might level up and change your XP again
+		# and you may have maxed your Loot, thereby resetting it
+		# improve this
+		aPUI_gene_pillar_update_all_gene_pillar_progress_bars = yes
+
+		#Pillar ends in failure
+		[[province] event_target:gene_pillar_exploration_province = { province_event = { id = gene_pillars.31 } } ]
+		[[country] country_event = { id = gene_pillars.32 } ]
+	}
+}
+
+#Checks if you've failed the expedition before firing the success
+gene_pillar_end_expedition_effect = {
+	if = {
+		limit = { is_exploring_any_gene_pillar = yes }
+		gene_pillar_successful_end_expedition_effect = yes
+	}
+}
+
+#Ends the expedition (successful)
+gene_pillar_successful_end_expedition_effect = {
+	gene_pillars_expedition_finished_roll_final_injuries_effect = yes
+	gene_pillars_injury_clear_UI_slots_and_province_flags = yes
+
+	# These are rewards/penalties giving out during specific gene pillars
+	remove_country_modifier = gene_pillars_generic_artifice_cap_1_minus
+	if = {
+		limit = {
+			has_country_flag = gene_pillars_successful_gain_capital_dev
+		}
+		capital_scope = {
+			add_base_tax = 1
+			add_base_production = 1
+			add_base_manpower = 1
+		}
+		clr_country_flag = gene_pillars_successful_gain_capital_dev
+	}
+	if = {
+		limit = {
+			has_country_flag = gene_pillars_draconic_suppress_deactivated
+		}
+		event_target:gene_pillar_exploration_province = {
+			# +1 goods produced
+			add_province_modifier = {
+				name = gene_pillars_suppression_matrix_disabled
+				duration = -1
+			}
+		}
+		clr_country_flag = gene_pillars_draconic_suppress_deactivated
+	}
+
+	if = {
+		limit = { has_country_flag = gene_pillar_is_exploring_level_1_pillar }
+		gene_pillars_add_xp_effect = { amount = 5 }
+		add_prestige = 5
+		set_country_flag = aPUI_gene_pillar_explored_level_1_in_@event_target:gene_pillar_exploration_province
+	}
+	if = {
+		limit = { has_country_flag = gene_pillar_is_exploring_level_2_pillar }
+		gene_pillars_add_xp_effect = { amount = 15 }
+		add_prestige = 10
+		set_country_flag = aPUI_gene_pillar_explored_level_2_in_@event_target:gene_pillar_exploration_province
+	}
+	if = {
+		limit = { has_country_flag = gene_pillar_is_exploring_level_3_pillar }
+		gene_pillars_add_xp_effect = { amount = 30 }
+		add_prestige = 20
+		set_country_flag = aPUI_gene_pillar_explored_level_3_in_@event_target:gene_pillar_exploration_province
+		clr_country_flag = gene_pillars_visited_nexus_of_realities # Only clear once you beat the pillar on level 3
+	}
+	change_variable = {
+		which = num_gene_pillar_explorations_completed
+		value = 1
+	}
+	# TODO: hacky - we have to clear the XP and Loot here as you can see the expedition window again if you hold the finishing events open
+	# but we also need to update XP again in each completion event, because you might level up and change your XP again
+	# and you may have maxed your Loot, thereby resetting it
+	# improve this
+	aPUI_gene_pillar_update_all_gene_pillar_progress_bars = yes
+
+	event_target:gene_pillar_exploration_province = {
+		province_event = { id = gene_pillars.30 }
+		hidden_effect = {
+			aPUI_gene_pillar_reset_province = yes
+		}
+	}
+	hidden_effect = {
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3376 # - Red - Kiamoa
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3415 # - Blue - Mechanim
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3329 # - Orange - Hinuifauna
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3173 # - Yellow - Holohana
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3153 # - White - Forest
+		clr_country_flag = aPUI_gene_pillar_is_exploring_6950 # - Pink - Collection
+		clr_country_flag = aPUI_gene_pillar_is_exploring_6962 # - Gray - Kraken
+		clr_country_flag = aPUI_gene_pillar_is_exploring_3551 # - Green - Sandworm
+		clr_country_flag = aPUI_gene_pillar_is_exploring_6386 # - Black - Dragon
+		clr_country_flag = gene_pillar_is_exploring_level_1_pillar
+		clr_country_flag = gene_pillar_is_exploring_level_2_pillar
+		clr_country_flag = gene_pillar_is_exploring_level_3_pillar
+		gene_pillar_clear_all_class_country_flags = yes
+	}
+}
+
+#Begins the expedition
+gene_pillar_start_exploration_of_level = {
+	# c	ustom_tooltip = gene_pillar_start_exploration_of_level_$level$_tt
+	hidden_effect = {
+		if = { limit = { province_id = 3376 } gene_pillar_start_expedition_effect = { province = 3376 } }
+		if = { limit = { province_id = 3415 } gene_pillar_start_expedition_effect = { province = 3415 } }
+		if = { limit = { province_id = 3329 } gene_pillar_start_expedition_effect = { province = 3329 } }
+		if = { limit = { province_id = 3173 } gene_pillar_start_expedition_effect = { province = 3173 } }
+		if = { limit = { province_id = 3153 } gene_pillar_start_expedition_effect = { province = 3153 } }
+		if = { limit = { province_id = 6950 } gene_pillar_start_expedition_effect = { province = 6950 } }
+		if = { limit = { province_id = 6962 } gene_pillar_start_expedition_effect = { province = 6962 } }
+		if = { limit = { province_id = 3551 } gene_pillar_start_expedition_effect = { province = 3551 } }
+		if = { limit = { province_id = 6386 } gene_pillar_start_expedition_effect = { province = 6386 } }
+		owner = { set_country_flag = gene_pillar_is_exploring_level_$level$_pillar }
+	}
+	if = {
+		limit = { NOT = { gene_pillars_has_any_support_class_province = yes } }
+		custom_tooltip = gene_pillars_no_support_tt
+	}
+	if = {
+		limit = { NOT = { gene_pillars_has_any_frontliner_class_province = yes } }
+		custom_tooltip = gene_pillars_no_frontliner_tt
+	}
+}
+
+gene_pillar_start_expedition_effect = {
+	hidden_effect = {
+		owner = { set_country_flag = aPUI_gene_pillar_is_exploring_$province$ }
+		province_event = { id = gene_pillars.2 }
+	}
+}
+
+
+gene_pillars_clr_all_selecting_slot_flags = {
+	clr_province_flag = gene_pillars_selecting_slot_1
+	clr_province_flag = gene_pillars_selecting_slot_2
+	clr_province_flag = gene_pillars_selecting_slot_3
+	clr_province_flag = gene_pillars_selecting_slot_4
+	clr_province_flag = gene_pillars_selecting_slot_5
+}
+
+gene_pillar_clear_all_class_country_flags = {
+	clr_country_flag = gene_pillars_has_rogue_A
+	clr_country_flag = gene_pillars_has_rogue_B
+	clr_country_flag = gene_pillars_has_rogue_C
+	clr_country_flag = gene_pillars_has_rogue_D
+	clr_country_flag = gene_pillars_has_rogue_E
+	clr_country_flag = gene_pillars_has_ranger_A
+	clr_country_flag = gene_pillars_has_ranger_B
+	clr_country_flag = gene_pillars_has_ranger_C
+	clr_country_flag = gene_pillars_has_ranger_D
+	clr_country_flag = gene_pillars_has_ranger_E
+	clr_country_flag = gene_pillars_has_fighter_A
+	clr_country_flag = gene_pillars_has_fighter_B
+	clr_country_flag = gene_pillars_has_fighter_C
+	clr_country_flag = gene_pillars_has_fighter_D
+	clr_country_flag = gene_pillars_has_fighter_E
+	clr_country_flag = gene_pillars_has_cleric_A
+	clr_country_flag = gene_pillars_has_cleric_B
+	clr_country_flag = gene_pillars_has_cleric_C
+	clr_country_flag = gene_pillars_has_cleric_D
+	clr_country_flag = gene_pillars_has_cleric_E
+	clr_country_flag = gene_pillars_has_mage_A
+	clr_country_flag = gene_pillars_has_mage_B
+	clr_country_flag = gene_pillars_has_mage_C
+	clr_country_flag = gene_pillars_has_mage_D
+	clr_country_flag = gene_pillars_has_mage_E
+	clr_country_flag = gene_pillars_has_artificer_A
+	clr_country_flag = gene_pillars_has_artificer_B
+	clr_country_flag = gene_pillars_has_artificer_C
+	clr_country_flag = gene_pillars_has_artificer_D
+	clr_country_flag = gene_pillars_has_artificer_E
+}
+
+#Fires a generic event, and then a scripted event
+gene_pillar_generic_then_specific_event = {
+	hidden_effect = {
+		# Check party isn't dead before firing events
+		if = {
+			limit = {
+				event_target:gene_pillar_exploration_province = {
+					aPUI_check_variable = { name = gene_pillar_health value = 1 }
+				}
+			}
+
+			# This does not take into account every single combinatio of speed factors, but it handles
+			# each flag in combination with the two increased speed estate privileges
+			# We need to be careful though, since we can't fire an event from an else or else_if
+			if = { # Double speed
+				limit = {
+					has_country_flag = gene_pillars_exploration_events_double_speed
+				}
+				if = { # Increased speed privilege
+					limit = {
+						OR = {
+							has_estate_privilege = artifice_invention_pillar_scouts
+							has_estate_privilege = artifice_invention_mech_pillar_scouts
+						}
+					}
+					country_event = { id = gene_pillars.1000 days = 68 } #Generic event handler
+					country_event = { id = gene_pillars.$specific_event$ days = 136 } #Next event in chain
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_estate_privilege = artifice_invention_pillar_scouts
+							has_estate_privilege = artifice_invention_mech_pillar_scouts
+						}
+					}
+					country_event = { id = gene_pillars.1000 days = 91 } #Generic event handler
+					country_event = { id = gene_pillars.$specific_event$ days = 182 } #Next event in chain
+				}
+			}
+			if = {
+				limit = {
+					NOT = { has_country_flag = gene_pillars_exploration_events_double_speed }
+				}
+				if = { # 90-180 day delay
+					limit = {
+						has_country_flag = gene_pillars_exploration_next_event_small_delay
+					}
+					if = { # Increased speed privilege
+						limit = {
+							OR = {
+								has_estate_privilege = artifice_invention_pillar_scouts
+								has_estate_privilege = artifice_invention_mech_pillar_scouts
+							}
+						}
+						country_event = { id = gene_pillars.1000 days = 204 random = 67 } #Generic event handler
+						country_event = { id = gene_pillars.$specific_event$ days = 341 random = 67 } #Next event in chain
+					}
+					if = {
+						limit = {
+							NOT = {
+								has_estate_privilege = artifice_invention_pillar_scouts
+								has_estate_privilege = artifice_invention_mech_pillar_scouts
+							}
+						}
+						country_event = { id = gene_pillars.1000 days = 272 random = 90 } #Generic event handler
+						country_event = { id = gene_pillars.$specific_event$ days = 455 random = 90 } #Next event in chain
+					}
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = gene_pillars_exploration_next_event_small_delay }
+					}
+					if = { # 180-270 day delay
+						limit = {
+							has_country_flag = gene_pillars_exploration_next_event_medium_delay
+						}
+						if = { # Increased speed privilege
+							limit = {
+								OR = {
+									has_estate_privilege = artifice_invention_pillar_scouts
+									has_estate_privilege = artifice_invention_mech_pillar_scouts
+								}
+							}
+							country_event = { id = gene_pillars.1000 days = 271 random = 67 } #Generic event handler
+							country_event = { id = gene_pillars.$specific_event$ days = 409 random = 67 } #Next event in chain
+						}
+						if = {
+							limit = {
+								NOT = {
+									has_estate_privilege = artifice_invention_pillar_scouts
+									has_estate_privilege = artifice_invention_mech_pillar_scouts
+								}
+							}
+							country_event = { id = gene_pillars.1000 days = 362 random = 90 } #Generic event handler
+							country_event = { id = gene_pillars.$specific_event$ days = 545 random = 90 } #Next event in chain
+						}
+					}
+					if = {
+						limit = {
+							NOT = { has_country_flag = gene_pillars_exploration_next_event_medium_delay }
+						}
+						if = { # 270-360 day delay
+							limit = {
+								has_country_flag = gene_pillars_exploration_next_event_large_delay
+							}
+							if = { # Increased speed privilege
+								limit = {
+									OR = {
+										has_estate_privilege = artifice_invention_pillar_scouts
+										has_estate_privilege = artifice_invention_mech_pillar_scouts
+									}
+								}
+								country_event = { id = gene_pillars.1000 days = 339 random = 67 } #Generic event handler
+								country_event = { id = gene_pillars.$specific_event$ days = 476 random = 67 } #Next event in chain
+							}
+							if = {
+								limit = {
+									NOT = {
+										has_estate_privilege = artifice_invention_pillar_scouts
+										has_estate_privilege = artifice_invention_mech_pillar_scouts
+									}
+								}
+								country_event = { id = gene_pillars.1000 days = 452 random = 90 } #Generic event handler
+								country_event = { id = gene_pillars.$specific_event$ days = 635 random = 90 } #Next event in chain
+							}
+						}
+						if = {
+							limit = {
+								NOT = { has_country_flag = gene_pillars_exploration_next_event_large_delay }
+							}
+							if = { # Increased speed privilege
+								limit = {
+									OR = {
+										has_estate_privilege = artifice_invention_pillar_scouts
+										has_estate_privilege = artifice_invention_mech_pillar_scouts
+									}
+								}
+								country_event = { id = gene_pillars.1000 days = 135 } #Generic event handler
+								country_event = { id = gene_pillars.$specific_event$ days = 270 } #Next event in chain
+							}
+							if = {
+								limit = {
+									NOT = {
+										has_estate_privilege = artifice_invention_pillar_scouts
+										has_estate_privilege = artifice_invention_mech_pillar_scouts
+									}
+								}
+								country_event = { id = gene_pillars.1000 days = 182 } #Generic event handler
+								country_event = { id = gene_pillars.$specific_event$ days = 365 } #Next event in chain
+							}
+						}
+						clr_country_flag = gene_pillars_exploration_next_event_large_delay
+					}
+					clr_country_flag = gene_pillars_exploration_next_event_medium_delay
+				}
+				clr_country_flag = gene_pillars_exploration_next_event_small_delay
+			}
+			# This is just so the initial event doesn't advance the progress bar
+			[[advance]
+				gene_pillars_advance_progress_bar = yes
+			]
+		}
+	}
+}
+
+# DO NOT USE gene_pillars_change_loot_effect DIRECTLY - add must be used for +, and lose for -
+# these effects run on the country scope (the country doing the expedition), and require the event target gene_pillar_exploration_province to be saved
+# NOTE: these WILL NOT fully work inside a scripted effect else_if/else/trigger_switch, as they need to fire events (for 100 loot)
+gene_pillars_add_loot_effect = {
+	gene_pillars_change_loot_effect = { amount = $amount$ add = yes }
+}
+gene_pillars_lose_loot_effect = {
+	gene_pillars_change_loot_effect = { amount = -$amount$ lose = yes }
+}
+#Changes loot value on province
+#Needs to be updated to handle the overflow reward, it got broken in a merge?
+gene_pillars_change_loot_effect = {
+	# "Change Loot by X"
+	tooltip = {
+		change_aPUI_var = { name = gene_pillar_loot value = $amount$ }
+	}
+	
+	#Bonus for having specific party members
+	[[add]
+		hidden_effect = { set_variable = { which = temp value = 0 } }
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = fighter_C } }
+			custom_tooltip = gene_pillars_add_loot_effect_fighter_C_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.5 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = rogue_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_rogue_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = mage_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_mage_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = mage_B } }
+			custom_tooltip = gene_pillars_add_loot_effect_mage_B_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		if = {
+			limit = { gene_pillars_has_class_in_party = { class = artificer_A } }
+			custom_tooltip = gene_pillars_add_loot_effect_artificer_A_bonus_tt
+			hidden_effect = { change_variable = { which = temp value = 0.25 } }
+		}
+		hidden_effect = {
+			multiply_variable = { which = temp value = $amount$ }
+			change_aPUI_var = { name = gene_pillar_loot which = temp } # Update country level so we save between expedition
+			event_target:gene_pillar_exploration_province = {
+				set_variable = { which = temp which = PREV }
+				change_aPUI_var = { name = gene_pillar_loot which = temp }
+			}
+		}
+	]
+
+	#Change on province, refresh Gene Pillar UI
+	hidden_effect = {
+		change_aPUI_var = { name = gene_pillar_loot value = $amount$ } # Update country level so we save between expedition
+		[[lose]
+			if = {
+				limit = { NOT = { aPUI_check_variable = { name = gene_pillar_loot value = 0 } } }
+				set_aPUI_var = { name = gene_pillar_loot value = 0 }
+			}
+		]
+		event_target:gene_pillar_exploration_province = {
+			set_aPUI_var = { name = gene_pillar_loot which = PREV }
+			
+			[[add]
+				#Maybe not best positioned here
+				if = {
+					limit = { aPUI_check_variable = { name = gene_pillar_loot value = 100 } }
+					province_event = { id = gene_pillars.33 }
+				}
+			]
+			update_aPUI_var_bar = { name = gene_pillar_loot }
+		}
+	}
+}
+
+# DO NOT USE gene_pillars_change_xp_effect DIRECTLY - add must be used for +, and lose for -
+# these effects run on the country scope (the country doing the expedition), and require the event target gene_pillar_exploration_province to be saved
+# NOTE: these WILL NOT fully work inside a scripted effect else_if/else/trigger_switch, as they need to fire events (for levelling up)
+gene_pillars_add_xp_effect = {
+	gene_pillars_change_xp_effect = { amount = $amount$ add = yes }
+}
+gene_pillars_lose_xp_effect = {
+	gene_pillars_change_xp_effect = { amount = -$amount$ }
+}
+
+
+gene_pillars_change_xp_effect = {
+	tooltip = {
+		change_aPUI_var = { name = gene_pillar_xp value = $amount$ }
+	}
+	#Skip all this if you're capped
+	if = {
+		limit = { NOT = { aPUI_check_variable = { name = gene_pillars_party_level value = 5 } } }
+
+		hidden_effect = {
+			change_aPUI_var = { name = gene_pillar_xp value = $amount$ }
+
+			event_target:gene_pillar_exploration_province = {
+				set_aPUI_var = { name = gene_pillar_xp which = PREV }
+				[[add] gene_pillars_level_up_check = yes ]
+				#Update bar
+				update_aPUI_var_bar = { name = gene_pillar_xp }
+			}
+		}
+	}
+}
+
+# this runs on the scope of the expedition province (not the country)
+gene_pillars_level_up_check = {
+	hidden_effect = { province_event = { id = gene_pillars.5 } }
+}
+
+gene_pillars_level_up_check_helper = {
+	hidden_effect = {
+		if = {
+			limit = {
+				#Don't have a specific scripted trigger
+				owner = { aPUI_check_variable = { name = gene_pillar_xp which = aPUI_gene_pillar_xp_capacity } }
+			}
+			#Nor specific effect
+
+			owner = {
+				subtract_variable = { which = aPUI_gene_pillar_xp_var which = aPUI_gene_pillar_xp_capacity }
+				change_variable = { which = aPUI_gene_pillars_party_level_var value = 1 }
+				if = { # Went from level 1 to level 2
+					limit = { gene_pillars_is_exactly_party_level = { level = 2 } }
+					gene_pillars = {
+						limit = { owned_by = PREV } #Change visual as you unlock slot 2
+						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+					}
+					set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
+				}
+				else_if = { # Went from level 2 to level 3
+					limit = { gene_pillars_is_exactly_party_level = { level = 3 } }
+					gene_pillars = {
+						limit = { owned_by = PREV } #Change visual as you unlock slot 3
+						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @empty }
+					}
+					set_aPUI_cap = { name = gene_pillar_xp amount = 100 }
+	
+					if = {
+						limit = { NOT = { has_country_modifier = mechanim_administration } }
+						set_country_flag = gene_pillars_unlocked_fighter_B
+						set_country_flag = gene_pillars_unlocked_fighter_C
+					}
+				}
+				else_if = { # Went from level 3 to level 4
+					limit = { gene_pillars_is_exactly_party_level = { level = 4 } }
+					gene_pillars = {
+						limit = { owned_by = PREV } #Change visual as you unlock slot 4
+						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @empty }
+					}
+					set_aPUI_cap = { name = gene_pillar_xp amount = 200 }
+	
+					if = {
+						limit = { NOT = { has_country_modifier = mechanim_administration } }
+						set_country_flag = gene_pillars_unlocked_cleric_B
+					}
+				}
+				else_if = { # Went from level 4 to level 5
+					limit = { gene_pillars_is_exactly_party_level = { level = 5 } }
+					gene_pillars = {
+						limit = { owned_by = PREV } #Change visual as you unlock slot 5
+						set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @empty }
+					}
+					set_variable = { which = aPUI_gene_pillar_xp_var value = 200 }
+				}
+			}
+			#Then get the updated values
+			set_aPUI_var = { name = gene_pillar_xp which = owner }
+			set_aPUI_cap = { name = gene_pillar_xp which = owner }
+			# Necessary as this is called without change/add/lose XP effect
+			update_aPUI_var_bar = { name = gene_pillar_xp }
+			# Level up notification
+			province_event = { id = gene_pillars.6 }
+		}
+	}
+}
+
+# TODO not quite working. Was meant to be a way to reduce loot by 100 after the event loc was checked
+gene_pillars_check_loot_threshold = {
+	if = {
+		limit = { gene_pillars_has_capped_loot = yes }
+		change_aPUI_var = { name = gene_pillar_loot value = -100 }
+		gene_pillars_randomise_loot_event = yes
+	}
+}
+
+# This fires in the immediate of the reward event to calculate the loot, and then
+# the event option will actually give it to you
+# If you have 100 loot points, make sure we only select each reward once
+gene_pillars_randomise_loot_event = {
+	owner = {
+		random_list = {
+			10 = {
+				trigger = {
+					NOT = {
+						has_country_flag = gene_pillars_has_mage_A
+						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_good_ruler
+					}
+				}
+				set_country_flag = gene_pillars_loot_good_ruler
+			}
+			10 = {
+				trigger = {
+					NOT = {
+						has_country_flag = gene_pillars_has_mage_A
+						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_institution
+					}
+				}
+				set_country_flag = gene_pillars_loot_institution
+			}
+			10 = { # Get precursor relics
+				trigger = {
+					NOT = {
+						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_precursor_relics
+						has_country_flag = gene_pillars_loot_damestear
+					}
+					NOT = { PREV = { trade_goods = precursor_relics } }
+				}
+				set_country_flag = gene_pillars_loot_precursor_relics
+			}
+			10 = { # Get Damestear
+				trigger = {
+					NOT = {
+						has_country_flag = gene_pillars_loot_damestear
+						has_country_flag = gene_pillars_loot_precursor_relics
+					}
+					NOT = { PREV = { trade_goods = damestear } }
+				}
+				set_country_flag = gene_pillars_loot_damestear
+			}
+			10 = {
+				trigger = {
+					NOT = {
+						has_country_flag = gene_pillars_has_mage_A
+						has_country_flag = gene_pillars_has_artificer_A
+						has_country_flag = gene_pillars_loot_power_cash
+					}
+				}
+				set_country_flag = gene_pillars_loot_power_cash
+			}
+			5 = {
+				#TODO: Add trigger to ensure an eligible invention exists
+				trigger = {
+					NOT = { has_country_flag = gene_pillars_loot_insyaa_invention }
+				}
+				set_country_flag = gene_pillars_loot_insyaa_invention
+			}
+		}
+	}
+	[[looted]
+		# subtract from the loot variable as 'earned' loot, reset the bar
+		owner = { change_aPUI_var = { name = gene_pillar_loot value = -100 } }
+		set_aPUI_var = { name = gene_pillar_loot which = owner }
+		update_aPUI_var_bar = { name = gene_pillar_loot }
+	]
+}
+
+gene_pillars_gain_final_loot_event = {
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_good_ruler }
+		}
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						has_country_modifier = elven_administration
+						has_country_modifier = half_elven_administration
+						has_country_modifier = ruinborn_administration
+					}
+				}
+			}
+			owner = {
+				add_legitimacy_equivalent = { amount = 50 republican_tradition = 50 }
+				add_prestige = 35
+				random_list = {
+					1 = { change_adm = 1 }
+					1 = { change_dip = 1 }
+					1 = { change_mil = 1 }
+				}
+				custom_tooltip = gene_pillar_get_loot_ae_tt
+				hidden_effect = {
+					every_known_country = {
+						add_aggressive_expansion = {
+							who = PREV
+							value = -10
+							apply_calc = no
+						}
+					}
+				}
+			}
+		}
+		else = {
+			owner = {
+				add_legitimacy_equivalent = { amount = 25 republican_tradition = 25 }
+				add_prestige = 25
+				random_list = {
+					1 = { change_adm = 1 }
+					1 = { change_dip = 1 }
+					1 = { change_mil = 1 }
+				}
+				custom_tooltip = gene_pillar_get_loot_ae_tt
+				hidden_effect = {
+					every_known_country = {
+						add_aggressive_expansion = {
+							who = PREV
+							value = -10
+							apply_calc = no
+						}
+					}
+				}
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_good_ruler }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_institution }
+		}
+		if = {
+			limit = {
+				owner = {
+					OR = {
+						is_ahead_of_time_in_technology = { tech = adm }
+						is_ahead_of_time_in_technology = { tech = dip }
+						is_ahead_of_time_in_technology = { tech = mil }
+					}
+				}
+			}
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 100
+					}
+				}
+				add_country_modifier = {
+					name = gene_pillars_mod_1
+					duration = 3650 #10 years
+				}
+			}
+		}
+		else = {
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 100
+					}
+				}
+				add_country_modifier = {
+					name = gene_pillars_mod_2
+					duration = 3650 #10 years
+				}
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_institution }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_precursor_relics }
+		}
+		province_event = { id = gene_pillars.40 } # TODO change scope
+		owner = { clr_country_flag = gene_pillars_loot_precursor_relics }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_damestear }
+		}
+		province_event = { id = gene_pillars.50 } # TODO change scope
+		owner = { clr_country_flag = gene_pillars_loot_damestear }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_power_cash }
+		}
+		if = {
+			limit = {
+				owner = {
+					capital_scope = { continent = oceania }
+					is_lacking_institutions = yes
+				}
+			}
+			owner = {
+				capital_scope = {
+					area = {
+						add_next_institution_embracement = 50
+					}
+				}
+				add_adm_power = 75
+				add_dip_power = 75
+				add_mil_power = 75
+				if = {
+					limit = { monthly_income = 375 }
+					add_treasury = 3000
+				}
+				else = { add_years_of_income = 0.66 }
+			}
+		}
+		else = {
+			owner = {
+				add_adm_power = 100
+				add_dip_power = 100
+				add_mil_power = 100
+				if = {
+					limit = { monthly_income = 416.66 }
+					add_treasury = 5000
+				}
+				else = { add_years_of_income = 1 }
+			}
+		}
+		owner = { clr_country_flag = gene_pillars_loot_power_cash }
+	}
+	if = {
+		limit = {
+			owner = { has_country_flag = gene_pillars_loot_insyaa_invention }
+		}
+		owner = {
+			gene_pillars_random_insyaa_invention_unlock = yes
+			clr_country_flag = gene_pillars_loot_insyaa_invention
+		}
+	}
+	# Extra reward from gene_pillars.1005
+	if = {
+		limit = {
+			has_province_flag = gene_pillars_generic_extra_reward_at_end
+		}
+		owner = {
+			add_adm_power = 50
+			add_dip_power = 50
+			add_mil_power = 50
+			if = {
+				limit = { monthly_income = 208.33 }
+				add_treasury = 2500
+			}
+			else = { add_years_of_income = 0.5 }
+		}
+		clr_province_flag = gene_pillars_generic_extra_reward_at_end
+	}
+}
+
+
+#Overheal sets maxHP to HP if HP > maxHP, and shows a tooltip
+#Lose is effectively optional, but will show the player that they lost extra for not having a frontliner
+
+# DO NOT USE gene_pillars_change_hp_effect DIRECTLY - add must be used for +, and lose for -
+# these effects run on the country scope (the country doing the expedition), and require the event target gene_pillar_exploration_province to be saved
+# NOTE: these WILL NOT fully work inside a scripted effect else_if/else/trigger_switch, as they need to fire events (for abandoning the expedition at 0 health)
+gene_pillars_add_hp_effect = {
+	gene_pillars_change_hp_effect = { amount = $amount$ [[overheal] overheal = yes ] add = yes }
+}
+gene_pillars_lose_hp_effect = {
+	gene_pillars_change_hp_effect = { amount = -$amount$ lose = yes }
+
+	# If Party is dead, abandon Exploration and don't queue another event
+	if = {
+		limit = {
+			event_target:gene_pillar_exploration_province = {
+				NOT = { aPUI_check_variable = { name = gene_pillar_health value = 1 } }
+			}
+			is_exploring_any_gene_pillar = yes
+			# in case you trigger this twice by e.g. having two health loss effects in one option
+		}
+		reduce_stability_or_adm_power = yes
+		set_country_flag = gene_pillars_got_killed
+		gene_pillar_abandon_expedition_effect = { province_notification_event = yes }
+	}
+}
+
+gene_pillars_change_hp_effect = {
+	# "Change Health by X"
+	tooltip = {
+		change_aPUI_var = { name = gene_pillar_health value = $amount$ }
+	}
+	[[overheal] custom_tooltip = gene_pillars_overheal_tt ]
+	[[lose]
+		if = {
+			limit = { NOT = { gene_pillars_has_any_frontliner_class_country = yes } }
+			custom_tooltip = gene_pillars_lose_health_effect_frontliner_tt
+		}
+	]
+
+	hidden_effect = {
+		event_target:gene_pillar_exploration_province = {
+			change_aPUI_var = { name = gene_pillar_health value = $amount$ }
+			[[overheal]
+				# Is Max HP Less than current HP? Set to max for an 'overheal'
+				if = {
+					limit = { aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max } }
+					set_aPUI_to_aPUI_var = { name = gene_pillar_health_max which = gene_pillar_health }
+				}
+			]
+			[[lose]
+				if = {
+					limit = { # Take more damage if you have no frontliner
+						#In this generic effect, check there was a hp reduction before applying again
+						NOT = { owner = { gene_pillars_has_any_frontliner_class_country = yes } }
+					}
+					change_aPUI_var = { name = gene_pillar_health value = $amount$ }
+				}
+			]
+			[[add]
+				#Cap the health bar
+				if = {
+					limit = { aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max } }
+					set_aPUI_to_aPUI_var = { name = gene_pillar_health which = gene_pillar_health_max }
+				}
+			]
+			update_aPUI_var_bar = { name = gene_pillar_health }
+			update_aPUI_var_bar = { name = gene_pillar_health_max }
+		}
+	}
+}
+
+#Sets up the progress bar
+gene_pillars_set_up_progress_bar = {
+	# Define the increments based on the number of events
+	event_target:gene_pillar_exploration_province = {
+		set_aPUI_cap = { name = gene_pillar_progress amount = $events$ }
+		set_aPUI_var = { name = gene_pillar_progress value = 0 }
+		hidden_effect = { update_aPUI_var_bar = { name = gene_pillar_progress } }
+	}
+}
+
+#Advances the progress bar
+gene_pillars_advance_progress_bar = {
+	event_target:gene_pillar_exploration_province = {
+		change_aPUI_var = { name = gene_pillar_progress value = 1 }
+		hidden_effect = { update_aPUI_var_bar = { name = gene_pillar_progress } }
+	}
+}
+
+gene_pillar_clear_unlocked_party_setup_slot_for_injury = {
+	if = {
+		limit = {
+			check_variable = {
+				which = aPUI_gene_pillar_party_slot_framevar_$slot$
+				value = @min_class_value
+			}
+		}
+		set_variable = {
+			which = aPUI_gene_pillar_party_slot_framevar_$slot$
+			value = @empty
+		}
+	}
+}
+
+#Checks injuries and updates UI slots
+gene_pillars_injury_clear_UI_slots_and_province_flags = {
+	hidden_effect = {
+		if = {
+			limit = {
+				gene_pillars_is_anyone_injured_in_party = yes
+			}
+			# Even though not everyone is necessarily injured, it's a bit too tricky to check each slot to see if the
+			# injured character is in that slot, so if anyone is injured, let's just reset the party
+			event_target:gene_pillar_exploration_province = {
+				gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 1 }
+				gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 2 }
+				gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 3 }
+				gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 4 }
+				gene_pillar_clear_unlocked_party_setup_slot_for_injury = { slot = 5 }
+				gene_pillars_setup_clr_province_class_flags_rogue = yes
+				gene_pillars_setup_clr_province_class_flags_ranger = yes
+				gene_pillars_setup_clr_province_class_flags_fighter = yes
+				gene_pillars_setup_clr_province_class_flags_cleric = yes
+				gene_pillars_setup_clr_province_class_flags_mage = yes
+				gene_pillars_setup_clr_province_class_flags_artificer = yes
+			}
+		}
+	}
+}
+
+#Roll for injuries on all party members
+gene_pillars_expedition_finished_roll_final_injuries_effect = {
+	hidden_effect = {
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_A }
+			gene_pillars_roll_injury_class_effect = { class = rogue_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_B }
+			gene_pillars_roll_injury_class_effect = { class = rogue_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_C }
+			gene_pillars_roll_injury_class_effect = { class = rogue_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_D }
+			gene_pillars_roll_injury_class_effect = { class = rogue_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_E }
+			gene_pillars_roll_injury_class_effect = { class = rogue_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_A }
+			gene_pillars_roll_injury_class_effect = { class = ranger_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_B }
+			gene_pillars_roll_injury_class_effect = { class = ranger_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_C }
+			gene_pillars_roll_injury_class_effect = { class = ranger_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_D }
+			gene_pillars_roll_injury_class_effect = { class = ranger_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_E }
+			gene_pillars_roll_injury_class_effect = { class = ranger_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_A }
+			gene_pillars_roll_injury_class_effect = { class = fighter_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_B }
+			gene_pillars_roll_injury_class_effect = { class = fighter_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_C }
+			gene_pillars_roll_injury_class_effect = { class = fighter_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_D }
+			gene_pillars_roll_injury_class_effect = { class = fighter_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_E }
+			gene_pillars_roll_injury_class_effect = { class = fighter_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_A }
+			gene_pillars_roll_injury_class_effect = { class = cleric_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_B }
+			gene_pillars_roll_injury_class_effect = { class = cleric_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_C }
+			gene_pillars_roll_injury_class_effect = { class = cleric_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_D }
+			gene_pillars_roll_injury_class_effect = { class = cleric_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_E }
+			gene_pillars_roll_injury_class_effect = { class = cleric_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_A }
+			gene_pillars_roll_injury_class_effect = { class = mage_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_B }
+			gene_pillars_roll_injury_class_effect = { class = mage_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_C }
+			gene_pillars_roll_injury_class_effect = { class = mage_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_D }
+			gene_pillars_roll_injury_class_effect = { class = mage_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_E }
+			gene_pillars_roll_injury_class_effect = { class = mage_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_A }
+			gene_pillars_roll_injury_class_effect = { class = artificer_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_B }
+			gene_pillars_roll_injury_class_effect = { class = artificer_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_C }
+			gene_pillars_roll_injury_class_effect = { class = artificer_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_D }
+			gene_pillars_roll_injury_class_effect = { class = artificer_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_E }
+			gene_pillars_roll_injury_class_effect = { class = artificer_E }
+		}
+	}
+}
+
+#Roll for injury on a specific class
+gene_pillars_roll_injury_class_effect = {
+	event_target:gene_pillar_exploration_province = {
+		if = {
+			limit = {
+				NOT = {
+					AND = {
+						aPUI_check_aPUI_variable = { name = gene_pillar_health which = gene_pillar_health_max }
+						aPUI_check_variable = { name = gene_pillar_health value = 1 }
+					}
+				} # not at max health, and at least 1 health
+				# because there is an edge case here, if both vars are 0 from e.g. the province being uncolonised
+			}
+			if = {
+				limit = { aPUI_check_variable = { name = gene_pillar_health_max value = 1 } }
+				set_variable = {
+					which = temp
+					which = aPUI_gene_pillar_health_var
+				} # the other injury effects after this need to use the same health var
+				divide_variable = {
+					which = temp
+					which = aPUI_gene_pillar_health_max_var
+				}
+			}
+			else = {
+				set_variable = {
+					which = temp
+					value = 0
+				}
+			}
+			random_list = {
+				32 = {
+					modifier = {
+						factor = 0.9
+						owner = {
+							check_variable = {
+								which = aPUI_gene_pillars_party_level_var
+								value = 1
+							}
+							gene_pillars_has_any_support_class_country = yes
+						}
+					}
+					modifier = {
+						factor = 0.9
+						owner = {
+							check_variable = {
+								which = aPUI_gene_pillars_party_level_var
+								value = 2
+							}
+							gene_pillars_has_any_support_class_country = yes
+						}
+					}
+					modifier = {
+						factor = 0.9
+						owner = {
+							check_variable = {
+								which = aPUI_gene_pillars_party_level_var
+								value = 3
+							}
+							gene_pillars_has_any_support_class_country = yes
+						}
+					}
+					modifier = {
+						factor = 0.9
+						owner = {
+							check_variable = {
+								which = aPUI_gene_pillars_party_level_var
+								value = 4
+							}
+							gene_pillars_has_any_support_class_country = yes
+						}
+					}
+					modifier = {
+						factor = 0.9
+						owner = {
+							check_variable = {
+								which = aPUI_gene_pillars_party_level_var
+								value = 5
+							}
+							gene_pillars_has_any_support_class_country = yes
+						}
+					}
+					modifier = {
+						factor = 0.75
+						owner = { has_country_flag = gene_pillars_has_cleric_B }
+					}
+					owner = { gene_pillars_injure_class_effect = { class = $class$ } }
+				}
+				1 = {
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.1
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.2
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.3
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.4
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.5
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.6
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.7
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.8
+						}
+					}
+					modifier = {
+						factor = 2
+						check_variable = {
+							which = temp
+							value = 0.9
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+#Injure a specific class
+gene_pillars_injure_class_effect = {
+	add_country_modifier = { name = gene_pillars_injured_$class$ duration = 9125 } # 25 years
+}
+
+#Injure a random class in the party
+gene_pillar_injure_random_party_member_effect = {
+	custom_tooltip = gene_pillar_injure_random_party_member_tt
+	hidden_effect = {
+		random_list = {
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_rogue_A }
+				gene_pillars_injure_class_effect = { class = rogue_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_rogue_B }
+				gene_pillars_injure_class_effect = { class = rogue_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_rogue_C }
+				gene_pillars_injure_class_effect = { class = rogue_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_rogue_D }
+				gene_pillars_injure_class_effect = { class = rogue_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_rogue_E }
+				gene_pillars_injure_class_effect = { class = rogue_E }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_ranger_A }
+				gene_pillars_injure_class_effect = { class = ranger_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_ranger_B }
+				gene_pillars_injure_class_effect = { class = ranger_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_ranger_C }
+				gene_pillars_injure_class_effect = { class = ranger_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_ranger_D }
+				gene_pillars_injure_class_effect = { class = ranger_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_ranger_E }
+				gene_pillars_injure_class_effect = { class = ranger_E }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_fighter_A }
+				gene_pillars_injure_class_effect = { class = fighter_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_fighter_B }
+				gene_pillars_injure_class_effect = { class = fighter_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_fighter_C }
+				gene_pillars_injure_class_effect = { class = fighter_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_fighter_D }
+				gene_pillars_injure_class_effect = { class = fighter_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_fighter_E }
+				gene_pillars_injure_class_effect = { class = fighter_E }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_cleric_A }
+				gene_pillars_injure_class_effect = { class = cleric_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_cleric_B }
+				gene_pillars_injure_class_effect = { class = cleric_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_cleric_C }
+				gene_pillars_injure_class_effect = { class = cleric_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_cleric_D }
+				gene_pillars_injure_class_effect = { class = cleric_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_cleric_E }
+				gene_pillars_injure_class_effect = { class = cleric_E }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_mage_A }
+				gene_pillars_injure_class_effect = { class = mage_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_mage_B }
+				gene_pillars_injure_class_effect = { class = mage_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_mage_C }
+				gene_pillars_injure_class_effect = { class = mage_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_mage_D }
+				gene_pillars_injure_class_effect = { class = mage_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_mage_E }
+				gene_pillars_injure_class_effect = { class = mage_E }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_artificer_A }
+				gene_pillars_injure_class_effect = { class = artificer_A }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_artificer_B }
+				gene_pillars_injure_class_effect = { class = artificer_B }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_artificer_C }
+				gene_pillars_injure_class_effect = { class = artificer_C }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_artificer_D }
+				gene_pillars_injure_class_effect = { class = artificer_D }
+			}
+			1 = {
+				trigger = { has_country_flag = gene_pillars_has_artificer_E }
+				gene_pillars_injure_class_effect = { class = artificer_E }
+			}
+		}
+	}
+}
+
+#Injure the entire party
+gene_pillars_injure_entire_party_effect = {
+	custom_tooltip = gene_pillars_injure_entire_party_tt
+	hidden_effect = {
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_A }
+			gene_pillars_injure_class_effect = { class = rogue_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_B }
+			gene_pillars_injure_class_effect = { class = rogue_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_C }
+			gene_pillars_injure_class_effect = { class = rogue_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_D }
+			gene_pillars_injure_class_effect = { class = rogue_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_rogue_E }
+			gene_pillars_injure_class_effect = { class = rogue_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_A }
+			gene_pillars_injure_class_effect = { class = ranger_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_B }
+			gene_pillars_injure_class_effect = { class = ranger_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_C }
+			gene_pillars_injure_class_effect = { class = ranger_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_D }
+			gene_pillars_injure_class_effect = { class = ranger_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_ranger_E }
+			gene_pillars_injure_class_effect = { class = ranger_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_A }
+			gene_pillars_injure_class_effect = { class = fighter_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_B }
+			gene_pillars_injure_class_effect = { class = fighter_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_C }
+			gene_pillars_injure_class_effect = { class = fighter_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_D }
+			gene_pillars_injure_class_effect = { class = fighter_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_fighter_E }
+			gene_pillars_injure_class_effect = { class = fighter_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_A }
+			gene_pillars_injure_class_effect = { class = cleric_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_B }
+			gene_pillars_injure_class_effect = { class = cleric_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_C }
+			gene_pillars_injure_class_effect = { class = cleric_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_D }
+			gene_pillars_injure_class_effect = { class = cleric_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_cleric_E }
+			gene_pillars_injure_class_effect = { class = cleric_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_A }
+			gene_pillars_injure_class_effect = { class = mage_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_B }
+			gene_pillars_injure_class_effect = { class = mage_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_C }
+			gene_pillars_injure_class_effect = { class = mage_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_D }
+			gene_pillars_injure_class_effect = { class = mage_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_mage_E }
+			gene_pillars_injure_class_effect = { class = mage_E }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_A }
+			gene_pillars_injure_class_effect = { class = artificer_A }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_B }
+			gene_pillars_injure_class_effect = { class = artificer_B }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_C }
+			gene_pillars_injure_class_effect = { class = artificer_C }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_D }
+			gene_pillars_injure_class_effect = { class = artificer_D }
+		}
+		if = {
+			limit = { has_country_flag = gene_pillars_has_artificer_E }
+			gene_pillars_injure_class_effect = { class = artificer_E }
+		}
+	}
+}
+
+gene_pillars_injury_check_tooltips = {
+	if = { limit = { owner = { gene_pillars_is_anyone_injured = yes } } custom_tooltip = gene_pillars_current_injuries_tt }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_A } } custom_tooltip = gene_pillars_class_injure_effect_rogue_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_B } } custom_tooltip = gene_pillars_class_injure_effect_rogue_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_C } } custom_tooltip = gene_pillars_class_injure_effect_rogue_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_D } } custom_tooltip = gene_pillars_class_injure_effect_rogue_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_E } } custom_tooltip = gene_pillars_class_injure_effect_rogue_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_A } } custom_tooltip = gene_pillars_class_injure_effect_ranger_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_B } } custom_tooltip = gene_pillars_class_injure_effect_ranger_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_C } } custom_tooltip = gene_pillars_class_injure_effect_ranger_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_D } } custom_tooltip = gene_pillars_class_injure_effect_ranger_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_E } } custom_tooltip = gene_pillars_class_injure_effect_ranger_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_A } } custom_tooltip = gene_pillars_class_injure_effect_fighter_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_B } } custom_tooltip = gene_pillars_class_injure_effect_fighter_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_C } } custom_tooltip = gene_pillars_class_injure_effect_fighter_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_D } } custom_tooltip = gene_pillars_class_injure_effect_fighter_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_E } } custom_tooltip = gene_pillars_class_injure_effect_fighter_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_A } } custom_tooltip = gene_pillars_class_injure_effect_cleric_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_B } } custom_tooltip = gene_pillars_class_injure_effect_cleric_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_C } } custom_tooltip = gene_pillars_class_injure_effect_cleric_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_D } } custom_tooltip = gene_pillars_class_injure_effect_cleric_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_E } } custom_tooltip = gene_pillars_class_injure_effect_cleric_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_A } } custom_tooltip = gene_pillars_class_injure_effect_mage_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_B } } custom_tooltip = gene_pillars_class_injure_effect_mage_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_C } } custom_tooltip = gene_pillars_class_injure_effect_mage_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_D } } custom_tooltip = gene_pillars_class_injure_effect_mage_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_E } } custom_tooltip = gene_pillars_class_injure_effect_mage_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_A } } custom_tooltip = gene_pillars_class_injure_effect_artificer_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_B } } custom_tooltip = gene_pillars_class_injure_effect_artificer_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_C } } custom_tooltip = gene_pillars_class_injure_effect_artificer_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_D } } custom_tooltip = gene_pillars_class_injure_effect_artificer_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_E } } custom_tooltip = gene_pillars_class_injure_effect_artificer_E }
+}
+
+gene_pillars_clear_all_province_flags = {
+	clr_province_flag = gene_pillars_selecting_slot_1
+	clr_province_flag = gene_pillars_selecting_slot_2
+	clr_province_flag = gene_pillars_selecting_slot_3
+	clr_province_flag = gene_pillars_selecting_slot_4
+	clr_province_flag = gene_pillars_selecting_slot_5
+	aPUI_gene_pillar_reset_province = { new_owner = yes }
+}
+
+gene_pillars_setup_remove_previous_class_in_slot = {
+	hidden_effect = { province_event = { id = gene_pillars.93 } }
+}
+
+#When clearing a slot, sets the framevariable to @empty
+#This allows checking the framevariables to see ...
+gene_pillars_setup_clr_archetype_flags = {
+	if = {
+		limit = { has_province_flag = gene_pillars_selecting_slot_1 }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = @empty }
+	}
+	else_if = {
+		limit = { has_province_flag = gene_pillars_selecting_slot_2 }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = @empty }
+	}
+	else_if = {
+		limit = { has_province_flag = gene_pillars_selecting_slot_3 }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = @empty }
+	}
+	else_if = {
+		limit = { has_province_flag = gene_pillars_selecting_slot_4 }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = @empty }
+	}
+	else_if = {
+		limit = { has_province_flag = gene_pillars_selecting_slot_5 }
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = @empty }
+	}
+
+	gene_pillars_clr_non_party_member_province_flags_$archetype$ = yes
+}
+
+#Must be hardcoded here to use the @values
+gene_pillars_clr_non_party_member_province_flags_rogue = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @rogue_A } } }
+		clr_province_flag = gene_pillars_has_rogue_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @rogue_B } } }
+		clr_province_flag = gene_pillars_has_rogue_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @rogue_C } } }
+		clr_province_flag = gene_pillars_has_rogue_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @rogue_D } } }
+		clr_province_flag = gene_pillars_has_rogue_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @rogue_E } } }
+		clr_province_flag = gene_pillars_has_rogue_E
+	}
+}
+gene_pillars_clr_non_party_member_province_flags_ranger = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @ranger_A } } }
+		clr_province_flag = gene_pillars_has_ranger_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @ranger_B } } }
+		clr_province_flag = gene_pillars_has_ranger_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @ranger_C } } }
+		clr_province_flag = gene_pillars_has_ranger_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @ranger_D } } }
+		clr_province_flag = gene_pillars_has_ranger_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @ranger_E } } }
+		clr_province_flag = gene_pillars_has_ranger_E
+	}
+}
+gene_pillars_clr_non_party_member_province_flags_fighter = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @fighter_A } } }
+		clr_province_flag = gene_pillars_has_fighter_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @fighter_B } } }
+		clr_province_flag = gene_pillars_has_fighter_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @fighter_C } } }
+		clr_province_flag = gene_pillars_has_fighter_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @fighter_D } } }
+		clr_province_flag = gene_pillars_has_fighter_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @fighter_E } } }
+		clr_province_flag = gene_pillars_has_fighter_E
+	}
+}
+gene_pillars_clr_non_party_member_province_flags_cleric = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @cleric_A } } }
+		clr_province_flag = gene_pillars_has_cleric_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @cleric_B } } }
+		clr_province_flag = gene_pillars_has_cleric_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @cleric_C } } }
+		clr_province_flag = gene_pillars_has_cleric_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @cleric_D } } }
+		clr_province_flag = gene_pillars_has_cleric_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @cleric_E } } }
+		clr_province_flag = gene_pillars_has_cleric_E
+	}
+}
+gene_pillars_clr_non_party_member_province_flags_mage = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @mage_A } } }
+		clr_province_flag = gene_pillars_has_mage_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @mage_B } } }
+		clr_province_flag = gene_pillars_has_mage_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @mage_C } } }
+		clr_province_flag = gene_pillars_has_mage_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @mage_D } } }
+		clr_province_flag = gene_pillars_has_mage_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @mage_E } } }
+		clr_province_flag = gene_pillars_has_mage_E
+	}
+}
+gene_pillars_clr_non_party_member_province_flags_artificer = {
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @artificer_A } } }
+		clr_province_flag = gene_pillars_has_artificer_A
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @artificer_B } } }
+		clr_province_flag = gene_pillars_has_artificer_B
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @artificer_C } } }
+		clr_province_flag = gene_pillars_has_artificer_C
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @artificer_D } } }
+		clr_province_flag = gene_pillars_has_artificer_D
+	}
+	if = {
+		limit = { NOT = { gene_pillars_setup_check_framevars_for_class_trigger = { class = @artificer_E } } }
+		clr_province_flag = gene_pillars_has_artificer_E
+	}
+}
+
+gene_pillars_setup_clr_province_class_flags_rogue = {
+	clr_province_flag = gene_pillars_has_rogue_A
+	clr_province_flag = gene_pillars_has_rogue_B
+	clr_province_flag = gene_pillars_has_rogue_C
+	clr_province_flag = gene_pillars_has_rogue_D
+	clr_province_flag = gene_pillars_has_rogue_E
+}
+gene_pillars_setup_clr_province_class_flags_ranger = {
+	clr_province_flag = gene_pillars_has_ranger_A
+	clr_province_flag = gene_pillars_has_ranger_B
+	clr_province_flag = gene_pillars_has_ranger_C
+	clr_province_flag = gene_pillars_has_ranger_D
+	clr_province_flag = gene_pillars_has_ranger_E
+}
+gene_pillars_setup_clr_province_class_flags_fighter = {
+	clr_province_flag = gene_pillars_has_fighter_A
+	clr_province_flag = gene_pillars_has_fighter_B
+	clr_province_flag = gene_pillars_has_fighter_C
+	clr_province_flag = gene_pillars_has_fighter_D
+	clr_province_flag = gene_pillars_has_fighter_E
+}
+gene_pillars_setup_clr_province_class_flags_cleric = {
+	clr_province_flag = gene_pillars_has_cleric_A
+	clr_province_flag = gene_pillars_has_cleric_B
+	clr_province_flag = gene_pillars_has_cleric_C
+	clr_province_flag = gene_pillars_has_cleric_D
+	clr_province_flag = gene_pillars_has_cleric_E
+}
+gene_pillars_setup_clr_province_class_flags_mage = {
+	clr_province_flag = gene_pillars_has_mage_A
+	clr_province_flag = gene_pillars_has_mage_B
+	clr_province_flag = gene_pillars_has_mage_C
+	clr_province_flag = gene_pillars_has_mage_D
+	clr_province_flag = gene_pillars_has_mage_E
+}
+gene_pillars_setup_clr_province_class_flags_artificer = {
+	clr_province_flag = gene_pillars_has_artificer_A
+	clr_province_flag = gene_pillars_has_artificer_B
+	clr_province_flag = gene_pillars_has_artificer_C
+	clr_province_flag = gene_pillars_has_artificer_D
+	clr_province_flag = gene_pillars_has_artificer_E
+}
+
+#class = <class number, set by @$class$>
+#class_2 <class string>
+gene_pillars_select_class = {
+	hidden_effect = {
+
+		set_province_flag = gene_pillars_has_$class_2$
+
+		if = {
+			limit = { has_province_flag = gene_pillars_selecting_slot_1 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_1 value = $class$ }
+		}
+		else_if = {
+			limit = { has_province_flag = gene_pillars_selecting_slot_2 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_2 value = $class$ }
+		}
+		else_if = {
+			limit = { has_province_flag = gene_pillars_selecting_slot_3 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_3 value = $class$ }
+		}
+		else_if = {
+			limit = { has_province_flag = gene_pillars_selecting_slot_4 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_4 value = $class$ }
+		}
+		else_if = {
+			limit = { has_province_flag = gene_pillars_selecting_slot_5 }
+			set_variable = { which = aPUI_gene_pillar_party_slot_framevar_5 value = $class$ }
+		}
+		aPUI_gene_pillars_setup_update_UI = yes
+	}
+}
+gene_pillars_set_class_flags_on_country_effect = {
+	if = { limit = { has_province_flag = gene_pillars_has_rogue_A } owner = { set_country_flag = gene_pillars_has_rogue_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_rogue_B } owner = { set_country_flag = gene_pillars_has_rogue_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_rogue_C } owner = { set_country_flag = gene_pillars_has_rogue_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_rogue_D } owner = { set_country_flag = gene_pillars_has_rogue_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_rogue_E } owner = { set_country_flag = gene_pillars_has_rogue_E } }
+	if = { limit = { has_province_flag = gene_pillars_has_ranger_A } owner = { set_country_flag = gene_pillars_has_ranger_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_ranger_B } owner = { set_country_flag = gene_pillars_has_ranger_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_ranger_C } owner = { set_country_flag = gene_pillars_has_ranger_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_ranger_D } owner = { set_country_flag = gene_pillars_has_ranger_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_ranger_E } owner = { set_country_flag = gene_pillars_has_ranger_E } }
+	if = { limit = { has_province_flag = gene_pillars_has_fighter_A } owner = { set_country_flag = gene_pillars_has_fighter_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_fighter_B } owner = { set_country_flag = gene_pillars_has_fighter_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_fighter_C } owner = { set_country_flag = gene_pillars_has_fighter_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_fighter_D } owner = { set_country_flag = gene_pillars_has_fighter_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_fighter_E } owner = { set_country_flag = gene_pillars_has_fighter_E } }
+	if = { limit = { has_province_flag = gene_pillars_has_cleric_A } owner = { set_country_flag = gene_pillars_has_cleric_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_cleric_B } owner = { set_country_flag = gene_pillars_has_cleric_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_cleric_C } owner = { set_country_flag = gene_pillars_has_cleric_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_cleric_D } owner = { set_country_flag = gene_pillars_has_cleric_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_cleric_E } owner = { set_country_flag = gene_pillars_has_cleric_E } }
+	if = { limit = { has_province_flag = gene_pillars_has_mage_A } owner = { set_country_flag = gene_pillars_has_mage_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_mage_B } owner = { set_country_flag = gene_pillars_has_mage_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_mage_C } owner = { set_country_flag = gene_pillars_has_mage_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_mage_D } owner = { set_country_flag = gene_pillars_has_mage_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_mage_E } owner = { set_country_flag = gene_pillars_has_mage_E } }
+	if = { limit = { has_province_flag = gene_pillars_has_artificer_A } owner = { set_country_flag = gene_pillars_has_artificer_A } }
+	if = { limit = { has_province_flag = gene_pillars_has_artificer_B } owner = { set_country_flag = gene_pillars_has_artificer_B } }
+	if = { limit = { has_province_flag = gene_pillars_has_artificer_C } owner = { set_country_flag = gene_pillars_has_artificer_C } }
+	if = { limit = { has_province_flag = gene_pillars_has_artificer_D } owner = { set_country_flag = gene_pillars_has_artificer_D } }
+	if = { limit = { has_province_flag = gene_pillars_has_artificer_E } owner = { set_country_flag = gene_pillars_has_artificer_E } }
+}
+
+#Requires: slot = <slot number>
+gene_pillars_setup_clear_party_slot = {
+	hidden_effect = {
+
+		if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @fighter_A } } clr_province_flag = gene_pillars_has_fighter_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @fighter_B } } clr_province_flag = gene_pillars_has_fighter_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @fighter_C } } clr_province_flag = gene_pillars_has_fighter_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @fighter_D } } clr_province_flag = gene_pillars_has_fighter_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @fighter_E } } clr_province_flag = gene_pillars_has_fighter_E }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @ranger_A } } clr_province_flag = gene_pillars_has_ranger_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @ranger_B } } clr_province_flag = gene_pillars_has_ranger_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @ranger_C } } clr_province_flag = gene_pillars_has_ranger_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @ranger_D } } clr_province_flag = gene_pillars_has_ranger_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @ranger_E } } clr_province_flag = gene_pillars_has_ranger_E }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @rogue_A } } clr_province_flag = gene_pillars_has_rogue_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @rogue_B } } clr_province_flag = gene_pillars_has_rogue_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @rogue_C } } clr_province_flag = gene_pillars_has_rogue_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @rogue_D } } clr_province_flag = gene_pillars_has_rogue_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @rogue_E } } clr_province_flag = gene_pillars_has_rogue_E }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @cleric_A } } clr_province_flag = gene_pillars_has_cleric_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @cleric_B } } clr_province_flag = gene_pillars_has_cleric_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @cleric_C } } clr_province_flag = gene_pillars_has_cleric_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @cleric_D } } clr_province_flag = gene_pillars_has_cleric_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @cleric_E } } clr_province_flag = gene_pillars_has_cleric_E }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @mage_A } } clr_province_flag = gene_pillars_has_mage_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @mage_B } } clr_province_flag = gene_pillars_has_mage_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @mage_C } } clr_province_flag = gene_pillars_has_mage_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @mage_D } } clr_province_flag = gene_pillars_has_mage_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @mage_E } } clr_province_flag = gene_pillars_has_mage_E }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @artificer_A } } clr_province_flag = gene_pillars_has_artificer_A }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @artificer_B } } clr_province_flag = gene_pillars_has_artificer_B }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @artificer_C } } clr_province_flag = gene_pillars_has_artificer_C }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @artificer_D } } clr_province_flag = gene_pillars_has_artificer_D }
+		else_if = { limit = { is_variable_equal = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @artificer_E } } clr_province_flag = gene_pillars_has_artificer_E }
+
+		set_variable = { which = aPUI_gene_pillar_party_slot_framevar_$slot$ value = @empty }
+		aPUI_gene_pillars_setup_update_UI = yes
+	}
+}
+
+gene_pillars_generic_loot_or_trap_repeat = {
+	random_list = {
+		$success_factor$ = {
+			gene_pillars_add_loot_effect = { amount = $party_loot$ }
+			gene_pillars_add_xp_effect = { amount = $party_xp$ }
+			hidden_effect = {
+				change_variable = { # So I can track what to remove if the trap is sprung
+					which = gene_pillars_generic_traps_and_treasure_loot_gained
+					value = $party_loot$
+				}
+				change_variable = { # So I can track what to remove if the trap is sprung
+					which = gene_pillars_generic_traps_and_treasure_xp_gained
+					value = $party_xp$
+				}
+				change_variable = {
+					which = gene_pillars_generic_traps_and_treasure_count
+					value = 1
+				}
+			}
+			if = {
+				limit = {
+					NOT = {
+						check_variable = {
+							which = gene_pillars_generic_traps_and_treasure_count
+							value = 5
+						}
+					}
+				}
+				country_event = {
+					id = gene_pillars.1005 # get this event again
+					days = 1 # can't trigger itself without a delay
+				}
+			}
+			# If you succeed 5 times, reset the variables in case you get this again
+			else = {
+				hidden_effect = {
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_loot_gained
+						value = 0
+					}
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_xp_gained
+						value = 0
+					}
+					set_variable = {
+						which = gene_pillars_generic_traps_and_treasure_count
+						value = 0
+					}
+				}
+			}
+		}
+		$fail_factor$ = {
+			country_event = {
+				id = gene_pillars.1006 # Trap sprung
+			}
+			# Reset the counter for next time we encounter this event
+			hidden_effect = {
+				set_variable = {
+					which = gene_pillars_generic_traps_and_treasure_count
+					value = 0
+				}
+			}
+		}
+	}
+}
+
+gene_pillars_T4_invention_unlock = {
+	if = {
+		limit = {
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3173
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_6962
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3551
+			NOT = { has_country_flag = unlocked_artifice_invention_kraken_galleons }
+		}
+		set_country_flag = unlocked_artifice_invention_kraken_galleons
+		custom_tooltip = unlocked_artifice_invention_kraken_galleons_unlock_tt
+	}
+	if = {
+		limit = {
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3415
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3329
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3153
+			NOT = { has_country_flag = unlocked_artifice_invention_bio_processor }
+		}
+		set_country_flag = unlocked_artifice_invention_bio_processor
+		custom_tooltip = unlocked_artifice_invention_bio_processor_unlock_tt
+	}
+	if = {
+		limit = {
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_6386
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_6950
+			has_country_flag = aPUI_gene_pillar_explored_level_3_in_3376
+			NOT = { has_country_flag = unlocked_artifice_invention_spirit_munition }
+		}
+		set_country_flag = unlocked_artifice_invention_spirit_munition
+		custom_tooltip = unlocked_artifice_invention_spirit_munition_unlock_tt
+	}
+}
+
+gene_pillars_random_insyaa_invention_unlock = {
+	if = {
+		limit = { NOT = { has_country_modifier = mechanim_administration } }
+		custom_tooltip = gene_pillars_random_insyaa_invention_unlock_tt
+		#if = {
+		#	limit = { ai = no }
+		#	get_partial_artificery_for_gene_pillar_exploration = yes
+			# unlock a restricted form of artificery if you don't yet have it
+			# TODO: very experimental and likely temporary, revisit this asap as there are a host of caveats with this, gameplay and code-wise
+		#}
+		if = {
+			limit = { NOT = { has_country_flag = artificery_unlocked has_country_flag = artificery_choice } }
+			custom_tooltip = gene_pillars_insyaa_invention_available_later_tt
+			# sorry..
+		}
+		hidden_effect = {
+			random_list = {
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_reverse_mechanim } }
+					unlock_insyaa_invention = { invention = artifice_invention_reverse_mechanim }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_industrial_automatories } }
+					unlock_insyaa_invention = { invention = artifice_invention_industrial_automatories }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_memory_module } }
+					unlock_insyaa_invention = { invention = artifice_invention_memory_module }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_fireproof_plating } }
+					unlock_insyaa_invention = { invention = artifice_invention_fireproof_plating }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_okalu_scanners } }
+					unlock_insyaa_invention = { invention = artifice_invention_okalu_scanners }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_pillar_scouts } }
+					unlock_insyaa_invention = { invention = artifice_invention_pillar_scouts }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_behavioral_chip } }
+					unlock_insyaa_invention = { invention = artifice_invention_behavioral_chip }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_construction_bots } }
+					unlock_insyaa_invention = { invention = artifice_invention_construction_bots }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mechanim_regiments } }
+					unlock_insyaa_invention = { invention = artifice_invention_mechanim_regiments }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_auto_scribes } }
+					unlock_insyaa_invention = { invention = artifice_invention_auto_scribes }
+				}
+				#Gene Magic
+				100 = {
+					trigger = {
+						NOT = { has_country_flag = unlocked_artifice_invention_crop_enlarge }
+						has_country_flag = magic_artificery_artificery_only
+					}
+					unlock_insyaa_invention = { invention = artifice_invention_crop_enlarge }
+				}
+				100 = {
+					trigger = {
+						NOT = { has_country_flag = unlocked_artifice_invention_assisted_growth }
+						has_country_flag = magic_artificery_mixed
+					}
+					unlock_insyaa_invention = { invention = artifice_invention_assisted_growth }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_animal_gene } }
+					unlock_insyaa_invention = { invention = artifice_invention_animal_gene }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_titano_thorns } }
+					unlock_insyaa_invention = { invention = artifice_invention_titano_thorns }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_titano_weed } }
+					unlock_insyaa_invention = { invention = artifice_invention_titano_weed }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_seed_siege } }
+					unlock_insyaa_invention = { invention = artifice_invention_seed_siege }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_tgs_farmland } }
+					unlock_insyaa_invention = { invention = artifice_invention_tgs_farmland }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_tgs_livestock } }
+					unlock_insyaa_invention = { invention = artifice_invention_tgs_livestock }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_titano_artif } }
+					unlock_insyaa_invention = { invention = artifice_invention_titano_artif }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_titano_cav } }
+					unlock_insyaa_invention = { invention = artifice_invention_titano_cav }
+				}
+				#Precursor Tech
+				100 = { 
+					trigger = {
+						NOT = { has_country_flag = unlocked_artifice_invention_sonic_amplifiers
+						has_country_flag = magic_artificery_mixed }
+					}
+					unlock_insyaa_invention = { invention = artifice_invention_sonic_amplifiers }
+				}
+				100 = { 
+					trigger = {
+						NOT = { has_country_flag = unlocked_artifice_invention_sonic_weaponary
+						has_country_flag = magic_artificery_artificery_only }
+					}
+					unlock_insyaa_invention = { invention = artifice_invention_sonic_weaponary }
+				}
+				100 = { 
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_flak_cannons } }
+					unlock_insyaa_invention = { invention = artifice_invention_flak_cannons }
+				}
+				100 = { 
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_terrain_shaper } }
+					unlock_insyaa_invention = { invention = artifice_invention_terrain_shaper }
+				}
+				100 = { 
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_steel_tracking } }
+					unlock_insyaa_invention = { invention = artifice_invention_steel_tracking }
+				}
+				100 = { 
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_memory_storage } }
+					unlock_insyaa_invention = { invention = artifice_invention_memory_storage }
+				}
+				100 = { 
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mechanim_deconstructor } }
+					unlock_insyaa_invention = { invention = artifice_invention_mechanim_deconstructor }
+				}
+			}
+		}
+	}
+	if = {
+		limit = { has_country_modifier = mechanim_administration }
+		custom_tooltip = gene_pillars_random_mechanim_body_part_unlock_tt
+		hidden_effect = {
+			random_list = {
+				#Cultural
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_steel_detector } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_steel_detector }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_reawakening_prosedure } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_reawakening_prosedure }
+				}
+				#Religious
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_building_plates } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_building_plates }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_terrain_specialization } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_terrain_specialization }
+				}
+				#Military
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_lava_cell } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_lava_cell }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_fireproof_plating } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_fireproof_plating }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_pillar_scouts } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_pillar_scouts }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_mech_amphibious_attachements } }
+					unlock_insyaa_invention = { invention = artifice_invention_mech_amphibious_attachements }
+				}
+				#Head
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_head_long_range } }
+					unlock_insyaa_invention = { invention = artifice_invention_head_long_range }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_head_war_craved } }
+					unlock_insyaa_invention = { invention = artifice_invention_head_war_craved }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_head_human_like } }
+					unlock_insyaa_invention = { invention = artifice_invention_head_human_like }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_head_adm_oversight } }
+					unlock_insyaa_invention = { invention = artifice_invention_head_adm_oversight }
+				}
+				#Torso
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_torso_self_repair } }
+					unlock_insyaa_invention = { invention = artifice_invention_torso_self_repair }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_torso_war_craved } }
+					unlock_insyaa_invention = { invention = artifice_invention_torso_war_craved }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_torso_container_part } }
+					unlock_insyaa_invention = { invention = artifice_invention_torso_container_part }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_torso_war_machine } }
+					unlock_insyaa_invention = { invention = artifice_invention_torso_war_machine }
+				}
+				#Chassis
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_chassis_heavy } }
+					unlock_insyaa_invention = { invention = artifice_invention_chassis_heavy }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_chassis_light } }
+					unlock_insyaa_invention = { invention = artifice_invention_chassis_light }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_chassis_waterproof } }
+					unlock_insyaa_invention = { invention = artifice_invention_chassis_waterproof }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_chassis_soarer_struts } }
+					unlock_insyaa_invention = { invention = artifice_invention_chassis_soarer_struts }
+				}
+				#Arms
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_arms_dual_pair } }
+					unlock_insyaa_invention = { invention = artifice_invention_arms_dual_pair }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_arms_stabilizer } }
+					unlock_insyaa_invention = { invention = artifice_invention_arms_stabilizer }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_arms_construction } }
+					unlock_insyaa_invention = { invention = artifice_invention_arms_construction }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_arms_sonic_firearm } }
+					unlock_insyaa_invention = { invention = artifice_invention_arms_sonic_firearm }
+				}
+				#Legs
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_legs_quadripedal } }
+					unlock_insyaa_invention = { invention = artifice_invention_legs_quadripedal }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_legs_bipedal } }
+					unlock_insyaa_invention = { invention = artifice_invention_legs_bipedal }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_legs_octipedal } }
+					unlock_insyaa_invention = { invention = artifice_invention_legs_octipedal }
+				}
+				100 = {
+					trigger = { NOT = { has_country_flag = unlocked_artifice_invention_legs_trailblazer } }
+					unlock_insyaa_invention = { invention = artifice_invention_legs_trailblazer }
+				}
+			}
+		}
+	}
+}
+
+#Scripted effect for sandworm pillar no delays or generic events
+gene_pillar_sandworm_pillar_next_event = {
+	hidden_effect = {
+		if = { # Increased speed privilege
+			limit = {
+				OR = {
+					has_estate_privilege = artifice_invention_pillar_scouts
+					has_estate_privilege = artifice_invention_mech_pillar_scouts
+				}
+			}
+			country_event = { id = gene_pillars.$specific_event$ days = 135 } #Next event in chain
+		}
+		if = {
+			limit = {
+				NOT = {
+					has_estate_privilege = artifice_invention_pillar_scouts
+					has_estate_privilege = artifice_invention_mech_pillar_scouts
+				}
+			}
+			country_event = { id = gene_pillars.$specific_event$ days = 182 } #Next event in chain
+		}
+	}
+}
