@@ -330,7 +330,7 @@ gene_pillar_successful_end_expedition_effect = {
 	}
 	if = {
 		limit = {
-			has_country_flag = gene_pillars_draconic_suppress_deactivated
+			has_country_flag = gene_pillars_suppression_matrix_reward
 		}
 		event_target:gene_pillar_exploration_province = {
 			# +1 goods produced
@@ -339,7 +339,7 @@ gene_pillar_successful_end_expedition_effect = {
 				duration = -1
 			}
 		}
-		clr_country_flag = gene_pillars_draconic_suppress_deactivated
+		clr_country_flag = gene_pillars_suppression_matrix_reward
 	}
 
 	if = {
@@ -830,64 +830,90 @@ gene_pillars_check_loot_threshold = {
 # If you have 100 loot points, make sure we only select each reward once
 gene_pillars_randomise_loot_event = {
 	owner = {
-		random_list = {
-			10 = {
-				trigger = {
+		if = { # guarantee damestear or precursor relics if artificer A or mage A is in the party
+			limit = {
+				OR = {
+					has_country_flag = gene_pillars_has_mage_A
+					has_country_flag = gene_pillars_has_artificer_A
+				}
+				NOT = {
+					has_country_flag = gene_pillars_loot_precursor_relics
+					has_country_flag = gene_pillars_loot_damestear
+				}
+				PREV = {
 					NOT = {
-						has_country_flag = gene_pillars_has_mage_A
-						has_country_flag = gene_pillars_has_artificer_A
-						has_country_flag = gene_pillars_loot_good_ruler
+						trade_goods = damestear
+						trade_goods = precursor_relics
 					}
 				}
-				set_country_flag = gene_pillars_loot_good_ruler
 			}
-			10 = {
-				trigger = {
-					NOT = {
-						has_country_flag = gene_pillars_has_mage_A
-						has_country_flag = gene_pillars_has_artificer_A
-						has_country_flag = gene_pillars_loot_institution
+			random_list = {
+				1 = { set_country_flag = gene_pillars_loot_damestear }
+				1 = {
+					trigger = { # mages only get guaranteed damestear
+						NOT = { has_country_flag = gene_pillars_has_mage_A }
 					}
+					set_country_flag = gene_pillars_loot_precursor_relics
 				}
-				set_country_flag = gene_pillars_loot_institution
 			}
-			10 = { # Get precursor relics
-				trigger = {
-					NOT = {
-						has_country_flag = gene_pillars_has_artificer_A
-						has_country_flag = gene_pillars_loot_precursor_relics
-						has_country_flag = gene_pillars_loot_damestear
+		}
+		else = { # otherwise just do normal loot rewards
+			random_list = {
+				10 = { # Improve ruler
+					trigger = {
+						NOT = { has_country_flag = gene_pillars_loot_good_ruler }
 					}
-					NOT = { PREV = { trade_goods = precursor_relics } }
+					set_country_flag = gene_pillars_loot_good_ruler
 				}
-				set_country_flag = gene_pillars_loot_precursor_relics
-			}
-			10 = { # Get Damestear
-				trigger = {
-					NOT = {
-						has_country_flag = gene_pillars_loot_damestear
-						has_country_flag = gene_pillars_loot_precursor_relics
+				10 = { # Get next institution
+					trigger = {
+						NOT = { has_country_flag = gene_pillars_loot_institution }
 					}
-					NOT = { PREV = { trade_goods = damestear } }
+					set_country_flag = gene_pillars_loot_institution
 				}
-				set_country_flag = gene_pillars_loot_damestear
-			}
-			10 = {
-				trigger = {
-					NOT = {
-						has_country_flag = gene_pillars_has_mage_A
-						has_country_flag = gene_pillars_has_artificer_A
-						has_country_flag = gene_pillars_loot_power_cash
+				10 = { # Get precursor relics
+					trigger = {
+						NOT = {
+							has_country_flag = gene_pillars_loot_precursor_relics
+							has_country_flag = gene_pillars_loot_damestear
+						}
+						PREV = {
+							NOT = {
+								trade_goods = precursor_relics
+								trade_goods = damestear
+							}
+						}
 					}
+					set_country_flag = gene_pillars_loot_precursor_relics
 				}
-				set_country_flag = gene_pillars_loot_power_cash
-			}
-			5 = {
-				#TODO: Add trigger to ensure an eligible invention exists
-				trigger = {
-					NOT = { has_country_flag = gene_pillars_loot_insyaa_invention }
+				10 = { # Get Damestear
+					trigger = {
+						NOT = {
+							has_country_flag = gene_pillars_loot_damestear
+							has_country_flag = gene_pillars_loot_precursor_relics
+						}
+						PREV = {
+							NOT = {
+								trade_goods = damestear
+								trade_goods = precursor_relics
+							}
+						}
+					}
+					set_country_flag = gene_pillars_loot_damestear
 				}
-				set_country_flag = gene_pillars_loot_insyaa_invention
+				10 = { # Get powerpoints/cash
+					trigger = {
+						NOT = { has_country_flag = gene_pillars_loot_power_cash }
+					}
+					set_country_flag = gene_pillars_loot_power_cash
+				}
+				5 = {
+					#TODO: Add trigger to ensure an eligible invention exists
+					trigger = {
+						NOT = { has_country_flag = gene_pillars_loot_insyaa_invention }
+					}
+					set_country_flag = gene_pillars_loot_insyaa_invention
+				}
 			}
 		}
 	}
@@ -2505,4 +2531,93 @@ gene_pillar_sandworm_pillar_next_event = {
 			country_event = { id = gene_pillars.$specific_event$ days = 182 } #Next event in chain
 		}
 	}
+}
+
+gene_pillars_dragon_suppression_matrix_damage = {
+	if = {
+		limit = {
+			gene_pillars_dragon_power_core_activated_province = yes
+			gene_pillars_dragon_suppression_matrix_disabled_province = no
+		}
+		if = {
+			limit = {
+				culture_is_kobold = yes
+			}
+			custom_tooltip = gene_pillars_dragon_suppression_matrix_damage_tt
+			gene_pillars_lose_hp_effect = { amount = 2 }
+			set_country_flag = gene_pillar_dragon_kobold_suppression # 50% -1 HP on subsequent encounters
+		}
+		if = {
+			limit = {
+				culture_is_kobold = no
+				OR = {
+					high_tolerance_kobold_race_trigger = yes
+					medium_tolerance_kobold_race_trigger = yes
+				}
+			}
+			custom_tooltip = gene_pillars_dragon_suppression_matrix_damage_tt
+			gene_pillars_lose_hp_effect = { amount = 1 }
+			set_country_flag = gene_pillar_dragon_kobold_suppression # 50% -1 HP on subsequent encounters
+		}
+		gene_pillars_add_xp_effect = { amount = 2 }
+	}
+}
+
+gene_pillars_dragon_suppression_matrix_reward_hint = {
+	if = {
+		limit = {
+			gene_pillars_dragon_power_core_activated_province = yes
+		}
+		set_country_flag = gene_pillars_suppression_matrix_reward
+		custom_tooltip = gene_pillars_dragon_suppress_reward_hint_tt
+	}
+}
+
+gene_pillars_dragon_disable_matrix = {
+	hidden_effect = {
+		event_target:gene_pillar_exploration_province = {
+			set_province_flag = gene_pillars_dragon_suppression_disabled
+		}
+	}
+	custom_tooltip = gene_pillars_dragon_disable_suppression_tt
+}
+
+gene_pillars_dragon_kobold_suppression_damage = {
+	if = {
+		limit = {
+			has_country_flag = gene_pillar_dragon_kobold_suppression
+		}
+		custom_tooltip = gene_pillars_dragon_kobold_suppression_damage_tt
+		random = {
+			chance = 50
+			gene_pillars_lose_hp_effect = { amount = 1 }
+		}
+	}
+}
+
+gene_pillars_dragon_library_unwind_damage = {
+	custom_tooltip = gene_pillars_dragon_library_unwind_damage_tt
+	random_list = {
+		1 = {
+			gene_pillars_lose_hp_effect = { amount = 1 }
+		}
+		1 = {
+			if = {
+				limit = {
+					NOT = {
+						AND = {
+							gene_pillars_has_artificer_in_party = yes
+							tier_3_artificer_estate = yes
+						}
+						AND = {
+							gene_pillars_has_mage_in_party = yes
+							is_estate_enchantment_level_3 = yes
+						}
+					}
+				}
+				gene_pillars_lose_hp_effect = { amount = 2 }
+			}
+		}
+	}
+	gene_pillars_dragon_kobold_suppression_damage = yes
 }
