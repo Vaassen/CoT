@@ -19,6 +19,9 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
 	# Then, check if colony. That will exclude everything else, since you can't build SFs on colonies
 	# Then, check if SF
 	# Then, check if city
+	# Finally, handle one corner case - if you lose all provinces except for an in-progrss colony, that colony
+	# 	is immediately set to be the capital, and after 1 day is completed but doesn't fire
+	#	on_colony_finished_effect, so we need to check separately
 	if = {
 		limit = { province_group = citadel_group_main NOT = { has_province_modifier = charkuchin_kobold_citadel_0 } }
 		if = {
@@ -143,6 +146,27 @@ insyaa_charkuchin_kobold_citadel_supplies_update_count_remove = {
 	# That is not a concern when you lose a province
 	else = { # Otherwise, it's a province we need to spend monthly supplies on
 		kobold_citadel_supplies_remove_supply_cost_based_on_region = yes # Different regions have different costs so we track them differently
+	}
+	# Our corner case, where your last province after war is a single in-progress colony
+	if = {
+		limit = {
+			FROM = { # If the loser only has 1 province now...
+				NOT = {
+					num_of_owned_provinces_with = {
+						value = 2
+						always = yes
+					}
+				}
+				any_owned_province = { #...and it was a colony. capital_scope did not work - maybe capital moves after all these on_province_owner_changes are done?
+					has_province_modifier = supplies_colony
+				}
+			}
+		}
+		FROM = {
+			random_owned_province = { # Can't scope to capital because it seems to be false
+				insyaa_charkuchin_kobold_citadel_supplies_update_count_upgrade = yes
+			}
+		}
 	}
 }
 kobold_citadel_supplies_remove_supply_cost_based_on_region = {
