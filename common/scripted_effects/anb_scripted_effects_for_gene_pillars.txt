@@ -268,6 +268,7 @@ gene_pillars_clear_all_class_flags = {
 # NOTE: this does mean that this will not work in a scripted effect else_if/else/trigger_switch as it would not fire the event,
 # but it would be broken anyway as it would be unable to fire gene_pillars.30 in that case
 gene_pillar_abandon_expedition_effect = {
+	gene_pillar_on_expedition_ended = yes
 	hidden_effect = {
 		[[province_notification_event]	country_event = { id = gene_pillars.3 } ]
 		[[country_notification_event]	country_event = { id = gene_pillars.4 } ]
@@ -306,7 +307,7 @@ gene_pillar_abandon_expedition_effect_helper = {
 #Checks if you've failed the expedition before firing the success
 gene_pillar_end_expedition_effect = {
 	if = {
-		limit = { is_exploring_any_gene_pillar = yes }
+		limit = { aPUI_gene_pillar_root_is_exploring_event_target_province_trigger = yes }
 		gene_pillar_successful_end_expedition_effect = yes
 	}
 }
@@ -378,6 +379,7 @@ gene_pillar_successful_end_expedition_effect = {
 			aPUI_gene_pillar_reset_province = yes
 		}
 	}
+	gene_pillar_on_expedition_ended = yes
 	hidden_effect = {
 		clr_country_flag = aPUI_gene_pillar_is_exploring_3376 # - Red - Kiamoa
 		clr_country_flag = aPUI_gene_pillar_is_exploring_3415 # - Blue - Mechanim
@@ -398,7 +400,6 @@ gene_pillar_successful_end_expedition_effect = {
 # Reduces stability/adm, set party killed modifier, and abandons the expedition
 gene_pillar_fail_expedition = {
 	reduce_stability_or_adm_power = yes
-	add_country_modifier = { name = gene_pillars_got_killed duration = 3650 } # 10 years
 	gene_pillar_abandon_expedition_effect = { province_notification_event = yes }
 }
 
@@ -484,12 +485,10 @@ gene_pillar_clear_all_class_country_flags = {
 #Fires a generic event, and then a scripted event
 gene_pillar_generic_then_specific_event = {
 	hidden_effect = {
-		# Check party isn't dead before firing events
+		# Check party is still exploring before firing events
 		if = {
 			limit = {
-				event_target:gene_pillar_exploration_province = {
-					aPUI_check_variable = { name = gene_pillar_health value = 1 }
-				}
+				aPUI_gene_pillar_root_is_exploring_event_target_province_trigger = yes
 			}
 			# calculate speed
 			set_variable = { GenePillarsSpeed = 12 } # base speed of 12 months
@@ -543,6 +542,10 @@ gene_pillar_generic_then_specific_event = {
 
 			### Add Speed modifiers above here ###
 
+			# NOTE TO FUTURE DEVELOPERS: This speed variable is currently capped at 6 and 24 as the minimum and maximum
+			# DO NOT increase this max of 24, since this may cause a queued event that is left over from a failed expedition
+			# to fire for another expedition the player starts on the same gene pillar
+			
 			round_variable = { which = GenePillarsSpeed value = 0 }
 			if = { # clamp speed at minimum of 6 months
 				limit = { NOT = { check_variable = { which = GenePillarsSpeed value = 6 } } }
@@ -1150,9 +1153,9 @@ gene_pillars_lose_hp_effect = {
 		limit = {
 			event_target:gene_pillar_exploration_province = {
 				NOT = { aPUI_check_variable = { name = gene_pillar_health value = 1 } }
+				# in case you trigger this twice by e.g. having two health loss effects in one option
+				aPUI_gene_pillar_is_exploring_this_province_trigger = { who = ROOT }
 			}
-			is_exploring_any_gene_pillar = yes
-			# in case you trigger this twice by e.g. having two health loss effects in one option
 		}
 		gene_pillar_fail_expedition = yes
 	}
@@ -1404,22 +1407,22 @@ gene_pillars_roll_injury_class_effect = {
 			if = {
 				limit = { aPUI_check_variable = { name = gene_pillar_health_max value = 1 } }
 				set_variable = {
-					which = temp
+					which = temp_health
 					which = aPUI_gene_pillar_health_var
 				} # the other injury effects after this need to use the same health var
 				divide_variable = {
-					which = temp
+					which = temp_health
 					which = aPUI_gene_pillar_health_max_var
 				}
 			}
 			else = {
 				set_variable = {
-					which = temp
+					which = temp_health
 					value = 0
 				}
 			}
 			random_list = {
-				32 = {
+				32 = { #Chance for normal Injury
 					modifier = {
 						factor = 0.9
 						owner = {
@@ -1476,68 +1479,115 @@ gene_pillars_roll_injury_class_effect = {
 					}
 					owner = { gene_pillars_injure_class_effect = { class = $class$ } }
 				}
-				1 = {
+				1 = { #Chance that nothing happens
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.1
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.2
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.3
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.4
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.5
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.6
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.7
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.8
 						}
 					}
 					modifier = {
 						factor = 2
 						check_variable = {
-							which = temp
+							which = temp_health
 							value = 0.9
+						}
+					}
+				}
+			}
+			#Additional roll if you are under 40% of max health to determine if you should get additional injury
+			#Second Injury is converted to heavy injury lasting 20 years
+			#I dont think there is need to lower chance of this additional injury because of support classes but feel free to do so if you think they should be stronger
+			if = { 
+				limit = { 
+					NOT = { #Lower
+						check_variable = {
+							which = temp_health
+							value = 0.4 #40% - in current system its quite synonymous with 1 hp
+						}
+					}
+				}
+				random_list = {
+					1 = {
+						owner = { gene_pillars_injure_class_effect = { class = $class$ } }
+					}
+					8 = {
+						modifier = {
+							factor = 0.5
+							NOT = {
+								check_variable = {
+									which = temp_health
+									value = 0.3
+								}
+							}
+						}
+						modifier = {
+							factor = 0.5
+							NOT = {
+								check_variable = {
+									which = temp_health
+									value = 0.2
+								}
+							}
+						}
+						modifier = {
+							factor = 0.5
+							NOT = {
+								check_variable = {
+									which = temp_health
+									value = 0.1
+								}
+							}
 						}
 					}
 				}
@@ -1548,7 +1598,17 @@ gene_pillars_roll_injury_class_effect = {
 
 #Injure a specific class
 gene_pillars_injure_class_effect = {
-	add_country_modifier = { name = gene_pillars_injured_$class$ duration = 9125 } # 25 years
+	if = {
+		limit = { NOT = { has_country_modifier = gene_pillars_heavy_injured_$class$ } } # Don't gain another injury if you are already gravely injured
+		if = {
+			limit = { has_country_modifier = gene_pillars_injured_$class$ }
+			remove_country_modifier = gene_pillars_injured_$class$
+			add_country_modifier = { name = gene_pillars_heavy_injured_$class$ duration = 7300 } # 20 years
+		}
+		else = {
+			add_country_modifier = { name = gene_pillars_injured_$class$ duration = 3650 } # 10 years
+		}
+	}
 }
 
 #Injure a random class in the party
@@ -1810,35 +1870,65 @@ gene_pillars_injure_entire_party_effect = {
 gene_pillars_injury_check_tooltips = {
 	if = { limit = { owner = { gene_pillars_is_anyone_injured = yes } } custom_tooltip = gene_pillars_current_injuries_tt }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_A } } custom_tooltip = gene_pillars_class_injure_effect_rogue_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_rogue_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_rogue_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_B } } custom_tooltip = gene_pillars_class_injure_effect_rogue_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_rogue_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_rogue_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_C } } custom_tooltip = gene_pillars_class_injure_effect_rogue_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_rogue_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_rogue_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_D } } custom_tooltip = gene_pillars_class_injure_effect_rogue_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_rogue_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_rogue_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_rogue_E } } custom_tooltip = gene_pillars_class_injure_effect_rogue_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_rogue_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_rogue_E }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_A } } custom_tooltip = gene_pillars_class_injure_effect_ranger_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_ranger_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_ranger_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_B } } custom_tooltip = gene_pillars_class_injure_effect_ranger_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_ranger_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_ranger_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_C } } custom_tooltip = gene_pillars_class_injure_effect_ranger_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_ranger_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_ranger_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_D } } custom_tooltip = gene_pillars_class_injure_effect_ranger_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_ranger_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_ranger_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_ranger_E } } custom_tooltip = gene_pillars_class_injure_effect_ranger_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_ranger_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_ranger_E }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_A } } custom_tooltip = gene_pillars_class_injure_effect_fighter_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_fighter_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_fighter_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_B } } custom_tooltip = gene_pillars_class_injure_effect_fighter_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_fighter_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_fighter_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_C } } custom_tooltip = gene_pillars_class_injure_effect_fighter_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_fighter_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_fighter_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_D } } custom_tooltip = gene_pillars_class_injure_effect_fighter_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_fighter_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_fighter_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_fighter_E } } custom_tooltip = gene_pillars_class_injure_effect_fighter_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_fighter_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_fighter_E }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_A } } custom_tooltip = gene_pillars_class_injure_effect_cleric_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_cleric_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_cleric_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_B } } custom_tooltip = gene_pillars_class_injure_effect_cleric_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_cleric_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_cleric_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_C } } custom_tooltip = gene_pillars_class_injure_effect_cleric_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_cleric_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_cleric_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_D } } custom_tooltip = gene_pillars_class_injure_effect_cleric_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_cleric_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_cleric_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_cleric_E } } custom_tooltip = gene_pillars_class_injure_effect_cleric_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_cleric_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_cleric_E }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_A } } custom_tooltip = gene_pillars_class_injure_effect_mage_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_mage_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_mage_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_B } } custom_tooltip = gene_pillars_class_injure_effect_mage_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_mage_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_mage_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_C } } custom_tooltip = gene_pillars_class_injure_effect_mage_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_mage_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_mage_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_D } } custom_tooltip = gene_pillars_class_injure_effect_mage_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_mage_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_mage_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_mage_E } } custom_tooltip = gene_pillars_class_injure_effect_mage_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_mage_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_mage_E }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_A } } custom_tooltip = gene_pillars_class_injure_effect_artificer_A }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_artificer_A } } custom_tooltip = gene_pillars_class_heavy_injure_effect_artificer_A }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_B } } custom_tooltip = gene_pillars_class_injure_effect_artificer_B }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_artificer_B } } custom_tooltip = gene_pillars_class_heavy_injure_effect_artificer_B }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_C } } custom_tooltip = gene_pillars_class_injure_effect_artificer_C }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_artificer_C } } custom_tooltip = gene_pillars_class_heavy_injure_effect_artificer_C }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_D } } custom_tooltip = gene_pillars_class_injure_effect_artificer_D }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_artificer_D } } custom_tooltip = gene_pillars_class_heavy_injure_effect_artificer_D }
 	if = { limit = { owner = { has_country_modifier = gene_pillars_injured_artificer_E } } custom_tooltip = gene_pillars_class_injure_effect_artificer_E }
+	if = { limit = { owner = { has_country_modifier = gene_pillars_heavy_injured_artificer_E } } custom_tooltip = gene_pillars_class_heavy_injure_effect_artificer_E }
 }
 
 gene_pillars_clear_all_province_flags = {
@@ -2880,23 +2970,34 @@ gene_pillars_random_insyaa_invention_unlock = {
 #Scripted effect for sandworm pillar no delays or generic events
 gene_pillar_sandworm_pillar_next_event = {
 	hidden_effect = {
-		if = { # Increased speed privilege
-			limit = {
-				OR = {
-					has_estate_privilege = artifice_invention_pillar_scouts
-					has_estate_privilege = artifice_invention_mech_pillar_scouts
-				}
-			}
-			country_event = { id = gene_pillars.$specific_event$ days = 135 } #Next event in chain
-		}
+		# Check party is still exploring before firing events
 		if = {
 			limit = {
-				NOT = {
-					has_estate_privilege = artifice_invention_pillar_scouts
-					has_estate_privilege = artifice_invention_mech_pillar_scouts
-				}
+				aPUI_gene_pillar_root_is_exploring_event_target_province_trigger = yes
 			}
-			country_event = { id = gene_pillars.$specific_event$ days = 182 } #Next event in chain
+			if = { # Increased speed privilege
+				limit = {
+					OR = {
+						has_estate_privilege = artifice_invention_pillar_scouts
+						has_estate_privilege = artifice_invention_mech_pillar_scouts
+					}
+				}
+				country_event = { id = gene_pillars.$specific_event$ days = 135 } #Next event in chain
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_estate_privilege = artifice_invention_pillar_scouts
+						has_estate_privilege = artifice_invention_mech_pillar_scouts
+					}
+				}
+				country_event = { id = gene_pillars.$specific_event$ days = 182 } #Next event in chain
+			}
+
+			# This is just so the initial event doesn't advance the progress bar
+			[[advance]
+				gene_pillars_advance_progress_bar = yes
+			]
 		}
 	}
 }
@@ -3305,3 +3406,11 @@ gene_pillars_get_random_insyaa_invention_flag = {
 		}
 	}
 } 
+gene_pillar_on_expedition_ended = { #Effects that needs to trigger after expedition is finished in any way
+	# We want the timer to be per gene pillar
+
+	# NOTE TO FUTURE DEVELOPERS: If there end up being ways to remove this modifier to reduce the cooldown, DO NOT allow it to be shorter than 1 year. It is possible
+	# that after failing an expedition, there can be an event queued for up to 363 days. So we don't have that event pop up for an expedition you start too soon,
+	# the minimum cooldown MUST be 1 year
+	event_target:gene_pillar_exploration_province = { add_province_modifier = { name = gene_pillars_party_preparing duration = 1095 } } # 3 years
+}
