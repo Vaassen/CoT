@@ -1794,8 +1794,8 @@ country_event = { #Spawn of Alefisol
 		else_if = {
 			limit = { 
 				any_country = {
-				religion = rinta_seekers
-				total_development = 400
+					religion = rinta_seekers
+					total_development = 400
 				} 
 			}
 			set_global_flag = rinta_double
@@ -1915,10 +1915,35 @@ country_event = { #Spawn of Alefisol
 					add_latest_building = { builder = ROOT fort = yes }
 				}
 			}
-			#####################
-			#Armies
+			##################### Starting Armies
 			random_owned_province = {
-				limit = { province_has_current_tech_fort_trigger = yes }
+				limit = {
+					superregion = djinnakah_superregion
+					province_has_current_tech_fort_trigger = yes
+					NOT = { has_province_flag = rinta_army_spawn_province }
+				}
+				spawn_alefisol_army = yes
+			}
+			random_owned_province = {
+				limit = {
+					OR = {
+						superregion = rahen_superregion
+						superregion = vimdatrong_superregion
+					}
+					NOT = { has_province_flag = rinta_army_spawn_province }
+				}
+				spawn_alefisol_army = yes
+			}
+			random_owned_province = {
+				limit = {
+					NOT = {
+						superregion = djinnakah_superregion
+						superregion = taneyas_superregion
+						superregion = rahen_superregion
+						superregion = vimdatrong_superregion
+					}
+					NOT = { has_province_flag = rinta_army_spawn_province }
+				}
 				spawn_alefisol_army = yes
 			}
 			#Generals
@@ -1942,14 +1967,41 @@ country_event = { #Spawn of Alefisol
 					spawn_alefisol_fleet = yes
 				}
 			}
-			#####################
-			if = { #Max potencial 
+			##################### Medium
+			if = {
+				limit = { OR = { has_global_flag = rinta_double has_global_flag = rinta_boss_music } }
+				#Armies
+				random_owned_province = {
+					limit = { province_has_current_tech_fort_trigger = yes NOT = { has_province_flag = rinta_army_spawn_province } }
+					if = {
+						limit = { NOT = { has_building = ramparts } }
+						add_building = ramparts
+					}
+					spawn_alefisol_army = yes
+				}
+				#General
+				create_general = {
+					tradition = 66
+				}
+				#Resources
+				add_treasury = 3000
+				add_manpower = 100
+				change_government_reform_progress = 300
+			}
+			##################### Max Strength
+			if = {
 				limit = { has_global_flag = rinta_boss_music }
 				#Armies
 				random_owned_province = { 
+					limit = {
+						NOT = { has_province_flag = rinta_army_spawn_province }
+					}
 					spawn_alefisol_army = yes
 				}
 				random_owned_province = {
+					limit = {
+						NOT = { has_province_flag = rinta_army_spawn_province }
+					}
 					spawn_alefisol_army = yes
 				}
 				#Generals
@@ -1981,29 +2033,8 @@ country_event = { #Spawn of Alefisol
 				add_manpower = 200
 				change_government_reform_progress = 300
 			}
-			#####################
-			if = { #Medium
-				limit = { OR = { has_global_flag = rinta_double has_global_flag = rinta_boss_music } }
-				#Armies
-				random_owned_province = {
-					limit = { province_has_current_tech_fort_trigger = yes }
-					if = {
-						limit = { NOT = { has_building = ramparts } }
-						add_building = ramparts
-					}
-					spawn_alefisol_army = yes
-				}
-				#General
-				create_general = {
-					tradition = 66
-				}
-				#Resources
-				add_treasury = 3000
-				add_manpower = 100
-				change_government_reform_progress = 300
-			}
-			#####################
-			if = { #Small bonus for number of resonance
+			##################### Bonus for number of resonance
+			if = { #10
 				limit = { 
 					num_of_owned_provinces_with = {
 						has_province_modifier = rinta_infernal_resonance
@@ -2011,10 +2042,13 @@ country_event = { #Spawn of Alefisol
 					}
 				}
 				random_owned_province = {
+					limit = {
+						NOT = { has_province_flag = rinta_army_spawn_province }
+					}
 					spawn_alefisol_army = yes
 				}
 			}
-			if = { #Bonus for number of resonance
+			if = { #16
 				limit = { 
 					num_of_owned_provinces_with = {
 						has_province_modifier = rinta_infernal_resonance
@@ -2022,6 +2056,9 @@ country_event = { #Spawn of Alefisol
 					}
 				}
 				random_owned_province = {
+					limit = {
+						NOT = { has_province_flag = rinta_army_spawn_province }
+					}
 					spawn_alefisol_army = yes
 				}
 			}
@@ -2035,6 +2072,7 @@ country_event = { #Spawn of Alefisol
 				duration = -1
 			}
 			every_owned_province = {
+				clr_province_flag = rinta_army_spawn_province
 				add_province_modifier = {
 					name = alefisol_early_disorganization 
 					duration = 64
@@ -2081,46 +2119,55 @@ country_event = {
 			casus_belli = cb_alefisol_war
 			duration = 365
 		}
-		any_war_enemy_country = {
-			is_in_war = {
-				defender_leader = THIS
-				casus_belli = cb_alefisol_war
-				duration = 365
-			}
-			OR = {
-				war_score_against = { # lose!
-					who = S93
-					value = 98 
+		OR = {
+			AND = {
+				ai = yes
+				is_in_war = { #Bypass if war stagnated
+					casus_belli = cb_alefisol_war
+					duration = 10950 #30 Years
 				}
-				AND = { # also lose!
-					S93 = {
-						check_variable = {
-							which = alefisol_lost_6
-							value = 6
-						}
+			}
+			any_war_enemy_country = {
+				is_in_war = {
+					defender_leader = THIS
+					casus_belli = cb_alefisol_war
+					duration = 365
+				}
+				OR = {
+					war_score_against = { # lose!
+						who = S93
+						value = 98 
 					}
-					OR = {
-						AND = {
-							S93 = {
-								capital_scope = {
-									NOT = { controlled_by = S93 }
+					AND = { # also lose!
+						S93 = {
+							check_variable = {
+								which = alefisol_lost_6
+								value = 6
+							}
+						}
+						OR = {
+							AND = {
+								S93 = {
+									capital_scope = {
+										NOT = { controlled_by = S93 }
+									}
+								}
+								war_score_against = {
+									who = S93
+									value = 50
 								}
 							}
 							war_score_against = {
 								who = S93
-								value = 50
+								value = 74
 							}
 						}
+					}
+					NOT = { #Win for Alefisol
 						war_score_against = {
 							who = S93
-							value = 74
+							value = -95
 						}
-					}
-				}
-				NOT = { #Win for Alefisol
-					war_score_against = {
-						who = S93
-						value = -95
 					}
 				}
 			}
