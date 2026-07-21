@@ -15,6 +15,10 @@ function validate_localization(){
 	echo "--------------------------------------------------------------------------------------------------------------------------------"
 	declare -i TOTAL=0
 	declare -i GOOD=0
+<<<<<<< HEAD
+=======
+	declare -i NEUTRAL=0
+>>>>>>> remotes/anbennar/steam
 	declare -i BAD=0
 	
 	for f in ./localisation/*.yml
@@ -22,6 +26,14 @@ function validate_localization(){
 		if [[ "$( has_bom "$f" && file -b --mime-encoding "$f")" = utf-8 ]];then
 			# echo -e "${GREEN}{$f} encoding is good.${NC}"
 			GOOD+=1
+<<<<<<< HEAD
+=======
+		elif [[ "$( has_bom "$f" && file -b --mime-encoding "$f")" = binary ]];then
+			# there are sometimes false negatives, if they have the BOM they're probably correct
+			GOOD+=1
+			NEUTRAL+=1
+			echo -e "${YELLOW}{$f} has a BOM but 'file' reports binary - ignoring${NC}"
+>>>>>>> remotes/anbennar/steam
 		else
 			echo -e "${RED}{$f} encoding is wrong!${NC}"
 			file -i $f
@@ -30,8 +42,16 @@ function validate_localization(){
 		TOTAL+=1
 	done
 	echo -e "\n		${GREEN}${GOOD}${NC}/${TOTAL} ${GREEN}localization files encoding validated.${NC}\n"
+<<<<<<< HEAD
 	if [[ $BAD > 0 ]]; then
 		echo -e "\n		${RED}${BAD}${NC}/${TOTAL} ${RED}decicion files have a wrong or unknown encoding!${NC}\n"
+=======
+	if [[ $NEUTRAL > 0 ]]; then
+		echo -e "\n             ${YELLOW}${NEUTRAL}${NC}/${TOTAL} ${YELLOW}files encoding reported as binary but have BOM.${NC}\n"
+	fi
+	if [[ $BAD > 0 ]]; then
+		echo -e "\n		${RED}${BAD}${NC}/${TOTAL} ${RED}localization files have a wrong or unknown encoding!${NC}\n"
+>>>>>>> remotes/anbennar/steam
 		exit 1
 	fi
 }
