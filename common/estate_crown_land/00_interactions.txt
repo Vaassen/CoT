@@ -1,15 +1,19 @@
+
+# There are ten "interaction" slots arranged in a five-wide, two-tall space on the estate screen
+# The empty, invisible interactions are here to "take up space" basically.
+# Makes the other things be in the right spots on the UI.
+
 interaction = { # Empty
-    #key = empty_interaction
-    random_seed = random
+	#key = empty_interaction
+	random_seed = random
 	cooldown_months = 1000
 
-    trigger = {
+	trigger = {
 		hidden_trigger = {
 			always = no
 		}
-    }
-    effect = { }
-	
+	}
+	effect = { }
 	ai_will_do = {
 		factor = 0
 	}
@@ -83,124 +87,75 @@ interaction = { # Empty
 	}
 }
 
-interaction = { # Cast Spell
+interaction = { # Manage Magic system
     key = cast_spell
     random_seed = random
 	cooldown_months = 0
 
     trigger = {
-		custom_trigger_tooltip = {
-			tooltip = has_magic_estate_tt
-			OR = {
-				has_estate = estate_mages
-				has_estate = estate_acolytes
-				tag = Y01	#azjakuma
-				has_estate_privilege = artifice_invention_korashi_tuners
-			}
-		}
-		if = { limit = { has_estate = estate_mages }
-			estate_influence = { estate = estate_mages influence = 15 }
-			if = { limit = { tag = Y63 has_country_flag = Y63_unlocked_minor_runes }
-				hidden_trigger = { NOT = { has_country_flag = V63_runes_menu_open } }
-			}
-			else = {
-				NOT = { has_estate_privilege = estate_mages_cast_spells }
-				if = { limit = { tag = I02 }	#krak
-					mission_completed = krak_relighting_forges
-				}
-			}
-		}
-		else_if = { limit = { has_estate = estate_acolytes }
-			estate_influence = { estate = estate_acolytes influence = 15 }
-			NOT = { has_estate_privilege = estate_acolytes_cast_spells }
-		}
-		else_if = { limit = { tag = Y01 }
-			if = { limit = { has_country_flag = azjakuma_two_magics_allowed }
-				custom_trigger_tooltip = {
-					tooltip = no_other_magic_shirgrii_two_tooltip
-					NOT = {
-						calc_true_if = {
-							has_estate_privilege = estate_shinukhorchi_cast_magic
-							has_estate_privilege = estate_chumijemoya_cast_magic
-							has_estate_privilege = estate_ajgriijarul_cast_magic
-							has_estate_privilege = estate_kabiurgarko_cast_magic
-							has_estate_privilege = estate_khelorvalshi_cast_magic
-							amount = 2
-						}
-					}
-				}
-			}
-			else = {
-				custom_trigger_tooltip = {
-					tooltip = no_other_magic_shirgrii_tooltip
-					NOT = { 
-						has_estate_privilege = estate_shinukhorchi_cast_magic
-						has_estate_privilege = estate_chumijemoya_cast_magic
-						has_estate_privilege = estate_ajgriijarul_cast_magic
-						has_estate_privilege = estate_kabiurgarko_cast_magic
-						has_estate_privilege = estate_khelorvalshi_cast_magic
-					}
-				}
-			}
-			hidden_trigger = { NOT = { has_country_flag = azjakuma_magic_menu_opened } }
-		}
-		else_if = { limit = { has_estate_privilege = artifice_invention_korashi_tuners }
-			NOT = { has_country_modifier = magic_cooldown }
-		}
 		hidden_trigger = {
-			NOT = { has_country_flag = J84_no_casting_spells_flag }
+			ai = no
+			can_use_magic = yes
+			OR = {
+				check_variable = { current_mana_percent = 90 }
+				is_overall_advancing_magic = no
+			}
+			hidden_trigger = { has_any_estates = yes }
 		}
     }
     effect = {
-		if = { limit = { has_estate = estate_mages }
-			if = { limit = { tag = Y63 has_country_flag = Y63_unlocked_minor_runes }
-				custom_tooltip = Y63_open_runes_manu_tt
-				set_country_flag = V63_runes_menu_open
-				hidden_effect = { country_event = { id = verkalozovar_events.100 } }
-			}
-			else = {
-				custom_tooltip = opens_magic_estate_menu_tt
-				custom_tooltip = cast_spell_effect_tt
-				hidden_effect = {
-					if = { limit = { tag = I02 } #krakdhumvror ice smiths
-						set_estate_privilege = estate_mages_perform_icecraft
-						country_event = { id = flavor_krak.100 }
-					}
-					else = {
-						set_estate_privilege = estate_mages_cast_spells
-						country_event = { id = magic_estate.1 }
-					}
+		update_magic_menu_effect = yes
+		custom_tooltip = magic_estate_notif
+		if = {
+			limit = {
+				OR = {
+					check_variable = { current_mana_percent = 90 }
+					is_overall_advancing_magic = no
 				}
 			}
+			custom_tooltip = magic_effect_separator_tt
 		}
-		else_if = { limit = { has_estate = estate_acolytes }
-			custom_tooltip = opens_magic_estate_menu_tt
-			custom_tooltip = cast_spell_effect_tt
-			hidden_effect = {
-				set_estate_privilege = estate_acolytes_cast_spells
-				country_event = { id = acolyte_estate.1 }
+		if = { # Mana nearly full
+			limit = {
+				check_variable = { current_mana_percent = 90 }
 			}
+			custom_tooltip = magic_estate_notif_mana
+			close_all_magic_menus = yes
+			# set_country_flag = magic_menu_main_flag
+			set_country_flag = magic_menu_spellbook_flag
 		}
-		else_if = { limit = { tag = Y01 }
-			custom_tooltip = opens_shirgrii_magic_menu_tt
-			custom_tooltip = cast_spell_effect_tt
-			hidden_effect = {
-				set_country_flag = azjakuma_magic_menu_opened
-				country_event = { id = flavor_azjakuma.1250 }
+		if = { # Not advancing
+			limit = {
+				is_overall_advancing_magic = no
 			}
-			clr_country_flag = remove_azjakuma_casting_spells
-		}
-		else_if = { limit = { has_estate_privilege = artifice_invention_korashi_tuners }
-			custom_tooltip = opens_magic_estate_menu_tt
-			custom_tooltip = cast_spell_effect_tt
-			hidden_effect = {
-				country_event = { id = magic_estate.1 }
+			custom_tooltip = magic_estate_notif_no_study
+			if = {
+				limit = {
+					if = { limit = { has_country_modifier = magical_infrastructure_4 }
+						can_upgrade_to_magical_infrastructure_5 = yes
+					}
+					else_if = { limit = { has_country_modifier = magical_infrastructure_3 }
+						can_upgrade_to_magical_infrastructure_4 = yes
+					}
+					else_if = { limit = { has_country_modifier = magical_infrastructure_2 }
+						can_upgrade_to_magical_infrastructure_3 = yes
+					}
+					else_if = { limit = { has_country_modifier = magical_infrastructure_1 }
+						can_upgrade_to_magical_infrastructure_2 = yes
+					}
+					else = { #MI 0
+						can_upgrade_to_magical_infrastructure_1 = yes
+					}
+				}
+				custom_tooltip = magic_estate_notif_upgrade_MI
 			}
+			close_all_magic_menus = yes
+			# set_country_flag = magic_menu_main_flag
+			set_country_flag = magic_menu_advancement_flag
 		}
-		clr_country_flag = revoke_mage_estate_spells
     }
 	ai_will_do = {
-		factor = 10
+		factor = 0
 	}
 }
 
@@ -213,6 +168,7 @@ interaction = { # Sale of Titles
         crown_land_share = 10
         NOT = { num_of_rebel_armies = 1 }
 		NOT = { num_of_rebel_controlled_provinces = 1 }
+		hidden_trigger = { NOT = { has_country_flag = farranean_estates_harmony } }
 		hidden_trigger = { has_any_estates = yes }
 		if = {
 			limit = { 
@@ -224,6 +180,7 @@ interaction = { # Sale of Titles
 				NOT = { has_country_modifier = JY_LF_recent_trade }
 			}
 		}
+		NOT = { has_government_attribute = cannot_sell_land }
     }
     effect = {
 		if = {
@@ -282,6 +239,8 @@ interaction = { # Sale of Titles
 			clr_country_flag = recent_land_distribution
 		}
 		set_country_flag = recent_land_distribution
+		
+		accretive_path_gain_chi = { aspect = meditation_through_labour category = dip amount = 15 }
     }
 	ai_will_do = {
 		factor = 25
@@ -395,11 +354,31 @@ interaction = { # Summon Diet
 		hidden_trigger = { has_any_estates = yes }
 		NOT = { has_government_attribute = blocked_call_diet }
     }
-
+	#This is is used in `illusion_1_bread_and_circuses_effect`. Any changes to this should be made to both
+	# with the exception that the spell does not include the 'EST_VAL_DIET_SUMMONED' influence modifier
     effect = {
         custom_tooltip = ESTATES_SUMMON_THE_DIET_DESC
         hidden_effect = {
-	        country_event = { id = estate_privileges_and_agendas_events.3 }
+	        if = {
+				limit = { NOT = { has_anzalkatsa_naga = yes } NOT = { has_country_flag = anb_has_special_agendas} }
+				country_event = { id = estate_privileges_and_agendas_events.3 }
+			}
+			else_if = {
+				limit = {
+					has_anzalkatsa_naga = yes
+				}
+				clr_country_flag = Invalidate_NagaAgenda
+				country_event = { id = estate_privileges_and_agendas_events.14 }
+			}
+			else_if = {
+				limit = {
+					has_country_flag = anb_has_special_agendas
+					has_country_flag = I26_disabled_call_the_diet
+				}
+				country_event = { 
+					id = flavor_salla_elyn.300
+				}
+			}
 			if = {
 				limit = {
 					ai = yes
@@ -421,7 +400,12 @@ interaction = { # Summon Diet
 		set_country_flag = recent_estate_agenda
 
         if = {
-			limit = { NOT = { has_government_attribute = diet_increases_not_influence } }
+			limit = {
+				NOT = {
+					has_government_attribute = diet_increases_not_influence
+					has_estate_privilege = estate_burghers_to_outsmart_and_outwit
+				}  
+			}
 			add_estate_influence_modifier = {
 				estate = all
 				desc = EST_VAL_DIET_SUMMONED
@@ -441,6 +425,60 @@ interaction = { # Summon Diet
 			}
 			add_scaled_republican_tradition = 2
 		}
+		if = {
+			limit = { 
+				owns = 394
+				394 = { #can use modifier trigger
+					baths_of_verinus_are_active = yes #scripted so bypasses can be added
+				}
+			}
+			if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 3 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 3 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+			else_if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 2 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 2 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+			else_if = {
+				limit = { 394 = { has_great_project = { type = baths_of_verinus tier = 1 } } }
+				hidden_effect = {
+					random_list = {
+						1 = { define_random_adm_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_dip_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+						1 = { define_random_mil_advisor_effect = { skill = 1 cost_multiplier = 0.5 culture = ROOT } }
+					}
+				}
+			}
+			if = {
+				limit = {
+					has_estate_privilege = artifice_invention_litoral_reclamation
+					has_estate = estate_mages
+				}
+				clr_auto_complete_flag = { estate = estate_mages }
+				random = {
+					chance = 30
+					auto_complete_estate_agenda = { estate = estate_mages }
+				}
+			}
+		}
+
+		#Pashaine
+		pashaine_add_clue = yes
+
+		accretive_path_gain_chi = { aspect = meditation_through_labour category = dip amount = 15 }
     }
 	ai_will_do = {
 		# Only use if it will bring loyalty above 50 for all estates
@@ -485,20 +523,20 @@ interaction = { # Seize Land
         NOT = { num_of_rebel_armies = 1 }
 		NOT = { num_of_rebel_controlled_provinces = 1 }
 		#The following if/else_if-statements match those in estate_privileges_and_agendas_events.2.a. If those change, these should too.
+		# if = {
+		# 	limit = {
+		# 		OR = {
+		# 			has_estate_privilege = estate_brahmins_statutory_rights
+		# 			#AND = {
+		# 			#	religion = hinduism
+		# 			#	has_estate = estate_brahmins
+		# 			#}
+		# 		}
+		# 		has_estate = estate_brahmins
+		# 	}
+		# 	NOT = { has_estate_privilege = estate_brahmins_statutory_rights }
+		# }
 		if = {
-			limit = {
-				OR = {
-					has_estate_privilege = estate_brahmins_statutory_rights
-					#AND = {
-					#	religion = hinduism
-					#	has_estate = estate_brahmins
-					#}
-				}
-				has_estate = estate_brahmins
-			}
-			NOT = { has_estate_privilege = estate_brahmins_statutory_rights }
-		}
-		else_if = {
 			limit = {
 				OR = {
 					has_estate_privilege = estate_nobles_statutory_rights
@@ -540,6 +578,12 @@ interaction = { # Seize Land
 			}
 			NOT = { has_estate_privilege = estate_uppercastes_statutory_rights }
 		}
+		else_if = {
+			limit = {
+				has_estate = estate_shinukhorchi
+			}
+			NOT = { has_estate_privilege = estate_shinukhorchi_statutory_rights }
+		}
         is_at_war = no
 		if = {
 			limit = { has_government_attribute = can_not_seize_land }
@@ -564,6 +608,22 @@ interaction = { # Seize Land
 			take_estate_land_share_massive = { estate = all }
 			custom_tooltip = SEPERATOR_TOOLTIP
 			if = {
+				limit = {
+					has_country_flag = farranean_estates_harmony 
+				}
+				add_estate_loyalty = {
+					estate = all
+					loyalty = 1
+					short = yes
+				}
+			}
+			else_if = {
+				limit = {
+					has_country_flag = S90_always_watching
+				}
+				custom_tooltip = S90_always_watching_effect_tt
+			}
+			else_if = {
 				limit = {
 					has_government_attribute = seizing_land_loyalty
 				}
@@ -599,6 +659,8 @@ interaction = { # Seize Land
 						loyalty = 30
 					}
 				}
+				#ANB this used to not display unless you were under 30 loyalty
+				custom_tooltip = estate_seize_land_interaction_tooltip_generic
 			}
 			else_if = { 
 				limit = {
@@ -637,7 +699,14 @@ interaction = { # Seize Land
 				has_country_modifier = khadisrapur_empower_merchants_mod
 				mission_completed = R11_embassies_guild
 			}
-			change_estate_land_share = { estate = adventurers share = 1 }
+			change_estate_land_share = { estate = estate_adventurers share = 1 }
+		}
+
+		accretive_path_gain_chi = { aspect = meditation_through_labour category = dip amount = 15 }
+		if = {
+			limit = { has_country_flag = infinite_self_no_seize }
+			clr_country_flag = infinite_self_no_seize
+			set_country_flag = infinite_self_no_seize
 		}
 	}
 	ai_will_do = {
@@ -723,7 +792,7 @@ interaction = { # Seize Land
 					has_disaster = estate_burghers_disaster
 					has_disaster = estate_church_disaster
 					has_disaster = estate_cossacks_disaster
-					has_disaster = estate_dhimmi_disaster
+					# has_disaster = estate_dhimmi_disaster
 					# has_disaster = estate_jains_disaster
 					# has_disaster = estate_maratha_disaster
 					has_disaster = estate_nobility_disaster
@@ -874,7 +943,7 @@ interaction = { # Seize Land
 				has_disaster = estate_burghers_disaster
 				has_disaster = estate_church_disaster
 				has_disaster = estate_cossacks_disaster
-				has_disaster = estate_dhimmi_disaster
+				# has_disaster = estate_dhimmi_disaster
 				# has_disaster = estate_jains_disaster
 				# has_disaster = estate_maratha_disaster
 				has_disaster = estate_nobility_disaster
@@ -910,10 +979,10 @@ interaction = { # Seize Land
 					disaster = estate_cossacks_disaster
 					value = 5
 				}
-				has_disaster_progress = {
-					disaster = estate_dhimmi_disaster
-					value = 5
-				}
+				# has_disaster_progress = {
+				# 	disaster = estate_dhimmi_disaster
+				# 	value = 5
+				# }
 				# has_disaster_progress = {
 					# disaster = estate_jains_disaster
 					# value = 5
@@ -1019,13 +1088,25 @@ interaction = { # Research Artificery
 
     trigger = {
 		hidden_trigger = {
+			has_country_flag = artificery_unlocked
 			OR = {
 				has_country_flag = magic_artificery_mixed
 				has_country_flag = magic_artificery_artificery_only
 			}
 			has_artificers_organization_privilege = yes
 		}
-		is_not_researching_invention = yes
+		is_not_researching_or_blocked_from_researching_invention = yes
+		if = {
+			limit = {            
+				artifice_invention_researched_all = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = artifice_research.3.x
+				always = no
+			}
+			# this is the tooltip from inside artifice_invention_researched_all
+			# (so that we don't re-check the whole giant trigger when we already know we have failed)
+		}
     }
     effect = {
 		custom_tooltip = start_artificery_research_tt
