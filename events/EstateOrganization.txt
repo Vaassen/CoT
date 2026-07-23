@@ -12,9 +12,8 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		NOT = { has_mages_organization_privilege = yes }
 		has_estate = estate_mages
-		NOT = { has_country_flag = banned_magic }
+		NOT = { has_mages_organization_privilege = yes }
 	}
 
 	#Guilds
@@ -50,7 +49,7 @@ country_event = {
 	}
 
 	#Magisterium
-	option = {
+	option = { #Regional organizations
 		name = estate_organization.1.c
 		ai_chance = {
 			factor = 33
@@ -62,14 +61,12 @@ country_event = {
 		trigger = {
 			OR = {
 				is_part_of_hre = yes
-				if = {
-					limit = {
-						exists = A85
-					}
+				AND = {
+					exists = A85
 					A85 = {
 						has_opinion = {
 							who = ROOT
-							value = 100
+							value = 150
 						}
 					}
 				}
@@ -82,51 +79,26 @@ country_event = {
 	#Religious
 	option = {
 		name = estate_organization.1.e
-		ai_chance = {
-			factor = 33
-			modifier = {
-				factor = 100
-				OR = {
-					religion = ravelian
-					religion = xhazobkult
-					religion = skaldhyrric_faith
-					religion = beast_memory
-					religion = rinta_seekers
-					religion = sky_domain
-					religion = shadow_pact
-				}
-			}
-		}
+		ai_chance = { factor = 100 }
 		trigger = {
-			OR = {
-				religion = ravelian
-				religion = xhazobkult
-				religion = skaldhyrric_faith
-				religion = beast_memory
-				religion = rinta_seekers
-				religion = sky_domain
-				religion = shadow_pact
-			}
 			NOT = { tag = A85 }
-			NOT = { tag = I02 }
+			OR = {
+				has_estate = estate_church
+				religion_group = centaur_religion
+				religion_group = raheni
+			}
 		}
 		set_estate_privilege = estate_mages_organization_religious
 	}
 
-	#Jaherian
+	#Magi
 	option = {
 		name = estate_organization.1.f
-		ai_chance = {
-			factor = 33
-			modifier = {
-				factor = 100
-				religion_group = bulwari
-			}
-		}
+		ai_chance = { factor = 100 }
 		trigger = {
 			religion_group = bulwari
 		}
-		set_estate_privilege = estate_mages_organization_jaherian_statute
+		set_estate_privilege = estate_mages_organization_magi_clans
 	}
 
 	option = {
@@ -137,62 +109,9 @@ country_event = {
 		trigger = {
 			religion = ravelian
 		}
-		set_country_flag = banned_magic
+		ban_magic = yes
 	}
 }
-
-#Expel Mages Change Noble Reform
-# country_event = {
-	# id = estate_organization.2
-	# title = estate_organization.2.t
-	# desc = estate_organization.2.d
-	# picture = NOBLE_ESTATE_DEMANDS_eventPicture
-	
-	# mean_time_to_happen = {
-		# months = 1
-	# }
-	
-	# trigger = {
-		# has_country_modifier = expelled_mages
-		# has_reform = magical_elite_reform
-		# has_estate = estate_nobles
-	# }
-	
-	# #Strengthen Nobles
-	# option = {
-		# name = estate_organization.2.a
-		# ai_chance = {
-			# factor = 50
-		# }
-		# add_country_modifier = {
-			# name = magic_noble_reshuffle
-			# duration = 1825
-		# }
-		# add_government_reform = enforce_privileges_reform 
-	# }
-	
-	# #Curtail Nobles
-	# option = {
-		# name = estate_organization.2.b
-		# ai_chance = {
-			# factor = 50
-			# modifier = {
-				# factor = 0.5
-				# is_at_war = yes
-			# }
-		# }
-		# random_owned_province = {
-			# spawn_rebels = {
-				# size = 2
-				# leader = noble_zealot
-				# type = noble_rebels
-			# }
-		# }
-		
-
-		# add_government_reform = quash_noble_power_reform 
-	# }
-# }
 
 #Unban Magic Set Mage Organization
 country_event = {
@@ -205,18 +124,19 @@ country_event = {
 	is_triggered_only = yes
 	
 	trigger = {
-		NOT = { has_mages_organization_privilege = yes }
 		has_estate = estate_mages
-		NOT = { has_country_flag = banned_magic }
+		NOT = { has_mages_organization_privilege = yes }
 	}
 	
-	option = {
+	option = { #Regional organizations
 		name = estate_organization.3.a
 		if = {
-			limit = {
-				is_part_of_hre = yes
-			}
+			limit = { is_part_of_hre = yes }
 			set_estate_privilege = estate_mages_organization_magisterium
+		}
+		else_if = {
+			limit = { religion_group = bulwari }
+			set_estate_privilege = estate_mages_organization_magi_clans
 		}
 		else = {
 			set_estate_privilege = estate_mages_organization_guilds
@@ -274,6 +194,24 @@ country_event = {
 		}
 		set_estate_privilege = estate_adventurers_organization_chronicler_grants
 	}
+
+	option = {
+		name = estate_organization.4.e
+		ai_chance = {
+			factor = 33
+		}
+		trigger = {
+			OR = {
+				capital_scope = {
+					superregion = bulwar_superregion
+				}
+				tag = F51 #Jadd Empire
+				tag = U17 #Crathanor
+			}
+		}
+
+		set_estate_privilege = estate_adventurers_suhuskar_palace
+	}
 }
 
 # Artificer 
@@ -287,6 +225,7 @@ country_event = {
 	
 	trigger = {
 		NOT = { has_artificers_organization_privilege = yes }
+		NOT = { has_country_flag = artifice_no_base_privileges }
 		OR = {
 			has_estate = estate_artificers
 			AND = {
@@ -408,11 +347,14 @@ country_event = {
 		has_estate = estate_artificers
 		NOT = { has_estate_privilege = estate_artificers_organization_ravelian_control }
 		NOT = { has_country_flag = ravelian_artificers_asked }
+		#Could maybe make this a single generic flag and add it to the estates
+		NOT = { has_estate_privilege = estate_artificers_organization_vaultwardens }                    #Gor Vazumbrog
 		NOT = { has_estate_privilege = estate_artificers_organization_vazhatun_enhanced_astronomy }		#Dur-Vazhatun
 		NOT = { has_estate_privilege = estate_artificers_organization_feiten_shuimu_cadre }				#Feiten
 		NOT = { has_estate_privilege = estate_artificers_organization_giberd_magisterium_oversight }	#Giberd
 		NOT = { has_estate_privilege = estate_artificers_organization_giberd_ravelian_guilds }			#Giberd
 		NOT = { has_estate_privilege = estate_artificers_organization_giberd_beacon_of_harmony }		#Giberd
+		NOT = { has_estate_privilege = estate_artificers_organization_strict_state_supervision }		#Pashaine
 	}
 	
 	after = {
@@ -473,6 +415,7 @@ country_event = {
 		NOT = { has_estate_privilege = estate_mages_organization_religious }
 		NOT = { has_estate_privilege = estate_artificers_organization_giberd_magisterium_oversight }
 		NOT = { has_country_flag = ravelian_mages_asked }
+		NOT = { has_country_flag = allow_lazzaward_usage } #overclan MT
 	}
 	
 	after = {
@@ -559,6 +502,7 @@ country_event = {
         NOT = { has_country_flag = new_imperial_candidate_gain_magisterium }
         has_estate = estate_mages
         NOT = { has_country_flag = banned_magic }
+        NOT = { has_estate_privilege = estate_mages_organization_magisterium }
 		NOT = { has_estate_privilege = estate_mages_organization_orda_aldresia }
     }    
 	
@@ -586,5 +530,63 @@ country_event = {
 				religion = ravelian
 			}
 		}
+	}
+}
+
+#Choose Organization for Planetouched
+country_event = {
+	id = estate_organization.9
+	title = estate_organization.9.t
+	desc = estate_organization.9.d
+	picture = DHIMMI_ESTATE_eventPicture
+	
+	is_triggered_only = yes
+    trigger = {
+		has_estate = estate_planetouched
+		NOT = { has_planetouched_organization_privilege = yes }
+    }    
+	
+	option = {
+		name = estate_organization.9.a
+		ai_chance = {
+			factor = 1
+		}	
+		set_estate_privilege = estate_planetouched_organization_scattered
+	}
+	option = {
+		name = estate_organization.9.b
+		trigger = {
+			overlord = {
+				has_estate_privilege = estate_planetouched_organization_empowered
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}	
+		set_estate_privilege = estate_planetouched_organization_empowered
+	}
+	option = {
+		name = estate_organization.9.c
+		trigger = {
+			overlord = {
+				has_estate_privilege = estate_planetouched_organization_state
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}	
+		set_estate_privilege = estate_planetouched_organization_state
+	}
+	option = {
+		name = estate_organization.9.e
+		trigger = {
+			overlord = {
+				has_estate_privilege = estate_planetouched_organization_oppressed
+			}
+		}
+		ai_chance = {
+			factor = 10
+		}	
+		set_estate_privilege = estate_planetouched_organization_oppressed
 	}
 }

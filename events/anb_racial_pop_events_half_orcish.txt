@@ -900,10 +900,7 @@ country_event = {
 			}
 			modifier = { #+Evil country stuff
 				factor = 1.5
-				OR = {
-					has_country_modifier = evil_nation
-					has_country_modifier = lich_ruler
-				}
+				is_evil = yes
 			}
 			modifier = { #+If you have a enemy or rival
 				factor = 1.25
@@ -1040,6 +1037,19 @@ country_event = {
 					capital_scope = { superregion = bulwar_superregion }
 				}
 			}
+			
+			#Special Stuff
+			modifier = { #-Special - tolerant Escanni guys who want to integrate half-orcs
+				factor = 0
+				OR = {
+					tag = B02 #Corintar
+					tag = B07 #Sons of Dameria
+					tag = B37 #Rogieria
+					tag = B13 #Stalwart Band
+					was_tag = B13 #edge case where Stalwart Band forms Blademarches - they'd want to stick to their tolerant ideas
+					tag = B47 #Stalbor
+				}
+			}
 
         }
 		hidden_effect = {
@@ -1078,6 +1088,7 @@ country_event = {
 		name = racial_pop_events_all_races.12.c
 		trigger = {
 			has_country_modifier = racial_pop_half_orcish_purge
+			NOT = { has_country_flag = cannot_end_half_orcish_purge }
 			adm_power = 100
 		}
 		
@@ -1172,11 +1183,21 @@ country_event = {
 		name = racial_pop_events_all_races.12.dd
 		trigger = {
 			has_country_modifier = racial_pop_half_orcish_purge
-			NOT = { adm_power = 100 }
+			OR = {
+				NOT = { adm_power = 100 }
+				has_country_flag = cannot_end_half_orcish_purge
+			}
 		}
 		ai_chance = { factor = 0 }
 		custom_tooltip = pop_menu_purge_desc_tt
-		custom_tooltip = pop_menu_cannot_stop_purge_not_enough_adm_tt
+		if = {
+			limit = { has_country_flag = cannot_end_half_orcish_purge }
+			custom_tooltip = purge_cannot_end_tt
+		}
+		if = {
+			limit = { NOT = { adm_power = 100 } }
+			custom_tooltip = pop_menu_cannot_stop_purge_not_enough_adm_tt 
+		}
 		hidden_effect = {
 			country_event = { id = racial_pop_events_half_orcish.24 }
 		}
@@ -1234,10 +1255,7 @@ country_event = {
 			}
 			modifier = { #+Evil country stuff
 				factor = 1.25
-				OR = {
-					has_country_modifier = evil_nation
-					has_country_modifier = lich_ruler
-				}
+				is_evil = yes
 			}
 			modifier = { #+If you have a enemy or rival
 				factor = 1.25
@@ -1353,6 +1371,17 @@ country_event = {
 			modifier = { #+Special - Slave States of The Command encouraged to displace
 				factor = 2
 				is_subject_of_type = slave_state 
+			}
+			modifier = { #-Special - tolerant Escanni guys who want to integrate half-orcs
+				factor = 0
+				OR = {
+					tag = B02 #Corintar
+					tag = B07 #Sons of Dameria
+					tag = B37 #Rogieria
+					tag = B13 #Stalwart Band
+					was_tag = B13 #edge case where Stalwart Band forms Blademarches - they'd want to stick to their tolerant ideas
+					tag = B47 #Stalbor
+				}
 			}
 			modifier = { #-Humanists dont do it
 				factor = 0
@@ -1554,7 +1583,7 @@ country_event = {
 		name = racial_pop_events_all_races.12.z
 		trigger = { ai = no }
 		hidden_effect = {
-			country_event = { id = racial_pop_misc.3 }
+			country_event = { id = racial_pop_misc.1 }
 		}
 	}
 }	
@@ -1566,11 +1595,6 @@ country_event = {
 	title = racial_pop_events_half_orcish.13.t
 	desc = racial_pop_events_half_orcish.13.d
 	picture = REFUGEES_ESCAPING_eventPicture
-	
-	major = yes
-	major_trigger = {
-		is_neighbor_of = ROOT
-	}
 	
 	hidden = yes
 	
@@ -1627,10 +1651,10 @@ country_event = {
 	desc = racial_pop_events_half_orcish.14.d
 	picture = PLAGUE_eventPicture
 	
-	major = yes
-	major_trigger = {
-		is_neighbor_of = ROOT
-	}
+	# major = yes
+	# major_trigger = {
+	# 	is_neighbor_of = FROM
+	# }
 	
 	is_triggered_only = yes
 	
@@ -1655,10 +1679,10 @@ country_event = {
 	desc = racial_pop_events_half_orcish.15.d
 	picture = REFUGEES_ESCAPING_eventPicture
 	
-	major = yes
-	major_trigger = {
-		is_neighbor_of = ROOT
-	}
+	# major = yes
+	# major_trigger = {
+	# 	is_neighbor_of = FROM
+	# }
 	
 	is_triggered_only = yes
 	
@@ -1683,10 +1707,10 @@ country_event = {
 	desc = racial_pop_events_half_orcish.16.d
 	picture = PLAGUE_eventPicture
 	
-	major = yes
-	major_trigger = {
-		is_neighbor_of = ROOT
-	}
+	# major = yes
+	# major_trigger = {
+	# 	is_neighbor_of = FROM
+	# }
 	
 	is_triggered_only = yes
 	
@@ -2333,20 +2357,9 @@ country_event = {
 		event_target:racial_pop_province_origin = {
 			change_culture = ROOT
 			change_religion = ROOT
-			mother_akasik_mountain_control_check = yes
 			add_devastation = 15
 			
-			random_list = {
-				1 = {
-					add_base_tax = -1
-				}
-				1 = {
-					add_base_production = -1
-				}
-				1 = {
-					add_base_manpower = -1
-				}
-			}
+			remove_random_development = yes
 			
 			add_permanent_province_modifier = { name = expulsion_unrest_modifier duration = 18250 }
 		}
@@ -2571,6 +2584,10 @@ country_event = {
 		}
 		
 		large_decrease_of_half_orcish_tolerance_effect = yes
+
+		if = { limit = { has_country_flag = B54_cflag_arbitrary_purges } 
+			B54_se_purge_effect = { gov_power_gained = 5000 }
+		}
 	}
 	
 	option = {		#Special: Evil Purge them entirely
@@ -2594,6 +2611,10 @@ country_event = {
 		}
 		
 		large_decrease_of_half_orcish_tolerance_effect = yes
+
+		if = { limit = { has_country_flag = B54_cflag_arbitrary_purges } 
+			B54_se_purge_effect = { gov_power_gained = 10000 }
+		}
 	}
 	
 }
@@ -2829,7 +2850,6 @@ country_event = {
 			add_devastation = 25
 			change_culture = ROOT
 			change_religion = ROOT
-			mother_akasik_mountain_control_check = yes
 			random_list = {
 				1 = {
 					add_base_tax = -2
@@ -2847,6 +2867,10 @@ country_event = {
 		}
 		
 		large_decrease_of_half_orcish_tolerance_effect = yes
+
+		if = { limit = { has_country_flag = B54_cflag_arbitrary_purges } 
+			B54_se_purge_effect = { gov_power_gained = 15000 }
+		}
 	}
 	
 	
@@ -3132,7 +3156,7 @@ country_event = {
 	option = {		
 		name = racial_pop_events_half_orcish.17.a
 		trigger = {
-			
+			NOT = { AND = { is_or_was_tag = { tag = B54 } has_country_flag = B54_cflag_arbitrary_purges } }
 		}
 		ai_chance = {
 			factor = 50
@@ -3147,7 +3171,19 @@ country_event = {
 		medium_decrease_of_half_orcish_tolerance_effect = yes
 	}
 	
-	
+	option = {
+		name = racial_pop_events_flee_from_B54
+		trigger = { is_or_was_tag = { tag = B54 } has_country_flag = B54_cflag_arbitrary_purges }
+		B54_se_purge_effect = { gov_power_gained = 2500 }		
+
+		#Remove Minority from Origin Province
+		event_target:racial_pop_province_origin = {
+			remove_half_orcish_minority_size_effect = yes
+			add_devastation = 20
+		}
+		
+		large_decrease_of_half_orcish_tolerance_effect = yes
+	}
 }
 
 
@@ -3445,7 +3481,7 @@ country_event = {
 	option = {		
 		name = racial_pop_events_half_orcish.17.a
 		trigger = {
-			
+			NOT = { AND = { is_or_was_tag = { tag = B54 } has_country_flag = B54_cflag_arbitrary_purges } }
 		}
 		ai_chance = {
 			factor = 50
@@ -3459,25 +3495,31 @@ country_event = {
 			add_devastation = 15
 			change_culture = ROOT
 			change_religion = ROOT
-			mother_akasik_mountain_control_check = yes
-			random_list = {
-				1 = {
-					add_base_tax = -1
-				}
-				1 = {
-					add_base_production = -1
-				}
-				1 = {
-					add_base_manpower = -1
-				}
-			}
+			remove_random_development = yes
 			
 		}
 		
 		medium_decrease_of_half_orcish_tolerance_effect = yes
 	}
 	
-	
+	option = {
+		name = racial_pop_events_flee_from_B54
+		trigger = { is_or_was_tag = { tag = B54 } has_country_flag = B54_cflag_arbitrary_purges }
+		B54_se_purge_effect = { gov_power_gained = 7500 }
+
+		#Remove majority from Origin Province
+		event_target:racial_pop_province_origin = {
+
+			hidden_effect = { remove_racial_majority = { race = half_orcish } } # delete immediately so no minority left
+
+			add_devastation = 30
+			change_culture = ROOT
+			change_religion = ROOT
+			remove_random_development = yes
+			
+		}
+		large_decrease_of_half_orcish_tolerance_effect = yes
+	}
 }
 
 

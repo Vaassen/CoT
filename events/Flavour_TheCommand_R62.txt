@@ -74,8 +74,14 @@ country_event = { #Startup Event
 			factor = 1
 		}
 		add_army_professionalism = 0.2
+		add_country_modifier = { name = no_slacken_mod duration = -1 desc = until_end_of_halessi_magic }
 		
 		custom_tooltip = command_mechanics_hint_tt
+
+		if = {
+			limit = { luck = yes }
+			add_country_modifier = { name = command_lucky_offset_mod duration = -1 }
+		}
 	}
 }
 
@@ -165,6 +171,13 @@ country_event = { # The rule of [Root.Monarch.GetName]
 	
 	trigger = {
 		has_reform = hobgoblin_stratocracy_reform
+		NOT = {
+			primary_culture = yak_command
+			AND = {
+				has_country_flag = tsukqiao_is_yak_command
+				tag = R94
+			}
+		}
 	}
 	
 	immediate = {
@@ -2682,6 +2695,35 @@ country_event = { #A universal Command
 		}
 		custom_tooltip = desc_command_the_edict
 	}
+
+	option = {
+		name = the_command.45.b
+		ai_chance = { factor = 1 }
+		trigger = { current_age = age_of_reformation }
+		highlight = yes
+		add_splendor = 800
+		add_prestige = 200
+		override_country_name = THE_SUPREME_COMMAND
+		add_country_modifier = {
+			name = command_the_edict
+			duration = -1
+		}
+		hidden_effect = {
+			every_owned_province = {
+				clr_province_flag = ai_command_wuhyunize_this_province_flag
+				clr_province_flag = ai_command_currently_wuhyunizing_this_province_flag
+				if = {
+					limit = { command_not_yet_wuhyunized = yes }
+					add_province_modifier = {
+						name = command_not_yet_wuhyunized_mod
+						duration = -1
+					}
+				}
+			}
+			set_global_flag = R62_the_edict_of_x_flag
+		}
+		custom_tooltip = desc_command_the_edict
+	}
 }
 
 country_event = { #The Fate of the Oracle
@@ -2695,8 +2737,7 @@ country_event = { #The Fate of the Oracle
 	option = { # Kill the oracle
 		name = the_command.46.a
 		ai_chance = { factor = 1 }
-		add_stability_or_adm_power = yes
-		add_stability_or_adm_power = yes
+		add_2_stability_or_adm_power = yes
 		add_legitimacy_or_monarch_power = { VAL = 30 }
 		
 		# add_country_modifier = {
@@ -2776,6 +2817,7 @@ country_event = { #The Fate of the Oracle
 		add_legitimacy = -20
 		custom_tooltip = command_fate_of_the_oracle_enslave_tt
 		set_country_flag = command_enslaved_the_oracle_flag
+		make_spell_half_off = { school = divination level = 2 id = scry duration = -1 }
 	}
 	option = { # leave the oracle free
 		name = the_command.46.c
@@ -2828,7 +2870,7 @@ country_event = { #The Fate of the Oracle
 country_event = { #Command encroaches on Raj!
 	id = the_command.47
 	title = the_command.47.t
-	desc = the_command.47.desc
+	desc = the_command.47.d
 	picture = LAND_MILITARY_eventPicture
 
 	is_triggered_only = yes
@@ -2836,7 +2878,7 @@ country_event = { #Command encroaches on Raj!
 	option = { #
 		name = the_command.47.a
 		ai_chance = { factor = 1 }
-		raj_cohesion_change_absolute = { amount = -10 }
+		raj_permanent_cohesion_change_bonus = { amount = -5 }
 	}
 }
 
@@ -3121,6 +3163,7 @@ country_event = { #Auto-Wuhyunification pulse
 				tag = R62
 				mission_completed = R62_laws_of_ninun
 				ai = yes
+				NOT = { is_subject = yes }
 				NOT = { has_global_flag = R62_the_edict_of_x_flag }
 			}
 			AND = {
@@ -3328,6 +3371,7 @@ country_event = { #The Korashi Process 3
 			add_permanent_province_modifier = { name = command_chain_workshop duration = -1 }
 			add_building = mage_tower
 		}
+		custom_tooltip = important_korashi_prov_warning_tt
 		if = {
 			limit = { ai = yes }
 			4811 = {
@@ -4198,13 +4242,24 @@ country_event = { #Rise of the Shamans Start (Hidden)
 				V98 = { set_capital = PREV }
 			}
 			country_event = { id = anbennar_setup.3 }
+			change_government = theocracy
 			add_government_reform = magocracy_reform
-			add_country_modifier = { name = mage_rebel_country_mod duration = -1 }
+			adopt_reform_progress = R62
+			add_country_modifier = { name = mage_rebel_country_mod duration = 9125 }
 			add_stability = 3
 			add_treasury = 5000
 			add_manpower = 50
 			declare_war_with_cb = { who = R62 casus_belli = cb_dissolve_command }
 			command_spawn_troops_for_shamans_effect = yes
+		}
+		hidden_effect = {
+			trigger_switch = {
+				on_trigger = has_country_flag
+				shaman_leader_chandra = { V98 = { set_country_flag = shaman_leader_chandra } }
+				shaman_leader_suresh = { V98 = { set_country_flag = shaman_leader_suresh } }
+				shaman_leader_zhongwen = { V98 = { set_country_flag = shaman_leader_zhongwen } }
+			}
+			V98 = { swap_free_idea_group = yes }
 		}
 		country_event = { id = the_command.82 }
 		country_event = { id = the_command.86 days = 100 random = 90 }
@@ -4253,6 +4308,32 @@ country_event = { #Rise of the Shamans End
 		}
 		add_years_of_income = 2
 		add_country_modifier = { name = command_chimera_resurgent duration = 3650 }
+		if = {
+			limit = { has_country_modifier = command_exemplary_leadership }
+			remove_country_modifier = command_exemplary_leadership
+			add_ruler_modifier = {
+				name = command_respected_leadership
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { has_country_modifier = command_respected_leadership }
+			remove_country_modifier = command_respected_leadership
+			add_ruler_modifier = {
+				name = command_legendary_leadership
+				duration = -1
+			}
+		}
+		else_if = {
+			limit = { NOT = { has_country_modifier = command_legendary_leadership } }
+			add_ruler_modifier = {
+				name = command_exemplary_leadership
+				duration = -1
+			}
+		}
+		else = {
+			add_mil_power = 50
+		}
 		hidden_effect = {
 			every_owned_province = {
 				clr_province_flag = command_has_had_shaman_uprising_flag
@@ -4305,40 +4386,24 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 							culture = muthadhaya
 							religion = high_philosophy
 						}
-						add_ruler_personality = mage_personality
 						add_ruler_personality = intricate_web_weaver_personality
 						add_ruler_personality = obsessive_perfectionist_personality
-						define_ruler_to_general = {
-							fire = 3
-							shock = 11
-							manuever = 4
-							siege = 7
-							trait = war_wizard_personality
+						define_powerful_mage = {
+							type = ruler
+							abjuration = 3
+							conjuration = 3
+							divination = 3
+							enchantment = 2
+							evocation = 3
+							illusion = 1
+							transmutation = 2
+							war_wizard = yes
 						}
-						set_ruler_flag = abjuration_3
-						set_ruler_flag = abjuration_2
-						set_ruler_flag = abjuration_1
-						set_ruler_flag = conjuration_3
-						set_ruler_flag = conjuration_2
-						set_ruler_flag = conjuration_1
-						set_ruler_flag = divination_3
-						set_ruler_flag = divination_2
-						set_ruler_flag = divination_1
-						set_ruler_flag = enchantment_2
-						set_ruler_flag = enchantment_1
-						set_ruler_flag = evocation_3
-						set_ruler_flag = evocation_2
-						set_ruler_flag = evocation_1
-						set_ruler_flag = illusion_1
-						set_ruler_flag = necromancy_1
-						set_ruler_flag = transmutation_2
-						set_ruler_flag = transmutation_1
-						set_ruler_flag = initialized_magic_flags
 						add_ruler_modifier = { name = command_chandra_of_many_hands duration = -1 }
 
 						capital_scope = {
 							add_province_modifier = {
-								name = magic_realm_abjuration_empowered_ward
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4361,41 +4426,35 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 							culture = beikling
 							religion = devouring_path
 						}
-						add_ruler_personality = mage_personality
 						add_ruler_personality = scholar_personality
 						add_ruler_personality = zealot_personality
-						define_ruler_to_general = {
-							fire = 3
-							shock = 11
-							manuever = 4
-							siege = 7
-							trait = war_wizard_personality
+						define_powerful_mage = {
+							type = ruler
+							abjuration = 3
+							conjuration = 2
+							divination = 2
+							enchantment = 3
+							evocation = 1
+							illusion = 3
+							necromancy = 2
+							transmutation = 3
+							war_wizard = yes
 						}
-						set_ruler_flag = abjuration_3
-						set_ruler_flag = abjuration_2
-						set_ruler_flag = abjuration_1
-						set_ruler_flag = conjuration_2
-						set_ruler_flag = conjuration_1
-						set_ruler_flag = divination_2
-						set_ruler_flag = divination_1
-						set_ruler_flag = enchantment_3
-						set_ruler_flag = enchantment_2
-						set_ruler_flag = enchantment_1
-						set_ruler_flag = evocation_1
-						set_ruler_flag = illusion_3
-						set_ruler_flag = illusion_2
-						set_ruler_flag = illusion_1
-						set_ruler_flag = necromancy_2
-						set_ruler_flag = necromancy_1
-						set_ruler_flag = transmutation_3
-						set_ruler_flag = transmutation_2
-						set_ruler_flag = transmutation_1
-						set_ruler_flag = initialized_magic_flags
 						add_ruler_modifier = { name = command_zhongwen_of_the_shaded_mists duration = -1 }
+
+						set_country_flag = devouring_temple_secrets
+						set_country_flag = devouring_life_extension_unlocked
+						set_country_flag = devouring_powerful_mage_unlocked
+						set_country_flag = devouring_skill_increase_unlocked
+						set_country_flag = to_devour_chi_locked
+
+						set_ruler_flag = long_lived_ruler
+						set_ruler_flag = dvp_life_extension_1
+						set_ruler_flag = devouring_life_extension
 						
 						capital_scope = {
 							add_province_modifier = {
-								name = magic_realm_abjuration_empowered_ward
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4406,7 +4465,6 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 						override_country_name = THE_STALKING_WAY_REBELLION
 						change_primary_culture = shamadhan
 						change_religion = suhans_praxis
-						change_unit_type = tech_undead
 						define_ruler = {
 							name = "Suresh"
 							dynasty = "of the Stalking Way"
@@ -4417,62 +4475,28 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 							culture = lich
 							religion = suhans_praxis
 						}
-						add_ruler_personality = mage_personality
 						add_ruler_personality = fertile_personality
 						add_ruler_personality = strict_personality
-						define_ruler_to_general = {
-							fire = 3
-							shock = 11
-							manuever = 4
-							siege = 7
-							trait = war_wizard_personality
+						define_powerful_mage = {
+							type = ruler
+							abjuration = 3
+							conjuration = 3
+							divination = 2
+							enchantment = 1
+							evocation = 1
+							illusion = 2
+							necromancy = 3
+							transmutation = 1
+							war_wizard = yes
+							lich = yes
+							witch_king = yes
 						}
-						set_ruler_flag = abjuration_3
-						set_ruler_flag = abjuration_2
-						set_ruler_flag = abjuration_1
-						set_ruler_flag = conjuration_3
-						set_ruler_flag = conjuration_2
-						set_ruler_flag = conjuration_1
-						set_ruler_flag = divination_2
-						set_ruler_flag = divination_1
-						set_ruler_flag = enchantment_1
-						set_ruler_flag = evocation_1
-						set_ruler_flag = illusion_2
-						set_ruler_flag = illusion_1
-						set_ruler_flag = necromancy_3
-						set_ruler_flag = necromancy_2
-						set_ruler_flag = necromancy_1
-						set_ruler_flag = transmutation_1
-						set_ruler_flag = initialized_magic_flags
 
-						ruler_save_spell_schools = yes
-						increase_witch_king_points_large = yes
-						increase_witch_king_points_large = yes
-						increase_witch_king_points_large = yes
-						increase_witch_king_points_large = yes
-						increase_witch_king_points_large = yes
-						set_ruler_flag = is_a_lich
-						set_ruler_flag = is_a_secret_lich
-						set_country_flag = lich_ruler
-						set_country_flag = lich_ruler_has_phylactery
-						set_country_flag = exposed_lich_ruler
-						set_country_flag = lich_ruler_male
-						add_ruler_modifier = {
-							name = lich_ruler
-							duration = -1
-						}
-						if = { limit = { NOT = { has_country_modifier = undead_military } }
-							clear_racial_military = yes
-							add_country_modifier = { name = undead_military duration = -1 hidden = yes }
-						}
-						save_persistent_ruler_personalities = yes
-						ruler_save_spell_schools = yes
-						save_ruler_stats = yes
 						add_country_modifier = { name = command_suresh_of_the_stalking_way duration = -1 }
 						
 						capital_scope = {
 							add_province_modifier = {
-								name = magic_realm_abjuration_empowered_ward
+								name = abjuration_1_ward_mod_3
 								duration = 365
 							}
 						}
@@ -4493,44 +4517,49 @@ country_event = { #Mage Revolt Leader Start (this is what shows up on-screen)
 		switch_tag = V98
 	}
 }
-country_event = { #Conquest of Temple from Shamans
+country_event = { #Re-Conquest of Temple from Shamans
 	id = the_command.83
 	title = the_command.83.t
 	desc = the_command.83.desc
 	picture = HIGH_TEMPLE_CITY_eventPicture
+	goto = temple_area_reconquest_shaman_revolt
 
 	is_triggered_only = yes
 	
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { #has to look right for the tooltip
+					event_target:temple_area_reconquest_shaman_revolt = { is_capital = yes }
+				}
+				V98 = {
+					random_owned_province = {
+						limit = {
+							province_group = temple_province_group
+							NOT = { province_id = event_target:temple_area_reconquest_shaman_revolt }
+						}
+						save_event_target_as = new_capital_shaman_revolt
+					}
+				}
+			}
+		}
+	}
 	option = {
 		name = the_command.83.a
 		ai_chance = { factor = 1 }
-
-		FROM = {
+		
+		event_target:temple_area_reconquest_shaman_revolt = {
 			damage_temple_effect_small = yes
 			add_devastation = 25
-			area = {
+			area = {     
 				cede_province = R62
 				remove_core = V98
+				add_core = R62
 			}
 		}
 		if = {
-			limit = { #has to look right for the tooltip
-				V98 = {
-					any_owned_province = {
-						province_group = temple_province_group
-						NOT = { province_id = FROM }
-					}
-				}
-			}
-			V98 = {
-				random_owned_province = {
-					limit = {
-						province_group = temple_province_group
-						NOT = { province_id = FROM }
-					}
-					V98 = { set_capital = PREV }
-				}
-			}
+			limit = { has_saved_event_target = new_capital_shaman_revolt }
+			V98 = { set_capital = event_target:new_capital_shaman_revolt }
 		}
 	}
 }
@@ -4928,8 +4957,9 @@ country_event = { #The Betrayal of the Oni!
 			V98 = {
 				set_capital = 4633
 				country_event = { id = anbennar_setup.3 }
+				change_government = theocracy
 				add_government_reform = magocracy_reform
-				add_country_modifier = { name = mage_rebel_country_mod duration = -1 }
+				add_country_modifier = { name = mage_rebel_country_mod duration = 9125 }
 				add_stability = 3
 				add_treasury = 10000
 				add_manpower = 100
@@ -4967,37 +4997,31 @@ country_event = { #The Betrayal of the Oni!
 					culture = beikling
 					religion = devouring_path
 				}
-				add_ruler_personality = mage_personality
 				add_ruler_personality = scholar_personality
 				add_ruler_personality = zealot_personality
-				define_ruler_to_general = {
-					fire = 3
-					shock = 11
-					manuever = 4
-					siege = 7
-					trait = war_wizard_personality
+				define_powerful_mage = {
+					type = ruler
+					abjuration = 3
+					conjuration = 2
+					divination = 2
+					enchantment = 3
+					evocation = 1
+					illusion = 3
+					necromancy = 2
+					transmutation = 3
+					war_wizard = yes
 				}
-				set_ruler_flag = abjuration_3
-				set_ruler_flag = abjuration_2
-				set_ruler_flag = abjuration_1
-				set_ruler_flag = conjuration_2
-				set_ruler_flag = conjuration_1
-				set_ruler_flag = divination_2
-				set_ruler_flag = divination_1
-				set_ruler_flag = enchantment_3
-				set_ruler_flag = enchantment_2
-				set_ruler_flag = enchantment_1
-				set_ruler_flag = evocation_1
-				set_ruler_flag = illusion_3
-				set_ruler_flag = illusion_2
-				set_ruler_flag = illusion_1
-				set_ruler_flag = necromancy_2
-				set_ruler_flag = necromancy_1
-				set_ruler_flag = transmutation_3
-				set_ruler_flag = transmutation_2
-				set_ruler_flag = transmutation_1
-				set_ruler_flag = initialized_magic_flags
 				add_ruler_modifier = { name = command_zhongwen_of_the_shaded_mists duration = -1 }
+
+				set_country_flag = devouring_temple_secrets
+				set_country_flag = devouring_life_extension_unlocked
+				set_country_flag = devouring_powerful_mage_unlocked
+				set_country_flag = devouring_skill_increase_unlocked
+				set_country_flag = to_devour_chi_locked
+
+				set_ruler_flag = long_lived_ruler
+				set_ruler_flag = dvp_life_extension_1
+				set_ruler_flag = devouring_life_extension
 				
 				add_country_modifier = {
 					name = azjakuma_rethagi
@@ -5005,6 +5029,7 @@ country_event = { #The Betrayal of the Oni!
 				}
 			}
 			demon_hills_region = {
+				limit = { country_or_non_sovereign_subject_holds = R62 }
 				cede_province = Y01
 				add_core = Y01
 			}
@@ -5020,52 +5045,27 @@ country_event = { #The Betrayal of the Oni!
 					religion = devouring_path
 					female = yes
 				}
-				add_ruler_personality = mage_personality
 				add_ruler_personality = strict_personality
 				add_ruler_personality = cruel_personality
-				define_ruler_to_general = {
-					fire = 3
-					shock = 11
-					manuever = 4
-					siege = 7
-					trait = war_wizard_personality
+				define_powerful_mage = {
+					type = ruler
+					abjuration = 3
+					conjuration = 3
+					divination = 3
+					enchantment = 3
+					evocation = 3
+					illusion = 3
+					necromancy = 2
+					transmutation = 3
+					war_wizard = yes
 				}
-				set_ruler_flag = abjuration_3
-				set_ruler_flag = abjuration_2
-				set_ruler_flag = abjuration_1
-				set_ruler_flag = conjuration_3
-				set_ruler_flag = conjuration_2
-				set_ruler_flag = conjuration_1
-				set_ruler_flag = divination_3
-				set_ruler_flag = divination_2
-				set_ruler_flag = divination_1
-				set_ruler_flag = enchantment_3
-				set_ruler_flag = enchantment_2
-				set_ruler_flag = enchantment_1
-				set_ruler_flag = evocation_3
-				set_ruler_flag = evocation_2
-				set_ruler_flag = evocation_1
-				set_ruler_flag = illusion_3
-				set_ruler_flag = illusion_2
-				set_ruler_flag = illusion_1
-				set_ruler_flag = necromancy_2
-				set_ruler_flag = necromancy_1
-				set_ruler_flag = transmutation_3
-				set_ruler_flag = transmutation_2
-				set_ruler_flag = transmutation_1
-				set_ruler_flag = initialized_magic_flags
 				set_ruler_flag = devouring_life_extension
-				create_subject = {
-					subject_type = oni_governorship
-					subject = V98
-				}
-				add_country_modifier = { name = mage_rebel_country_mod duration = -1 }
+				set_ruler_flag = dvp_life_extension_2
+				add_country_modifier = { name = mage_rebel_country_mod duration = 9125 }
 				declare_war_with_cb = { who = R62 casus_belli = cb_dissolve_command }
+				country_event = { id = the_command.93 } #delays effect
 			}
-			4831 = { add_province_modifier = { name = mage_rebel_temple_mod duration = -1 } add_latest_building = { fort = yes builder = Y01 } }
-			5430 = { add_province_modifier = { name = mage_rebel_temple_mod duration = -1 } add_latest_building = { fort = yes builder = Y01 } }
-			4829 = { add_province_modifier = { name = mage_rebel_temple_mod duration = -1 } add_latest_building = { fort = yes builder = Y01 } }
-			4828 = { add_province_modifier = { name = mage_rebel_temple_mod duration = -1 } add_latest_building = { fort = yes builder = Y01 } }
+			four_starting_shirgrii = { add_province_modifier = { name = mage_rebel_temple_mod duration = -1 } add_latest_building = { fort = yes builder = Y01 } }
 			4833 = { add_latest_building = { fort = yes builder = Y01 } }
 			4815 = { add_latest_building = { fort = yes builder = Y01 } }
 			4901 = { add_latest_building = { fort = yes builder = Y01 } }
@@ -5101,6 +5101,33 @@ country_event = {
 		ai_chance = { factor = 1 }
 
 		add_disaster_progress = { disaster = command_rise_of_the_shamans value = 100 }
+	}
+}
+
+country_event = { #Delayed event to make Shaman-Home an Oni Rethagi
+	id = the_command.93
+	title = the_command.93.t
+	desc = the_command.93.d
+	picture = WESTERNISATION_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = the_command.93.a
+		ai_chance = { factor = 1 }
+
+		create_subject = {
+			subject_type = oni_governorship
+			subject = V98
+		}
+		add_country_modifier = { name = oni_vassalage duration = -1 }
+		add_historical_friend = V98
+		V98 = {
+			add_liberty_desire = -100
+			add_historical_friend = ROOT
+			add_opinion = { who = ROOT modifier = released_vassal }
+		}
 	}
 }
 
@@ -5146,6 +5173,7 @@ country_event = { #Command Dissolution Event
 		add_adm_power = 100
 		add_dip_power = 100
 		add_mil_power = 100
+		add_war_exhaustion = -20
 
 		if = {
 			limit = { FROM = { total_own_and_non_tributary_subject_development = 3000 } }
@@ -5214,7 +5242,7 @@ country_event = { #Command Dissolution Event
 				Y01 = { set_country_flag = eligible_for_unification_war }
 			}
 			if = {
-				limit = { xianjie_region = { owned_by = R62 } }
+				limit = { xianjie_region = { owned_by = R62 } R63 = { is_subject_of = R62 } }
 				xianjie_region = {
 					limit = { owned_by = R62 }
 					cede_province = R63
@@ -5231,7 +5259,7 @@ country_event = { #Command Dissolution Event
 				}
 			}
 			if = {
-				limit = { dhujat_region = { owned_by = R62 } }
+				limit = { dhujat_region = { owned_by = R62 } R64 = { is_subject_of = R62 } }
 				dhujat_region = {
 					limit = { owned_by = R62 }
 					cede_province = R64
@@ -5358,6 +5386,7 @@ country_event = { #Command Dissolution Event
 			}
 			if = {
 				limit = { rahen_superregion = { owned_by = R62 } }
+				if = { limit = { exists = R67 } R67 = { set_country_flag = already_exists } }
 				rahen_superregion = {
 					limit = { owned_by = R62 }
 					cede_province = R67
@@ -5365,7 +5394,11 @@ country_event = { #Command Dissolution Event
 				}
 				R67 = {
 					country_event = { id = anbennar_setup.3 }
-					set_country_flag = eligible_for_unification_war
+					if = {
+						limit = { has_country_flag = already_exists }
+						clr_country_flag = already_exists
+					}
+					else = { set_country_flag = eligible_for_unification_war }
 					random_owned_province = {
 						limit = { has_terrain = city_terrain }
 						R67 = { set_capital = PREV }
@@ -5388,6 +5421,7 @@ country_event = { #Command Dissolution Event
 			}
 			if = {
 				limit = { vimdatrong_superregion = { owned_by = R62 } }
+				if = { limit = { exists = R68 } R68 = { set_country_flag = already_exists } }
 				vimdatrong_superregion = {
 					limit = { owned_by = R62 }
 					cede_province = R68
@@ -5395,7 +5429,11 @@ country_event = { #Command Dissolution Event
 				}
 				R68 = {
 					country_event = { id = anbennar_setup.3 }
-					set_country_flag = eligible_for_unification_war
+					if = {
+						limit = { has_country_flag = already_exists }
+						clr_country_flag = already_exists
+					}
+					else = { set_country_flag = eligible_for_unification_war }
 					random_owned_province = {
 						limit = { has_terrain = city_terrain }
 						R68 = { set_capital = PREV }
@@ -5418,6 +5456,7 @@ country_event = { #Command Dissolution Event
 			}
 			if = {
 				limit = { yanshen_superregion = { owned_by = R62 } }
+				if = { limit = { exists = R69 } R69 = { set_country_flag = already_exists } }
 				yanshen_superregion = {
 					limit = { owned_by = R62 }
 					cede_province = R69
@@ -5425,7 +5464,11 @@ country_event = { #Command Dissolution Event
 				}
 				R69 = {
 					country_event = { id = anbennar_setup.3 }
-					set_country_flag = eligible_for_unification_war
+					if = {
+						limit = { has_country_flag = already_exists }
+						clr_country_flag = already_exists
+					}
+					else = { set_country_flag = eligible_for_unification_war }
 					random_owned_province = {
 						limit = { has_terrain = city_terrain }
 						R69 = { set_capital = PREV }
@@ -5452,6 +5495,8 @@ country_event = { #Command Dissolution Event
 			}
 			if = {
 				limit = { tag = V98 }
+				add_country_modifier = { name = mage_rebel_post_mod duration = 14600 }
+				add_country_modifier = { name = mage_rebel_post_mod_2 duration = 3650 }
 				if = {
 					limit = { exists = R63 R63 = { has_country_flag = eligible_for_unification_war } }
 					create_subject = { subject_type = oni_governorship subject = R63 }
@@ -5494,18 +5539,15 @@ country_event = { #Command Dissolution Event
 				}
 				if = {
 					limit = { exists = R94 }
-					create_subject = { subject_type = oni_governorship subject = R94 }
-					R94 = { change_government = theocracy add_government_reform = magocracy_reform }
+					inherit = R94
 				}
 				if = {
 					limit = { exists = R95 }
-					create_subject = { subject_type = oni_governorship subject = R95 }
-					R95 = { change_government = theocracy add_government_reform = magocracy_reform }
+					inherit = R95
 				}
 				if = {
 					limit = { exists = R96 }
-					create_subject = { subject_type = oni_governorship subject = R96 }
-					R96 = { change_government = theocracy add_government_reform = magocracy_reform }
+					inherit = R96
 				}
 			}
 		}
@@ -5797,6 +5839,7 @@ country_event = { #Whispers From the Rivers
 	immediate = { #immediate so that timing doesn't screw up
 		hidden_effect = {
 			country_event = { id = the_command.111 days = 150 random = 60 }
+			Y89 = { country_event = { id = yuanszi.1 } }
 			R11 = { country_event = { id = khadisrapur.0 days = 15 random = 30 } }
 		}
 	}
@@ -6032,7 +6075,7 @@ country_event = { #Sir asks for help from Xia
 	id = the_command.114
 	title = the_command.114.t
 	desc = the_command.114.desc
-	picture = EUNUCH_ESTATE_eventPicture
+	picture = EUNUCH_ESTATE_upset_eventPicture
 
 	is_triggered_only = yes
 
@@ -6226,6 +6269,8 @@ country_event = { #War of the Three Commands Start
 			limit = { tag = R95 }
 			set_ruler_culture = lion_command
 			command_new_ruler_effect = { command = lion }
+			add_treasury = 100
+			add_manpower = 5
 			capital_scope = {
 				cavalry = ROOT
 				cavalry = ROOT
@@ -6250,12 +6295,34 @@ country_event = { #War of the Three Commands Start
 			limit = { tag = R96 }
 			set_ruler_culture = wolf_command
 			command_new_ruler_effect = { command = wolf }
-			add_treasury = 300
+			add_treasury = 100
+			add_manpower = 8
 			add_mil_tech = 1
 			capital_scope = {
 				cavalry = ROOT
 				cavalry = ROOT
 				cavalry = ROOT
+				infantry = ROOT
+				add_building = regimental_camp
+			}
+			4534 = {
+				add_building = fort_15th
+				add_building = ramparts
+				add_province_modifier = { name = wolf_command_no_move duration = 1825 }
+			}
+			define_general = {
+				fire = 1
+				shock = 5
+				manuever = 3
+				siege = 1
+				name = "Youguang the Adopted Wolfcub"
+			}
+			define_general = {
+				fire = 3
+				shock = 2
+				manuever = 4
+				siege = 3
+				name = "Zhanjun the Adopted Wolfcub"
 			}
 			hire_advisor = {
 				type = natural_scientist
@@ -6272,7 +6339,13 @@ country_event = { #War of the Three Commands Start
 				who = R95
 				casus_belli = cb_three_commands
 			}
+			hidden_effect = { #Sets their units to updated if applicable
+				change_unit_type = tech_raheni
+				change_unit_type = tech_hobgoblin
+			}
 		}
+		add_casus_belli = { target = R65 type = cb_vassalize_mission months = 240 }
+		add_casus_belli = { target = R66 type = cb_vassalize_mission months = 240 }
 	}
 }
 country_event = { #Someone sieged down one of the Sir Revolt participants, request they enforce peace
@@ -6370,20 +6443,6 @@ country_event = { #Sir revolt starts
 			set_country_flag = command_sir_revolt_started
 			every_war_enemy_country = {
 				gronstunad_area = { discover_country = PREV }
-				if = {
-					limit = {
-						all_war_enemy_countries = {
-							is_in_war = { casus_belli = cb_revolt_of_the_north }
-						}
-					}
-					if = {
-						limit = { is_subject = yes }
-						capital_scope = { add_province_modifier = { name = command_defensiveness_for_ai duration = -1 } }
-					}
-					else = {
-						capital_scope = { add_province_modifier = { name = command_trade_power_for_ai duration = -1 hidden = yes } }
-					}
-				}
 			}
 		}
 		if = {
@@ -6394,33 +6453,17 @@ country_event = { #Sir revolt starts
 			}
 			else = { Y01 = { add_truce_with = R78 } }
 		}
-		4323 = { add_province_modifier = { name = command_defensiveness_for_ai duration = -1 } }
-		4350 = { add_province_modifier = { name = command_defensiveness_for_ai duration = -1 } }
-		4521 = { add_province_modifier = { name = command_defensiveness_for_ai duration = -1 } }
-		4628 = { add_province_modifier = { name = command_defensiveness_for_ai duration = -1 } }
-		4630 = { add_province_modifier = { name = command_trade_power_for_ai duration = -1 hidden = yes } }
-		4538 = { add_province_modifier = { name = command_trade_power_for_ai duration = -1 hidden = yes } }
-		4311 = { add_province_modifier = { name = command_trade_power_for_ai duration = -1 hidden = yes } }
-		if = {
-			limit = { #we don't need to put this up above because AI will never swap to Sir
-				ai = yes
-				all_war_enemy_countries = {
-					ai = yes
-				}
-			}
-			set_capital = 4311
-			4352 = { add_building = fort_15th add_province_modifier = { name = command_fake_fort duration = -1 } }
-			4345 = { add_building = fort_15th add_province_modifier = { name = command_fake_fort duration = -1 } }
-		}
 		R63 = { country_event = { id = the_command.131 } }
 		R64 = { country_event = { id = the_command.131 } }
+		4630 = { add_province_triggered_modifier = command_sir_revolt_fallback_ptm } #PTM checks every day
 	}
 
 	option = { #DO NOT PUT THIS STUFF IN THE IMMEDIATE. WHITE PEACE IN THE IMMEDIATE CAUSES A CTD
 		name = the_command.120.a
 		ai_chance = { factor = 1 }
 		custom_tooltip = command_sir_revolt_hint_tt
-		release = R78
+		tooltip = { release = R78 }
+		hidden_effect = { R78 = { every_core_province = { cede_province = R78 } } } #NO CHEESE
 		R78 = {
 			declare_war_with_cb = {
 				who = R62
@@ -6448,6 +6491,8 @@ country_event = { #Sir revolt starts
 					manuever = 3
 					siege = 3
 				}
+				country_event = { id = anbennar_setup.3 }
+				set_capital = 4633
 			}
 			4633 = {
 				add_latest_building = { builder = R78 fort = yes }
@@ -6475,16 +6520,6 @@ country_event = { #Sir revolt starts
 				limit = { has_reform = wulin }
 				create_alliance = R78
 				join_all_offensive_wars_of = R78
-				create_subject = {
-					subject_type = tributary_state_anb
-					subject = R78
-				}
-			}
-			R78 = {
-				add_country_modifier = {
-					name = R78_revolt_loyalty
-					duration = 18250
-				}
 			}
 			every_war_enemy_country = {
 				limit = {
@@ -6500,26 +6535,14 @@ country_event = { #Sir revolt starts
 			R62 = {
 				add_manpower = -10
 			}
-			R78 = {
-				define_general = {
-					shock = 7
-					fire = 2
-					manuever = 1
-					siege = 3
-					female = yes
-					name = "Chiyi Kwaeng"
-					trait = war_wizard_personality
-				}
-			}
+			R78 = { define_war_wizard = { level = 2 name = "Chiyi Kwaeng" female = yes } }
 		}
 		if = {
 			limit = { has_country_flag = command_sir_revolt_rebel_participation }
 			custom_tooltip = command_sir_revolt_rebel_participation_tt
 			hidden_effect = {
 				every_owned_province = {
-					limit = {
-						is_core = R79
-					}
+					limit = { is_core = R79 }
 					cede_province = R79
 				}
 				R79 = {
@@ -6585,20 +6608,25 @@ country_event = { #Sir revolt starts
 				}
 			}
 		}
+		if = {
+			limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+			Y89 = {
+				create_alliance = R78
+				join_all_offensive_wars_of = R78
+			}
+		}
 	}
-	option = {
-		name = the_command.120.b #Play as Sir
+	option = { #Play as Sir
+		name = the_command.120.b
 		ai_chance = { factor = 0 }
 
 		hidden_effect = {
-			release = R78
+			R78 = { every_core_province = { cede_province = R78 } }
 			R78 = {
 				declare_war_with_cb = {
 					who = R62
 					casus_belli = cb_revolt_of_the_north
 				}
-			}
-			R78 = {
 				add_manpower = 10
 				define_ruler = {
 					name = "Deima 'Rusahan'"
@@ -6618,6 +6646,8 @@ country_event = { #Sir revolt starts
 					manuever = 3
 					siege = 3
 				}
+				country_event = { id = anbennar_setup.3 }
+				set_capital = 4633
 			}
 			4633 = {
 				add_latest_building = { builder = R78 fort = yes }
@@ -6660,17 +6690,7 @@ country_event = { #Sir revolt starts
 				R62 = {
 					add_manpower = -10
 				}
-				R78 = {
-					define_general = {
-						shock = 7
-						fire = 2
-						manuever = 1
-						siege = 3
-						female = yes
-						name = "Chiyi Kwaeng"
-						trait = war_wizard_personality
-					}
-				}
+				R78 = { define_war_wizard = { level = 2 name = "Chiyi Kwaeng" female = yes } }
 			}
 			if = {
 				limit = { has_country_flag = command_sir_revolt_rebel_participation }
@@ -6732,6 +6752,13 @@ country_event = { #Sir revolt starts
 					join_all_offensive_wars_of = R78
 				}
 			}
+			if = {
+				limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+				Y89 = {
+					create_alliance = R78
+					join_all_offensive_wars_of = R78
+				}
+			}
 		}
 		switch_tag = R78
 	}
@@ -6744,35 +6771,7 @@ country_event = { #Offer for Truce
 
 	is_triggered_only = yes
 
-	trigger = {
-		is_in_war = {
-			casus_belli = cb_revolt_of_the_north
-		}
-	}
-
-	immediate = {
-		hidden_effect = {
-			if = {
-				limit = {
-					OR = {
-						all_war_enemy_countries = { #you won Sir Revolt due to unconditional surrender
-							OR = {
-								NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-								is_subject = yes
-								capital_scope = { controller = { is_in_war = { casus_belli = cb_revolt_of_the_north defenders = THIS } } }
-							}
-						}
-						AND = { #you lost Sir Revolt due to unconditional surrender
-							4630 = { NOT = { controlled_by = R62 } }
-							4538 = { NOT = { controlled_by = R62 } }
-							4311 = { NOT = { controlled_by = R62 } }
-						}
-					}
-				}
-				country_event = { id = the_command.3003 }
-			}
-		}
-	}
+	trigger = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 
 	#this currently always results in White Peace after 10 years.
 	#In the future it could be warscore dependent,
@@ -6812,10 +6811,13 @@ country_event = { #Truce Offer P2
 		name = the_command.122.a
 		ai_chance = {
 			factor = 1
+			modifier = {
+				factor = 0
+				has_country_flag = sir_no_peace
+			}
 		}
 
 		R62 = {
-			if = { limit = { ai = yes } set_capital = 4630 }
 			if = {
 				limit = { has_country_modifier = command_exemplary_leadership }
 				remove_country_modifier = command_exemplary_leadership
@@ -6826,13 +6828,6 @@ country_event = { #Truce Offer P2
 			set_country_flag = command_sir_revolt_victory
 			custom_tooltip = command_white_peace_everyone_tt
 			hidden_effect = {
-				every_war_enemy_country = {
-					limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-					capital_scope = {
-						remove_province_modifier = command_defensiveness_for_ai
-						remove_province_modifier = command_trade_power_for_ai
-					}
-				}
 				every_war_enemy_country = { #yes you have to do it like this
 					limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 					white_peace = R62
@@ -6850,32 +6845,22 @@ country_event = { #Truce Offer P2
 			clr_country_flag = command_sir_revolt_sarnavan_participation
 			clr_country_flag = command_sir_revolt_parraj_participation
 		}
-		hidden_effect = {
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-		}
 		Y01 = { remove_country_modifier = command_aingjada_elsewhere }
 		shamakhad_region = {
 			limit = { NOT = { R62 = { owns_or_subject_of = PREV } } }
 			remove_province_modifier = command_shamakhadi_resistance
 		}
-		hidden_effect = {
-			R78 = {
-				remove_country_modifier = R78_revolt_loyalty
-				grant_independence = yes
-			}
-		}
+		hidden_effect = { 4630 = { remove_province_triggered_modifier = command_sir_revolt_fallback_ptm } }
 	}
 	option = {
 		name = the_command.122.b
-		ai_chance = { factor = 0 }
+		ai_chance = {
+			factor = 1
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = sir_no_peace }
+			}
+		}
 		
 		add_prestige = 1
 	}
@@ -6888,12 +6873,14 @@ country_event = { #Sir revolt end - Command loss
 
 	is_triggered_only = yes
 	major = yes
+	fire_only_once = yes
 
 	immediate = {
 		every_known_country = {
 			limit = { has_country_flag = sir_revolt_fake_truce_flag }
 			clr_country_flag = sir_revolt_fake_truce_flag
 		}
+		hidden_effect = { 4630 = { remove_province_triggered_modifier = command_sir_revolt_fallback_ptm } }
 	}
 
 	after = {
@@ -6913,26 +6900,10 @@ country_event = { #Sir revolt end - Command loss
 		custom_tooltip = command_sir_revolt_lose_tt
 		tooltip = { kill_ruler = yes }
 		hidden_effect = {
-			every_war_enemy_country = {
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				capital_scope = {
-					remove_province_modifier = command_defensiveness_for_ai
-					remove_province_modifier = command_trade_power_for_ai
-				}
-			}
 			every_war_enemy_country = { #yes you have to do it like this
 				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 				white_peace = R62
 			}
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
 			4630 = {
 				change_religion = high_philosophy
 				change_culture = khedarid
@@ -6957,20 +6928,20 @@ country_event = { #Sir revolt end - Command loss
 			inherit = R64
 			set_capital = 4351 #intentional
 
-			4516 = { cede_province = R11 }
-			4517 = { cede_province = R11 }
-			4518 = { cede_province = R11 }
-			4521 = { cede_province = R11 }
-			4522 = { cede_province = R11 }
+			4516 = { if = { limit = { owned_by = ROOT } cede_province = R11 } }
+			4517 = { if = { limit = { owned_by = ROOT } cede_province = R11 } }
+			4518 = { if = { limit = { owned_by = ROOT } cede_province = R11 } }
+			4521 = { if = { limit = { owned_by = ROOT } cede_province = R11 } }
+			4522 = { if = { limit = { owned_by = ROOT } cede_province = R11 } }
 
-			4523 = { cede_province = R12 }
-			4524 = { cede_province = R12 }
-			4513 = { cede_province = R12 }
-			4507 = { cede_province = R12 }
+			4523 = { if = { limit = { owned_by = ROOT } cede_province = R12 } }
+			4524 = { if = { limit = { owned_by = ROOT } cede_province = R12 } }
+			4513 = { if = { limit = { owned_by = ROOT } cede_province = R12 } }
+			4507 = { if = { limit = { owned_by = ROOT } cede_province = R12 } }
 
-			4624 = { cede_province = R85 }
-			4627 = { cede_province = R85 }
-			4628 = { cede_province = R85 }
+			4624 = { if = { limit = { owned_by = ROOT } cede_province = R85 } }
+			4627 = { if = { limit = { owned_by = ROOT } cede_province = R85 } }
+			4628 = { if = { limit = { owned_by = ROOT } cede_province = R85 } }
 			every_owned_province = {
 				limit = { culture = boar_command }
 				add_core = R94
@@ -7044,12 +7015,6 @@ country_event = { #Sir revolt end - Command loss
 					}
 					country_event = { id = the_command.125 }
 				}
-				hidden_effect = {
-					R78 = {
-						remove_country_modifier = R78_revolt_loyalty
-						grant_independence = yes
-					}
-				}
 			}
 			if = {
 				limit = { has_country_flag = command_sir_revolt_oni_participation }
@@ -7071,6 +7036,10 @@ country_event = { #Sir revolt end - Command loss
 			if = {
 				limit = { has_country_flag = command_sir_revolt_parraj_participation }
 				R09 = { country_event = { id = the_command.125 } }
+			}
+			if = {
+				limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+				Y89 = { country_event = { id = the_command.125 } }
 			}
 			R94 = {
 				define_ruler = {
@@ -7121,7 +7090,7 @@ country_event = { #Sir revolt end - Command loss
 					dip = 3
 					mil = 4
 				}
-				add_ruler_personality = kind_hearted_personality
+				add_ruler_personality = inspiring_leader_personality
 				add_ruler_personality = well_advised_personality
 				set_ai_personality = { personality = ai_balanced locked = yes }
 				add_ruler_modifier = {
@@ -7167,26 +7136,10 @@ country_event = { #Sir revolt end - Command loss
 		ai_chance = { factor = 0 }
 		tooltip = { switch_tag = R94 }
 		hidden_effect = {
-			every_war_enemy_country = {
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				capital_scope = {
-					remove_province_modifier = command_defensiveness_for_ai
-					remove_province_modifier = command_trade_power_for_ai
-				}
-			}
 			every_war_enemy_country = { #yes you have to do it like this
 				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 				white_peace = R62
 			}
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
 			4630 = {
 				change_religion = high_philosophy
 				change_culture = khedarid
@@ -7320,6 +7273,10 @@ country_event = { #Sir revolt end - Command loss
 				limit = { has_country_flag = command_sir_revolt_parraj_participation }
 				R09 = { country_event = { id = the_command.125 } }
 			}
+			if = {
+				limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+				Y89 = { country_event = { id = the_command.125 } }
+			}
 			R94 = {
 				define_ruler = {
 					name = "Zau"
@@ -7369,7 +7326,7 @@ country_event = { #Sir revolt end - Command loss
 					dip = 3
 					mil = 4
 				}
-				add_ruler_personality = kind_hearted_personality
+				add_ruler_personality = inspiring_leader_personality
 				add_ruler_personality = well_advised_personality
 				set_ai_personality = { personality = ai_balanced locked = yes }
 				add_ruler_modifier = {
@@ -7409,26 +7366,10 @@ country_event = { #Sir revolt end - Command loss
 		ai_chance = { factor = 0 }
 		tooltip = { switch_tag = R95 }
 		hidden_effect = {
-			every_war_enemy_country = {
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				capital_scope = {
-					remove_province_modifier = command_defensiveness_for_ai
-					remove_province_modifier = command_trade_power_for_ai
-				}
-			}
 			every_war_enemy_country = { #yes you have to do it like this
 				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 				white_peace = R62
 			}
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
 			4630 = {
 				change_religion = high_philosophy
 				change_culture = khedarid
@@ -7562,6 +7503,10 @@ country_event = { #Sir revolt end - Command loss
 				limit = { has_country_flag = command_sir_revolt_parraj_participation }
 				R09 = { country_event = { id = the_command.125 } }
 			}
+			if = {
+				limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+				Y89 = { country_event = { id = the_command.125 } }
+			}
 			R94 = {
 				define_ruler = {
 					name = "Zau"
@@ -7611,7 +7556,7 @@ country_event = { #Sir revolt end - Command loss
 					dip = 3
 					mil = 4
 				}
-				add_ruler_personality = kind_hearted_personality
+				add_ruler_personality = inspiring_leader_personality
 				add_ruler_personality = well_advised_personality
 				set_ai_personality = { personality = ai_balanced locked = yes }
 				add_ruler_modifier = {
@@ -7651,26 +7596,10 @@ country_event = { #Sir revolt end - Command loss
 		ai_chance = { factor = 0 }
 		tooltip = { switch_tag = R96 }
 		hidden_effect = {
-			every_war_enemy_country = {
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				capital_scope = {
-					remove_province_modifier = command_defensiveness_for_ai
-					remove_province_modifier = command_trade_power_for_ai
-				}
-			}
 			every_war_enemy_country = { #yes you have to do it like this
 				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
 				white_peace = R62
 			}
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
 			4630 = {
 				change_religion = high_philosophy
 				change_culture = khedarid
@@ -7804,6 +7733,10 @@ country_event = { #Sir revolt end - Command loss
 				limit = { has_country_flag = command_sir_revolt_parraj_participation }
 				R09 = { country_event = { id = the_command.125 } }
 			}
+			if = {
+				limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+				Y89 = { country_event = { id = the_command.125 } }
+			}
 			R94 = {
 				define_ruler = {
 					name = "Zau"
@@ -7853,7 +7786,7 @@ country_event = { #Sir revolt end - Command loss
 					dip = 3
 					mil = 4
 				}
-				add_ruler_personality = kind_hearted_personality
+				add_ruler_personality = inspiring_leader_personality
 				add_ruler_personality = well_advised_personality
 				set_ai_personality = { personality = ai_balanced locked = yes }
 				add_ruler_modifier = {
@@ -8010,6 +7943,12 @@ country_event = { #Everyone else victory notification
 					add_dip_power = 100
 					add_mil_power = 100
 				}
+				Y89 = {
+					add_humiliation_reward = yes
+					add_adm_power = 100
+					add_dip_power = 100
+					add_mil_power = 100
+				}
 			}
 		}
 	}
@@ -8022,8 +7961,12 @@ country_event = { #Sir Revolt End - Command Victory
 
 	is_triggered_only = yes
 	major = yes
+	fire_only_once = yes
 
-	immediate = { set_country_flag = command_sir_revolt_victory }
+	immediate = {
+		set_country_flag = command_sir_revolt_victory
+		hidden_effect = { 4630 = { remove_province_triggered_modifier = command_sir_revolt_fallback_ptm } }
+	}
 
 	after = {
 		hidden_effect = { country_event = { id = the_command.130 days = 3650 } } #They Call it Lesser Love
@@ -8053,33 +7996,12 @@ country_event = { #Sir Revolt End - Command Victory
 		ai_chance = { factor = 1 }
 
 		hidden_effect = {
-			every_war_enemy_country = {
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				capital_scope = {
-					remove_province_modifier = command_defensiveness_for_ai
-					remove_province_modifier = command_trade_power_for_ai
-				}
-			}
-			every_war_enemy_country = { #yes you have to do it like this
-				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-				white_peace = R62
-			}
-			4323 = { remove_province_modifier = command_defensiveness_for_ai }
-			4350 = { remove_province_modifier = command_defensiveness_for_ai }
-			4521 = { remove_province_modifier = command_defensiveness_for_ai }
-			4628 = { remove_province_modifier = command_defensiveness_for_ai }
-			4630 = { remove_province_modifier = command_trade_power_for_ai }
-			4538 = { remove_province_modifier = command_trade_power_for_ai }
-			4311 = { remove_province_modifier = command_trade_power_for_ai }
-			if = { limit = { ai = yes } set_capital = 4630 }
-			4352 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
-			4345 = { remove_building = fort_15th remove_province_modifier = command_fake_fort }
 			R78 = { every_owned_province = { add_devastation = 40 } }
 			4633 = { add_base_tax = -4 add_base_production = -4 add_base_manpower = -4 add_devastation = 10 }
 			4630 = { add_base_tax = 3 add_base_production = 2 add_base_manpower = 3 }
 			add_treasury = 500
-			every_known_country = {
-				limit = {
+			add_ae_for_known_countries_with_limit = {
+				limit = "
 					NOT = { is_subject_of = R62 tag = Y01 }
 					capital_scope = {
 						OR = {
@@ -8088,8 +8010,9 @@ country_event = { #Sir Revolt End - Command Victory
 							superregion = vimdatrong_superregion
 						}
 					}
-				}
-				add_aggressive_expansion = { who = R62 value = 6 apply_calc = no }
+				"
+				value = 6
+				apply_calc = no
 			}
 			R78 = {
 				every_owned_province = {
@@ -8132,8 +8055,9 @@ country_event = { #Sir Revolt End - Command Victory
 			limit = { has_country_flag = command_sir_revolt_xia_participation }
 			custom_tooltip = command_sir_revolt_win_vs_xia_tt
 			hidden_effect = {
-				every_known_country = {
-					limit = {
+				add_army_professionalism = 0.05
+				add_ae_for_known_countries_with_limit = {
+					limit = "
 						NOT = { is_subject_of = R62 tag = Y01 }
 						capital_scope = {
 							OR = {
@@ -8142,36 +8066,37 @@ country_event = { #Sir Revolt End - Command Victory
 								superregion = vimdatrong_superregion
 							}
 						}
-					}
-					add_aggressive_expansion = { who = R62 value = 6 apply_calc = no }
+					"
+					value = 6
+					apply_calc = no
 				}
 				4816 = {
 					if = {
-						limit = { owner = { truce_with = R62 NOT = { has_country_flag = sir_revolt_fake_truce_flag } } }
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 					}
 				}
 				4817 = {
 					if = {
-						limit = { owner = { truce_with = R62 NOT = { has_country_flag = sir_revolt_fake_truce_flag } } }
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 					}
 				}
 				4818 = {
 					if = {
-						limit = { owner = { truce_with = R62 NOT = { has_country_flag = sir_revolt_fake_truce_flag } } }
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 					}
 				}
 				4641 = {
 					if = {
-						limit = { owner = { truce_with = R62 NOT = { has_country_flag = sir_revolt_fake_truce_flag } } }
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 					}
 				}
 				4626 = {
 					if = {
-						limit = { owner = { truce_with = R62 NOT = { has_country_flag = sir_revolt_fake_truce_flag } } }
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 					}
 				}
@@ -8195,7 +8120,7 @@ country_event = { #Sir Revolt End - Command Victory
 		if = {
 			limit = { has_country_flag = command_sir_revolt_oni_participation }
 			custom_tooltip = command_sir_revolt_win_vs_oni_tt
-			add_treasury = 200
+			add_treasury = 250
 		}
 		if = {
 			limit = {
@@ -8210,8 +8135,8 @@ country_event = { #Sir Revolt End - Command Victory
 				limit = { has_country_flag = command_sir_revolt_khadisrapur_participation }
 				custom_tooltip = command_sir_revolt_win_vs_khadisrapur_tt
 				hidden_effect = {
-					every_known_country = {
-						limit = {
+					add_ae_for_known_countries_with_limit = {
+						limit = "
 							NOT = { is_subject_of = R62 tag = Y01 }
 							capital_scope = {
 								OR = {
@@ -8220,24 +8145,25 @@ country_event = { #Sir Revolt End - Command Victory
 									superregion = vimdatrong_superregion
 								}
 							}
-						}
-						add_aggressive_expansion = { who = R62 value = 2 apply_calc = no }
+						"
+						value = 2
+						apply_calc = no
 					}
 					4465 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
 					4476 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
 					4515 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
@@ -8247,8 +8173,8 @@ country_event = { #Sir Revolt End - Command Victory
 				limit = { has_country_flag = command_sir_revolt_sarnavan_participation }
 				custom_tooltip = command_sir_revolt_win_vs_sarnavan_tt
 				hidden_effect = {
-					every_known_country = {
-						limit = {
+					add_ae_for_known_countries_with_limit = {
+						limit = "
 							NOT = { is_subject_of = R62 tag = Y01 }
 							capital_scope = {
 								OR = {
@@ -8257,24 +8183,25 @@ country_event = { #Sir Revolt End - Command Victory
 									superregion = vimdatrong_superregion
 								}
 							}
-						}
-						add_aggressive_expansion = { who = R62 value = 2 apply_calc = no }
+						"
+						value = 2
+						apply_calc = no
 					}
 					4509 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
 					4514 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
 					4474 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
@@ -8284,8 +8211,8 @@ country_event = { #Sir Revolt End - Command Victory
 				limit = { has_country_flag = command_sir_revolt_parraj_participation }
 				custom_tooltip = command_sir_revolt_win_vs_parraj_tt
 				hidden_effect = {
-					every_known_country = {
-						limit = {
+					add_ae_for_known_countries_with_limit = {
+						limit = "
 							NOT = { is_subject_of = R62 tag = Y01 }
 							capital_scope = {
 								OR = {
@@ -8294,18 +8221,19 @@ country_event = { #Sir Revolt End - Command Victory
 									superregion = vimdatrong_superregion
 								}
 							}
-						}
-						add_aggressive_expansion = { who = R62 value = 2 apply_calc = no }
+						"
+						value = 2
+						apply_calc = no
 					}
 					4467 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
 					4475 = {
 						if = {
-							limit = { owner = { truce_with = R62 } }
+							limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
 							cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
 						}
 					}
@@ -8316,8 +8244,8 @@ country_event = { #Sir Revolt End - Command Victory
 			limit = { has_country_flag = command_sir_revolt_rebel_participation }
 			custom_tooltip = command_sir_revolt_win_vs_rebel_tt
 			hidden_effect = {
-				every_known_country = {
-					limit = {
+				add_ae_for_known_countries_with_limit = {
+					limit = "
 						NOT = { is_subject_of = R62 tag = Y01 }
 						capital_scope = {
 							OR = {
@@ -8326,8 +8254,9 @@ country_event = { #Sir Revolt End - Command Victory
 								superregion = vimdatrong_superregion
 							}
 						}
-					}
-					add_aggressive_expansion = { who = R62 value = 6 apply_calc = no }
+					"
+					value = 6
+					apply_calc = no
 				}
 				R79 = {
 					capital_scope = { generic_add_race_minority_size_effect = { race = hobgoblin } }
@@ -8358,6 +8287,48 @@ country_event = { #Sir Revolt End - Command Victory
 					}
 				}
 			}			
+		}
+		if = {
+			limit = { has_country_flag = command_sir_revolt_yuanszi_participation }
+			custom_tooltip = command_sir_revolt_win_vs_yuanszi_tt
+			hidden_effect = {
+				add_ae_for_known_countries_with_limit = {
+					limit = "
+						NOT = { is_subject_of = R62 tag = Y01 }
+						capital_scope = {
+							OR = {
+								superregion = rahen_superregion
+								superregion = yanshen_superregion
+								superregion = vimdatrong_superregion
+							}
+						}
+					"
+					value = 2
+					apply_calc = no
+				}
+				4813 = {
+					if = {
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
+						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
+					}
+				}
+				4814 = {
+					if = {
+						limit = { owner = { is_in_war = { casus_belli = cb_revolt_of_the_north } } }
+						cede_province = R62 add_permanent_claim = R62 add_permanent_province_modifier = { name = command_legacy_of_the_revolt duration = 365 }
+					}
+				}
+				add_adm_power = 100
+				add_dip_power = 100
+				add_mil_power = 100
+			}
+		}
+
+		hidden_effect = {
+			every_war_enemy_country = { #so that on_war_won triggers last
+				limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
+				white_peace = R62
+			}
 		}
 	}
 }
@@ -8422,7 +8393,6 @@ country_event = { #Player Xiaken can choose to opt out of the Sir Revolt
 				add_truce_with = ROOT
 			}
 		}
-		capital_scope = { remove_province_modifier = command_defensiveness_for_ai }
 	}
 	
 	option = {
@@ -8432,7 +8402,6 @@ country_event = { #Player Xiaken can choose to opt out of the Sir Revolt
 		R62 = { add_treasury = 100 }
 		white_peace = R62
 		set_country_flag = sir_revolt_fake_truce_flag
-		capital_scope = { remove_province_modifier = command_defensiveness_for_ai }
 	}
 }
 
@@ -8564,7 +8533,7 @@ country_event = { #Extraction
 	}
 }
 
-country_event = { #The End of Raheni Magic
+country_event = { #The End of Halessi Magic
 	id = the_command.152
 	title = the_command.152.t
 	desc = the_command.152.desc
@@ -8576,8 +8545,9 @@ country_event = { #The End of Raheni Magic
 		name = the_command.152.a
 		ai_chance = { factor = 1 }
 		add_stability_or_adm_power = yes
-		add_country_modifier = { name = command_end_of_raheni_magic_mod duration = -1 }
-		custom_tooltip = command_the_end_of_raheni_magic_event_tt
+		add_country_modifier = { name = command_end_of_halessi_magic_mod duration = -1 }
+		remove_country_modifier = no_slacken_mod
+		custom_tooltip = command_the_end_of_halessi_magic_event_tt
 		hidden_effect = { country_event = { id = the_command.153 days = 730 random = 365 } }
 		set_country_flag = rise_of_shamans_disabled
 	}
@@ -8696,7 +8666,7 @@ country_event = { #The Great Culling
 		clr_country_flag = investigated_shamans_in_leadership
 		clr_country_flag = investigated_korashi_sabotage
 		clr_country_flag = investigated_shamans_in_populace
-		set_country_flag = command_end_of_raheni_magic_flag
+		set_country_flag = command_end_of_halessi_magic_flag
 		clr_country_flag = rise_of_shamans_disabled
 		custom_tooltip = command_swap_out_buttons_tt
 	}
@@ -8892,7 +8862,6 @@ province_event = { #The Breaking of Chains
 		OR = {
 			is_neighbor_of = R62
 			war_with = R62
-			controls = ROOT
 		}
 	}
 
@@ -8978,14 +8947,7 @@ country_event = { #War Wizard Escape Handler
 		random_list = {
 			1 = {
 				random_neighbor_country = {
-					limit = {
-						NOT = {
-							has_reform = hobgoblin_stratocracy_reform
-							is_subject_of = R62
-							has_country_flag = banned_magic
-							has_country_flag = LF_mages_banned
-						}
-					}
+					limit = { has_not_banned_magic = yes }
 					country_event = { id = the_command.161 }
 				}
 			}
@@ -8994,23 +8956,13 @@ country_event = { #War Wizard Escape Handler
 					ai = yes
 					any_neighbor_country = {
 						ai = no
-						NOT = {
-							has_reform = hobgoblin_stratocracy_reform
-							is_subject_of = R62
-							has_country_flag = banned_magic
-							has_country_flag = LF_mages_banned
-						}
+						NOT = { has_not_banned_magic = yes }
 					}
 				}
 				random_neighbor_country = {
 					limit = {
 						ai = no
-						NOT = {
-							has_reform = hobgoblin_stratocracy_reform
-							is_subject_of = R62
-							has_country_flag = banned_magic
-							has_country_flag = LF_mages_banned
-						}
+						NOT = { has_not_banned_magic = yes }
 					}
 					country_event = { id = the_command.161 }
 				}
@@ -9055,7 +9007,7 @@ country_event = { #Powerful Mage Escapes the Command!
 		name = the_command.161.a
 		ai_chance = { factor = 1 }
 
-		create_war_wizard_effect = yes
+		create_war_wizard = yes
 	}
 }
 
@@ -9128,8 +9080,6 @@ country_event = { #The Camp of Contrition Part 2
 
 	is_triggered_only = yes
 	
-	immediate = { hidden_effect = { country_event = { id = the_command.166 days = 730 } } }
-
 	option = {
 		name = the_command.165.a
 		ai_chance = { factor = 1 }
@@ -9185,15 +9135,23 @@ country_event = { #The Camp of Contrition Part 2
 			value = 100
 		}
 		custom_tooltip = R62_the_shaman_question_effect_2_tt
+
+		hidden_effect = { country_event = { id = the_command.166 days = 730 } }
 	}
 
 	
 	option = {
 		name = the_command.165.b
-		ai_chance = { factor = 1 }
+		ai_chance = { factor = 0 }
 
-		add_estate_loyalty = { estate = estate_gerunanin loyalty = 40 }
-		custom_tooltip = R62_the_shaman_question_effect_2_tt
+		tooltip = {
+			add_estate_loyalty = { estate = estate_gerunanin loyalty = 100 }
+			remove_estate_privilege = estate_gerunanin_front_line_fodder
+			remove_estate_privilege = estate_gerunanin_mage_powered_explosives
+		}
+		custom_tooltip = R62_the_shaman_question_effect_5_tt
+
+		hidden_effect = { country_event = { id = the_command.171 } }
 	}
 }
 country_event = { #The Camp of Contrition Part 3
@@ -9313,6 +9271,23 @@ country_event = { #Mage Proves Loyalty
 
 		custom_tooltip = R62_new_methods_of_management_effect_2_tt
 		set_country_flag = mage_proves_loyalty_flag
+	}
+}
+
+country_event = { #Gerunanin Bounceback
+	id = the_command.171
+	title = the_command.171.t
+	desc = the_command.171.desc
+	picture = MAMLUK_WARRIORS_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = the_command.171.a
+		ai_chance = { factor = 1 }
+
+		country_event = { id = the_command.165 }
 	}
 }
 
@@ -13261,8 +13236,7 @@ country_event = { #A high level murder
 ###   The Great Insubordination Disaster   ###
 ##############################################
 
-#starts the tickup
-country_event = {
+country_event = { #Insub tickup
 	id = the_command.1984
 	title = the_command.1984.t
 	desc = the_command.1984.d
@@ -13399,11 +13373,11 @@ country_event = {		# Noriko Dragonborn, only lasts for five years
 	is_triggered_only = yes
 
 	trigger = {
+		mission_completed = R62_the_dragon_command
 		num_of_provinces_owned_or_owned_by_non_sovereign_subjects_with = {
 			value = 20
 			superregion = yanshen_superregion
 		}
-		mission_completed = R62_the_dragon_command
 		NOT = { has_country_flag = insubordination_start_flag has_country_flag = insubordination_active_flag }
 		has_estate = estate_dragon_command
 	}
@@ -13704,7 +13678,13 @@ country_event = {		# oni choice for ultimatum, AI only
 
 	option = {		# Submit, AI will always choose this.
 		name = the_command.1979.a
-		ai_chance = { factor = 1 }
+		trigger = {
+			OR = {
+				ai = no
+				is_subject = no
+				is_subject_of = R62
+			}
+		}
 		add_prestige = -20
 		R62 = {
 			white_peace = Y01
@@ -13716,7 +13696,15 @@ country_event = {		# oni choice for ultimatum, AI only
 	}
 	option = {		# WE CAN TAKE EM
 		name = the_command.1979.b
-		ai_chance = { factor = 0 }
+		trigger = {
+			OR = {
+				ai = no
+				NOT = {
+					is_subject = no
+					is_subject_of = R62
+				}
+			}
+		}
 		reverse_add_casus_belli = {
 			target = R62
 			type = cb_vassalize_mission
@@ -14001,14 +13989,7 @@ country_event = { # spawning the tiger command
 	fire_only_once = yes
 
 	mean_time_to_happen = {
-		months = 2
-		modifier = {
-			factor = 0.1
-			has_disaster_progress = {
-				disaster = command_insubordination
-				value = 80
-			}
-		}
+		days = 1 #THIS IS AN MTTH EVENT
 	}
 
 	trigger = {
@@ -14136,10 +14117,10 @@ country_event = { # spawning the tiger command
 					name = "Mishya Tigerborn"
 				}
 				define_general = {
-					shock = 7
-					fire = 2
+					shock = 6
+					fire = 4
 					manuever = 6
-					siege = 2
+					siege = 3
 					name = "Kabkuri 'of the Raj' Tigerborn"
 				}
 				define_ruler = {
@@ -14436,14 +14417,7 @@ country_event = { # spawning the elephant command
 	fire_only_once = yes
 
 	mean_time_to_happen = {
-		months = 2
-		modifier = {
-			factor = 0.1
-			has_disaster_progress = {
-				disaster = command_insubordination
-				value = 85
-			}
-		}
+		days = 1 #THIS IS AN MTTH EVENT
 	}
 
 	trigger = {
@@ -14836,14 +14810,7 @@ country_event = { # spawning the dragon command
 	fire_only_once = yes
 
 	mean_time_to_happen = {
-		months = 2
-		modifier = {
-			factor = 0.1
-			has_disaster_progress = {
-				disaster = command_insubordination
-				value = 85
-			}
-		}
+		days = 1 #THIS IS AN MTTH EVENT
 	}
 
 	trigger = {
@@ -15317,10 +15284,15 @@ country_event = { # disaster kicks off.
 					}
 				}
 			}
-			country_event = { id = the_command.1977 days = 1 random = 364 }					#Oni Revolt
-			R81 = { country_event = { id = the_command.2011 days = 1 random = 364 } }		#Jade March Demands Autonomy
-			country_event = { id = the_command.2000 days = 365 random = 720 }				#Oni Spies
-			country_event = { id = the_command.2005 days = 720 random = 720 }				#Wuhyun Half-Orc Mercs
+			country_event = { id = the_command.1977 days = 1 random = 364 }				#Oni Revolt
+			R81 = { country_event = { id = the_command.2011 days = 1 random = 364 } }	#Jade March Demands Autonomy
+			country_event = { id = the_command.2000 days = 365 random = 720 }			#Oni Spies
+			country_event = { id = the_command.2005 days = 720 random = 720 }			#Wuhyun Half-Orc Mercs
+			4630 = { #Account for unconditional surrender
+				add_province_triggered_modifier = command_kill_tiger_fallback
+				add_province_triggered_modifier = command_kill_elephant_fallback
+				add_province_triggered_modifier = command_kill_dragon_fallback
+			}
 		}
 	}
 
@@ -15994,6 +15966,7 @@ country_event = { # Fall of the Tiger Command
 
 	fire_only_once = yes
 	is_triggered_only = yes
+	immediate = { hidden_effect = { 4630 = { remove_province_triggered_modifier = command_kill_tiger_fallback } } }
 
 	option = {
 		name = the_command.1994.a
@@ -16077,6 +16050,7 @@ country_event = { # Fall of the Elephant Command
 
 	fire_only_once = yes
 	is_triggered_only = yes
+	immediate = { hidden_effect = { 4630 = { remove_province_triggered_modifier = command_kill_elephant_fallback } } }
 
 	option = {
 		name = the_command.1995.a
@@ -16167,6 +16141,7 @@ country_event = { # Fall of the Dragon Command
 
 	fire_only_once = yes
 	is_triggered_only = yes
+	immediate = { hidden_effect = { 4630 = { remove_province_triggered_modifier = command_kill_dragon_fallback } } }
 
 	option = {
 		name = the_command.1996.a
@@ -16325,10 +16300,7 @@ country_event = { #The Demon Exorcised
 		}
 		hidden_effect = {
 			Y01 = { kill_ruler = yes }
-			4831 = { add_base_tax = -1 add_base_production = -1 add_base_manpower = -1 }
-			5430 = { add_base_tax = -1 add_base_production = -1 add_base_manpower = -1 }
-			4829 = { add_base_tax = -1 add_base_production = -1 add_base_manpower = -1 }
-			4828 = { add_base_tax = -1 add_base_production = -1 add_base_manpower = -1 }
+			four_starting_shirgrii = { add_base_tax = -1 add_base_production = -1 add_base_manpower = -1 }
 		}
 	}
 }
@@ -16794,48 +16766,15 @@ country_event = { # wuhyun half-orc mercenaries
 	}
 }
 
-country_event = { # you lost, dang I was rooting for you
-	id = the_command.2009
-	title = the_command.2009.t
-	desc = the_command.2009.d
-	picture = LOOMING_DEATH_eventPicture
-
-	hidden = yes
-	fire_only_once = yes
-	is_triggered_only = yes
-
-	trigger = {
-		tag = R62
-		has_country_flag = insubordination_active_flag
-		capital_scope = {
-			NOT = {
-				controlled_by = R62
-			}
-		}
-		OR = {
-			R67 = { war_score_against = { who = R62 value = 90 } }
-			R68 = { war_score_against = { who = R62 value = 90 } }
-			R69 = { war_score_against = { who = R62 value = 90 } }
-			NOT = { war_score = -90 } #edge case where you peaced out or smth
-		}
-	}
-
-	option = {
-		name = the_command.2009.a
-		ai_chance = { factor = 1 }
-		set_country_flag = insubordination_bad
-	}
-}
-
 country_event = { # disaster ends
 	id = the_command.2010
 	title = the_command.2010.t
 	desc = {
-		trigger = { NOT = { has_country_flag = insubordination_bad } }
+		trigger = { NOT = { exists = R67 exists = R68 exists = R69 } }
 		desc = the_command.2010.d
 	}
 	desc = {
-		trigger = { has_country_flag = insubordination_bad }
+		trigger = { OR = { exists = R67 exists = R68 exists = R69 } }
 		desc = the_command.2010.d.2
 	}
 	picture = LAND_MILITARY_eventPicture
@@ -16844,6 +16783,11 @@ country_event = { # disaster ends
 
 	immediate = {
 		hidden_effect = {
+			4630 = {
+				remove_province_triggered_modifier = command_kill_tiger_fallback
+				remove_province_triggered_modifier = command_kill_elephant_fallback
+				remove_province_triggered_modifier = command_kill_dragon_fallback
+			}
 			set_country_flag = insubordination_complete
 			clr_country_flag = insubordination_active_flag
 			clr_country_flag = gobbos_will_remember_this_flag
@@ -16917,7 +16861,7 @@ country_event = { # disaster ends
 	option = { # good ending
 		name = the_command.2010.a
 		ai_chance = { factor = 1 }
-		trigger = { NOT = { has_country_flag = insubordination_bad } }
+		trigger = { NOT = { exists = R67 exists = R68 exists = R69 } }
 		add_legitimacy_or_monarch_power = { VAL = 100 }
 		add_army_professionalism = 0.25
 		add_war_exhaustion = -10
@@ -16929,7 +16873,7 @@ country_event = { # disaster ends
 	option = { # bad ending
 		name = the_command.2010.b
 		ai_chance = { factor = 1 }
-		trigger = { has_country_flag = insubordination_bad }
+		trigger = { OR = { exists = R67 exists = R68 exists = R69 } }
 		add_stability = -2
 		kill_ruler = yes
 		if = {
@@ -16976,7 +16920,7 @@ country_event = {	# jade march demands autonomy - jade march version
 	option = {		# we want freedom
 		name = the_command.2011.a
 		ai_chance = { factor = 3 }
-		custom_tooltip = "We will send a letter to Grand Marshal, only time will tell if they'll accept."
+		custom_tooltip = the_command.2011.a_tt
 		hidden_effect = { R62 = { country_event = { id = the_command.1997 } } }
 	}
 	option = {		# I don't wanna be free
@@ -17065,14 +17009,6 @@ country_event = {
 		
 	is_triggered_only = yes
 	hidden = yes
-	trigger = {
-		NOT = {
-			AND = {
-				tag = R81
-				is_subject_of_type = autonomous_vassal
-			}
-		}
-	}
 		
 	option = {
 		name = the_command.3000.a
@@ -17094,10 +17030,10 @@ country_event = {
 		hidden = yes
 
 		option = {
-				name = the_command.3001.a
-				ai_chance = { factor = 1 }
-
-				overlord = { create_subject = { subject_type = vassal subject = ROOT } }
+			name = the_command.3001.a
+			ai_chance = { factor = 1 }
+			
+			overlord = { create_subject = { subject_type = vassal subject = ROOT } }
 		}
 }
 
@@ -17113,11 +17049,9 @@ country_event = { #Force Command AI to do stuff
 	trigger = {
 		ai = yes
 		NOT = {
-			OR = {
-				R67 = { is_subject_of = ROOT }
-				R68 = { is_subject_of = ROOT }
-				R69 = { is_subject_of = ROOT }
-			}
+			overlord_of = R67
+			overlord_of = R68
+			overlord_of = R69
 		}
 	}
 
@@ -17125,27 +17059,6 @@ country_event = { #Force Command AI to do stuff
 		name = the_command.3002.a
 		ai_chance = { factor = 1 }
 		command_force_progress_campaign_multiple_effect = yes
-		random_owned_province = { #build forts dummy
-			limit = {
-				has_terrain = city_terrain
-				has_fort_building_trigger = no
-			}
-			if = {
-				limit = { R62 = { mil_tech = 24 } }
-				add_building_construction = { building = fort_18th speed = 1 cost = 1 }
-			}
-			else_if = {
-				limit = { R62 = { mil_tech = 19 } }
-				add_building_construction = { building = fort_17th speed = 1 cost = 1 }
-			}
-			else_if = {
-				limit = { R62 = { mil_tech = 14 } }
-				add_building_construction = { building = fort_16th speed = 1 cost = 1 }
-			}
-			else = {
-				add_building_construction = { building = fort_15th speed = 1 cost = 1 }
-			}
-		}
 		every_owned_province = {
 			if = {
 				limit = { NOT = { has_construction = any } }
@@ -17172,91 +17085,6 @@ country_event = { #Force Command AI to do stuff
 	}
 }
 
-country_event = { #Debug event that triggers every year
-	id = the_command.3003
-	title = the_command.3003.t
-	desc = the_command.3003.d
-	picture = GOOD_WITH_MONARCH_eventPicture
-
-	is_triggered_only = yes
-	hidden = yes
-
-	trigger = {
-		tag = R62
-		OR = {
-			AND = { #Insubordination won via unconditional surrender
-				has_country_flag = insubordination_active_flag
-				OR = {
-					R67 = { capital_scope = { controlled_by = R62 } }
-					R68 = { capital_scope = { controlled_by = R62 } }
-					R69 = { capital_scope = { controlled_by = R62 } }
-				}
-			}
-			AND = { #Sir Revolt bugtest
-				has_country_flag = command_sir_revolt_started
-				OR = {
-					all_war_enemy_countries = { #you won Sir Revolt due to unconditional surrender
-						OR = {
-							NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-							is_subject = yes
-							capital_scope = { controller = { is_in_war = { casus_belli = cb_revolt_of_the_north defenders = THIS } } }
-						}
-					}
-					AND = { #you lost Sir Revolt due to unconditional surrender
-						4630 = { NOT = { controlled_by = R62 } }
-						4538 = { NOT = { controlled_by = R62 } }
-						4311 = { NOT = { controlled_by = R62 } }
-					}
-				}
-			}
-		}
-	}
-
-	option = {
-		name = the_command.3003.a
-		ai_chance = { factor = 1 }
-
-		if = { #Calm Down Sir
-			limit = { has_country_flag = command_sir_revolt_started }
-			if = {
-				limit = { #You won Sir Revolt due to unconditional surrender
-					all_war_enemy_countries = {
-						OR = {
-							NOT = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
-							is_subject = yes
-							capital_scope = { controller = { is_in_war = { casus_belli = cb_revolt_of_the_north defenders = THIS } } }
-						}
-					}
-				}
-				country_event = { id = the_command.126 }
-			}
-			else_if = {
-				limit = { #You lost Sir Revolt due to unconditional surrender
-					4630 = { NOT = { controlled_by = R62 } }
-					4538 = { NOT = { controlled_by = R62 } }
-					4311 = { NOT = { controlled_by = R62 } }
-				}
-				country_event = { id = the_command.123 }
-			}
-		}
-		if = {
-			limit = { has_country_flag = insubordination_active_flag }
-			if = {
-				limit = { R67 = { capital_scope = { controlled_by = R62 } } }
-				country_event = { id = the_command.1994 }
-			}
-			if = {
-				limit = { R68 = { capital_scope = { controlled_by = R62 } } }
-				country_event = { id = the_command.1995 }
-			}
-			if = {
-				limit = { R69 = { capital_scope = { controlled_by = R62 } } }
-				country_event = { id = the_command.1996 }
-			}
-		}
-	}
-}
-
 country_event = { #AI Command cedes Serpentspine to Jade March
 	id = the_command.3004
 	title = the_command.3004.t
@@ -17273,6 +17101,113 @@ country_event = { #AI Command cedes Serpentspine to Jade March
 		east_serpentspine_superregion = {
 			limit = { owned_by = ROOT }
 			cede_province = R81
+		}
+	}
+}
+
+country_event = { #Sir Revolt peacing out vassals who break free
+	id = the_command.3005
+	title = the_command.3005.t
+	desc = the_command.3005.d
+	picture = GOOD_WITH_MONARCH_eventPicture
+
+	is_triggered_only = yes
+	hidden = yes
+
+	option = {
+		name = the_command.3005.a
+		ai_chance = { factor = 1 }
+
+		every_war_enemy_country = {
+			limit = { is_in_war = { casus_belli = cb_revolt_of_the_north } }
+			white_peace = ROOT
+		}
+	}
+}
+#The Command meets Eagle Command
+country_event = { 
+	id = the_command.4001
+	title = the_command.4001.t
+	desc = the_command.4001.d
+	picture = ONI_THINK_HOBGOBLIN_eventPicture
+
+	fire_only_once = yes
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			every_country = {
+				limit = {
+					primary_culture = eagle_command
+					religion = eagle_worship
+				}
+				country_event = { id = the_command.4002 }
+				}
+			}
+		}
+
+	option = {
+		name = the_command.4001.a
+		custom_tooltip = command_rivalry_eagle
+		add_country_modifier = {
+			name = command_shamanic_paranoia
+			duration = 7300
+		}
+		custom_tooltip = command_claim_eagle
+		hidden_effect = {
+			every_province = {
+				limit = {
+					culture = eagle_command
+					religion = eagle_worship
+				}
+				add_permanent_claim = ROOT
+			}
+		}
+	}
+	option = {
+		name = the_command.4001.b
+		custom_tooltip = command_rivalry_eagle
+		add_country_modifier = {
+			name = command_shamanic_paranoia
+			duration = 7300
+		}
+		add_country_modifier = {
+			name = command_preparing_confrontation
+			duration = 3600
+		}
+	}
+}
+
+#Eagle Command met The Command
+country_event = { 
+	id = the_command.4002
+	title = the_command.4002.t
+	desc = the_command.4002.d
+	picture = ONI_FORTRESS_eventPicture
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			R62 = {
+				add_historical_rival = ROOT
+				add_opinion = {
+				who = ROOT
+				modifier = hobgoblin_first_contact
+				}
+			}
+		}
+	}
+	option = {
+		name = the_command.4002.a
+		add_historical_rival = R62
+		add_opinion = {
+			who = R62
+			modifier = hobgoblin_first_contact
+		}
+		add_country_modifier = {
+			name = command_the_righteous_army
+			duration = 7300
 		}
 	}
 }
