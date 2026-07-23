@@ -131,9 +131,9 @@ NDiplomacy = {
 	HRE_FOREIGN_CONTROL_PENALTY = -0.005,			-- Each foreign-controlled province in the empire (owned or vassalised) lowers IA by this amount
 	HRE_HERETIC_PENALTY = -0.01,					-- Per heretic prince (halved by Peace of Westphalia)
 	LACK_OF_ELECTORS_HIT = -0.1,					-- Also applied to vassalized electors
-	JOIN_HRE_DEVELOPMENT_CAP_VASSAL = 200,			-- Max cap of development of vassals to join the empire
+	JOIN_HRE_DEVELOPMENT_CAP_VASSAL = 2000,			-- Max cap of development of vassals to join the empire
 	IMPERIAL_REFORM_COST = 50,						-- Minium Cost of enacting a new reform.
-	IMPERIAL_REFORM_AUTHORITY_ACCEPTANCE = 1,		-- How much acceptance for each authority above IMPERIAL_REFORM_COST
+	IMPERIAL_REFORM_AUTHORITY_ACCEPTANCE = 2,		-- How much acceptance for each authority above IMPERIAL_REFORM_COST
 	CELESTIAL_EMPIRE_REFORM_COST = 70,				-- Mandate cost of enacting a new reform for the Emperor of China.
 	CELESTIAL_EMPIRE_REFORM_STABILITY_COST = 1,		-- Stability cost of enacting a new reform for the Emperor of China
 	CELESTIAL_EMPIRE_REFORM_MIN_VALUE = 80,		-- Minimum value of Mandate above which new reforms can be enacted.
@@ -504,7 +504,7 @@ NCountry = {
 	SPLENDOR_ABILITY_COST = 800,
 	PROSPERITY_MONTHLY_DECLINE = -2,				-- monthly tick
 	PROSPERITY_INCREASE_SIZE= 1,				-- if diceroll of d20< monarch stat, while possible ot increase
-	CORRUPTION_FROM_BANNERS = 0.1,
+	CORRUPTION_FROM_BANNERS = 0.0,
 	FORCE_CONVERT_COOLDOWN_DURATION = 10,				-- Years
 
 
@@ -1443,7 +1443,7 @@ NMilitary = {
 	BATTLE_DAILY_MORALE_DAMAGE = 0.01,				-- Deployed troops take this fraction of their maximum morale as damage
 	RESERVE_DAILY_MORALE_DAMAGE = 0.02,				-- Reserve troops take this fraction of their maximum morale as damage (modified by reserves_organisation)
 	CREATE_JANISSARIES_MIL_COST = 5,				-- (Anbennar) pdx: 3 Cost to create janissaries (per unit)
-	CREATE_CAWA_MIL_COST = 2,						-- Cost to create Cawa (per unit)
+	CREATE_CAWA_MIL_COST = 5,						-- Cost to create Cawa (per unit)
 	CREATE_HUSSARS_MIL_COST = 10;					-- (Anbennar) pdx: 0 (Mythical Riders) Cost to create Hussars (per unit)
 	COSSACKS_MAXIMUM_RATIO = 1.0,					-- Maximum number of Cossacks regiments, relative to force limit
 	REVOLUTIONARY_GUARD_MAXIMUM_RATIO = 1.0,			-- Maximum number of Revolutionary Guard regiments, relative to force limit
@@ -1501,7 +1501,7 @@ NMilitary = {
 	GEOBUKSEON_STARTING_MORALE = 1, 
 
 	MAN_OF_WAR_USES_CONSTRUCTION = 1,
-	MAN_OF_WAR_BASE_COST_MODIFIER = 1.0,
+	MAN_OF_WAR_BASE_COST_MODIFIER = 1.25,
 	MAN_OF_WAR_SAILORS_COST_MODIFIER = 1.0,
 	MAN_OF_WAR_STARTING_STRENGTH = 1.0,
 	MAN_OF_WAR_STARTING_MORALE = 1, 
@@ -1547,7 +1547,7 @@ NMilitary = {
 	STRELTSY_MANPOWER_COST_MODIFIER = 1.0,
 	STRELTSY_STARTING_MORALE = 1, 
 
-	BANNER_USES_CONSTRUCTION = 0,
+	BANNER_USES_CONSTRUCTION = 1,                   -- Anbennar, changed this to 1
 	STRELTSY_USES_CONSTRUCTION = 1,
 	COSSACKS_USES_CONSTRUCTION = 1,
 	JANISSARIES_USES_CONSTRUCTION = 1,				-- Anbennar, changed this to 1

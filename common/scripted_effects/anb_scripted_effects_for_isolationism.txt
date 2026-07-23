@@ -10,12 +10,18 @@ increase_nsc_isolation_level = {
 			limit = {
 				OR = {
 					AND = {
-						is_chosen_country = yes
 						isolationism = 4
+						OR = {
+							is_chosen_country = yes
+							AND = {
+								is_or_was_tag = { tag = F80 }
+								mission_completed = F80_mission_divine_duties_fulfilled
+							}
+						}
 					}
 					AND = {
-						NOT = { is_chosen_country = yes }
 						isolationism = 3
+						NOT = { is_chosen_country = yes }
 					}
 				}
 			}
@@ -69,6 +75,18 @@ decrease_nsc_isolation_level = {
 	}
 }
 
+#Role Increase is negative value, Role Decrease positive value (Gilly's way of doing it)
+nsc_update_incident_value = { 
+	[[increase]
+		custom_tooltip = nsc_chosen_role_up_tt
+		add_incident_variable_value = { incident = $incident$ value = -1 }
+	]
+	[[decrease]
+		custom_tooltip = nsc_chosen_role_down_tt
+		add_incident_variable_value = { incident = $incident$ value = 1 }
+	]
+}
+
 update_nsc_level_secondary_effects = { 								#This effect can be triggered by a NSC level change. a new ruler. a vassalisation. an overlord's new ruler or a conversion
 	if = {
 		limit = {
@@ -113,7 +131,7 @@ update_nsc_level_secondary_effects = { 								#This effect can be triggered by 
 		else_if = { limit = { isolationism = 2 } 					# = level 3 in the loc/interface
 			remove_country_modifier = NSC_level_3
 			# country_event = { id = new_sun_cult.1 } 				#humans gets the clergy privilege back
-			country_event = { id = new_sun_cult.2 } 				#lose elven mil
+			# country_event = { id = new_sun_cult.2 } 				#lose elven mil
 		}
 		else_if = { limit = { isolationism = 1 } 					# = level 2 in the loc/interface
 			remove_country_modifier = NSC_level_0
@@ -145,6 +163,15 @@ refresh_nsc_incidents_ui = {
 			religion = bulwari_sun_cult
 			has_dlc = "Mandate of Heaven"
 		}
+		#This and below is done because, adventurers have the monastic attribute which affects your devotion when changing religions
+		#Thus NSC adventurers would basically have their devotion set to 0 whenever this is called
+		if = {
+			limit = { has_adventurer_reform = yes }
+			export_to_variable = {
+				which = nsc_devotion
+				value = trigger_value:devotion
+			}
+		}
 		set_country_flag = updating_isolationism_window
 		if = { limit = { is_defender_of_faith = yes } set_country_flag = updating_isolationism_dotf }
 		change_religion = etchings_of_the_deep
@@ -155,6 +182,15 @@ refresh_nsc_incidents_ui = {
 			clr_country_flag = updating_isolationism_dotf
 		}
 		clr_country_flag = updating_isolationism_window
+		#See above for reason
+		if = {
+			limit = { has_adventurer_reform = yes }
+			var_effect = {
+				var = nsc_devotion
+				effect = add_devotion
+				sign = +
+			}
+		}
 	}
 }
 
@@ -169,9 +205,12 @@ end_all_nsc_incidents = {
 	end_incident = incident_silent_as_the_grave
 	end_incident = incident_rise_of_artificery
 	end_incident = incident_spread_of_ravelianism
-	end_incident = incident_teachings_szal_fazil
+	end_incident = incident_rebirth_magic
 	end_incident = incident_thirteenth_night
 	end_incident = incident_whisper_shadows
+	end_incident = incident_F80_kings_queens_kneeling
+	end_incident = incident_trapped_in_shadows
+	end_incident = incident_one_sun
 	
 	clr_country_flag = active_nsc_incident_flag
 	
@@ -221,10 +260,7 @@ end_all_nsc_incidents = {
 	clr_country_flag = nsc_lucian_carter_in_our_lands
 	clr_country_flag = nsc_lucian_carter_happened
 	every_owned_province = { clr_province_flag = denied_ravelian_society }
-	
-	#szal-fazil
-	clr_country_flag = nsc_human_country_magic_prohibition
-	
+		
 	#Silent as the grave
 	clr_country_flag = nsc_first_calamity
 	clr_country_flag = nsc_second_calamity
@@ -290,107 +326,6 @@ end_all_nsc_incidents = {
 	remove_country_modifier = nsc_third_calamity_modifier
 	remove_country_modifier = nsc_fifth_calamity_modifier
 }
-
-#For the disasters
-
-# nsc_disaster_province_conversion_effect = {
-	# if = {
-		# limit = {
-			# OR = {
-				# religion = old_bulwari_sun_cult
-				# religion = the_jadd
-			# }
-		# }
-		# set_province_flag = dukeldar_conversion
-	# }
-	# else_if = { limit = { religion = bulwari_sun_cult }
-		# if = { limit = { has_province_flag = dukeldar_conversion }
-			# owner = {
-				# export_to_variable = { which = numOfCitiesVar value = num_of_cities }
-				# if = { limit = { check_variable = { which = numOfCitiesVar value = 30 } }
-					# set_variable = { which = numOfCitiesVar value = 30 }
-				# }
-				# set_variable = { which = tempNscDisasterScoreVar value = 30 }
-				# divide_variable = { which = tempNscDisasterScoreVar which = numOfCitiesVar }
-				# change_variable = { which = nscDisasterConversionScoreVar which = tempNscDisasterScoreVar }
-			# }
-		# }
-	# }
-	# else = {
-		# clr_province_flag = dukeldar_conversion
-	# }
-# }
-
-# nsc_update_monthly_disaster_score = {
-	# set_variable = { which = monthlyNscDisasterScoreVar value = 0 }
-	# if = { limit = { employed_advisor = { category = ADM } }
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 0.25 }
-	# }
-	# if = { limit = { employed_advisor = { category = DIP } }
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 0.25 }
-	# }
-	# if = { limit = { employed_advisor = { category = MIL } }
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 0.25 }
-	# }
-	# if = { limit = { stability = 1 }
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 0.5 }
-	# }
-	# if = { limit = { stability = 3 }
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 1 }
-	# }
-	# if = { limit = { has_disaster = nsc_dinam_elutur }
-		# if = { limit = { estate_loyalty = { estate = estate_church loyalty = 50 } }
-			# change_variable = { which = monthlyNscDisasterScoreVar value = 0.5 }
-		# }
-		# else_if = { limit = { estate_loyalty = { estate = estate_church loyalty = 30 } }
-			# change_variable = { which = monthlyNscDisasterScoreVar value = 0.25 }
-		# }
-		# else = {
-			# change_variable = { which = monthlyNscDisasterScoreVar value = -0.1 }
-		# }
-		# if = { limit = { estate_loyalty = { estate = estate_nobles loyalty = 50 } }
-			# change_variable = { which = monthlyNscDisasterScoreVar value = 0.5 }
-		# }
-		# else_if = { limit = { estate_loyalty = { estate = estate_nobles loyalty = 30 } }
-			# change_variable = { which = monthlyNscDisasterScoreVar value = 0.25 }
-		# }
-		# else = {
-			# change_variable = { which = monthlyNscDisasterScoreVar value = -0.1 }
-		# }
-	# }
-	
-	# export_to_variable = { which = numOfRebelArmiesVar value = num_of_rebel_armies }
-	# export_to_variable = { which = numOfRebelProvincesVar value = num_of_rebel_controlled_provinces }
-	
-	# if = {
-		# limit = {
-			# OR = { 
-				# check_variable = { which = numOfRebelArmiesVar value = 1 }
-				# check_variable = { which =  numOfRebelProvincesVar value = 1 }
-			# }
-		# }
-		# set_variable = { which = disasterRebelArmiesScoreVar which = numOfRebelArmiesVar }
-		# multiply_variable = { which = disasterRebelArmiesScoreVar value = -0.25 }
-		# change_variable = { which = monthlyNscDisasterScoreVar which = disasterRebelArmiesScoreVar }
-		# set_variable = { which = disasterRebelProvincesScoreVar which = numOfRebelProvincesVar }
-		# multiply_variable = { which = disasterRebelProvincesScoreVar value = -0.1 }
-		# change_variable = { which = monthlyNscDisasterScoreVar which = disasterRebelProvincesScoreVar }
-	# }
-	# else = {
-		# change_variable = { which = monthlyNscDisasterScoreVar value = 0.5 }
-	# }
-# }
-
-# nsc_calculate_total_disaster_score = {
-	# nsc_update_monthly_disaster_score = yes
-	# change_variable = { which = totalMonthlyNscDisasterScoreVar which = monthlyNscDisasterScoreVar }
-	# set_variable = { which = nscDisasterScoreVar which = totalMonthlyNscDisasterScoreVar }
-	# if = { limit = { has_disaster = nsc_dukeldar }
-		# change_variable = { which = nscDisasterScoreVar which = nscDisasterConversionScoreVar }
-	# }
-	# change_variable = { which = nscDisasterScoreVar which = nscDisasterBattleWonScoreVar }
-	# subtract_variable = { which = nscDisasterScoreVar which = nscDisasterBattleLostScoreVar }
-# }
 
 #Shadow on the sun incident
 nsc_define_influenceable_vassals = {
@@ -1600,65 +1535,6 @@ define_kazam_siege = {
 
 #-----------# New Sun Cult End #-----------#
 
-#-----------# Runefather Worship #-----------#
-######Defunct, kept in files to keep isolationism lvls consistent for other religions######
-increase_runelink_level = {
-	if = {
-		limit = {
-			religion = runefather_worship
-			NOT = { isolationism = 9 }
-		}
-		every_country = {
-			limit = { religion = runefather_worship }
-			custom_tooltip = rune_increase_isolation_tt
-			hidden_effect = { add_isolationism = 1 }
-		}
-		hidden_effect = { REB = { change_variable = { runeLevel = 1 } } }
-	}
-}
-
-decrease_runelink_level = {
-	if = {
-		limit = {
-			religion = runefather_worship
-			isolationism = 6
-		}
-		every_country = {
-			limit = { religion = runefather_worship }
-			custom_tooltip = rune_decrease_isolation_tt
-			hidden_effect = { add_isolationism = -1 }
-		}
-		hidden_effect = { REB = { subtract_variable = { runeLevel = 1 } } }
-	}
-}
-
-set_runelink_level = {
-	if = {
-		limit = { religion = runefather_worship }
-		if = {
-			limit = { REB = { check_variable = { runeLevel = 4 } } }
-			add_isolationism = 6
-		}
-		else_if = {
-			limit = { REB = { check_variable = { runeLevel = 3 } } }
-			add_isolationism = 5
-		}
-		else_if = {
-			limit = { REB = { check_variable = { runeLevel = 2 } } }
-			add_isolationism = 4
-		}
-		else_if = {
-			limit = { REB = { check_variable = { runeLevel = 1 } } }
-			add_isolationism = 3
-		}
-		else_if = {
-			limit = { REB = { check_variable = { runeLevel = 0 } } }
-			add_isolationism = 2
-		}
-	}
-}
-
-
 #-----------# Rinta Seekers #-----------#
 
 
@@ -1694,6 +1570,217 @@ decrease_rinta_seekers_isolation_level = {
 		}
 		else = {
 			custom_tooltip = decrease_rinta_seekers_isolation_level_min_tooltip			#Already at min
+		}
+	}
+}
+
+# Generic script to set isolation level if you convert and are outside the range
+check_isolation_level = {
+	if = {
+		limit = {
+			religion = bulwari_sun_cult
+		}
+		check_isolation_level_set_middle = {
+			lower = 0
+			middle = 2
+			middle_plus = 3
+			upper_plus = 5
+		}
+	}
+	else_if = {
+		limit = {
+			religion = rinta_seekers
+		}
+		check_isolation_level_set_middle = {
+			lower = 10
+			middle = 12
+			middle_plus = 13
+			upper_plus = 15
+		}
+	}
+	else_if = {
+		limit = {
+			religion = volcanic_truth
+		}
+		check_isolation_level_set_middle = {
+			lower = 15
+			middle = 17
+			middle_plus = 18
+			upper_plus = 20
+		}
+	}
+}
+
+check_isolation_level_set_middle = {
+	# lower is the actual lowest valid value for isolationism for the religion
+	# middle is the value in the middle that we want to get to
+	# middle_plus is 1 higher which we use when going down to middle
+	# upper_plus is 1 higher than the highest valid value for isolationism for the religion
+	
+	if = { # If you are above the highest valid value, decrement until you get to middle
+		limit = {
+			isolationism = $upper_plus$
+		}
+		while = {
+			limit = {
+				isolationism = $middle_plus$
+			}
+			add_isolationism = -1
+		}
+	}
+	else_if = { # If you are below the lowest valid value, increment until you get to middle
+		limit = {
+			NOT = { isolationism = $lower$ }
+		}
+		while = {
+			limit = {
+				NOT = { isolationism  = $middle$ }
+			}
+			add_isolationism = 1
+		}
+	}
+}
+
+#-----------# Volcanic Truth #-----------#
+
+
+increase_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = {
+				isolationism = 19
+			}
+			custom_tooltip = increase_volcanic_truth_isolation_level_max_tooltip 			#already at max
+		}
+		else = {
+			custom_tooltip = increase_volcanic_truth_isolation_level_tooltip 				#Tooltip for specific localization for each religion
+			hidden_effect = { add_isolationism = 1 }
+		}
+	}
+}
+
+decrease_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = { isolationism = 15 }
+			custom_tooltip = decrease_volcanic_truth_isolation_level_tooltip				#Tooltip for specific localization for each religion
+			hidden_effect = { add_isolationism = -1 }
+		}
+		else = {
+			custom_tooltip = decrease_volcanic_truth_isolation_level_min_tooltip			#Already at min
+		}
+	}
+}
+
+move_to_center_volcanic_truth_isolation_level = {
+	if = {
+		limit = {
+			religion = volcanic_truth
+			has_dlc = "Mandate of Heaven"
+		}
+		if = {
+			limit = { NOT = { isolationism = 17 } }
+			custom_tooltip = move_to_center_volcanic_truth_isolation_level_tooltip
+			hidden_effect = { add_isolationism = 1 }
+		}
+		if = {
+			limit = { isolationism = 18 }
+			custom_tooltip = move_to_center_volcanic_truth_isolation_level_tooltip
+			hidden_effect = { add_isolationism = -1 }
+		}
+	}
+}
+
+end_all_volcanic_truth_incidents = {
+	end_incident = incident_volcanic_organizational_crisis
+	end_incident = incident_volcanic_taga_ala_influence
+	end_incident = incident_volcanic_mass_eruption_of_the_twin_gods
+	end_incident = incident_volcanic_weakening_of_the_kiamoa
+	end_incident = incident_volcanic_the_molten_eternity
+	end_incident = incident_volcanic_a_dragon_turtles_place
+	end_incident = incident_volcanic_mechanim_awakening
+}
+
+vt_set_incident_finished_flags = {
+	set_global_flag = vt_incident_$incident$_finished
+	clr_global_flag = vt_incident_$incident$_active
+}
+				
+
+vt_random_eruption_effect = {
+	random_list = {
+		15 = {
+			trigger = { government = monarchy }
+			modifier = {
+				factor = 4
+				tag = N00
+			}
+			country_event = {
+				id = volcanic_truth.301
+			}
+		}
+		15 = {
+			trigger = { NOT = { has_reform = cuahu_teotlehu_reform } }
+			country_event = {
+				id = volcanic_truth.302
+			}
+		}
+		15 = {
+			trigger = {
+				any_owned_province = {
+					has_owner_culture = no
+				}
+				any_owned_province = {
+					has_owner_culture = yes
+				}
+			}
+			country_event = {
+				id = volcanic_truth.303
+			}
+		}
+		15 = {
+			trigger = {
+				is_religion_enabled = molten_eternity
+			}
+			country_event = {
+				id = volcanic_truth.304
+			}
+		}
+		15 = {
+			trigger = {
+				OR = {
+					num_of_generals = 2
+					num_of_admirals = 2
+				}
+			}
+			country_event = {
+				id = volcanic_truth.305
+			}
+		}
+		15 = {
+			trigger = {
+				OR = {
+					vassal = 1
+					march = 1
+				}
+			}
+			country_event = {
+				id = volcanic_truth.306
+			}
+		}
+		1 = {
+			#General Unrest Rare
+			country_event = {
+				id = volcanic_truth.307
+			}
 		}
 	}
 }
