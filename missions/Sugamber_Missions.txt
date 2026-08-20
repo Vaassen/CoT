@@ -106,23 +106,12 @@ sugamber_1_missions = {
 		}
 		
 		trigger = {
-			total_development = emperor
-			prestige = emperor
+			total_development = 200
+			prestige = 25
 		}
 		
 		effect = {
-			if = {
-				limit = {
-					OR = {
-						Z02 = { is_vassal = yes }
-						Z02 = { exists = no }
-					}
-				}
-				add_dip_power = 200
-			}
-			else = {
-				vassalize = Z02
-			}
+			add_splendor = 200
 			mountainway_area = {
 				add_permanent_claim = ROOT
 			}
@@ -355,7 +344,6 @@ sugamber_1_missions = {
 		
 		provinces_to_highlight = {
 			owned_by = ROOT
-			culture = arannese
 			OR = {
 				unrest = 1
 				local_autonomy = 10
@@ -366,19 +354,33 @@ sugamber_1_missions = {
 		trigger = {
 			num_of_owned_provinces_with = {
 				value = 25
-				culture = arannese
 				NOT = { unrest = 1 }
 				NOT = { local_autonomy = 10 }
 				NOT = { nationalism = 1 }
+				has_manpower_building_trigger = yes
+			}
+			OR = {
+				has_idea_group = adm2
+				theologian = 2
 			}
 		}
 		
 		effect = {
-			add_country_modifier = {
-				name = sugamber_integrate_arannese
-				duration = -1
+			if = {
+				limit = { has_idea_group = adm2 }
+				add_country_modifier = {
+					name = sugamber_integrate_arannese
+					duration = -1
+				}
+				add_accepted_culture = arannese
+				add_accepted_culture = milcori
 			}
-			add_accepted_culture = arannese
+			else = {
+				add_country_modifier = {
+					name = cot_sugamber_sugamberese
+					duration = -1
+				}
+			}
 		}
 	}
 	
@@ -526,9 +528,33 @@ sugamber_2_missions = {
 		
 		effect = {
 			if = {
-				limit = { exists = A34 }
+				limit = {
+					exists = A34
+					NOT = { A34 = { is_subject_of = A30 } }
+					alliance_with = A30
+				}
 				add_dip_power = -100
 				country_event = { id = flavor_sugamber.2001 }
+			}
+			else_if = {
+				limit = {
+					A34 = { is_subject_of = A30 }
+					alliance_with = A30
+				}
+				add_country_modifier = {
+					name = cot_sugamber_settlers #-15% ae impact -15% core creation
+					duration = 9125 #25 years
+				}
+			}
+			else = {
+				east_bisan_area = {
+					limit = { NOT = { country_or_non_sovereign_subject_holds = ROOT } }
+					add_permanent_claim = ROOT
+				}
+				west_bisan_area = {
+					limit = { NOT = { country_or_non_sovereign_subject_holds = ROOT } }
+					add_claim = ROOT
+				}
 			}
 		}
 	}
@@ -702,7 +728,7 @@ sugamber_2_missions = {
 		
 		trigger = {
 			num_of_owned_provinces_with = {
-				value = 20
+				value = 5
 				culture = arannese
 				development = 15
 				OR = {
@@ -796,12 +822,10 @@ sugamber_2_missions = {
 			owned_by = ROOT
 			OR = {
 				AND = {
-					culture = wexonard
 					NOT = { has_manpower_building_trigger = yes }
-					NOT = { ROOT = { num_of_owned_provinces_with = { value = 10 culture = wexonard has_manpower_building_trigger = yes } } }
+					NOT = { ROOT = { num_of_owned_provinces_with = { value = 20 culture = wexonard has_manpower_building_trigger = yes } } }
 				}
 				AND = {
-					culture = arannese
 					NOT = { has_manufactory_trigger = yes }
 					NOT = { ROOT = { num_of_owned_provinces_with = { value = 5 culture = arannese has_manufactory_trigger = yes } } }
 				}
@@ -810,13 +834,11 @@ sugamber_2_missions = {
 		
 		trigger = {
 			num_of_owned_provinces_with = {
-				value = 10
-				culture = wexonard
+				value = 20
 				has_manpower_building_trigger = yes
 			}
 			num_of_owned_provinces_with = {
 				value = 5
-				culture = arannese
 				has_manufactory_trigger = yes
 			}
 		}
@@ -1067,7 +1089,13 @@ sugamber_3_missions = {
 					type = all
 					if = {
 						limit = { culture = arannese }
-						country_or_non_sovereign_subject_holds = ROOT
+						OR = {
+							country_or_non_sovereign_subject_holds = ROOT
+							AND = {
+								ROOT =  { alliance_with = A30 }
+								country_or_non_sovereign_subject_holds = A30
+							}
+						}
 					}
 				}
 			}
@@ -1092,38 +1120,21 @@ sugamber_3_missions = {
 		icon = the_hundred_years_war
 		position = 9
 		required_missions = { sugamber_hegemony_over_the_arannese }
-		
-		provinces_to_highlight = {
-			owned_by = A77
-		}
-		
+				
 		trigger = {
-			OR = {
-				AND = {
-					A77 = {
-						has_opinion = {
-							who = ROOT
-							value = 150
-						}
-					}
-					dip_power = 100
-					mil_power = 100
-				}
-				NOT = { exists = A77 }
-			}
+			army_professionalism = 0.2
+			cavalry_fraction = 0.2
+			army_size = 30
+			dip_power = 100
+			mil_power = 100
 		}
 		
 		effect = {
-			if = {
-				limit = { exists = A77 }
-				add_dip_power = -100
-				add_mil_power = -100
-				A77 = {
-					country_event = {
-						id = flavor_sugamber.2005
-						days = 7
-					}
-				}
+			add_dip_power = -100
+			add_mil_power = -100
+			country_event = {
+				id = flavor_sugamber.3000
+				days = 7
 			}
 		}
 	}
@@ -1135,32 +1146,28 @@ sugamber_3_missions = {
 		
 		provinces_to_highlight = {
 			OR = {
-				area = ashfields_area
-				province_id = 423
+				province_id = 321
+				province_id = 323
 			}
 			OR = {
 				NOT = { has_building = ramparts }
-				NOT = { base_manpower = 10 }
+				NOT = { base_manpower = 5 }
 				NOT = { country_or_non_sovereign_subject_holds = ROOT }
 				NOT = { fort_level = 2 }
-				AND = {
-					province_id = 423
-					NOT = { fort_level = 4 }
-				}
 			}
 		}
 		
 		trigger = {
-			ashfields_area = {
+			321 = {
 				fort_level = 2
 				has_building = ramparts
-				base_manpower = 10
+				base_manpower = 5
 				country_or_non_sovereign_subject_holds = ROOT
 			}
-			423 = {
-				fort_level = 4
+			323 = {
+				fort_level = 2
 				has_building = ramparts
-				base_manpower = 10
+				base_manpower = 5
 				country_or_non_sovereign_subject_holds = ROOT
 			}
 		}
@@ -1170,7 +1177,13 @@ sugamber_3_missions = {
 				name = sugamber_north_cinched
 				duration = 18250
 			}
-			423 = {
+			321 = {
+				add_permanent_province_modifier = {
+					name = sugamber_local_defensiveness
+					duration = -1
+				}
+			}
+			323 = {
 				add_permanent_province_modifier = {
 					name = sugamber_local_defensiveness
 					duration = -1
@@ -1194,7 +1207,7 @@ sugamber_3_missions = {
 				fort_level = 4
 				base_manpower = 10
 			}
-			full_idea_group = defensive_ideas
+			full_idea_group = mil6
 		}
 		
 		effect = {
@@ -1528,28 +1541,21 @@ sugamber_4_missions = {
 					NOT = { is_part_of_hre = yes }
 				}
 				AND = {
-					area = central_dreadmire_area
-					NOT = { central_dreadmire_area = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
+					province_id = 446
+					NOT = { 446 = { fort_level = 2 base_manpower = 5 country_or_non_sovereign_subject_holds = ROOT } }
 				}
 				AND = {
-					area = north_dreadmire_area
-					NOT = { north_dreadmire_area = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
+					province_id = 447
+					447 = { north_dreadmire_area = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
 				}
 				AND = {
-					area = baldostan_area
-					NOT = { baldostan_area = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
-				}
-				AND = {
-					area = east_overmarch_area
-					NOT = { east_overmarch_area = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
+					province_id = 510
+					NOT = { 510 = { fort_level = 2 base_manpower = 10 country_or_non_sovereign_subject_holds = ROOT } }
 				}
 			}
 		}
 		
-		trigger = {	
-			510 = {
-				has_province_modifier = castanorian_citadel
-			}
+		trigger = {
 			west_overmarch_area = {
 				type = all
 				is_part_of_hre = yes
@@ -1558,25 +1564,21 @@ sugamber_4_missions = {
 				type = all
 				is_part_of_hre = yes
 			}
-			central_dreadmire_area = {
+			446 = {
+				fort_level = 2
+				base_manpower = 5
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+			447 = {
 				fort_level = 2
 				base_manpower = 10
 				country_or_non_sovereign_subject_holds = ROOT
 			}
-			north_dreadmire_area = {
+			510 = {
 				fort_level = 2
 				base_manpower = 10
 				country_or_non_sovereign_subject_holds = ROOT
-			}
-			baldostan_area = {
-				fort_level = 2
-				base_manpower = 10
-				country_or_non_sovereign_subject_holds = ROOT
-			}
-			east_overmarch_area = {
-				fort_level = 2
-				base_manpower = 10
-				country_or_non_sovereign_subject_holds = ROOT
+				has_province_modifier = castanorian_citadel
 			}
 		}
 		
@@ -1584,6 +1586,24 @@ sugamber_4_missions = {
 			add_country_modifier = {
 				name = sugamber_east_plugged
 				duration = 18250
+			}
+			446 = {
+				add_permanent_province_modifier = {
+					name = sugamber_local_defensiveness
+					duration = -1
+				}
+			}
+			447 = {
+				add_permanent_province_modifier = {
+					name = sugamber_local_defensiveness
+					duration = -1
+				}
+			}
+			510 = {
+				add_permanent_province_modifier = {
+					name = sugamber_local_defensiveness
+					duration = -1
+				}
 			}
 		}
 	}
