@@ -167,8 +167,12 @@ castellyr_first_slot_c = {
 				AND = {
 					accepted_culture = green_orc
 					OR = {
-						has_coexisting_orcish_pop_trigger = yes
-						has_integrated_orcish_pop_trigger = yes
+						any_owned_province = {
+							has_coexisting_orcish_pop_trigger = yes
+						}
+						any_owned_province = {
+							has_integrated_orcish_pop_trigger = yes
+						}
 					}
 				}
 				has_country_modifier = racial_pop_orcish_expulsion
@@ -225,17 +229,45 @@ castellyr_first_slot_c = {
 		}
 	}
 
-	CA_cot_castellyrian_castellyr = {
+	CA_cot_castellyr_honored = {
 		icon = mission_rb_unite_the_clans
 		required_missions = { CA_cot_slavery_fate CA_escanninomics }
 		position = 7
-
+		provinces_to_highlight = {
+			region = inner_castanor_region
+			NOT = { area = zarakrod_area }
+			NOT = { area = mountainheart_area }
+			NOT = { area = rampart_area }
+			NOT = {
+				country_or_non_sovereign_subject_holds = ROOT
+			}
+		}
 		trigger = {
+			inner_castanor_region = {
+				type = all
+				NOT = { area = zarakrod_area }
+				NOT = { area = mountainheart_area }
+				NOT = { area = rampart_area }
+				country_or_non_sovereign_subject_holds = ROOT
+				religion = ROOT
+				development = 15
+			}
 			religious_unity = 1
-
+			treasury = 1000
 		}
 		effect = {
-			
+			add_treasury = -1000
+			custom_tooltip = cot_castellyr_tall_tt
+			hidden_effect = {
+				inner_castanor_region = {
+					limit = {
+						NOT = { area = zarakrod_area }
+						NOT = { area = mountainheart_area }
+						NOT = { area = rampart_area }
+					}
+					add_province_triggered_modifier = cot_B31_tallstellyr
+				}
+			}
 		}
 	}
 }
@@ -563,6 +595,9 @@ castellyr_third_slot = {
 				limit = {
 					NOT = { is_core = ROOT }
 					NOT = { country_or_non_sovereign_subject_holds = ROOT }
+					NOT = { area = rampart_area }
+					NOT = { area = mountainheart_area }
+					NOT = { area = zarakrod_area }
 				}
 				add_permanent_claim = ROOT
 			}
@@ -640,6 +675,9 @@ castellyr_third_slot = {
 		trigger = {
 			inner_castanor_region = {
 				type = all
+				NOT = { area = zarakrod_area }
+				NOT = { area = mountainheart_area }
+				NOT = { area = rampart_area }
 				country_or_non_sovereign_subject_holds = ROOT
 			}
 		}
@@ -1048,18 +1086,56 @@ castelly_fifth_slot_a = {
 		effect = {
 			if = {
 				limit = {
-
+					religion = regent_court
 				}
-
+				add_years_of_income = 0.5
+				add_country_modifier = {
+					name = cot_B31_stalwart_religion
+					duration = 18250
+				}
 			}
 			else_if = {
 				limit = {
-
+					religion = corinite
 				}
-
+				add_manpower = 10
+				add_mil_power = 50
+				large_increase_of_half_orcish_tolerance_effect = yes
+				large_increase_of_orcish_tolerance_effect = yes
+			}
+			else_if = {
+				limit = {
+					religion = infernal_court
+				}
+				add_stability_or_adm_power = yes
+				add_country_modifier = {
+					name = cot_B31_stalwart_religion
+					duration = 18250
+				}
+			}
+			else_if = {
+				limit = {
+					religion = skaldhyrric_faith
+				}
+				add_manpower = 5
+				add_country_modifier = {
+					name = cot_B31_adaptive_religion
+					duration = 18250
+				}
+			}
+			else_if = {
+				limit = {
+					religion = dalcabba
+				}
+				add_years_of_income = 0.5
+				add_country_modifier = {
+					name = cot_B31_adaptive_religion
+					duration = 18250
+				}
 			}
 			else = {
-
+				add_mil_power = 100
+				add_prestige = 25
 			}
 		}
 	}
@@ -1070,25 +1146,100 @@ castelly_fifth_slot_a = {
 		position = 5
 
 		trigger = {
-
+			is_year = 1550
+			OR = {
+				has_estate = estate_artificers
+				innovativeness = 25
+				has_country_modifier = magical_infrastructure_1
+				has_country_modifier = magical_infrastructure_2
+				has_country_modifier = magical_infrastructure_3
+				has_country_modifier = magical_infrastructure_4
+			}
+			OR = {
+				court_mage = 2
+				natural_scientist = 2
+				AND = {
+					NOT = { employed_advisor = { type = court_mage } }
+					NOT = { employed_advisor = { type = natural_scientist } }
+				}
+			}
 		}
 		
 		effect = {
-
+			if = {
+				limit = {
+					natural_scientist = 2
+				}
+				set_country_flag = banned_magic
+				set_country_flag = artificery_unlocked
+				clr_country_flag = magic_artificery_mage_only
+				clr_country_flag = magic_artificery_mixed
+				set_country_flag = magic_artificery_artificery_only
+				mission_reward_artifice_points_20 = yes
+				add_estate_loyalty = {
+					estate = estate_artificers
+					loyalty = 20
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { employed_advisor = { type = court_mage } }
+					NOT = { employed_advisor = { type = natural_scientist } }
+				}
+				clr_country_flag = magic_artificery_mage_only
+				clr_country_flag = magic_artificery_artificery_only
+				set_country_flag = artificery_unlocked
+				set_country_flag = magic_artificery_mixed
+				mission_reward_artifice_points_5 = yes
+				add_estate_loyalty = {
+					estate = estate_artificers
+					loyalty = 5
+				}
+				add_estate_loyalty = {
+					estate = estate_mages
+					loyalty = 5
+				}
+				add_country_modifier = {
+					name = cot_B31_mix
+					duration = -1
+				}
+				define_advisor = {
+					type = natural_scientist
+					skill = 2
+					culture = creek_gnome
+					religion = regent_court
+					discount = yes
+				}
+			}
+			else_if = {
+				limit = {
+					court_mage = 2
+				}
+				add_estate_loyalty = {
+					estate = estate_mages
+					loyalty = 20
+				}
+				add_country_modifier = {
+					name = cot_B31_mage_only
+					duration = -1
+				}
+				set_country_flag = artifice_set_up
+				set_country_flag = magic_artificery_mage_only
+			}
 		}
 	}
 
 	CA_cot_our_purpose = {
 		icon = secure_the_sava
-		required_missions = { CA_cot_borderlands CA_army_of_escann }
+		required_missions = { CA_cot_on_artificery CA_army_of_escann }
 		position = 7
 
 		trigger = {
-
+			always = no
 		}
 
 		effect = {
-
+			#WIP
 		}
 	}
 }
