@@ -3376,6 +3376,18 @@ on_battle_won_country = {
 		100 = aw_zombies.100
 	}
 
+	# CoT
+	if = {
+		limit = { has_idea = martyrs }
+		add_country_modifier = { name = cot_divine_medics duration = 180 }
+	}
+
+	# CoT
+	if = {
+		limit = { has_idea = superior_firepower }
+		add_country_modifier = { name = cot_press_our_advantage duration = 180 }
+	}
+
 	#averibilet battles agianst trolls won
 	if = {
 		limit = {
@@ -3963,6 +3975,12 @@ on_siege_won_country = {
 		spirits.019
 		flavor_toarnaire.9
 	}
+	# CoT
+	if = {
+		limit = { has_idea = expanded_supply_trains }
+		FROM = { add_garrison = 2000 }
+	}
+
 	if = {
 		limit = { is_subject_of_type = acolyte_dominion }
 		change_variable = { aInfluence = 0.5 }
@@ -9741,8 +9759,10 @@ on_yearly_pulse = {
 		#CoT
 		cot_misc_events.2 # Refresh land FL building buffs
 		cot_misc_events.4 # Refrsh naval FL building buffs
-		cot_i_events.109 # Refresh Open Mind minoriites buffs
 		cot_misc_events.23 # Refresh Aldresian Garrisons
+		cot_idea_groups_events.5 # Refresh CoT Goods Produced buff
+		cot_idea_groups_events.10 # Refresh CoT Tolerance minorities buff
+		cot_idea_groups_events.15 # Refresh CoT dip rep apc buff
 	}
 	if = {
 		limit = { tag = R62 }
@@ -16667,6 +16687,12 @@ on_lose_great_power_status = {
 on_province_religion_converted = {
 	on_province_religion_converted_effect = yes #1.35
     # don't use this, it doesn't account for religion change by effect - use on_province_religion_changed
+	# ^^^ What if I do anyway?
+	# CoT
+	if = {
+		limit = { owner = { has_idea = church_attendance_duty } }
+		add_nationalism = -1000
+	}
 }
 
 
@@ -17085,6 +17111,19 @@ on_province_culture_converted = {
 			}
 		}
 	}
+
+	#CoT
+	if = {
+		limit = { 
+			owner = { has_idea = administrative_efficiency_idea }
+			has_owner_culture = yes
+			NOT = { has_province_flag = cot_gained_dev_from_converting }
+		}
+		add_base_tax = 1
+		add_base_production = 1
+		add_base_manpower = 1
+		set_province_flag = cot_gained_dev_from_converting
+	}
 }
 
 # province, general conversion through effects 1.35
@@ -17376,6 +17415,7 @@ on_province_culture_changed = {
 
 # THIS = Province, FROM = Country who Propogated
 on_convert_by_trade_policy = {
+
 }
 
 # province
@@ -21062,11 +21102,24 @@ on_leader_recruited = {
 on_general_recruited = {
 	on_general_recruited_effect = yes #1.35
 
+	#CoT
+	if = {
+		limit = { has_idea = local_nobility }
+		add_army_tradition = 5
+	}
+
 	remove_country_modifier = B43_promote_the_unbreakable_ones #Flying Hound
 }
 
 # country
 on_admiral_recruited = {
+
+	#CoT
+	if = {
+		limit = { has_idea = local_nobility }
+		add_navy_tradition = 5
+	}
+
 	if = {
 		limit = { has_country_flag = admirals_give_army_professionalism }
 		add_army_professionalism = 0.005
@@ -26859,9 +26912,10 @@ on_trade_good_changed = {
 # this = country
 on_loan_repaid = {
 	on_loan_repaid_estate_privileges_effect = yes
+	# CoT
 	if = { #1.35 - Anbennar removed the THIS scope for causing errors
 		limit = { 
-			economic_ideas = 4 
+			has_idea = smithian_economics
 		}
 		add_inflation = -0.05
 	}
@@ -30624,6 +30678,9 @@ on_adm_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
 	#turns out this fires before you have technically employed the new advisor, so you can't check if you hired a specific advisor type 
 	if = { limit = { ROOT = { has_country_flag = pasiragha_flag_improved_philosophers } } ROOT = { country_event = { id = flavor_pasiragha.3 days = 1 } } }
 	
+	#CoT
+	if = { limit = { has_idea = court_embassies } set_country_flag = cot_hired_adm_advisor }
+
 	set_country_flag = adm_advisor_recently_hired
 	if = {
 		limit = {
@@ -30661,6 +30718,10 @@ on_adm_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
 }
 
 on_dip_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
+
+	#CoT
+	if = { limit = { has_idea = court_embassies } set_country_flag = cot_hired_dip_advisor }
+
 	if = {
 		limit = {
 			religion = accretive_path
@@ -30695,6 +30756,10 @@ on_dip_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
 }
 
 on_mil_advisor_hired = { #ROOT - Country, executed after on_advisor_hired!
+
+	#CoT
+	if = { limit = { has_idea = court_embassies } set_country_flag = cot_hired_mil_advisor }
+
 	if = {
 		limit = {
 			religion = accretive_path
@@ -31125,6 +31190,13 @@ on_mil_tech_taken = { #ROOT - Country, executed after on_tech_taken!
 }
 
 on_barrage = { #ROOT - barraging country, FROM - barraged province
+
+	# CoT
+	if = {
+		limit = { has_idea = napoleonic_warfare }
+		FROM = { add_province_modifier = { name = cot_into_the_breach duration = 180 } }
+	}
+
 	if = {	#set the country flag to begin counting
 		limit = { has_country_flag = count_barrages_done }
 		change_variable = {
@@ -31254,6 +31326,12 @@ on_barrage = { #ROOT - barraging country, FROM - barraged province
 }
 
 on_naval_barrage = { #ROOT - barraging country, FROM - barraged province
+
+	if = {
+		limit = { has_idea = naval_cadets }
+		FROM = { add_province_modifier = { name = cot_naval_bombardment duration = 180 } }
+	}
+
 	if = {
 		limit = {
 			OR = {
@@ -31296,6 +31374,13 @@ on_naval_barrage = { #ROOT - barraging country, FROM - barraged province
 }
 
 on_scorch_earth = { #ROOT - scorching country, FROM - scorched province
+
+	# CoT
+	if = {
+		limit = { has_idea = improved_foraging }
+		FROM = { add_province_modifier = { name = cot_partisans duration = 1825 } }
+	}
+
 	FROM = {
 		on_scorch_earth_effect = yes
 	}
