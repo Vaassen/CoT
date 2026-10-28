@@ -130,3 +130,196 @@ cot_remove_vampires = {
 	clr_country_flag = vampire_hunter_2
 	remove_country_modifier = vampire_ruler
 }
+
+ilvandet_restore_carneter_effect = {
+	19 = { move_capital_effect = yes }
+	change_tag = B78
+	add_prestige = 25
+	if = {
+		limit = {
+			has_custom_ideas = no
+		}
+		country_event = { id = ideagroups.1 } #Swap Ideas
+	}
+	set_country_flag = formed_carneter_flag
+	primary_and_ruler_culture_change = { race = human new_culture = carnetori }
+	every_owned_province = {
+		limit = { OR = { area = woodwell_area area = carneteria_area province_id = 57 } }
+		change_culture = carnetori
+	}
+}
+
+# Custom Carneter effects. Province effects are called from country-rooted chains.
+
+carneter_apply_grove = {
+    remove_province_modifier = carneter_grove_base
+    remove_province_modifier = carneter_grove_communion
+    if = {
+        limit = { owner = { has_country_flag = carneter_spirits_done } }
+        add_province_modifier = { name = carneter_grove_communion duration = -1 }
+    }
+    else = { add_province_modifier = { name = carneter_grove_base duration = -1 } }
+}
+
+carneter_apply_sanctuary = {
+    # The old modifier is defined in the earlier Ilvandet wildlife package.
+    remove_province_modifier = ilvandet_wildlife_sanctuary
+    remove_province_modifier = carneter_sanctuary_base
+    remove_province_modifier = carneter_sanctuary_breeding
+    remove_province_modifier = carneter_sanctuary_living
+    if = {
+        limit = { owner = { has_country_flag = carneter_living_forest_done } }
+        add_province_modifier = { name = carneter_sanctuary_living duration = -1 }
+    }
+    else_if = {
+        limit = { owner = { has_country_flag = carneter_breeding_done } }
+        add_province_modifier = { name = carneter_sanctuary_breeding duration = -1 }
+    }
+    else = { add_province_modifier = { name = carneter_sanctuary_base duration = -1 } }
+}
+
+carneter_refresh_sites = {
+    every_owned_province = {
+        limit = {
+            OR = {
+                has_province_flag = ilvandet_wildlife_sanctuary
+                has_province_modifier = ilvandet_wildlife_sanctuary
+                has_province_flag = carneter_royal_sanctuary
+            }
+        }
+        set_province_flag = carneter_royal_sanctuary
+        carneter_apply_sanctuary = yes
+    }
+    every_owned_province = {
+        limit = { has_province_flag = carneter_royal_grove }
+        carneter_apply_grove = yes
+    }
+}
+
+carneter_update_census = {
+    set_variable = { which = carneter_total_production_development value = 0 }
+    set_variable = { which = carneter_woodland_production_development value = 0 }
+    set_variable = { which = carneter_grove_count value = 0 }
+    set_variable = { which = carneter_sanctuary_count value = 0 }
+    every_owned_province = {
+        limit = { is_city = yes }
+        export_to_variable = { which = carneter_total_production_development value = trigger_value:base_production }
+        ROOT = { change_variable = { which = carneter_total_production_development which = PREV } }
+        if = {
+            limit = { OR = { carneter_woodland = yes has_province_flag = carneter_royal_sanctuary } }
+            export_to_variable = { which = carneter_woodland_production_development value = trigger_value:base_production }
+            ROOT = { change_variable = { which = carneter_woodland_production_development which = PREV } }
+        }
+        if = {
+            limit = { carneter_owned_grove = yes }
+            ROOT = { change_variable = { which = carneter_grove_count value = 1 } }
+        }
+        if = {
+            limit = { carneter_owned_sanctuary = yes }
+            ROOT = { change_variable = { which = carneter_sanctuary_count value = 1 } }
+        }
+    }
+    clr_country_flag = carneter_last_census
+    set_country_flag = carneter_last_census
+}
+
+carneter_initialize = {
+    if = {
+        limit = { tag = B78 NOT = { has_country_flag = carneter_forest_initialized } }
+        set_country_flag = carneter_forest_initialized
+        carneter_refresh_sites = yes
+        carneter_update_census = yes
+        swap_non_generic_missions = yes
+        country_event = { id = carneter_forest.4 days = 1 }
+    }
+}
+
+carneter_clear_survey_menu = {
+    clr_country_flag = carneter_survey_menu_open
+    clr_country_flag = carneter_survey_menu_woodland
+    clr_country_flag = carneter_survey_menu_coastal
+    clr_country_flag = carneter_survey_menu_riverland
+}
+
+carneter_select_grove_site = {
+    every_owned_province = { clr_province_flag = carneter_grove_preview_seen }
+    if = {
+        limit = { capital_scope = { carneter_grove_candidate = yes } }
+        capital_scope = { save_event_target_as = carneter_grove_site }
+    }
+    else = { random_owned_province = { limit = { carneter_grove_candidate = yes } save_event_target_as = carneter_grove_site } }
+    event_target:carneter_grove_site = { set_province_flag = carneter_grove_preview_seen }
+}
+
+carneter_next_grove_site = {
+    if = {
+        limit = { NOT = { any_owned_province = { carneter_grove_candidate = yes NOT = { has_province_flag = carneter_grove_preview_seen } } } }
+        every_owned_province = { clr_province_flag = carneter_grove_preview_seen }
+        event_target:carneter_grove_site = { set_province_flag = carneter_grove_preview_seen }
+    }
+    random_owned_province = {
+        limit = { carneter_grove_candidate = yes NOT = { has_province_flag = carneter_grove_preview_seen } }
+        save_event_target_as = carneter_grove_site
+    }
+    event_target:carneter_grove_site = { set_province_flag = carneter_grove_preview_seen }
+}
+
+carneter_select_sanctuary_site = {
+    every_owned_province = { clr_province_flag = carneter_sanctuary_preview_seen }
+    if = {
+        limit = { capital_scope = { carneter_sanctuary_candidate = yes } }
+        capital_scope = { save_event_target_as = carneter_sanctuary_site }
+    }
+    else = { random_owned_province = { limit = { carneter_sanctuary_candidate = yes } save_event_target_as = carneter_sanctuary_site } }
+    event_target:carneter_sanctuary_site = { set_province_flag = carneter_sanctuary_preview_seen }
+}
+
+carneter_next_sanctuary_site = {
+    if = {
+        limit = { NOT = { any_owned_province = { carneter_sanctuary_candidate = yes NOT = { has_province_flag = carneter_sanctuary_preview_seen } } } }
+        every_owned_province = { clr_province_flag = carneter_sanctuary_preview_seen }
+        event_target:carneter_sanctuary_site = { set_province_flag = carneter_sanctuary_preview_seen }
+    }
+    random_owned_province = {
+        limit = { carneter_sanctuary_candidate = yes NOT = { has_province_flag = carneter_sanctuary_preview_seen } }
+        save_event_target_as = carneter_sanctuary_site
+    }
+    event_target:carneter_sanctuary_site = { set_province_flag = carneter_sanctuary_preview_seen }
+}
+
+carneter_next_survey_site = {
+    if = {
+        limit = { NOT = { any_owned_province = { carneter_survey_candidate = yes NOT = { has_province_flag = carneter_survey_preview_seen } } } }
+        every_owned_province = { clr_province_flag = carneter_survey_preview_seen }
+        event_target:carneter_survey_site = { set_province_flag = carneter_survey_preview_seen }
+    }
+    random_owned_province = {
+        limit = { carneter_survey_candidate = yes NOT = { has_province_flag = carneter_survey_preview_seen } }
+        save_event_target_as = carneter_survey_site
+    }
+    event_target:carneter_survey_site = { set_province_flag = carneter_survey_preview_seen }
+}
+
+carneter_select_hart_site = {
+    if = {
+        limit = { any_owned_province = { carneter_owned_sanctuary = yes carneter_woodland = yes } }
+        random_owned_province = { limit = { carneter_owned_sanctuary = yes carneter_woodland = yes } save_event_target_as = carneter_hart_site }
+    }
+    else = { random_owned_province = { limit = { carneter_owned_sanctuary = yes } save_event_target_as = carneter_hart_site } }
+}
+
+carneter_select_boar_site = {
+    if = {
+        limit = { any_owned_province = { carneter_owned_sanctuary = yes carneter_woodland = yes } }
+        random_owned_province = { limit = { carneter_owned_sanctuary = yes carneter_woodland = yes } save_event_target_as = carneter_boar_site }
+    }
+    else = { random_owned_province = { limit = { carneter_owned_sanctuary = yes } save_event_target_as = carneter_boar_site } }
+}
+
+carneter_select_moonwing_site = {
+    if = {
+        limit = { any_owned_province = { carneter_owned_sanctuary = yes carneter_coastal_habitat = yes } }
+        random_owned_province = { limit = { carneter_owned_sanctuary = yes carneter_coastal_habitat = yes } save_event_target_as = carneter_moonwing_site }
+    }
+    else = { random_owned_province = { limit = { carneter_owned_sanctuary = yes } save_event_target_as = carneter_moonwing_site } }
+}
