@@ -458,3 +458,271 @@ if = { limit = { has_country_flag = binwarji_accord_dunes } change_variable = { 
         if = { limit = { L20 = { is_subject_of = ROOT } } L20 = { remove_country_modifier = disloyal_kaino_vassal } }
         binwarji_restore_mine_effect = yes
     }
+    
+ar_hs_begin = {
+    custom_tooltip = ar_hs_cast_tt
+    hidden_effect = {
+        ar_hs_end = yes
+        set_country_flag = ar_hs_live
+        clr_country_flag = ar_hs_cast_date
+        set_country_flag = ar_hs_cast_date
+        set_variable = { which = ar_hs_total_souls value = 0 }
+        set_variable = { which = ar_hs_unspent_souls value = 0 }
+        set_variable = { which = ar_hs_tier value = 0 }
+        # Snapshot once. Each point of force limit requires 100 casualties per
+        # tier, with a 5,000-casualty floor. Later FL changes cannot move the goal.
+        export_to_variable = { which = ar_hs_souls_per_tier value = land_forcelimit }
+        multiply_variable = { which = ar_hs_souls_per_tier value = 400 }
+        if = {
+            limit = { NOT = { check_variable = { which = ar_hs_souls_per_tier value = 5000 } } }
+            set_variable = { which = ar_hs_souls_per_tier value = 5000 }
+        }
+        add_country_modifier = { name = ar_hs_active duration = 1095 }
+        remove_country_modifier = ar_hs_casting_cooldown
+        add_country_modifier = { name = ar_hs_casting_cooldown duration = 1825 }
+        country_event = { id = ar_harvest_souls.90 days = 1095 }
+    }
+}
+
+# Injected FIRST into BOTH country battle callbacks, before other handlers
+# can change variables or contexts. Never install the same callback twice.
+ar_hs_on_battle = {
+    if = {
+        limit = { ar_hs_qualifying_battle = yes }
+        set_variable = { which = ar_hs_battle_souls value = 0 }
+        change_variable = { which = ar_hs_battle_souls which = land_units_killed }
+        change_variable = { which = ar_hs_total_souls which = ar_hs_battle_souls }
+        change_variable = { which = ar_hs_unspent_souls which = ar_hs_battle_souls }
+        while = {
+            limit = {
+                check_variable = { which = ar_hs_unspent_souls which = ar_hs_souls_per_tier }
+                NOT = { check_variable = { which = ar_hs_tier value = 5 } }
+            }
+            subtract_variable = { which = ar_hs_unspent_souls which = ar_hs_souls_per_tier }
+            change_variable = { which = ar_hs_tier value = 1 }
+        }
+        ar_hs_apply_tier = yes
+    }
+}
+
+ar_hs_remove_tier_modifiers = {
+    remove_country_modifier = ar_hs_tier_1
+    remove_country_modifier = ar_hs_tier_2
+    remove_country_modifier = ar_hs_tier_3
+    remove_country_modifier = ar_hs_tier_4
+    remove_country_modifier = ar_hs_tier_5
+}
+
+ar_hs_apply_tier = {
+    ar_hs_remove_tier_modifiers = yes
+    if = {
+        limit = { check_variable = { which = ar_hs_tier value = 5 } }
+        add_country_modifier = { name = ar_hs_tier_5 duration = -1 }
+    }
+    else_if = {
+        limit = { check_variable = { which = ar_hs_tier value = 4 } }
+        add_country_modifier = { name = ar_hs_tier_4 duration = -1 }
+    }
+    else_if = {
+        limit = { check_variable = { which = ar_hs_tier value = 3 } }
+        add_country_modifier = { name = ar_hs_tier_3 duration = -1 }
+    }
+    else_if = {
+        limit = { check_variable = { which = ar_hs_tier value = 2 } }
+        add_country_modifier = { name = ar_hs_tier_2 duration = -1 }
+    }
+    else_if = {
+        limit = { check_variable = { which = ar_hs_tier value = 1 } }
+        add_country_modifier = { name = ar_hs_tier_1 duration = -1 }
+    }
+}
+
+# Timed tier modifiers would accidentally restart the three-year clock on
+# every battle. Instead all tiers are removed together at the CAST deadline.
+ar_hs_end = {
+    ar_hs_remove_tier_modifiers = yes
+    remove_country_modifier = ar_hs_active
+    clr_country_flag = ar_hs_live
+    set_variable = { which = ar_hs_tier value = 0 }
+    set_variable = { which = ar_hs_total_souls value = 0 }
+    set_variable = { which = ar_hs_unspent_souls value = 0 }
+    set_variable = { which = ar_hs_battle_souls value = 0 }
+}
+ar_hs_expire_if_due = {
+    if = {
+        limit = {
+            has_country_flag = ar_hs_live
+            had_country_flag = { flag = ar_hs_cast_date days = 1875 }
+        }
+        ar_hs_end = yes
+    }
+}
+ar_hs_monthly_cleanup = {
+    # Handles an externally removed timer, an annexed-and-restored country,
+    # or a missed callback without leaving an indefinite tier modifier behind.
+    if = {
+        limit = {
+            NOT = { has_country_modifier = ar_hs_active }
+            OR = {
+                has_country_flag = ar_hs_live
+                has_country_modifier = ar_hs_tier_1
+                has_country_modifier = ar_hs_tier_2
+                has_country_modifier = ar_hs_tier_3
+                has_country_modifier = ar_hs_tier_4
+                has_country_modifier = ar_hs_tier_5
+            }
+        }
+        ar_hs_end = yes
+    }
+    ar_hs_expire_if_due = yes
+}
+
+ar_fs_begin = {
+    custom_tooltip = ar_fs_cast_tt
+    if = {
+        limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 3 } }
+        custom_tooltip = divination_3_foresight_upgrade_yes
+    }
+    else = { custom_tooltip = divination_3_foresight_upgrade_no }
+    hidden_effect = {
+        ar_fs_clear_pool = yes
+        # Paid battle/audience boons survive pool expiry and a fresh casting.
+        set_country_flag = ar_fs_pool_live
+        set_variable = { which = ar_fs_visions value = 3 }
+        if = {
+            limit = { at_least_magic_project_level = { project = orb_of_omniscience level = 3 } }
+            set_variable = { which = ar_fs_visions value = 5 }
+        }
+        set_variable = { which = ar_fs_native_days value = $native_days$ }
+        add_country_modifier = { name = ar_fs_visions_window duration = 1825 }
+        country_event = { id = ar_foresight.90 days = 1826 }
+        remove_country_modifier = ar_fs_casting_cooldown
+        add_country_modifier = { name = ar_fs_casting_cooldown duration = 1825 }
+    }
+}
+
+# Only pool state is cleared. This must not cut short a paid timed boon.
+ar_fs_clear_pool = {
+    clr_country_flag = ar_fs_pool_live
+    clr_country_flag = ar_fs_fort_menu_open
+    set_variable = { which = ar_fs_visions value = 0 }
+    remove_country_modifier = ar_fs_visions_window
+    every_province = {
+        limit = {
+            OR = {
+                has_province_flag = ar_fs_fort_used_@ROOT
+                has_province_flag = ar_fs_menu_seen_@ROOT
+            }
+        }
+        clr_province_flag = ar_fs_fort_used_@ROOT
+        clr_province_flag = ar_fs_menu_seen_@ROOT
+    }
+}
+ar_fs_monthly_cleanup = {
+    if = {
+        limit = {
+            has_country_flag = ar_fs_pool_live
+            NOT = { has_country_modifier = ar_fs_visions_window }
+        }
+        ar_fs_clear_pool = yes
+    }
+}
+ar_fs_replace_timed_boon = {
+    remove_country_modifier = ar_fs_foreseen_battle
+    remove_country_modifier = ar_fs_perfect_audience
+}
+ar_fs_buy_battle = {
+    if = {
+        limit = {
+            ar_fs_can_spend = yes
+            is_at_war = yes
+            NOT = { has_country_modifier = ar_fs_foreseen_battle }
+            NOT = { has_country_flag = ar_fs_fort_menu_open }
+        }
+        subtract_variable = { which = ar_fs_visions value = 1 }
+        ar_fs_replace_timed_boon = yes
+        add_country_modifier = { name = ar_fs_foreseen_battle duration = 90 }
+    }
+}
+ar_fs_buy_audience = {
+    if = {
+        limit = {
+            ar_fs_can_spend = yes
+            NOT = { has_country_modifier = ar_fs_perfect_audience }
+            NOT = { has_country_flag = ar_fs_fort_menu_open }
+        }
+        subtract_variable = { which = ar_fs_visions value = 1 }
+        ar_fs_replace_timed_boon = yes
+        add_country_modifier = { name = ar_fs_perfect_audience duration = 365 }
+    }
+}
+ar_fs_close_fort_menu = {
+    clr_country_flag = ar_fs_fort_menu_open
+    every_province = {
+        limit = { has_province_flag = ar_fs_menu_seen_@ROOT }
+        clr_province_flag = ar_fs_menu_seen_@ROOT
+    }
+}
+ar_fs_select_first_fort = {
+    random_province = {
+        limit = { ar_fs_fort_candidate = yes }
+        save_event_target_as = ar_fs_target_fort
+        set_province_flag = ar_fs_menu_seen_@ROOT
+    }
+}
+ar_fs_select_next_fort = {
+    # Exhaust unseen choices before beginning another cycle. Never repeat
+    # the current fort as the next result when another candidate exists.
+    if = {
+        limit = {
+            NOT = {
+                any_province = {
+                    ar_fs_fort_candidate = yes
+                    NOT = { has_province_flag = ar_fs_menu_seen_@ROOT }
+                    NOT = { province_id = event_target:ar_fs_target_fort }
+                }
+            }
+        }
+        every_province = {
+            limit = { has_province_flag = ar_fs_menu_seen_@ROOT }
+            clr_province_flag = ar_fs_menu_seen_@ROOT
+        }
+    }
+    random_province = {
+        limit = {
+            ar_fs_fort_candidate = yes
+            NOT = { has_province_flag = ar_fs_menu_seen_@ROOT }
+            NOT = { province_id = event_target:ar_fs_target_fort }
+        }
+        save_event_target_as = ar_fs_target_fort
+        set_province_flag = ar_fs_menu_seen_@ROOT
+    }
+}
+ar_fs_buy_selected_fort = {
+    # Recheck when the player clicks: war, siege leadership or pool may have
+    # changed while the preview was open. An invalid target costs no Vision.
+    if = {
+        limit = {
+            ar_fs_can_spend = yes
+            has_country_flag = ar_fs_fort_menu_open
+            event_target:ar_fs_target_fort = { ar_fs_fort_candidate = yes }
+        }
+        subtract_variable = { which = ar_fs_visions value = 1 }
+        event_target:ar_fs_target_fort = {
+            change_siege = 5
+            set_province_flag = ar_fs_fort_used_@ROOT
+        }
+    }
+    ar_fs_close_fort_menu = yes
+}
+ar_fs_ai_buy_fort = {
+    if = {
+        limit = { ar_fs_can_spend = yes any_province = { ar_fs_fort_candidate = yes } }
+        random_province = {
+            limit = { ar_fs_fort_candidate = yes }
+            change_siege = 5
+            set_province_flag = ar_fs_fort_used_@ROOT
+        }
+        subtract_variable = { which = ar_fs_visions value = 1 }
+    }
+}
